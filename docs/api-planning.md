@@ -36,10 +36,11 @@ TODO
 TODO
 
 # Decisions
+## Should we offer bulk data dumps that can be downloaded and sifted through locally
 ## Should GraphQl be a first class citizen?
 ## Where should the API be hosted
 ## What will be our update cycle model
-
+- Consider an event based update model
 
 # Terms
 - Asset: An archive/binary
@@ -54,7 +55,7 @@ TODO
 
 Types of assets we deliver:
 - JVM archives (i.e zip/tar.gz)
-- Installers (i.e msi/deb)
+- Installers (i.e msi)
 - Source code bundles
 - Checksums/signatures
 
