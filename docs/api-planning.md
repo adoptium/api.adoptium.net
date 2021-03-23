@@ -3,7 +3,7 @@
 
 ## What could be better about the V3 api
 - Updater times are slow, especially full updates
- - Treating updates as atomic/monolithic is quite limiting and leads to the slow times
+  - Treating updates as atomic/monolithic is quite limiting and leads to the slow times
 - Process of discovering newly created builds has been flakey and at times quite a long lag between
   builds being produced and turning up in the api. Frequently requiring manual intervention (normally
   due to bugs).
@@ -23,7 +23,7 @@
   their own version format)
 - Separate arch and bitness
 - Make LTS more fine grained rather than just true/false
- - Make it vendor specific
+  - Make it vendor specific
 
 # Marketplace Requirements
 
@@ -40,13 +40,13 @@ TODO
 
 
 # Terms
-Asset: An archive/binary
-Vendor: An organisation that compiles/packages an Asset (i.e Adopt, Oracle, Azul, Bellsoft, Amazon etc)
-Flavour/Brand: The brand name of the asset (such as Dragonwell, Zulu) 
-JVM Implementation: The implementation of the JVM (hotspot/openj9)
-Version: version information of the asset
-Feature: A optional feature that a JVM may contain (such as JavaFX, JFR)
-Project: A project such as valhalla, metropolis, loom
+- Asset: An archive/binary
+- Vendor: An organisation that compiles/packages an Asset (i.e Adopt, Oracle, Azul, Bellsoft, Amazon etc)
+- Flavour/Brand: The brand name of the asset (such as Dragonwell, Zulu) 
+- JVM Implementation: The implementation of the JVM (hotspot/openj9)
+- Version: version information of the asset
+- Feature: A optional feature that a JVM may contain (such as JavaFX, JFR)
+- Project: A project such as valhalla, metropolis, loom
 
 # Schema
 
