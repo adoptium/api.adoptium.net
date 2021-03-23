@@ -7,6 +7,8 @@
 - Process of discovering newly created builds has been flakey and at times quite a long lag between
   builds being produced and turning up in the api. Frequently requiring manual intervention (normally
   due to bugs).
+- Document the application and how to develop/contribute better.
+- Improve testing and ability for people to run a local test without a full update
 - We have had failed requests and been unable to determine why due to a lack of visibility
 - Pagination is not well implemented
     - no indication of if next page exists
