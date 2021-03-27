@@ -38,9 +38,28 @@ TODO
 # Decisions
 ## Should we offer bulk data dumps that can be downloaded and sifted through locally
 ## Should GraphQl be a first class citizen?
+
+At present, no.
+
+The additional complexity of supporting & maintaining a GraphQL API doesn't appear to provide many benefits.
+The Adoptium API implements by a set of RESTful endpoints provided by a single web service and database.
+
+If and when the Adoptium API evolves to become more complex, with data served from multiple downstream services, then we may benefit from 
+a layer of abstraction such as that provided by a GraphQL API but even then, an API gateway / proxy may be sufficient for our needs.
+
 ## Where should the API be hosted
 ## What will be our update cycle model
 - Consider an event based update model
+
+## Telemetry ( i.e. Metrics / Traces  / Logs)
+
+We should ensure that we are collecting and storing useful telemetry for the deployment of the API.
+
+Assuming the API will still be fronted by Cloudflare, we should ensure that the Cloudflare RayID is forwarded with all
+requests and logs are annotated with the ID to ease debugging and correlation when issues occur.
+
+We should ensure that access to the monitoring services is provided to key contributors to ensure they are able to effectively
+assist with debugging and analysis of issues.
 
 # Terms
 - Asset: An archive/binary
