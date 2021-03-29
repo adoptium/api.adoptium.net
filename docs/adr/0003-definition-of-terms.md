@@ -42,7 +42,11 @@ We need a fairly well understood set of terms to use in the API. The terms are a
 - Snapshot
   - If the Asset produced is built using source considered ready for production i.e was built using whatever state the repo was in when the build happened (i.e nightly).
     This to some extent overlaps with "Release Status", the distinction here is that we may include a feature that is not considered ready for production, however build it
-    using source that at a release tag. I.e OpenJ9 produced builds that contained early access support for AArch64 from source that was at a release tag.
+    using source that at a release tag. I.e OpenJ9 produced builds that contained early access support for AArch64 from source that was at a release tag. 
+  - This does raise a question on if all "snapshots" would also be considered "EA"? Given the current definition of "Release Status":
+    - Snapshot releases MUST also be EA as they are not considered ready for production.
+    - Non-snapshot releases may or may not be EA depending on if they contain features not ready for production.
+    
 - Asset type
   - I.e msi/tar.gz/zip 
 
