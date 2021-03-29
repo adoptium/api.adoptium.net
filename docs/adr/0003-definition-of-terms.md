@@ -52,7 +52,7 @@ We need a fairly well understood set of terms to use in the API. The terms are a
 
 ## Things to consider:
 Should we ban/embrace acronyms and shortened terms? In the past certain terms we have shortened when it is convention to do so, i.e:
-- Long Term Stable -> LTS, 
+- Long Term Support -> LTS, 
 - Operating System -> OS
 - Architecture -> arch
 - Early access -> EA
