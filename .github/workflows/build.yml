@@ -30,7 +30,7 @@ jobs:
     - name: Extract openapi doc
       run: |
         cd adoptopenjdk-api-v3-frontend
-        unzip target/adoptopenjdk-api-v3-frontend-*-runner.jar META-INF/quarkus-generated-openapi-doc.YAML
+        unzip target/quarkus-app/quarkus/generated-bytecode.jar META-INF/quarkus-generated-openapi-doc.YAML
         ../mvnw --batch-mode org.openapitools:openapi-generator-maven-plugin:4.3.0:generate \
                 -Dopenapi.generator.maven.plugin.inputSpec=META-INF/quarkus-generated-openapi-doc.YAML
 

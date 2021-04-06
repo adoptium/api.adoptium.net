@@ -14,6 +14,7 @@ import net.adoptopenjdk.api.v3.routes.stats.DownloadStatsResource
 import org.eclipse.microprofile.openapi.annotations.OpenAPIDefinition
 import org.eclipse.microprofile.openapi.annotations.info.Info
 import org.eclipse.microprofile.openapi.annotations.servers.Server
+import javax.annotation.PostConstruct
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
 import javax.ws.rs.ApplicationPath
@@ -46,26 +47,21 @@ problems as an issue in the <a href=\"https://github.com/AdoptOpenJDK/openjdk-ap
 )
 @ApplicationScoped
 @ApplicationPath("/")
-class V3 : Application {
+class V3 : Application() {
 
     companion object {
         val ENABLE_PERIODIC_UPDATES: String = "enablePeriodicUpdates"
     }
 
-    private val apiDataStore: APIDataStore
     private val resourceClasses: Set<Class<out Any>>
     private val cors: Set<Any>
 
-    @Inject
-    constructor(apiDataStore: APIDataStore) {
-        this.apiDataStore = apiDataStore
+    init {
         cors = setOf(object : ContainerResponseFilter {
             override fun filter(requestContext: ContainerRequestContext?, responseContext: ContainerResponseContext) {
                 responseContext.headers.add("Access-Control-Allow-Origin", "*")
             }
         })
-
-        schedulePeriodicUpdates()
 
         resourceClasses = setOf(
             V1Route::class.java,
@@ -81,7 +77,12 @@ class V3 : Application {
         )
     }
 
-    private fun schedulePeriodicUpdates() {
+    /**
+     * Used to initialize the periodic update scheduler of [APIDataStore]
+     */
+    @Inject
+    @PostConstruct
+    fun schedulePeriodicUpdates(apiDataStore: APIDataStore) {
         // Eagerly fetch repo from db on app startup
         val enabled = System.getProperty(ENABLE_PERIODIC_UPDATES, "true")!!.toBoolean()
 

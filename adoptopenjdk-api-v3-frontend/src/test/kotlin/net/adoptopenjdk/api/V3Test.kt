@@ -12,7 +12,7 @@ class V3Test : FrontendTest() {
     @Test
     fun `update is scheduled`(apiDataStore: APIDataStore) {
         System.setProperty(V3.ENABLE_PERIODIC_UPDATES, "true")
-        V3(apiDataStore)
+        V3().schedulePeriodicUpdates(apiDataStore)
         assertNotNull((apiDataStore as ApiDataStoreStub).scheduled)
     }
 }
