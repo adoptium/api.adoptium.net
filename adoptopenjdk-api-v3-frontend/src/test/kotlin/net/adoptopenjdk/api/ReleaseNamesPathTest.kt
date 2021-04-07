@@ -4,6 +4,8 @@ import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 @QuarkusTest
 @ExtendWith(value = [DbExtension::class])
@@ -39,6 +41,28 @@ class ReleaseNamesPathTest : FrontendTest() {
             .statusCode(200)
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = ["[11,15]", "(11,15)", "(11,15]", "[11,15)"])
+    fun releaseNamesVersionRanges(version: String) {
+
+        RestAssured.given()
+            .`when`()
+            .get("/v3/info/release_names?version=$version")
+            .then()
+            .statusCode(200)
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["[11,15", "(11,15", "11,15]", "11,15)", "11,15", "11,", ",15", "[11", "15)"])
+    fun releaseNamesInvalidVersionRanges(version: String) {
+
+        RestAssured.given()
+            .`when`()
+            .get("/v3/info/release_names?version=$version")
+            .then()
+            .statusCode(400)
+    }
+
     @Test
     fun releaseVersions() {
 
@@ -67,5 +91,27 @@ class ReleaseNamesPathTest : FrontendTest() {
             .get("/v3/info/release_versions?sort_order=ASC")
             .then()
             .statusCode(200)
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["[11,15]", "(11,15)", "(11,15]", "[11,15)"])
+    fun releaseVersionsVersionRanges(version: String) {
+
+        RestAssured.given()
+            .`when`()
+            .get("/v3/info/release_versions?version=$version")
+            .then()
+            .statusCode(200)
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["[11,15", "(11,15", "11,15]", "11,15)", "11,15", "11,", ",15", "[11", "15)"])
+    fun releaseVersionsInvalidVersionRanges(version: String) {
+
+        RestAssured.given()
+            .`when`()
+            .get("/v3/info/release_versions?version=$version")
+            .then()
+            .statusCode(400)
     }
 }

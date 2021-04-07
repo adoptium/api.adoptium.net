@@ -13,6 +13,8 @@ import net.adoptopenjdk.api.v3.models.ReleaseList
 import net.adoptopenjdk.api.v3.models.ReleaseType
 import net.adoptopenjdk.api.v3.models.ReleaseVersionList
 import net.adoptopenjdk.api.v3.models.Vendor
+import net.adoptopenjdk.api.v3.parser.FailedToParse
+import net.adoptopenjdk.api.v3.parser.maven.InvalidVersionSpecificationException
 import org.eclipse.microprofile.metrics.annotation.Timed
 import org.eclipse.microprofile.openapi.annotations.Operation
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
@@ -23,6 +25,7 @@ import org.jboss.resteasy.annotations.GZIP
 import org.jboss.resteasy.annotations.jaxrs.QueryParam
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
+import javax.ws.rs.BadRequestException
 import javax.ws.rs.GET
 import javax.ws.rs.Path
 import javax.ws.rs.Produces
@@ -134,7 +137,13 @@ constructor(
     }
 
     private fun getReleases(release_type: ReleaseType?, vendor: Vendor?, version: String?, sortOrder: SortOrder, sortMethod: SortMethod): Sequence<Release> {
-        val range = VersionRangeFilter(version)
+        val range = try {
+            VersionRangeFilter(version)
+        } catch (e: InvalidVersionSpecificationException) {
+            throw BadRequestException("Invalid version range", e)
+        } catch (e: FailedToParse) {
+            throw BadRequestException("Invalid version string", e)
+        }
         val releaseFilter = ReleaseFilter(releaseType = release_type, vendor = vendor, versionRange = range)
         return apiDataStore
             .getAdoptRepos()
