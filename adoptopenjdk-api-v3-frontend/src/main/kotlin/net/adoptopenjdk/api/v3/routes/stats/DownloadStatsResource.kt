@@ -44,7 +44,7 @@ class DownloadStatsResource {
     @Schema(hidden = true)
     private val downloadStatsInterface: DownloadStatsInterface
 
-    //Dont convert to primary constructor, @Schema(hidden = true) is not processed correctly on primary constructor
+    // Dont convert to primary constructor, @Schema(hidden = true) is not processed correctly on primary constructor
     @Inject
     constructor(
         apiDataStore: APIDataStore,
