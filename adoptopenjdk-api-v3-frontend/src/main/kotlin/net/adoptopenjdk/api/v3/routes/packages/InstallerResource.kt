@@ -20,9 +20,8 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
-import org.jboss.resteasy.annotations.GZIP
-import org.jboss.resteasy.annotations.jaxrs.PathParam
-import org.jboss.resteasy.annotations.jaxrs.QueryParam
+import javax.ws.rs.PathParam
+import javax.ws.rs.QueryParam
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
 import javax.ws.rs.GET
@@ -36,7 +35,6 @@ import javax.ws.rs.core.Response
 @Produces(MediaType.APPLICATION_JSON)
 @Timed
 @ApplicationScoped
-@GZIP
 class InstallerResource @Inject constructor(private val packageEndpoint: PackageEndpoint) {
 
     @GET

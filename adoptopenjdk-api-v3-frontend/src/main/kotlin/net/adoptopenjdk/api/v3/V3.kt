@@ -1,5 +1,6 @@
 package net.adoptopenjdk.api.v3
 
+import io.quarkus.runtime.Startup
 import net.adoptopenjdk.api.v3.dataSources.APIDataStore
 import net.adoptopenjdk.api.v3.routes.AssetsResource
 import net.adoptopenjdk.api.v3.routes.V1Route
@@ -47,6 +48,7 @@ problems as an issue in the <a href=\"https://github.com/AdoptOpenJDK/openjdk-ap
 )
 @ApplicationScoped
 @ApplicationPath("/")
+@Startup
 class V3 : Application() {
 
     companion object {
