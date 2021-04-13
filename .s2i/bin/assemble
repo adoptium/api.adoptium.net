@@ -11,17 +11,17 @@ cd /tmp/src
 
 if [ -v SWAGGERHUB_APIKEY ]; then
   cd adoptopenjdk-api-v3-frontend
-  unzip target/adoptopenjdk-api-v3-frontend-*-runner.jar META-INF/quarkus-generated-openapi-doc.JSON || true
+  unzip target/quarkus-app/quarkus/generated-bytecode.jar META-INF/quarkus-generated-openapi-doc.JSON || true
   ../mvnw io.swagger:swaggerhub-maven-plugin:upload || true
   cd ..
 fi
 
-mkdir -p /deployments/lib
+mkdir -p /deployments
 
-cp adoptopenjdk-api-v3-frontend/target/lib/* /deployments/lib/
+cp -r adoptopenjdk-api-v3-frontend/target/quarkus-app/* /deployments/
 
 cp adoptopenjdk-api-v3-updater/target/adoptopenjdk-api-v3-updater-*-jar-with-dependencies.jar /deployments/adoptopenjdk-api-v3-updater-runner.jar
-cp adoptopenjdk-api-v3-frontend/target/adoptopenjdk-api-*-runner.jar /deployments/adoptopenjdk-api-v3-frontend.jar
+mv /deployments/quarkus-run.jar /deployments/adoptopenjdk-api-v3-frontend.jar
 
 mkdir -p /deployments/scripts
 cp scripts/* /deployments/scripts/
