@@ -151,8 +151,9 @@ constructor(
     ): List<Release> {
         val order = sortOrder ?: SortOrder.DESC
         val sortMethod = sortMethod ?: SortMethod.DEFAULT
+        val vendorNonNull = vendor ?: Vendor.adoptopenjdk
 
-        val releaseFilter = ReleaseFilter(releaseType = release_type, featureVersion = version, vendor = vendor)
+        val releaseFilter = ReleaseFilter(releaseType = release_type, featureVersion = version, vendor = vendorNonNull)
         val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, heap_size, project, before)
         val repos = apiDataStore.getAdoptRepos().getFeatureRelease(version!!)
 
@@ -334,8 +335,9 @@ constructor(
         val sortMethod = sortMethod ?: SortMethod.DEFAULT
 
         val range = VersionRangeFilter(version)
+        val vendorNonNull = vendor ?: Vendor.adoptopenjdk
 
-        val releaseFilter = ReleaseFilter(releaseType = release_type, vendor = vendor, versionRange = range, lts = lts)
+        val releaseFilter = ReleaseFilter(releaseType = release_type, vendor = vendorNonNull, versionRange = range, lts = lts)
         val binaryFilter = BinaryFilter(os = os, arch = arch, imageType = image_type, jvmImpl = jvm_impl, heapSize = heap_size, project = project)
 
         val releases = apiDataStore
@@ -366,10 +368,18 @@ constructor(
 
         @Parameter(name = "jvm_impl", description = "JVM Implementation", required = true)
         @PathParam("jvm_impl")
-        jvm_impl: JvmImpl
+        jvm_impl: JvmImpl,
+
+        @Parameter(
+            name = "vendor", description = OpenApiDocs.VENDOR, required = false,
+            schema = Schema(defaultValue = "adoptopenjdk", type = SchemaType.STRING)
+        )
+        @QueryParam("vendor")
+        vendor: Vendor?
 
     ): List<BinaryAssetView> {
-        val releaseFilter = ReleaseFilter(ReleaseType.ga, featureVersion = version, vendor = Vendor.adoptopenjdk)
+        val vendor = vendor ?: Vendor.adoptopenjdk
+        val releaseFilter = ReleaseFilter(ReleaseType.ga, featureVersion = version, vendor = vendor)
         val binaryFilter = BinaryFilter(null, null, null, jvm_impl, null, null)
         val releases = apiDataStore
             .getAdoptRepos()
@@ -385,7 +395,7 @@ constructor(
                 binaryPermutation(it.second.architecture, it.second.heap_size, it.second.image_type, it.second.os)
             }
             .values
-            .map { BinaryAssetView(it.first.release_name, it.second, it.first.version_data) }
+            .map { BinaryAssetView(it.first.release_name, it.first.vendor, it.second, it.first.version_data) }
             .toList()
     }
 }

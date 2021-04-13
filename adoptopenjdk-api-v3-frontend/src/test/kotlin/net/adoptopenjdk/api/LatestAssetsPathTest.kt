@@ -11,6 +11,7 @@ import net.adoptopenjdk.api.v3.models.BinaryAssetView
 import net.adoptopenjdk.api.v3.models.ImageType
 import net.adoptopenjdk.api.v3.models.JvmImpl
 import net.adoptopenjdk.api.v3.models.OperatingSystem
+import net.adoptopenjdk.api.v3.models.Vendor
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
@@ -29,19 +30,20 @@ class LatestAssetsPathTest : FrontendTest() {
 
         val binaries = JsonArray(body.asString())
 
-        assert(hasEntryFor(binaries, OperatingSystem.linux, ImageType.jdk, Architecture.x64))
-        assert(hasEntryFor(binaries, OperatingSystem.linux, ImageType.jre, Architecture.x64))
-        assert(hasEntryFor(binaries, OperatingSystem.windows, ImageType.jdk, Architecture.x64))
-        assert(hasEntryFor(binaries, OperatingSystem.windows, ImageType.jdk, Architecture.x64))
+        assert(hasEntryFor(binaries, OperatingSystem.linux, ImageType.jdk, Architecture.x64, Vendor.adoptopenjdk))
+        assert(hasEntryFor(binaries, OperatingSystem.linux, ImageType.jre, Architecture.x64, Vendor.adoptopenjdk))
+        assert(hasEntryFor(binaries, OperatingSystem.windows, ImageType.jdk, Architecture.x64, Vendor.adoptopenjdk))
+        assert(hasEntryFor(binaries, OperatingSystem.windows, ImageType.jre, Architecture.x64, Vendor.adoptopenjdk))
     }
 
-    private fun hasEntryFor(binaries: JsonArray, os: OperatingSystem, imageType: ImageType, architecture: Architecture): Boolean {
+    private fun hasEntryFor(binaries: JsonArray, os: OperatingSystem, imageType: ImageType, architecture: Architecture, vendor: Vendor): Boolean {
         val hasEntry = binaries
             .map { JsonMapper.mapper.readValue(it.toString(), BinaryAssetView::class.java) }
             .filter({ release ->
                 release.binary.os == os &&
                     release.binary.image_type == imageType &&
-                    release.binary.architecture == architecture
+                    release.binary.architecture == architecture &&
+                    release.vendor == vendor
             })
             .count() > 0
         return hasEntry

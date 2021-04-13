@@ -18,9 +18,6 @@ import javax.annotation.PostConstruct
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
 import javax.ws.rs.ApplicationPath
-import javax.ws.rs.container.ContainerRequestContext
-import javax.ws.rs.container.ContainerResponseContext
-import javax.ws.rs.container.ContainerResponseFilter
 import javax.ws.rs.core.Application
 
 object ServerConfig {
@@ -54,14 +51,8 @@ class V3 : Application() {
     }
 
     private val resourceClasses: Set<Class<out Any>>
-    private val cors: Set<Any>
 
     init {
-        cors = setOf(object : ContainerResponseFilter {
-            override fun filter(requestContext: ContainerRequestContext?, responseContext: ContainerResponseContext) {
-                responseContext.headers.add("Access-Control-Allow-Origin", "*")
-            }
-        })
 
         resourceClasses = setOf(
             V1Route::class.java,
@@ -90,10 +81,6 @@ class V3 : Application() {
             apiDataStore.getAdoptRepos()
             apiDataStore.schedulePeriodicUpdates()
         }
-    }
-
-    override fun getSingletons(): Set<Any> {
-        return cors
     }
 
     override fun getClasses(): Set<Class<*>> {

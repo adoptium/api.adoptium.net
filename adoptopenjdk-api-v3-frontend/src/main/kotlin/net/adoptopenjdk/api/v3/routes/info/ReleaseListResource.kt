@@ -144,7 +144,8 @@ constructor(
         } catch (e: FailedToParse) {
             throw BadRequestException("Invalid version string", e)
         }
-        val releaseFilter = ReleaseFilter(releaseType = release_type, vendor = vendor, versionRange = range)
+        val vendorNonNull = vendor ?: Vendor.adoptopenjdk
+        val releaseFilter = ReleaseFilter(releaseType = release_type, vendor = vendorNonNull, versionRange = range)
         return apiDataStore
             .getAdoptRepos()
             .getReleases(releaseFilter, sortOrder, sortMethod)
