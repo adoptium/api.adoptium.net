@@ -24,9 +24,11 @@
         <maven.compiler.testTarget>11</maven.compiler.testTarget>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>1.13.1.Final</quarkus.version>
+        <quarkus.version>1.13.2.Final</quarkus.version>
         <surefire-plugin.version>3.0.0-M3</surefire-plugin.version>
         <jackson.version>2.11.4</jackson.version>
+        <kmongo.version>4.1.3</kmongo.version>
+        <mongo-driver.version>4.1.2</mongo-driver.version>
     </properties>
 
     <modules>
@@ -152,12 +154,12 @@
             <dependency>
                 <groupId>org.litote.kmongo</groupId>
                 <artifactId>kmongo-coroutine</artifactId>
-                <version>4.0.0</version>
+                <version>${kmongo.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.litote.kmongo</groupId>
                 <artifactId>kmongo-flapdoodle</artifactId>
-                <version>4.0.0</version>
+                <version>${kmongo.version}</version>
                 <scope>test</scope>
                 <exclusions>
                     <exclusion>
@@ -179,7 +181,7 @@
             <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
-                <version>3.17.0</version>
+                <version>3.19.0</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -201,12 +203,12 @@
             <dependency>
                 <groupId>org.mongodb</groupId>
                 <artifactId>mongodb-driver-core</artifactId>
-                <version>4.1.0</version>
+                <version>${mongo-driver.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mongodb</groupId>
                 <artifactId>mongodb-driver-reactivestreams</artifactId>
-                <version>4.1.0</version>
+                <version>${mongo-driver.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -222,12 +224,12 @@
             <dependency>
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>applicationinsights-core</artifactId>
-                <version>2.6.2</version>
+                <version>2.6.3</version>
             </dependency>
             <dependency>
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>applicationinsights-logging-logback</artifactId>
-                <version>2.6.2</version>
+                <version>2.6.3</version>
             </dependency>
             <dependency>
                 <groupId>org.jboss.weld</groupId>
@@ -461,7 +463,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-toolchains-plugin</artifactId>
-                    <version>1.1</version>
+                    <version>3.0.0</version>
                     <executions>
                         <execution>
                             <id>validate</id>
