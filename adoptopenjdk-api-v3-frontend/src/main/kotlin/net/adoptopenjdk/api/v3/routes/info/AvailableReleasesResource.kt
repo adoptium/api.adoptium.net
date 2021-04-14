@@ -2,7 +2,6 @@ package net.adoptopenjdk.api.v3.routes.info
 
 import net.adoptopenjdk.api.v3.dataSources.APIDataStore
 import net.adoptopenjdk.api.v3.models.ReleaseInfo
-import org.eclipse.microprofile.metrics.annotation.Timed
 import org.eclipse.microprofile.openapi.annotations.Operation
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
 import javax.enterprise.context.ApplicationScoped
@@ -15,7 +14,6 @@ import javax.ws.rs.core.MediaType
 @Tag(name = "Release Info")
 @Path("/v3/info/")
 @Produces(MediaType.APPLICATION_JSON)
-@Timed
 @ApplicationScoped
 class AvailableReleasesResource
 @Inject

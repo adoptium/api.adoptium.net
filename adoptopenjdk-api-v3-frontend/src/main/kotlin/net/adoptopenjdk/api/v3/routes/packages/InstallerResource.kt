@@ -12,7 +12,6 @@ import net.adoptopenjdk.api.v3.models.Project
 import net.adoptopenjdk.api.v3.models.Release
 import net.adoptopenjdk.api.v3.models.ReleaseType
 import net.adoptopenjdk.api.v3.models.Vendor
-import org.eclipse.microprofile.metrics.annotation.Timed
 import org.eclipse.microprofile.openapi.annotations.Operation
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
 import org.eclipse.microprofile.openapi.annotations.media.Schema
@@ -33,7 +32,6 @@ import javax.ws.rs.core.Response
 @Tag(name = "Installer")
 @Path("/v3/installer/")
 @Produces(MediaType.APPLICATION_JSON)
-@Timed
 @ApplicationScoped
 class InstallerResource @Inject constructor(private val packageEndpoint: PackageEndpoint) {
 

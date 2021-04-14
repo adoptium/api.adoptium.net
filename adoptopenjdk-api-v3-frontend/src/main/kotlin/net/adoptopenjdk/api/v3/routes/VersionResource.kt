@@ -3,7 +3,6 @@ package net.adoptopenjdk.api.v3.routes
 import net.adoptopenjdk.api.v3.models.VersionData
 import net.adoptopenjdk.api.v3.parser.FailedToParse
 import net.adoptopenjdk.api.v3.parser.VersionParser
-import org.eclipse.microprofile.metrics.annotation.Timed
 import org.eclipse.microprofile.openapi.annotations.Operation
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse
@@ -21,7 +20,6 @@ import javax.ws.rs.core.MediaType
 @Tag(name = "Version")
 @Path("/v3/version/")
 @Produces(MediaType.APPLICATION_JSON)
-@Timed
 @ApplicationScoped
 class VersionResource {
 
