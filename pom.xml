@@ -198,7 +198,7 @@
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq</artifactId>
-                <version>3.13.4</version>
+                <version>3.14.8</version>
             </dependency>
             <dependency>
                 <groupId>org.mongodb</groupId>
@@ -710,7 +710,7 @@
                     <dependency>
                         <groupId>com.pinterest</groupId>
                         <artifactId>ktlint</artifactId>
-                        <version>0.37.2</version>
+                        <version>0.41.0</version>
                     </dependency>
                     <!-- additional 3rd party ruleset(s) can be specified here -->
                 </dependencies>
