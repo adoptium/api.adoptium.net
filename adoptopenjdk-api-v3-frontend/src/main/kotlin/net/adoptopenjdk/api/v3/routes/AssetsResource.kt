@@ -21,7 +21,6 @@ import net.adoptopenjdk.api.v3.models.Project
 import net.adoptopenjdk.api.v3.models.Release
 import net.adoptopenjdk.api.v3.models.ReleaseType
 import net.adoptopenjdk.api.v3.models.Vendor
-import org.eclipse.microprofile.metrics.annotation.Timed
 import org.eclipse.microprofile.openapi.annotations.Operation
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
 import org.eclipse.microprofile.openapi.annotations.media.Content
@@ -30,9 +29,8 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
-import org.jboss.resteasy.annotations.GZIP
-import org.jboss.resteasy.annotations.jaxrs.PathParam
-import org.jboss.resteasy.annotations.jaxrs.QueryParam
+import javax.ws.rs.PathParam
+import javax.ws.rs.QueryParam
 import org.slf4j.LoggerFactory
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
@@ -48,9 +46,7 @@ import javax.ws.rs.core.Response
 @Tag(name = "Assets")
 @Path("/v3/assets/")
 @Produces(MediaType.APPLICATION_JSON)
-@Timed
 @ApplicationScoped
-@GZIP
 class AssetsResource
 @Inject
 constructor(

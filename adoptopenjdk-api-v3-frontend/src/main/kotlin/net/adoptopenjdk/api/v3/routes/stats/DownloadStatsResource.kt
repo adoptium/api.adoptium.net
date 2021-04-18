@@ -11,13 +11,11 @@ import net.adoptopenjdk.api.v3.models.Release
 import net.adoptopenjdk.api.v3.models.ReleaseType
 import net.adoptopenjdk.api.v3.models.StatsSource
 import net.adoptopenjdk.api.v3.models.Vendor
-import org.eclipse.microprofile.metrics.annotation.Timed
 import org.eclipse.microprofile.openapi.annotations.Operation
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter
-import org.jboss.resteasy.annotations.GZIP
-import org.jboss.resteasy.annotations.jaxrs.PathParam
+import javax.ws.rs.PathParam
 import java.time.LocalDate
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
@@ -34,9 +32,7 @@ import javax.ws.rs.core.Response
 @Path("/v3/stats/downloads")
 @Schema(hidden = true)
 @Produces(MediaType.APPLICATION_JSON)
-@Timed
 @ApplicationScoped
-@GZIP
 class DownloadStatsResource {
     @Schema(hidden = true)
     private val apiDataStore: APIDataStore

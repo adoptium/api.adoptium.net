@@ -15,14 +15,12 @@ import net.adoptopenjdk.api.v3.models.ReleaseVersionList
 import net.adoptopenjdk.api.v3.models.Vendor
 import net.adoptopenjdk.api.v3.parser.FailedToParse
 import net.adoptopenjdk.api.v3.parser.maven.InvalidVersionSpecificationException
-import org.eclipse.microprofile.metrics.annotation.Timed
 import org.eclipse.microprofile.openapi.annotations.Operation
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
-import org.jboss.resteasy.annotations.GZIP
-import org.jboss.resteasy.annotations.jaxrs.QueryParam
+import javax.ws.rs.QueryParam
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
 import javax.ws.rs.BadRequestException
@@ -34,9 +32,7 @@ import javax.ws.rs.core.MediaType
 @Tag(name = "Release Info")
 @Path("/v3/info")
 @Produces(MediaType.APPLICATION_JSON)
-@Timed
 @ApplicationScoped
-@GZIP
 class ReleaseListResource
 @Inject
 constructor(
