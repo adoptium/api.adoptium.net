@@ -23,13 +23,15 @@ import net.adoptopenjdk.api.v3.models.ReleaseType
 import net.adoptopenjdk.api.v3.models.Vendor
 import net.adoptopenjdk.api.v3.models.VersionData
 import net.adoptopenjdk.api.v3.routes.AssetsResource
+import net.adoptopenjdk.api.v3.routes.ReleaseEndpoint
 import org.junit.jupiter.api.Test
 import java.time.ZonedDateTime
 import kotlin.test.assertEquals
 
 class AssetsResourceFeatureReleasePathSortOrderTest : FrontendTest() {
 
-    var assetResource: AssetsResource = AssetsResource(ApiDataStoreStub(createRepo()))
+    val apiDataStore = ApiDataStoreStub(createRepo())
+    var assetResource: AssetsResource = AssetsResource(apiDataStore, ReleaseEndpoint(apiDataStore))
 
     companion object {
         fun createRepo(): AdoptRepos {

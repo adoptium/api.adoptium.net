@@ -2,12 +2,17 @@ package net.adoptopenjdk.api
 
 import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured
+import net.adoptopenjdk.api.v3.JsonMapper
 import net.adoptopenjdk.api.v3.models.Architecture
 import net.adoptopenjdk.api.v3.models.HeapSize
 import net.adoptopenjdk.api.v3.models.ImageType
 import net.adoptopenjdk.api.v3.models.JvmImpl
 import net.adoptopenjdk.api.v3.models.OperatingSystem
+import net.adoptopenjdk.api.v3.models.Release
+import net.adoptopenjdk.api.v3.models.Vendor
+import org.hamcrest.Description
 import org.hamcrest.Matchers
+import org.hamcrest.TypeSafeMatcher
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import java.util.stream.Stream
@@ -24,6 +29,41 @@ class AssetsResourceVersionPathTest : AssetsPathTest() {
         val JAVA11 = "11.0.200+2.1"
         val ABOVE_8 = "[8.0.0,)"
         val BELOW_11 = "(,11.0.0]"
+    }
+
+    @TestFactory
+    fun `no Vendor Defaults To AdoptopenJDK`(): Stream<DynamicTest> {
+        return listOf(
+            ABOVE_8,
+            BELOW_11,
+            JAVA8_212,
+            RANGE_11_12,
+            RANGE_8_METADATA,
+            JAVA11
+        )
+            .map { request -> "${getPath()}/$request?PAGE_SIZE=100" }
+            .map { request ->
+                DynamicTest.dynamicTest(request) {
+                    RestAssured.given()
+                        .`when`()
+                        .get(request)
+                        .then()
+                        .body(object : TypeSafeMatcher<String>() {
+
+                            override fun describeTo(description: Description?) {
+                                description!!.appendText("json")
+                            }
+
+                            override fun matchesSafely(p0: String?): Boolean {
+                                val releases = JsonMapper.mapper.readValue(p0, Array<Release>::class.java)
+                                return releases
+                                    .none { it.vendor != Vendor.adoptopenjdk }
+                            }
+                        })
+                        .statusCode(200)
+                }
+            }
+            .stream()
     }
 
     @TestFactory

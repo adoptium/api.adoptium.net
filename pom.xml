@@ -793,4 +793,15 @@
             </plugin>
         </plugins>
     </reporting>
+
+    <!--
+        Publishes artifacts to a local directory so that we can check them in and publish them
+    -->
+    <distributionManagement>
+        <repository>
+            <id>internal</id>
+            <url>file://${project.build.directory}/mvn-repo</url>
+        </repository>
+    </distributionManagement>
+
 </project>

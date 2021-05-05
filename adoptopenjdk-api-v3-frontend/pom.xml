@@ -56,6 +56,11 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>io.quarkus.resteasy.reactive</groupId>
+            <artifactId>resteasy-reactive-processor</artifactId>
+            <version>1.13.3.Final</version>
+        </dependency>
+        <dependency>
             <groupId>net.adoptopenjdk.api</groupId>
             <artifactId>adoptopenjdk-api-v3-updater</artifactId>
             <version>${project.version}</version>
@@ -217,7 +222,7 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>4.3.1</version>
+                <version>5.1.0</version>
                 <configuration>
                     <generatorName>javascript</generatorName>
                 </configuration>

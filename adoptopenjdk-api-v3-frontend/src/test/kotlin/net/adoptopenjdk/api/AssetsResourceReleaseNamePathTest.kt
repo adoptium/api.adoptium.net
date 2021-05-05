@@ -6,11 +6,14 @@ import net.adoptopenjdk.api.v3.JsonMapper
 import net.adoptopenjdk.api.v3.dataSources.APIDataStore
 import net.adoptopenjdk.api.v3.dataSources.SortMethod
 import net.adoptopenjdk.api.v3.dataSources.SortOrder
+import net.adoptopenjdk.api.v3.filters.BinaryFilter
 import net.adoptopenjdk.api.v3.filters.ReleaseFilter
+import net.adoptopenjdk.api.v3.models.Architecture
 import net.adoptopenjdk.api.v3.models.Release
 import net.adoptopenjdk.api.v3.models.ReleaseType
 import net.adoptopenjdk.api.v3.models.Vendor
 import net.adoptopenjdk.api.v3.routes.AssetsResource
+import net.adoptopenjdk.api.v3.routes.ReleaseEndpoint
 import org.hamcrest.Description
 import org.hamcrest.TypeSafeMatcher
 import org.junit.jupiter.api.DynamicTest
@@ -80,6 +83,33 @@ class AssetsResourceReleaseNamePathTest : FrontendTest() {
     }
 
     @Test
+    fun `for frontend requests x86 == x32`() {
+        val releaseName = apiDataStore
+            .getAdoptRepos()
+            .getFilteredReleases(ReleaseFilter(vendor = Vendor.adoptopenjdk), BinaryFilter(arch = Architecture.x32), SortOrder.DESC, SortMethod.DEFAULT)
+            .first()
+            .release_name
+
+        RestAssured.given()
+            .`when`()
+            .get("/v3/assets/release_name/adoptopenjdk/$releaseName?architecture=x86")
+            .then()
+            .statusCode(200)
+            .and()
+            .body(object : TypeSafeMatcher<String>() {
+                override fun describeTo(description: Description?) {
+                    description!!.appendText("json")
+                }
+
+                override fun matchesSafely(p0: String?): Boolean {
+                    val returnedRelease = JsonMapper.mapper.readValue(p0, Release::class.java)
+                    return returnedRelease.binaries.filter { it.architecture == Architecture.x32 }.size > 0 &&
+                        returnedRelease.binaries.filter { it.architecture != Architecture.x32 }.size == 0
+                }
+            })
+    }
+
+    @Test
     fun `release with different vendor 404s`(apiDataStore: APIDataStore) {
         val releaseName = apiDataStore
             .getAdoptRepos()
@@ -98,7 +128,7 @@ class AssetsResourceReleaseNamePathTest : FrontendTest() {
     @Test
     fun `missing release_name 400s`() {
         assertThrows<BadRequestException> {
-            AssetsResource(apiDataStore)
+            AssetsResource(apiDataStore, ReleaseEndpoint(apiDataStore))
                 .get(
                     Vendor.adoptopenjdk,
                     null,
@@ -115,7 +145,7 @@ class AssetsResourceReleaseNamePathTest : FrontendTest() {
     @Test
     fun `missing vendor 400s`() {
         assertThrows<BadRequestException> {
-            AssetsResource(apiDataStore)
+            AssetsResource(apiDataStore, ReleaseEndpoint(apiDataStore))
                 .get(
                     null,
                     "foo",

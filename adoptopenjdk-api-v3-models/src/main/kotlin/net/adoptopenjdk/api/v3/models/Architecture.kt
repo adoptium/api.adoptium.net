@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 
-@Schema(type = SchemaType.STRING, enumeration = ["x64", "x32", "ppc64", "ppc64le", "s390x", "aarch64", "arm", "sparcv9", "riscv64"])
+// note x86 does not exist as an enum entry, however for the case of front end queries we make x86==x32
+@Schema(type = SchemaType.STRING, enumeration = ["x64", "x86", "x32", "ppc64", "ppc64le", "s390x", "aarch64", "arm", "sparcv9", "riscv64"])
 enum class Architecture : FileNameMatcher {
     x64,
     x32(0, "x86-32"),
@@ -33,6 +34,15 @@ enum class Architecture : FileNameMatcher {
             return values()
                 .filter { it.names.contains(value) }
                 .first()
+        }
+
+        fun getValue(value: String): Architecture {
+            // For frontend queries make x86 == x32
+            return if (value == "x86") {
+                x32
+            } else {
+                valueOf(value)
+            }
         }
     }
 }
