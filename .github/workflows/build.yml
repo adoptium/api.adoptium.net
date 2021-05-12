@@ -15,7 +15,7 @@ jobs:
         java-package: jdk
         architecture: x64
         
-    - uses: actions/setup-node@v2
+    - uses: actions/setup-node@v2.1.5
       with:
         node-version: '14'
 
