@@ -268,13 +268,6 @@
         </dependency>
     </dependencies>
 
-    <repositories>
-        <repository>
-            <id>bintray-americanexpress-maven</id>
-            <url>https://dl.bintray.com/americanexpress/maven</url>
-        </repository>
-    </repositories>
-
     <build>
         <pluginManagement>
             <plugins>
@@ -804,4 +797,16 @@
         </repository>
     </distributionManagement>
 
+    <repositories>
+        <repository>
+            <id>adopt-api-assets</id>
+            <url>https://raw.githubusercontent.com/AdoptOpenJDK/openjdk-api-v3/maven/mvn-repo</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>
