@@ -28,6 +28,8 @@
         <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
         <jackson.version>2.12.3</jackson.version>
         <kmongo.version>4.2.6</kmongo.version>
+
+        <restassured.version>4.3.3</restassured.version>
     </properties>
 
     <modules>
@@ -111,13 +113,13 @@
             <dependency>
                 <groupId>io.rest-assured</groupId>
                 <artifactId>rest-assured</artifactId>
-                <version>4.3.1</version>
+                <version>${restassured.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>io.rest-assured</groupId>
                 <artifactId>json-path</artifactId>
-                <version>4.3.1</version>
+                <version>${restassured.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -202,7 +204,7 @@
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq</artifactId>
-                <version>3.14.8</version>
+                <version>3.14.9</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
