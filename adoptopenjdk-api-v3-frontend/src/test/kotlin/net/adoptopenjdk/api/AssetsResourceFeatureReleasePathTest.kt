@@ -12,7 +12,10 @@ import net.adoptopenjdk.api.v3.models.ImageType
 import net.adoptopenjdk.api.v3.models.OperatingSystem
 import net.adoptopenjdk.api.v3.models.Release
 import net.adoptopenjdk.api.v3.models.ReleaseType
+import net.adoptopenjdk.api.v3.models.Vendor
+import org.hamcrest.Description
 import org.hamcrest.Matchers
+import org.hamcrest.TypeSafeMatcher
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
@@ -37,6 +40,37 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
                                 .get(it)
                                 .then()
                                 .body("binaries.size()", Matchers.greaterThan(0))
+                                .statusCode(200)
+                        }
+                    }
+            }
+            .stream()
+    }
+
+    @TestFactory
+    fun `no Vendor Defaults To AdoptopenJDK`(): Stream<DynamicTest> {
+        return AdoptReposTestDataGenerator.TEST_VERSIONS
+            .flatMap { version ->
+                ReleaseType.values()
+                    .map { "/v3/assets/feature_releases/$version/$it?PAGE_SIZE=100" }
+                    .map { request ->
+                        DynamicTest.dynamicTest(request) {
+                            RestAssured.given()
+                                .`when`()
+                                .get(request)
+                                .then()
+                                .body(object : TypeSafeMatcher<String>() {
+
+                                    override fun describeTo(description: Description?) {
+                                        description!!.appendText("json")
+                                    }
+
+                                    override fun matchesSafely(p0: String?): Boolean {
+                                        val releases = JsonMapper.mapper.readValue(p0, Array<Release>::class.java)
+                                        return releases
+                                            .none { it.vendor != Vendor.adoptopenjdk }
+                                    }
+                                })
                                 .statusCode(200)
                         }
                     }

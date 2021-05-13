@@ -1,0 +1,46 @@
+on:
+  workflow_dispatch:
+
+name: Publish Nodes
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          java-package: jdk
+          architecture: x64
+          distribution: 'adopt'
+
+      - uses: actions/checkout@v2
+
+      - name: Build app
+        run: |
+          cd /tmp/
+          git clone https://github.com/americanexpress/nodes.git
+          cd nodes
+          git fetch origin v0.5.0
+          git checkout v0.5.0
+          mvn --batch-mode -pl '!samples/kotlin-sample,!samples/scala-sample' clean deploy -DaltDeploymentRepository="internal::default::file:///tmp/repo"
+
+      - name: setup git config
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+
+      - name: Publish maven assets
+        run: |
+          ls
+          git fetch origin maven
+          git checkout maven
+          rsync -r /tmp/repo/ ./mvn-repo
+          ls -R mvn-repo
+          git add mvn-repo
+          git status
+          git add mvn-repo
+          git commit -a -m "add node artifacts"
+          git push origin maven

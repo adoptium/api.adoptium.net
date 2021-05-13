@@ -1,0 +1,40 @@
+on:
+  workflow_dispatch:
+
+name: Publish Assets
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/setup-java@v2
+        with:
+          java-version: '11.0.10'
+          java-package: jdk
+          architecture: x64
+          distribution: 'adopt'
+
+      - uses: actions/checkout@v2
+
+      - name: Build app
+        run: ./mvnw --batch-mode clean deploy
+
+      - name: setup git config
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+
+      - name: Publish maven assets
+        run: |
+          ls
+          rsync -r ./*/target/mvn-repo ./target/mvn-repo /tmp/
+          git checkout --orphan maven || git checkout maven
+          git reset .
+          rm -r mvn-repo || true
+          cp -r /tmp/mvn-repo ./
+          ls
+          git add mvn-repo
+          git commit -a -m "add artifacts"
+          git push origin maven

@@ -6,6 +6,7 @@ import net.adoptopenjdk.api.v3.models.HeapSize
 import net.adoptopenjdk.api.v3.models.ImageType
 import net.adoptopenjdk.api.v3.models.JvmImpl
 import net.adoptopenjdk.api.v3.models.OperatingSystem
+import net.adoptopenjdk.api.v3.models.Project
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
@@ -38,6 +39,11 @@ abstract class AssetsPathTest : FrontendTest() {
     @TestFactory
     fun filtersHeapSize(): Stream<DynamicTest> {
         return runFilterTest("heap_size", HeapSize.values())
+    }
+
+    @TestFactory
+    fun filtersProject(): Stream<DynamicTest> {
+        return runFilterTest("project", arrayOf(Project.jdk, Project.jfr))
     }
 
     protected fun <T> createTest(

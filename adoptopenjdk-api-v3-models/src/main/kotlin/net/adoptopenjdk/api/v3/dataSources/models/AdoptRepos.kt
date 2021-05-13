@@ -45,7 +45,11 @@ class AdoptRepos {
             .toMap()
     )
 
-    fun getReleases(releaseFilter: Predicate<Release>, sortOrder: SortOrder, sortMethod: SortMethod): Sequence<Release> {
+    fun getReleases(
+        releaseFilter: Predicate<Release>,
+        sortOrder: SortOrder,
+        sortMethod: SortMethod
+    ): Sequence<Release> {
         return allReleases.getReleases(releaseFilter, sortOrder, sortMethod)
     }
 
