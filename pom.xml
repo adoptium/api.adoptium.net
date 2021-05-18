@@ -197,7 +197,7 @@
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-xml</artifactId>
-                <version>3.0.5</version>
+                <version>3.0.8</version>
             </dependency>
             <dependency>
                 <groupId>org.jooq</groupId>
@@ -470,7 +470,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>build-helper-maven-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
