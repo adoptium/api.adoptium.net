@@ -197,7 +197,7 @@
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-xml</artifactId>
-                <version>3.0.5</version>
+                <version>3.0.8</version>
             </dependency>
             <dependency>
                 <groupId>org.jooq</groupId>
