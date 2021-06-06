@@ -387,7 +387,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
-                    <version>3.13.0</version>
+                    <version>3.14.0</version>
                     <configuration>
                         <targetJdk>${jdk.version}</targetJdk>
                     </configuration>
@@ -395,7 +395,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-project-info-reports-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>3.1.2</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -737,7 +737,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>3.14.0</version>
                 <configuration>
                     <targetJdk>${jdk.version}</targetJdk>
                 </configuration>
@@ -745,7 +745,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>3.1.2</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.rat</groupId>
