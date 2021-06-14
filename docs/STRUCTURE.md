@@ -98,5 +98,5 @@ Download statistics:
 A full list of endpoints and each of the parameters can be found at https://api.adoptopenjdk.net/swagger-ui/
 
 ### Running
-To run the front-end quarkus tool, `cd` into the `adoptopenjdk-api-v3-frontend` directory and run `../mvnw quarkus:dev`. This will then run the tool on port 8080.
+To run the front-end quarkus tool, `cd` into the `adoptopenjdk-api-v3-frontend` directory and run `../../mvnw quarkus:dev`. This will then run the tool on port 8080.
 NOTE: You will need to have let the Updater run a full cycle before any data is shown.

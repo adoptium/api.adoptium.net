@@ -65,11 +65,15 @@ open class MongoClient {
             serverSelectionTimeoutMills = System.getenv("MONGODB_SERVER_SELECTION_TIMEOUT_MILLIS")
         )
 
-        val settings = MongoClientSettings.builder()
+        var settingsBuilder = MongoClientSettings.builder()
             .applyConnectionString(ConnectionString(connectionString))
-            .build()
 
-        client = KMongo.createClient(settings).coroutine
+        val sslEnabled = System.getenv("MONGODB_SSL")?.toBoolean()
+        if (sslEnabled == true) {
+            settingsBuilder = settingsBuilder.applyToSslSettings { it.enabled(true).invalidHostNameAllowed(true) }
+        }
+
+        client = KMongo.createClient(settingsBuilder.build()).coroutine
         database = client.getDatabase(dbName)
     }
 }

@@ -13,29 +13,30 @@
     </prerequisites>
 
     <properties>
-        <jacoco.version>0.8.6</jacoco.version>
+        <jacoco.version>0.8.7</jacoco.version>
         <jdk.version>11</jdk.version>
         <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
         <kotlin.version>1.4.32</kotlin.version>
-        <coroutine.version>1.5.0-native-mt</coroutine.version>
+        <coroutine.version>1.5.0</coroutine.version>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <maven.compiler.testSource>11</maven.compiler.testSource>
         <maven.compiler.testTarget>11</maven.compiler.testTarget>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>1.13.6.Final</quarkus.version>
+        <quarkus.version>1.13.7.Final</quarkus.version>
         <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
         <jackson.version>2.12.3</jackson.version>
         <kmongo.version>4.2.7</kmongo.version>
+        <ecosystem>adoptopenjdk</ecosystem>
     </properties>
 
     <modules>
-        <module>adoptopenjdk-api-v3-models</module>
+        <module>adoptopenjdk-models-parent</module>
         <module>adoptopenjdk-api-v3-persistence</module>
-        <module>adoptopenjdk-api-v3-frontend</module>
-        <module>adoptopenjdk-api-v3-updater</module>
         <module>adoptopenjdk-api-v3-telemetry</module>
+        <module>adoptopenjdk-updater-parent</module>
+        <module>adoptopenjdk-frontend-parent</module>
     </modules>
 
     <dependencyManagement>
@@ -660,7 +661,9 @@
                                 </java>
                             </target>
                         </configuration>
-                        <goals><goal>run</goal></goals>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
                     </execution>
                     <execution>
                         <id>ktlint</id>
@@ -673,7 +676,9 @@
                                 </java>
                             </target>
                         </configuration>
-                        <goals><goal>run</goal></goals>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
                     </execution>
                 </executions>
                 <dependencies>
@@ -805,7 +810,7 @@
                 <enabled>true</enabled>
             </releases>
             <snapshots>
-                <enabled>true</enabled>
+                <enabled>false</enabled>
             </snapshots>
         </repository>
     </repositories>
