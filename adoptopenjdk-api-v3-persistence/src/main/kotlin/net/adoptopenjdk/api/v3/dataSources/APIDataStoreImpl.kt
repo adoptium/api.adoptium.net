@@ -2,9 +2,14 @@ package net.adoptopenjdk.api.v3.dataSources
 
 import kotlinx.coroutines.runBlocking
 import net.adoptopenjdk.api.v3.dataSources.models.AdoptRepos
+import net.adoptopenjdk.api.v3.dataSources.models.FeatureRelease
+import net.adoptopenjdk.api.v3.dataSources.models.Releases
 import net.adoptopenjdk.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptopenjdk.api.v3.dataSources.persitence.mongo.UpdatedInfo
+import net.adoptopenjdk.api.v3.models.JvmImpl
 import net.adoptopenjdk.api.v3.models.ReleaseInfo
+import net.adoptopenjdk.api.v3.models.Vendor
+import net.adoptopenjdk.api.v3.models.Versions
 import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
 import java.util.concurrent.Executors
@@ -86,14 +91,13 @@ open class APIDataStoreImpl : APIDataStore {
     }
 
     override fun loadDataFromDb(forceUpdate: Boolean): AdoptRepos {
-        val previousRepo: AdoptRepos? = binaryRepos
+        val previousRepo: AdoptRepos = binaryRepos
 
         binaryRepos = runBlocking {
             val updated = dataStore.getUpdatedAt()
 
             if (forceUpdate || updated != updatedAt) {
-                val data = VariantStore
-                    .variants
+                val data = Versions
                     .versions
                     .map { version ->
                         dataStore.readReleaseData(version)
@@ -103,8 +107,8 @@ open class APIDataStoreImpl : APIDataStore {
                 updatedAt = dataStore.getUpdatedAt()
 
                 LOGGER.info("Loaded Version: $updatedAt")
+                val newData = filterValidAssets(data)
 
-                val newData = AdoptRepos(data)
                 showStats(previousRepo, newData)
                 newData
             } else {
@@ -113,6 +117,25 @@ open class APIDataStoreImpl : APIDataStore {
         }
 
         return binaryRepos
+    }
+
+    private fun filterValidAssets(data: List<FeatureRelease>): AdoptRepos {
+        // Ensure that we filter out valid releases/binaries for this ecosystem
+        val filtered = AdoptRepos(data)
+            .getFilteredReleases(
+                { release ->
+                    Vendor.validVendor(release.vendor)
+                },
+                { binary ->
+                    JvmImpl.validJvmImpl(binary.jvm_impl)
+                },
+                SortOrder.ASC,
+                SortMethod.DEFAULT
+            )
+            .groupBy { it.version_data.major }
+            .map { FeatureRelease(it.key, Releases(it.value)) }
+
+        return AdoptRepos(filtered)
     }
 
     // open for

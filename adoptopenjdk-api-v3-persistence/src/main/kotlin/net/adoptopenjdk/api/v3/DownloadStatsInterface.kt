@@ -1,6 +1,5 @@
 package net.adoptopenjdk.api.v3
 
-import net.adoptopenjdk.api.v3.dataSources.VariantStore
 import net.adoptopenjdk.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptopenjdk.api.v3.models.*
 import org.eclipse.microprofile.openapi.annotations.media.Schema
@@ -99,7 +98,7 @@ class DownloadStatsInterface {
         return stats.groupBy { it.dateTime.toLocalDate() }
             .map { grouped ->
                 StatEntry(
-                    grouped.value.map { it.dateTime }.max()!!,
+                    grouped.value.map { it.dateTime }.maxOrNull()!!,
                     grouped.value.map { it.count }.sum()
                 )
             }
@@ -117,7 +116,7 @@ class DownloadStatsInterface {
         return getStats(start, end, featureVersion, dockerRepo, jvmImpl, statsSource)
             .groupBy { it.dateTime.getMonth() }
             .map { grouped ->
-                grouped.value.maxBy { it.dateTime }!!
+                grouped.value.maxByOrNull { it.dateTime }!!
             }
     }
 
@@ -161,7 +160,7 @@ class DownloadStatsInterface {
                     grouped.value
                         .groupBy { it.feature_version }
                         .map { featureVersionsForDay ->
-                            featureVersionsForDay.value.maxBy { it.date }!!
+                            featureVersionsForDay.value.maxByOrNull { it.date }!!
                         }
                 }
                 .filter {
@@ -182,7 +181,7 @@ class DownloadStatsInterface {
                     grouped.value
                         .groupBy { it.repo }
                         .map { repoForDay ->
-                            repoForDay.value.maxBy { it.date }!!
+                            repoForDay.value.maxByOrNull { it.date }!!
                         }
                 }
                 .filter {
@@ -210,14 +209,14 @@ class DownloadStatsInterface {
 
     private fun <T> getLastDate(grouped: List<DbStatsEntry<T>>): ZonedDateTime {
         return grouped
-            .maxBy { it.date }!!
+            .maxByOrNull { it.date }!!
             .date
     }
 
     private fun <T> formTotalDownloads(stats: List<DbStatsEntry<T>>): Long {
         return stats
             .groupBy { it.getId() }
-            .map { grouped -> grouped.value.maxBy { it.date } }
+            .map { grouped -> grouped.value.maxByOrNull { it.date } }
             .map { it!!.getMetric() }
             .sum()
     }
@@ -225,7 +224,7 @@ class DownloadStatsInterface {
     private fun formTotalDownloads(stats: List<GitHubDownloadStatsDbEntry>, jvmImpl: JvmImpl): Long {
         return stats
             .groupBy { it.getId() }
-            .map { grouped -> grouped.value.maxBy { it.date } }
+            .map { grouped -> grouped.value.maxByOrNull { it.date } }
             .map { (it!!.jvmImplDownloads?.get(jvmImpl) ?: 0) }
             .sum()
     }
@@ -256,7 +255,7 @@ class DownloadStatsInterface {
     }
 
     private suspend fun getGithubStats(): List<GitHubDownloadStatsDbEntry> {
-        return VariantStore.variants.versions
+        return Versions.versions
             .mapNotNull { featureVersion ->
                 dataStore.getLatestGithubStatsForFeatureVersion(featureVersion)
             }

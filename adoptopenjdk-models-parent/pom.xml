@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>net.adoptopenjdk.api</groupId>
+        <artifactId>adoptopenjdk-api-v3</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>adoptopenjdk-models-parent</artifactId>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>adoptopenjdk-api-v3-models</module>
+    </modules>
+    <profiles>
+        <profile>
+            <id>adoptopenjdk</id>
+            <activation>
+                <property>
+                    <name>!ecosystem</name>
+                </property>
+            </activation>
+            <modules>
+                <module>adoptopenjdk-api-v3-adopt-specific-models</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>adoptium</id>
+            <activation>
+                <property>
+                    <name>ecosystem</name>
+                    <value>adoptium</value>
+                </property>
+            </activation>
+            <modules>
+                <module>adoptopenjdk-api-v3-adoptium-specific-models</module>
+            </modules>
+        </profile>
+    </profiles>
+</project>
