@@ -16,7 +16,7 @@
         <jacoco.version>0.8.7</jacoco.version>
         <jdk.version>11</jdk.version>
         <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
-        <kotlin.version>1.4.32</kotlin.version>
+        <kotlin.version>1.5.10</kotlin.version>
         <coroutine.version>1.5.0</coroutine.version>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
@@ -192,7 +192,7 @@
             <dependency>
                 <groupId>org.awaitility</groupId>
                 <artifactId>awaitility</artifactId>
-                <version>4.0.3</version>
+                <version>4.1.0</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
