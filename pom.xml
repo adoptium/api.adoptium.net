@@ -25,6 +25,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.version>1.13.7.Final</quarkus.version>
+        <rest-assured.version>4.4.0</rest-assured.version>
         <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
         <jackson.version>2.12.3</jackson.version>
         <kmongo.version>4.2.7</kmongo.version>
@@ -112,13 +113,13 @@
             <dependency>
                 <groupId>io.rest-assured</groupId>
                 <artifactId>rest-assured</artifactId>
-                <version>4.3.1</version>
+                <version>${rest-assured.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>io.rest-assured</groupId>
                 <artifactId>json-path</artifactId>
-                <version>4.3.1</version>
+                <version>${rest-assured.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -186,7 +187,7 @@
             <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
-                <version>3.19.0</version>
+                <version>3.20.0</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

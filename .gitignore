@@ -9,3 +9,4 @@ adoptopenjdk-api.iml
 .project
 .settings
 .vscode
+.java-version
