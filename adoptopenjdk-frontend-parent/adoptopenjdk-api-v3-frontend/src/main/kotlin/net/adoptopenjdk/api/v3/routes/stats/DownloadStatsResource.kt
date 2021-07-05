@@ -166,7 +166,7 @@ class DownloadStatsResource {
     @Schema(hidden = true)
     @Path("/monthly")
     @Operation(summary = "Get download stats for feature verson", description = "stats", hidden = true)
-    fun tracking(
+    fun monthly(
         @Parameter(name = "source", description = "Stats data source", schema = Schema(defaultValue = "all"), required = false)
         @QueryParam("source")
         source: StatsSource?,
