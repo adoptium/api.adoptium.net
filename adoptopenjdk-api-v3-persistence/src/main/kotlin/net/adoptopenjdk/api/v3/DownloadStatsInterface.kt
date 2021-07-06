@@ -1,7 +1,16 @@
 package net.adoptopenjdk.api.v3
 
+import net.adoptopenjdk.api.v3.config.APIConfig
 import net.adoptopenjdk.api.v3.dataSources.persitence.ApiPersistence
-import net.adoptopenjdk.api.v3.models.*
+import net.adoptopenjdk.api.v3.models.DbStatsEntry
+import net.adoptopenjdk.api.v3.models.DownloadDiff
+import net.adoptopenjdk.api.v3.models.DownloadStats
+import net.adoptopenjdk.api.v3.models.GitHubDownloadStatsDbEntry
+import net.adoptopenjdk.api.v3.models.JvmImpl
+import net.adoptopenjdk.api.v3.models.MonthlyDownloadDiff
+import net.adoptopenjdk.api.v3.models.StatsSource
+import net.adoptopenjdk.api.v3.models.TotalStats
+import net.adoptopenjdk.api.v3.models.Versions
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -71,7 +80,7 @@ class DownloadStatsInterface {
     ): List<MonthlyDownloadDiff> {
 
         val periodEnd = to ?: TimeSource.now().withDayOfMonth(1)
-        val MONTHLY_LIMIT = System.getenv("STATS_MONTHLY_LIMIT")?.toLongOrNull() ?: 6
+        val MONTHLY_LIMIT = APIConfig.ENVIRONMENT["STATS_MONTHLY_LIMIT"]?.toLongOrNull() ?: 6
         val periodStart = periodEnd.minusMonths(MONTHLY_LIMIT).withDayOfMonth(1)
         val statsSource = source ?: StatsSource.all
 
@@ -115,10 +124,11 @@ class DownloadStatsInterface {
         statsSource: StatsSource
     ): Collection<StatEntry> {
         return getStats(start, end, featureVersion, dockerRepo, jvmImpl, statsSource)
-            .groupBy { it.dateTime.getMonth() }
+            .groupBy { it.dateTime.withDayOfMonth(1) }
             .map { grouped ->
                 grouped.value.maxByOrNull { it.dateTime }!!
             }
+            .sortedBy { it.dateTime }
     }
 
     private fun calculateDailyDiff(
@@ -144,10 +154,15 @@ class DownloadStatsInterface {
 
         return stats
             .windowed(2, 1, false) {
+                val monthsBetween = ChronoUnit.MONTHS.between(
+                    it[0].dateTime.toLocalDate().withDayOfMonth(1),
+                    it[1].dateTime.toLocalDate().withDayOfMonth(1)
+                )
+                val monthly = (it[1].count - it[0].count) / max(monthsBetween, 1)
                 MonthlyDownloadDiff(
-                    it[1].dateTime.getYear().toString() + "-" + toTwoChar(it[1].dateTime.getMonthValue()),
+                    it[1].dateTime.year.toString() + "-" + toTwoChar(it[1].dateTime.monthValue),
                     it[1].count,
-                    it[1].count - it[0].count
+                    monthly
                 )
             }
     }
