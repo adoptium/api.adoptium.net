@@ -27,7 +27,7 @@
         <quarkus.version>1.13.7.Final</quarkus.version>
         <rest-assured.version>4.4.0</rest-assured.version>
         <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
-        <jackson.version>2.12.3</jackson.version>
+        <jackson.version>2.12.4</jackson.version>
         <kmongo.version>4.2.8</kmongo.version>
         <ecosystem>adoptopenjdk</ecosystem>
     </properties>
