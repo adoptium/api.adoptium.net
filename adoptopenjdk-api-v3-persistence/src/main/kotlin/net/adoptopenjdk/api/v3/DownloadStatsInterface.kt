@@ -124,7 +124,7 @@ class DownloadStatsInterface {
         statsSource: StatsSource
     ): Collection<StatEntry> {
         return getStats(start, end, featureVersion, dockerRepo, jvmImpl, statsSource)
-            .groupBy { it.dateTime.withDayOfMonth(1) }
+            .groupBy { it.dateTime.withDayOfMonth(1).toLocalDate() }
             .map { grouped ->
                 grouped.value.maxByOrNull { it.dateTime }!!
             }
