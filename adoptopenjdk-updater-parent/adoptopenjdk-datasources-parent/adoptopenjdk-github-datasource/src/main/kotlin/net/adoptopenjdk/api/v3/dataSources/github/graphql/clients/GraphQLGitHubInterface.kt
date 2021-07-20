@@ -153,7 +153,7 @@ abstract class GraphQLGitHubInterface(
                     return@withContext graphQLRequest.query(query, clazz)
                 }
             } catch (e: GraphQLException) {
-                if (e.status == "403" || e.status == "502") {
+                if (e.status == "403" || e.status == "502" || e.status == "503" || e.status == "504") {
                     // Normally get these due to tmp ban due to rate limiting
                     LOGGER.info("Retrying ${e.status} ${retryCount++}")
                     delay((TimeUnit.SECONDS.toMillis(5) * retryCount))
