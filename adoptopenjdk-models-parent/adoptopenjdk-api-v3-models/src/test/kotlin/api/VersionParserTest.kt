@@ -218,4 +218,17 @@ class VersionParserTest {
         assertEquals(second, sorted.toList()[1])
         assertEquals(third, sorted.toList()[0])
     }
+
+    @Test
+    fun sortOrderIsCorrectWithPres() {
+        val first = VersionParser.parse("17-beta+31-202107202346")
+        val second = VersionParser.parse("17+20-202105070000")
+
+        val sorted = TreeSet<VersionData>()
+        sorted.add(second)
+        sorted.add(first)
+
+        assertEquals(first, sorted.toList()[0])
+        assertEquals(second, sorted.toList()[1])
+    }
 }

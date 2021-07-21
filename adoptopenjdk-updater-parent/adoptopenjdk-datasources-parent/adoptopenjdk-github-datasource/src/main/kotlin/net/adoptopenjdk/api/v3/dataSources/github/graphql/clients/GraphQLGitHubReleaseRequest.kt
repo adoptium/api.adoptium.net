@@ -20,7 +20,7 @@ abstract class GraphQLGitHubReleaseRequest(
 
     protected suspend fun getNextPage(release: GHRelease): GHRelease {
         val getMore = getMoreReleasesQuery(release.id)
-        LOGGER.debug("Getting release assets ${release.id}")
+        LOGGER.debug("Getting release assets ${release.id.id}")
         val moreAssets = getAll(
             getMore,
             { asset ->
