@@ -120,8 +120,10 @@ private class AdoptReleaseMapper constructor(
 
         return if (release.release_type == ReleaseType.ea) {
             // remove all 14.0.1+7.1 and 15.0.0+24.1 nightlies - https://github.com/AdoptOpenJDK/openjdk-api-v3/issues/213
+            // also ignore jdk-2021-01-13-07-01
             if (release.version_data.semver.startsWith("14.0.1+7.1.") ||
-                release.version_data.semver.startsWith("15.0.0+24.1.")
+                release.version_data.semver.startsWith("15.0.0+24.1.") ||
+                release.release_name == "jdk-2021-01-13-07-01"
             ) {
                 // Found an excluded release, mark it for future reference
                 excludedReleases.add(ghRelease.id)
