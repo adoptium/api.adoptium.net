@@ -13,8 +13,8 @@ import net.adoptopenjdk.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptopenjdk.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptopenjdk.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptopenjdk.api.v3.dataSources.models.GitHubId
-import net.adoptopenjdk.api.v3.mapping.adopt.SemeruBinaryMapper
-import net.adoptopenjdk.api.v3.mapping.adopt.SemeruReleaseMapperFactory
+import net.adoptopenjdk.api.v3.mapping.adopt.AdoptBinaryMapper
+import net.adoptopenjdk.api.v3.mapping.adopt.AdoptReleaseMapperFactory
 import net.adoptopenjdk.api.v3.models.Architecture
 import net.adoptopenjdk.api.v3.models.HeapSize
 import net.adoptopenjdk.api.v3.models.ImageType
@@ -40,7 +40,7 @@ class SemeruReleaseMapperTest : BaseTest() {
     fun `parses release`() {
         runBlocking {
             val assets = GHAssets(
-                SemeruBinaryMapperTest.allGhAssets,
+                SemeruMapperTest.allGhAssets,
                 PageInfo(false, "")
             )
 
@@ -120,7 +120,7 @@ class SemeruReleaseMapperTest : BaseTest() {
             )
 
             val cachedGitHubHtmlClient = CachedGitHubHtmlClient(InMemoryInternalDbStore(), client)
-            val release = SemeruReleaseMapperFactory(SemeruBinaryMapper(cachedGitHubHtmlClient), cachedGitHubHtmlClient).get().toAdoptRelease(ghRelease)
+            val release = AdoptReleaseMapperFactory(AdoptBinaryMapper(cachedGitHubHtmlClient), cachedGitHubHtmlClient).get(Vendor.ibm).toAdoptRelease(ghRelease)
 
             assertEquals(1, release.result!!.size)
             assertEquals(1, release.result!![0].binaries.size)

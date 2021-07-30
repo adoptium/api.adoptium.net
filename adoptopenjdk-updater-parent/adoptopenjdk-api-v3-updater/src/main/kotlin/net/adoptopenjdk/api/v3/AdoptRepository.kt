@@ -12,7 +12,6 @@ import net.adoptopenjdk.api.v3.dataSources.models.FeatureRelease
 import net.adoptopenjdk.api.v3.dataSources.models.GitHubId
 import net.adoptopenjdk.api.v3.mapping.ReleaseMapper
 import net.adoptopenjdk.api.v3.mapping.adopt.AdoptReleaseMapperFactory
-import net.adoptopenjdk.api.v3.mapping.adopt.SemeruReleaseMapperFactory
 import net.adoptopenjdk.api.v3.mapping.upstream.UpstreamReleaseMapper
 import net.adoptopenjdk.api.v3.models.Release
 import net.adoptopenjdk.api.v3.models.Vendor
@@ -29,8 +28,7 @@ interface AdoptRepository {
 @Singleton
 class AdoptRepositoryImpl @Inject constructor(
     val client: GitHubApi,
-    adoptReleaseMapperFactory: AdoptReleaseMapperFactory,
-    semeruReleaseMapperFactory: SemeruReleaseMapperFactory
+    adoptReleaseMapperFactory: AdoptReleaseMapperFactory
 ) : AdoptRepository {
 
     companion object {
@@ -53,7 +51,7 @@ class AdoptRepositoryImpl @Inject constructor(
 
         ".*/temurin\\d+-binaries/.*".toRegex() to adoptReleaseMapperFactory.get(Vendor.adoptium),
 
-        ".*/semeru\\d+-binaries/.*".toRegex() to semeruReleaseMapperFactory.get(),
+        ".*/semeru\\d+-binaries/.*".toRegex() to adoptReleaseMapperFactory.get(Vendor.ibm),
     )
 
     private fun getMapperForRepo(url: String): ReleaseMapper {

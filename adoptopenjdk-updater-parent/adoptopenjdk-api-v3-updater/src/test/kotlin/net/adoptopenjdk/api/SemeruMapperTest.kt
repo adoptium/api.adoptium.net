@@ -7,7 +7,7 @@ import net.adoptopenjdk.api.v3.JsonMapper
 import net.adoptopenjdk.api.v3.dataSources.github.GitHubHtmlClient
 import net.adoptopenjdk.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptopenjdk.api.v3.dataSources.github.graphql.models.GHMetaData
-import net.adoptopenjdk.api.v3.mapping.adopt.SemeruBinaryMapper
+import net.adoptopenjdk.api.v3.mapping.adopt.AdoptBinaryMapper
 import net.adoptopenjdk.api.v3.models.Architecture
 import net.adoptopenjdk.api.v3.models.HeapSize
 import net.adoptopenjdk.api.v3.models.ImageType
@@ -21,10 +21,10 @@ import org.junit.jupiter.api.TestInstance.Lifecycle
 import kotlin.test.assertEquals
 
 @TestInstance(Lifecycle.PER_CLASS)
-class SemeruBinaryMapperTest {
+class SemeruMapperTest {
 
     private val fakeGithubHtmlClient = mockk<GitHubHtmlClient>()
-    private val semeruBinaryMapper = SemeruBinaryMapper(fakeGithubHtmlClient)
+    private val semeruBinaryMapper = AdoptBinaryMapper(fakeGithubHtmlClient)
 
     companion object {
 
