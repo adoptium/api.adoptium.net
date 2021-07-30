@@ -37,7 +37,7 @@ open class PackageEndpoint @Inject constructor(private val apiDataStore: APIData
         heap_size: HeapSize?,
         project: Project?
     ): List<Release> {
-        val releaseFilter = ReleaseFilter(releaseName = release_name, vendor = vendor)
+        val releaseFilter = ReleaseFilter(releaseName = release_name, vendor = vendor, jvm_impl = jvm_impl)
         val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, heap_size, project)
         return apiDataStore.getAdoptRepos().getFilteredReleases(releaseFilter, binaryFilter, SortOrder.DESC, SortMethod.DEFAULT).toList()
     }
@@ -84,7 +84,7 @@ open class PackageEndpoint @Inject constructor(private val apiDataStore: APIData
     }
 
     open fun getRelease(release_type: ReleaseType?, version: Int?, vendor: Vendor?, os: OperatingSystem?, arch: Architecture?, image_type: ImageType?, jvm_impl: JvmImpl?, heap_size: HeapSize?, project: Project?): List<Release> {
-        val releaseFilter = ReleaseFilter(releaseType = release_type, featureVersion = version, vendor = vendor)
+        val releaseFilter = ReleaseFilter(releaseType = release_type, featureVersion = version, vendor = vendor, jvm_impl = jvm_impl)
         val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, heap_size, project)
         val releases = apiDataStore.getAdoptRepos().getFilteredReleases(releaseFilter, binaryFilter, SortOrder.DESC, SortMethod.DEFAULT).toList()
 

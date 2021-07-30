@@ -1,6 +1,7 @@
 package net.adoptopenjdk.api.v3.filters
 
 import net.adoptopenjdk.api.v3.config.Ecosystem
+import net.adoptopenjdk.api.v3.models.JvmImpl
 import net.adoptopenjdk.api.v3.models.Release
 import net.adoptopenjdk.api.v3.models.ReleaseType
 import net.adoptopenjdk.api.v3.models.Vendor
@@ -13,7 +14,8 @@ class ReleaseFilter(
     private val releaseName: String? = null,
     private val vendor: Vendor? = null,
     private val versionRange: VersionRangeFilter? = null,
-    private val lts: Boolean? = null
+    private val lts: Boolean? = null,
+    private val jvm_impl: JvmImpl? = null
 ) : Predicate<Release> {
     override fun test(release: Release): Boolean {
         val ltsFilter = if (lts != null) {
@@ -26,6 +28,13 @@ class ReleaseFilter(
         val vendorFilters = if (Ecosystem.CURRENT == Ecosystem.adoptopenjdk && vendor == Vendor.adoptopenjdk) {
             // if we are in the adoptopenjdk api, and adoptopenjdk builds are requests, then also include adoptium builds
             (release.vendor == Vendor.adoptium || release.vendor == Vendor.adoptopenjdk)
+        } else if (
+            Ecosystem.CURRENT == Ecosystem.adoptopenjdk &&
+            jvm_impl == JvmImpl.openj9 &&
+            vendor == Vendor.adoptopenjdk
+        ) {
+            // if the user is requesting an openj9 from adopt, also include IBMs
+            (release.vendor == Vendor.ibm || release.vendor == Vendor.adoptopenjdk)
         } else {
             (vendor == null || release.vendor == vendor)
         }
