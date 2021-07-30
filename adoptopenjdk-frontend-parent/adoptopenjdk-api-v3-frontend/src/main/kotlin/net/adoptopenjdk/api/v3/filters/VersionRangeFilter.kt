@@ -66,6 +66,5 @@ class VersionRangeFilter(range: String?) : Predicate<VersionData> {
         }
 
         return rangeMatcher.containsVersion(noPreVersion)
-
     }
 }

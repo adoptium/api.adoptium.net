@@ -15,6 +15,7 @@
     <modules>
         <module>adopt-mappers</module>
         <module>upstream-mappers</module>
+        <module>semeru-mappers</module>
         <module>mappers-common</module>
     </modules>
 </project>

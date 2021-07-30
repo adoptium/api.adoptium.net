@@ -112,6 +112,11 @@
             <artifactId>junit-platform-commons</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>net.adoptopenjdk.api</groupId>
+            <artifactId>semeru-mappers</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

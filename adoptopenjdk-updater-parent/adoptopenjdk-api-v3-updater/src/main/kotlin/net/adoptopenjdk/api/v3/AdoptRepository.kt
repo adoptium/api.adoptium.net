@@ -12,6 +12,7 @@ import net.adoptopenjdk.api.v3.dataSources.models.FeatureRelease
 import net.adoptopenjdk.api.v3.dataSources.models.GitHubId
 import net.adoptopenjdk.api.v3.mapping.ReleaseMapper
 import net.adoptopenjdk.api.v3.mapping.adopt.AdoptReleaseMapperFactory
+import net.adoptopenjdk.api.v3.mapping.adopt.SemeruReleaseMapperFactory
 import net.adoptopenjdk.api.v3.mapping.upstream.UpstreamReleaseMapper
 import net.adoptopenjdk.api.v3.models.Release
 import net.adoptopenjdk.api.v3.models.Vendor
@@ -28,7 +29,8 @@ interface AdoptRepository {
 @Singleton
 class AdoptRepositoryImpl @Inject constructor(
     val client: GitHubApi,
-    adoptReleaseMapperFactory: AdoptReleaseMapperFactory
+    adoptReleaseMapperFactory: AdoptReleaseMapperFactory,
+    semeruReleaseMapperFactory: SemeruReleaseMapperFactory
 ) : AdoptRepository {
 
     companion object {
@@ -50,6 +52,8 @@ class AdoptRepositoryImpl @Inject constructor(
         ".*/openjdk\\d+-dragonwell-binaries/.*".toRegex() to adoptReleaseMapperFactory.get(Vendor.alibaba),
 
         ".*/temurin\\d+-binaries/.*".toRegex() to adoptReleaseMapperFactory.get(Vendor.adoptium),
+
+        ".*/semeru\\d+-binaries/.*".toRegex() to semeruReleaseMapperFactory.get(),
     )
 
     private fun getMapperForRepo(url: String): ReleaseMapper {
@@ -122,7 +126,9 @@ class AdoptRepositoryImpl @Inject constructor(
 
                 getRepoDataAsync(ADOPT_ORG, Vendor.alibaba, "openjdk$version-dragonwell-binaries", getFun),
 
-                getRepoDataAsync(ADOPTIUM_ORG, Vendor.adoptium, "temurin$version-binaries", getFun)
+                getRepoDataAsync(ADOPTIUM_ORG, Vendor.adoptium, "temurin$version-binaries", getFun),
+
+                getRepoDataAsync(ADOPT_ORG, Vendor.ibm, "semeru$version-binaries", getFun)
             )
                 .map { repo -> repo.await() }
         }
