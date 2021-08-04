@@ -139,7 +139,8 @@ class SemeruReleaseMapperTest : BaseTest() {
                     null,
                     "1.8.0_302-b08",
                     "8.0.302+8"
-                ), release.result!![0].version_data
+                ),
+                release.result!![0].version_data
             )
 
             assertEquals(OperatingSystem.linux, release.result!![0].binaries[0].os)
@@ -154,5 +155,4 @@ class SemeruReleaseMapperTest : BaseTest() {
             assertEquals(Project.jdk, release.result!![0].binaries[0].project)
         }
     }
-
 }

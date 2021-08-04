@@ -49,7 +49,7 @@ class AdoptRepositoryImpl @Inject constructor(
 
         ".*/openjdk\\d+-dragonwell-binaries/.*".toRegex() to adoptReleaseMapperFactory.get(Vendor.alibaba),
 
-        ".*/temurin\\d+-binaries/.*".toRegex() to adoptReleaseMapperFactory.get(Vendor.adoptium),
+        ".*/temurin\\d+-binaries/.*".toRegex() to adoptReleaseMapperFactory.get(Vendor.eclipse),
 
         ".*/semeru\\d+-binaries/.*".toRegex() to adoptReleaseMapperFactory.get(Vendor.ibm),
     )
@@ -124,7 +124,7 @@ class AdoptRepositoryImpl @Inject constructor(
 
                 getRepoDataAsync(ADOPT_ORG, Vendor.alibaba, "openjdk$version-dragonwell-binaries", getFun),
 
-                getRepoDataAsync(ADOPTIUM_ORG, Vendor.adoptium, "temurin$version-binaries", getFun),
+                getRepoDataAsync(ADOPTIUM_ORG, Vendor.eclipse, "temurin$version-binaries", getFun),
 
                 getRepoDataAsync(ADOPT_ORG, Vendor.ibm, "semeru$version-binaries", getFun)
             )

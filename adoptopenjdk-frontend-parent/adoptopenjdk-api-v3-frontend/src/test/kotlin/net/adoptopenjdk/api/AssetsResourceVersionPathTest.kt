@@ -60,7 +60,7 @@ class AssetsResourceVersionPathTest : AssetsPathTest() {
                                 return releases
                                     .all {
                                         return if (Ecosystem.CURRENT == Ecosystem.adoptopenjdk) {
-                                            return it.vendor == Vendor.adoptopenjdk || it.vendor == Vendor.adoptium
+                                            return it.vendor == Vendor.adoptopenjdk || it.vendor == Vendor.eclipse
                                         } else {
                                             it.vendor == Vendor.getDefault()
                                         }

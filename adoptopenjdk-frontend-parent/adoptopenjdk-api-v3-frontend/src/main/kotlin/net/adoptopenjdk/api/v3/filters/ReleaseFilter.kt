@@ -25,23 +25,34 @@ class ReleaseFilter(
             true
         }
 
-        val vendorFilters = if (Ecosystem.CURRENT == Ecosystem.adoptopenjdk && vendor == Vendor.adoptopenjdk) {
+        return (releaseType == null || release.release_type == releaseType) &&
+            (featureVersion == null || release.version_data.major == featureVersion) &&
+            (releaseName == null || release.release_name == releaseName) &&
+            vendorMatches(release) &&
+            (versionRange == null || versionRange.test(release.version_data)) &&
+            ltsFilter
+    }
+
+    private fun vendorMatches(release: Release): Boolean {
+        return if (Ecosystem.CURRENT == Ecosystem.adoptopenjdk && vendor == Vendor.adoptopenjdk) {
             if (jvm_impl == JvmImpl.openj9) {
                 // if the user is requesting an openj9 from adopt, also include IBMs
                 (release.vendor == Vendor.adoptopenjdk || release.vendor == Vendor.ibm)
             } else {
-                // if we are in the adoptopenjdk api, and adoptopenjdk builds are requests, then also include adoptium builds
-                (release.vendor == Vendor.adoptium || release.vendor == Vendor.adoptopenjdk)
+                // if we are in the adoptopenjdk api, and adoptopenjdk builds are requests, then also include eclipse builds
+                (compareVendor(Vendor.eclipse, release.vendor) || release.vendor == Vendor.adoptopenjdk)
             }
         } else {
-            (vendor == null || release.vendor == vendor)
+            (vendor == null || compareVendor(release.vendor, vendor))
         }
+    }
 
-        return (releaseType == null || release.release_type == releaseType) &&
-            (featureVersion == null || release.version_data.major == featureVersion) &&
-            (releaseName == null || release.release_name == releaseName) &&
-            vendorFilters &&
-            (versionRange == null || versionRange.test(release.version_data)) &&
-            ltsFilter
+    private fun compareVendor(a: Vendor?, b: Vendor?): Boolean {
+        return if (a == Vendor.adoptium || a == Vendor.eclipse) {
+            // make adoptium and eclipse synonymous
+            b == Vendor.adoptium || b == Vendor.eclipse
+        } else {
+            a == b
+        }
     }
 }
