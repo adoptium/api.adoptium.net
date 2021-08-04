@@ -149,7 +149,7 @@ constructor(
         val sortMethod = sortMethod ?: SortMethod.DEFAULT
         val vendorNonNull = vendor ?: Vendor.getDefault()
 
-        val releaseFilter = ReleaseFilter(releaseType = release_type, featureVersion = version, vendor = vendorNonNull)
+        val releaseFilter = ReleaseFilter(releaseType = release_type, featureVersion = version, vendor = vendorNonNull, jvm_impl = jvm_impl)
         val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, heap_size, project, before)
         val repos = apiDataStore.getAdoptRepos().getFeatureRelease(version!!)
 
@@ -222,7 +222,7 @@ constructor(
             throw BadRequestException("Must provide a vendor")
         }
 
-        val releaseFilter = ReleaseFilter(vendor = vendor, releaseName = releaseName.trim())
+        val releaseFilter = ReleaseFilter(vendor = vendor, releaseName = releaseName.trim(), jvm_impl = jvm_impl)
         val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, heap_size, project)
 
         val releases = apiDataStore
@@ -373,7 +373,7 @@ constructor(
 
     ): List<BinaryAssetView> {
         val vendor = vendor ?: Vendor.getDefault()
-        val releaseFilter = ReleaseFilter(ReleaseType.ga, featureVersion = version, vendor = vendor)
+        val releaseFilter = ReleaseFilter(ReleaseType.ga, featureVersion = version, vendor = vendor, jvm_impl = jvm_impl)
         val binaryFilter = BinaryFilter(null, null, null, jvm_impl, null, null)
         val releases = apiDataStore
             .getAdoptRepos()

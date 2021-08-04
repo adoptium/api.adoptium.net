@@ -1,9 +1,9 @@
-package net.adoptopenjdk.api;
+package net.adoptopenjdk.api
 
-import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.QuarkusTest
 import net.adoptopenjdk.api.v3.filters.VersionRangeFilter
 import net.adoptopenjdk.api.v3.parser.VersionParser
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 

@@ -51,7 +51,7 @@ constructor(private val apiDataStore: APIDataStore) {
             throw BadRequestException("Invalid version string", e)
         }
 
-        val releaseFilter = ReleaseFilter(releaseType = release_type, vendor = vendorNonNull, versionRange = range, lts = lts)
+        val releaseFilter = ReleaseFilter(releaseType = release_type, vendor = vendorNonNull, versionRange = range, lts = lts, jvm_impl = jvm_impl)
         val binaryFilter = BinaryFilter(os = os, arch = arch, imageType = image_type, jvmImpl = jvm_impl, heapSize = heap_size, project = project)
 
         return apiDataStore
