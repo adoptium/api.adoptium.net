@@ -6,7 +6,7 @@ WORKDIR /tmp/build
 
 COPY . /tmp/build
 
-RUN ./mvnw package
+RUN ./mvnw clean install
 
 FROM adoptopenjdk/openjdk11
 

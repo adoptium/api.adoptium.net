@@ -138,7 +138,6 @@
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy</artifactId>
-            <version>3.0.8</version>
         </dependency>
     </dependencies>
 
@@ -149,7 +148,6 @@
             <plugin>
                 <groupId>io.quarkus</groupId>
                 <artifactId>quarkus-maven-plugin</artifactId>
-                <version>${quarkus.version}</version>
                 <executions>
                     <execution>
                         <goals>
@@ -162,7 +160,6 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire-plugin.version}</version>
                 <configuration>
                     <systemProperties>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
@@ -208,7 +205,6 @@
             <plugin>
                 <groupId>io.swagger</groupId>
                 <artifactId>swaggerhub-maven-plugin</artifactId>
-                <version>1.0.9</version>
                 <configuration>
                     <api>API</api>
                     <owner>AdoptOpenJDK</owner>
@@ -222,7 +218,6 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>5.2.0</version>
                 <configuration>
                     <generatorName>javascript</generatorName>
                 </configuration>
