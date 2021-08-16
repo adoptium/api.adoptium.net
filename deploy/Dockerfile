@@ -1,4 +1,4 @@
-FROM adoptopenjdk:11
+FROM eclipse-temurin:11
 
 ARG ECOSYSTEM=adoptium
 ENV ECOSYSTEM=$ECOSYSTEM
