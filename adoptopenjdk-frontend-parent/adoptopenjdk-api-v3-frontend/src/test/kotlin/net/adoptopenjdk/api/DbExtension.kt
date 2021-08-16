@@ -1,6 +1,6 @@
 package net.adoptopenjdk.api
 
-import net.adoptopenjdk.api.v3.V3.Companion.ENABLE_PERIODIC_UPDATES
+import net.adoptopenjdk.api.v3.Startup.Companion.ENABLE_PERIODIC_UPDATES
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext

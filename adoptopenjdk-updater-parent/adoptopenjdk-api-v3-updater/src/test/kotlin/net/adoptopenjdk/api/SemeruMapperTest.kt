@@ -28,7 +28,8 @@ class SemeruMapperTest {
 
     companion object {
 
-        val data = JsonMapper.mapper.readValue("""{
+        val data = JsonMapper.mapper.readValue(
+            """{
                 "vendor": "IBM",
                 "os": "linux",
                 "arch": "s390x",
@@ -68,16 +69,19 @@ class SemeruMapperTest {
                     "security": "0",
                     "tags": "27"
                 }
-            }""".trimIndent(), GHMetaData::class.java
+            }
+            """.trimIndent(),
+            GHMetaData::class.java
         )
 
-        val ghBinaryAssets: List<GHAsset> = makeAssets(listOf("ibm-semeru-open-debugimage_s390x_linux_8u302b08_openj9-0.27.0.tar.gz"));
+        val ghBinaryAssets: List<GHAsset> = makeAssets(listOf("ibm-semeru-open-debugimage_s390x_linux_8u302b08_openj9-0.27.0.tar.gz"))
 
-        val allGhAssets: List<GHAsset> = makeAssets(listOf(
-            "ibm-semeru-open-debugimage_s390x_linux_8u302b08_openj9-0.27.0.tar.gz",
-            "ibm-semeru-open-debugimage_s390x_linux_8u302b08_openj9-0.27.0.tar.gz.json",
-            "ibm-semeru-open-debugimage_s390x_linux_8u302b08_openj9-0.27.0.tar.gz.sha256.txt"
-        )
+        val allGhAssets: List<GHAsset> = makeAssets(
+            listOf(
+                "ibm-semeru-open-debugimage_s390x_linux_8u302b08_openj9-0.27.0.tar.gz",
+                "ibm-semeru-open-debugimage_s390x_linux_8u302b08_openj9-0.27.0.tar.gz.json",
+                "ibm-semeru-open-debugimage_s390x_linux_8u302b08_openj9-0.27.0.tar.gz.sha256.txt"
+            )
         )
 
         val ghAssetsWithMetadata: Map<GHAsset, GHMetaData> = mapOf(
@@ -90,7 +94,7 @@ class SemeruMapperTest {
                     GHAsset(
                         entry,
                         0,
-                        "url-for-${entry}",
+                        "url-for-$entry",
                         0,
                         "2013-02-27T19:35:32Z"
                     )
@@ -121,6 +125,4 @@ class SemeruMapperTest {
             assertEquals(Project.jdk, parsed[0].project)
         }
     }
-
-
 }
