@@ -70,7 +70,7 @@ object AdoptReposTestDataGenerator {
         ),
         PermittedValues(
             ReleaseType.values().asList(),
-            listOf(Vendor.adoptium),
+            listOf(Vendor.eclipse),
             listOf(Project.jdk),
             listOf(JvmImpl.hotspot),
             listOf(ImageType.jre, ImageType.jdk),

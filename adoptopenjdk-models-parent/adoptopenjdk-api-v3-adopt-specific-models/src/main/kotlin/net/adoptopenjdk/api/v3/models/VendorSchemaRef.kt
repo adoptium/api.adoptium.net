@@ -9,5 +9,13 @@ object VendorSchemaRef {
         return AdoptVendor.VENDOR_VALUES.toList()
     }
 
+    fun applyVendorMapping(vendor: String): String {
+        return if (AdoptVendor.VENDOR_MAPPING.containsKey(vendor.lowercase())) {
+            AdoptVendor.VENDOR_MAPPING[vendor]!!
+        } else {
+            vendor
+        }
+    }
+
     const val SCHEMA_REF = "#/components/schemas/AdoptVendor"
 }
