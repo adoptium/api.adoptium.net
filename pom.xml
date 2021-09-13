@@ -28,7 +28,7 @@
         <rest-assured.version>4.4.0</rest-assured.version>
         <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
         <jackson.version>2.12.5</jackson.version>
-        <kmongo.version>4.2.8</kmongo.version>
+        <kmongo.version>4.3.0</kmongo.version>
         <ecosystem>adoptopenjdk</ecosystem>
     </properties>
 
@@ -409,7 +409,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
-                    <version>3.14.0</version>
+                    <version>3.15.0</version>
                     <configuration>
                         <targetJdk>${jdk.version}</targetJdk>
                     </configuration>
@@ -474,7 +474,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-war-plugin</artifactId>
-                    <version>3.3.1</version>
+                    <version>3.3.2</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.rat</groupId>
@@ -768,7 +768,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.14.0</version>
+                <version>3.15.0</version>
                 <configuration>
                     <targetJdk>${jdk.version}</targetJdk>
                 </configuration>
