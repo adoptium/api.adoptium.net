@@ -224,6 +224,7 @@ private class AdoptReleaseMapper constructor(
     private suspend fun pairUpBinaryAndMetadata(releaseAssets: GHAssets, metadataAsset: GHAsset): Pair<GHAsset, GHMetaData>? {
         val binaryAsset = releaseAssets
             .assets
+            .filter { asset -> !asset.name.endsWith(".json") }
             .firstOrNull {
                 metadataAsset.name.startsWith(it.name)
             }

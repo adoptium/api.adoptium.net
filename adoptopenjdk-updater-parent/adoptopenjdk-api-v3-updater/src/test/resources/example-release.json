@@ -18,6 +18,13 @@
         "name" : "OpenJDK8U-jre_x86-32_windows_openj9_2020-01-09-03-36.zip.sha256.txt",
         "size" : 123,
         "updatedAt" : "2020-01-09T03:44:16Z"
+      },
+      {
+        "downloadCount" : 4,
+        "downloadUrl" : "https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u-2020-01-09-03-36/OpenJDK8U-jre_x86-32_windows_openj9_2020-01-09-03-36.zip",
+        "name" : "OpenJDK8U-jre_x86-32_windows_openj9_2020-01-09-03-36.zip",
+        "size" : 123,
+        "updatedAt" : "2020-01-09T03:44:16Z"
       }
     ],
     "pageInfo" : {
