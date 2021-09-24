@@ -7,7 +7,7 @@ object Versions {
 
     private val latestJavaVersion: Int
     val versions: Array<Int>
-    val ltsVersions: Array<Int> = arrayOf(8, 11)
+    val ltsVersions: Array<Int> = arrayOf(8, 11, 17)
 
     init {
         latestJavaVersion = Integer.parseInt(System.getProperty(LATEST_JAVA_VERSION_PROPERTY, DEFAULT_LATEST_JAVA_VERSION.toString()))
