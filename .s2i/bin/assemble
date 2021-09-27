@@ -7,7 +7,7 @@ if [ "$(ls /tmp/artifacts/ 2>/dev/null)" ]; then
 fi
 
 cd /tmp/src
-./mvnw -B clean install
+./mvnw -B clean install -Padoptopenjdk,-adoptium
 
 if [ -v SWAGGERHUB_APIKEY ]; then
   cd adoptopenjdk-frontend-parent/adoptopenjdk-api-v3-frontend
