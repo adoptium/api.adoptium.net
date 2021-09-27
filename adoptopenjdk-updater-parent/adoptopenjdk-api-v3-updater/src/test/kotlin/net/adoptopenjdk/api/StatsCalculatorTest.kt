@@ -20,8 +20,8 @@ import net.adoptopenjdk.api.v3.models.Release
 import net.adoptopenjdk.api.v3.models.ReleaseType
 import net.adoptopenjdk.api.v3.models.Vendor
 import net.adoptopenjdk.api.v3.models.VersionData
-import net.adoptopenjdk.api.v3.stats.DockerStatsInterface
 import net.adoptopenjdk.api.v3.stats.GitHubDownloadStatsCalculator
+import net.adoptopenjdk.api.v3.stats.dockerstats.DockerStats
 import org.junit.jupiter.api.Test
 
 class StatsCalculatorTest : BaseTest() {
@@ -41,10 +41,10 @@ class StatsCalculatorTest : BaseTest() {
 
     @Test
     fun testDockerVersionNumber() {
-        assert(DockerStatsInterface.getOpenjdkVersionFromString("openjdk11") == 11)
-        assert(DockerStatsInterface.getOpenjdkVersionFromString("openjdk7") == 7)
-        assert(DockerStatsInterface.getOpenjdkVersionFromString("openjdk") == null)
-        assert(DockerStatsInterface.getOpenjdkVersionFromString("blah") == null)
+        assert(DockerStats.getOpenjdkVersionFromString("openjdk11") == 11)
+        assert(DockerStats.getOpenjdkVersionFromString("openjdk7") == 7)
+        assert(DockerStats.getOpenjdkVersionFromString("openjdk") == null)
+        assert(DockerStats.getOpenjdkVersionFromString("blah") == null)
     }
 
     private fun generateFeatureRelease(): FeatureRelease {
