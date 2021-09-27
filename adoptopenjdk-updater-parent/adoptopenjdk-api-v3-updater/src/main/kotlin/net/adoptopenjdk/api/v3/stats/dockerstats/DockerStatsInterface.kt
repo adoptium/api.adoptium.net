@@ -1,21 +1,47 @@
-package net.adoptopenjdk.api.v3.stats
+package net.adoptopenjdk.api.v3.stats.dockerstats
 
 import kotlinx.coroutines.runBlocking
-import net.adoptopenjdk.api.v3.TimeSource
+import net.adoptopenjdk.api.v3.config.Ecosystem
 import net.adoptopenjdk.api.v3.dataSources.UpdaterHtmlClient
-
 import net.adoptopenjdk.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptopenjdk.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptopenjdk.api.v3.models.DockerDownloadStatsDbEntry
-import net.adoptopenjdk.api.v3.models.JvmImpl
 import org.slf4j.LoggerFactory
+import javax.enterprise.inject.Produces
 import javax.inject.Inject
+import javax.inject.Singleton
 import javax.json.JsonObject
 
-class DockerStatsInterface @Inject constructor(
+@Singleton
+class DockerStatsInterfaceFactory @Inject constructor(
     private var database: ApiPersistence,
     private val updaterHtmlClient: UpdaterHtmlClient
 ) {
+    var cached: DockerStatsInterface? = null
+
+    @Produces
+    @Singleton
+    fun get(): DockerStatsInterface {
+        if (cached == null) {
+            cached = when (Ecosystem.CURRENT) {
+                Ecosystem.adoptopenjdk -> DockerStatsInterfaceAdoptOpenJdk(database, updaterHtmlClient)
+                Ecosystem.adoptium -> DockerStatsInterfaceAdoptium(database, updaterHtmlClient)
+            }
+        }
+
+        return cached!!
+    }
+}
+
+@Singleton
+interface DockerStatsInterface {
+    suspend fun updateDb()
+}
+
+abstract class DockerStats @Inject constructor(
+    private var database: ApiPersistence,
+    private val updaterHtmlClient: UpdaterHtmlClient
+) : DockerStatsInterface {
     companion object {
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
@@ -25,10 +51,10 @@ class DockerStatsInterface @Inject constructor(
         }
     }
 
-    private val downloadStatsUrl = "https://hub.docker.com/v2/repositories/adoptopenjdk/"
-    private val officialStatsUrl = "https://hub.docker.com/v2/repositories/library/adoptopenjdk/"
+    abstract fun getDownloadStats(): List<DockerDownloadStatsDbEntry>
+    abstract fun pullOfficalStats(): DockerDownloadStatsDbEntry
 
-    suspend fun updateDb() {
+    override suspend fun updateDb() {
         try {
             val stats = mutableListOf<DockerDownloadStatsDbEntry>()
 
@@ -42,29 +68,7 @@ class DockerStatsInterface @Inject constructor(
         }
     }
 
-    private fun getDownloadStats(): List<DockerDownloadStatsDbEntry> {
-        val now = TimeSource.now()
-
-        return pullAllStats()
-            .map {
-                DockerDownloadStatsDbEntry(
-                    now,
-                    it.getJsonNumber("pull_count").longValue(),
-                    it.getString("name"),
-                    getOpenjdkVersionFromString(it.getString("name")),
-                    if (it.getString("name").contains("openj9")) JvmImpl.openj9 else JvmImpl.hotspot // Will need to be updated with a new JVMImpl
-                )
-            }
-    }
-
-    private fun pullOfficalStats(): DockerDownloadStatsDbEntry {
-        val result = getStatsForUrl(officialStatsUrl)
-        val now = TimeSource.now()
-
-        return DockerDownloadStatsDbEntry(now, result.getJsonNumber("pull_count").longValue(), "official", null, null)
-    }
-
-    private fun pullAllStats(): ArrayList<JsonObject> {
+    protected fun pullAllStats(downloadStatsUrl: String): ArrayList<JsonObject> {
         var next: String? = downloadStatsUrl
 
         val results = ArrayList<JsonObject>()
@@ -76,7 +80,7 @@ class DockerStatsInterface @Inject constructor(
         return results
     }
 
-    private fun getStatsForUrl(url: String): JsonObject {
+    protected fun getStatsForUrl(url: String): JsonObject {
         return runBlocking {
             val stats = updaterHtmlClient.get(url)
             if (stats == null) {

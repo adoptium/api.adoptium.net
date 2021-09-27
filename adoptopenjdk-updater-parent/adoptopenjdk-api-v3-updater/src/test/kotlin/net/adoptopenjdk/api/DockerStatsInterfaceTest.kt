@@ -13,7 +13,9 @@ import net.adoptopenjdk.api.v3.models.DockerDownloadStatsDbEntry
 import net.adoptopenjdk.api.v3.models.GitHubDownloadStatsDbEntry
 import net.adoptopenjdk.api.v3.models.JvmImpl
 import net.adoptopenjdk.api.v3.models.StatsSource
-import net.adoptopenjdk.api.v3.stats.DockerStatsInterface
+import net.adoptopenjdk.api.v3.stats.dockerstats.DockerStats
+import net.adoptopenjdk.api.v3.stats.dockerstats.DockerStatsInterface
+import net.adoptopenjdk.api.v3.stats.dockerstats.DockerStatsInterfaceFactory
 import org.jboss.weld.junit5.auto.AddPackages
 import org.junit.Assert
 import org.junit.jupiter.api.Test
@@ -26,7 +28,7 @@ class DockerStatsInterfaceTest : BaseTest() {
     fun dbEntryIsCreated(defaultUpdaterHtmlClient: DefaultUpdaterHtmlClient) {
         runBlocking {
             val apiPersistence = InMemoryApiPersistence(adoptRepos)
-            val dockerStatsInterface = DockerStatsInterface(apiPersistence, defaultUpdaterHtmlClient)
+            val dockerStatsInterface = DockerStatsInterfaceFactory(apiPersistence, defaultUpdaterHtmlClient).get()
 
             dockerStatsInterface.updateDb()
 
@@ -90,12 +92,12 @@ class DockerStatsInterfaceTest : BaseTest() {
     @Test
     fun testGetOpenjdkVersionFromString() {
         runBlocking {
-            assertEquals(11, DockerStatsInterface.getOpenjdkVersionFromString("openjdk11"))
-            assertEquals(8, DockerStatsInterface.getOpenjdkVersionFromString("openjdk8-openj9"))
-            assertEquals(12, DockerStatsInterface.getOpenjdkVersionFromString("maven-openjdk12"))
-            assertEquals(14, DockerStatsInterface.getOpenjdkVersionFromString("maven-openjdk14-openj9"))
+            assertEquals(11, DockerStats.getOpenjdkVersionFromString("openjdk11"))
+            assertEquals(8, DockerStats.getOpenjdkVersionFromString("openjdk8-openj9"))
+            assertEquals(12, DockerStats.getOpenjdkVersionFromString("maven-openjdk12"))
+            assertEquals(14, DockerStats.getOpenjdkVersionFromString("maven-openjdk14-openj9"))
 
-            assertEquals(null, DockerStatsInterface.getOpenjdkVersionFromString("official"))
+            assertEquals(null, DockerStats.getOpenjdkVersionFromString("official"))
         }
     }
 }
