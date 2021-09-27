@@ -34,6 +34,6 @@ class DockerStatsInterfaceAdoptOpenJdk @Inject constructor(
         val result = getStatsForUrl(officialStatsUrl)
         val now = TimeSource.now()
 
-        return DockerDownloadStatsDbEntry(now, result.getJsonNumber("pull_count").longValue(), "eclipse-temurin", null, null)
+        return DockerDownloadStatsDbEntry(now, result.getJsonNumber("pull_count").longValue(), "official", null, null)
     }
 }

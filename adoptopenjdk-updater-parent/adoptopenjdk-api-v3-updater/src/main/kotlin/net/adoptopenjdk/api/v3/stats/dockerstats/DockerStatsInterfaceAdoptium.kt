@@ -11,7 +11,7 @@ class DockerStatsInterfaceAdoptium @Inject constructor(
     updaterHtmlClient: UpdaterHtmlClient
 ) : DockerStats(database, updaterHtmlClient) {
 
-    private val officialStatsUrl = "https://hub.docker.com/v2/repositories/library/adoptopenjdk/"
+    private val officialStatsUrl = "https://hub.docker.com/v2/repositories/library/eclipse-temurin/"
 
     override fun getDownloadStats(): List<DockerDownloadStatsDbEntry> {
         return emptyList()
@@ -21,6 +21,6 @@ class DockerStatsInterfaceAdoptium @Inject constructor(
         val result = getStatsForUrl(officialStatsUrl)
         val now = TimeSource.now()
 
-        return DockerDownloadStatsDbEntry(now, result.getJsonNumber("pull_count").longValue(), "official", null, null)
+        return DockerDownloadStatsDbEntry(now, result.getJsonNumber("pull_count").longValue(), "eclipse-temurin", null, null)
     }
 }
