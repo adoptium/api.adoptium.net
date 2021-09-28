@@ -20,7 +20,7 @@ For more information, including example queries, please look at [STRUCTURE.md](d
 
 ## Who's using the Adoptium API?
 
-The Adoptium API has served over 200 million downloads by a wide variety consumers, from individuals to organisations.
+The Adoptium API (and its predecessor at AdoptOpenJDK) has served over 200 million downloads by a wide variety consumers, from individuals to organisations.
 
 Check the [Download Statistics Dashboard](https://dash.adoptium.net/) for the latest numbers.  
 
