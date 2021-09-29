@@ -3,6 +3,7 @@ package net.adoptopenjdk.api.v3
 import net.adoptopenjdk.api.v3.config.APIConfig
 import net.adoptopenjdk.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptopenjdk.api.v3.models.DbStatsEntry
+import net.adoptopenjdk.api.v3.models.DockerDownloadStatsDbEntry
 import net.adoptopenjdk.api.v3.models.DownloadDiff
 import net.adoptopenjdk.api.v3.models.DownloadStats
 import net.adoptopenjdk.api.v3.models.GitHubDownloadStatsDbEntry
@@ -246,7 +247,7 @@ class DownloadStatsInterface {
     }
 
     suspend fun getTotalDownloadStats(): DownloadStats {
-        val dockerStats = dataStore.getLatestAllDockerStats()
+        val dockerStats = getAllDockerStats()
 
         val githubStats = getGithubStats()
 
@@ -270,10 +271,17 @@ class DownloadStatsInterface {
         return DownloadStats(TimeSource.now(), totalStats, githubBreakdown, dockerBreakdown)
     }
 
+    private suspend fun getAllDockerStats(): List<DockerDownloadStatsDbEntry> {
+        return dataStore
+            .getLatestAllDockerStats()
+            .filter { it.pulls != 0L }
+    }
+
     private suspend fun getGithubStats(): List<GitHubDownloadStatsDbEntry> {
         return Versions.versions
             .mapNotNull { featureVersion ->
                 dataStore.getLatestGithubStatsForFeatureVersion(featureVersion)
             }
+            .filter { it.downloads != 0L }
     }
 }
