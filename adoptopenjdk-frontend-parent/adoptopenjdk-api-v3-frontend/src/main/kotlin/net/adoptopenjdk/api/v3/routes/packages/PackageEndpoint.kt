@@ -11,6 +11,7 @@ import net.adoptopenjdk.api.v3.models.APIError
 import net.adoptopenjdk.api.v3.models.Architecture
 import net.adoptopenjdk.api.v3.models.Asset
 import net.adoptopenjdk.api.v3.models.Binary
+import net.adoptopenjdk.api.v3.models.CLib
 import net.adoptopenjdk.api.v3.models.HeapSize
 import net.adoptopenjdk.api.v3.models.ImageType
 import net.adoptopenjdk.api.v3.models.JvmImpl
@@ -35,10 +36,11 @@ open class PackageEndpoint @Inject constructor(private val apiDataStore: APIData
         image_type: ImageType?,
         jvm_impl: JvmImpl?,
         heap_size: HeapSize?,
-        project: Project?
+        project: Project?,
+        cLib: CLib?
     ): List<Release> {
         val releaseFilter = ReleaseFilter(releaseName = release_name, vendor = vendor, jvm_impl = jvm_impl)
-        val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, heap_size, project)
+        val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, heap_size, project, null, cLib)
         return apiDataStore.getAdoptRepos().getFilteredReleases(releaseFilter, binaryFilter, SortOrder.DESC, SortMethod.DEFAULT).toList()
     }
 
@@ -83,9 +85,9 @@ open class PackageEndpoint @Inject constructor(private val apiDataStore: APIData
             .build()
     }
 
-    open fun getRelease(release_type: ReleaseType?, version: Int?, vendor: Vendor?, os: OperatingSystem?, arch: Architecture?, image_type: ImageType?, jvm_impl: JvmImpl?, heap_size: HeapSize?, project: Project?): List<Release> {
+    open fun getRelease(release_type: ReleaseType?, version: Int?, vendor: Vendor?, os: OperatingSystem?, arch: Architecture?, image_type: ImageType?, jvm_impl: JvmImpl?, heap_size: HeapSize?, project: Project?, cLib: CLib?): List<Release> {
         val releaseFilter = ReleaseFilter(releaseType = release_type, featureVersion = version, vendor = vendor, jvm_impl = jvm_impl)
-        val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, heap_size, project)
+        val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, heap_size, project, null, cLib)
         val releases = apiDataStore.getAdoptRepos().getFilteredReleases(releaseFilter, binaryFilter, SortOrder.DESC, SortMethod.DEFAULT).toList()
 
         // We use updated_at and timestamp as well JIC we've made a mistake and respun the same version number twice, in which case newest wins.

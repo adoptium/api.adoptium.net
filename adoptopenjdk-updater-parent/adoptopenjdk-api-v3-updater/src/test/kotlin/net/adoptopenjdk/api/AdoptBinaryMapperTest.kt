@@ -17,6 +17,7 @@ import net.adoptopenjdk.api.v3.models.HeapSize
 import net.adoptopenjdk.api.v3.models.ImageType
 import net.adoptopenjdk.api.v3.models.Installer
 import net.adoptopenjdk.api.v3.models.JvmImpl
+import net.adoptopenjdk.api.v3.models.CLib
 import net.adoptopenjdk.api.v3.models.OperatingSystem
 import net.adoptopenjdk.api.v3.models.Package
 import net.adoptopenjdk.api.v3.models.Project
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.TestInstance.Lifecycle
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 
 @TestInstance(Lifecycle.PER_CLASS)
 class AdoptBinaryMapperTest {
@@ -187,7 +189,8 @@ class AdoptBinaryMapperTest {
                     architecture = Architecture.x64,
                     image_type = ImageType.jdk,
                     jvm_impl = JvmImpl.hotspot,
-                    project = Project.jdk
+                    project = Project.jdk,
+                    c_lib = null
                 )
 
             assertEquals(expectedBinary, actualBinaries[0])
@@ -354,6 +357,43 @@ class AdoptBinaryMapperTest {
             val binaryList = adoptBinaryMapper.toBinaryList(assets, assets, emptyMap())
 
             assertEquals(OperatingSystem.`alpine-linux`, binaryList[0].os)
+        }
+    }
+
+    @Test
+    fun `identifies static libs`() {
+        runBlocking {
+            val assets = listOf(
+                GHAsset(
+                    "OpenJDK11U-static-libs-glibc_x64_linux_hotspot_2021-09-28-08-28.tar.gz",
+                    1L,
+                    "",
+                    1L,
+                    "2013-02-27T19:35:32Z"
+                ),
+                GHAsset(
+                    "OpenJDK11U-static-libs-musl_x64_linux_hotspot_2021-09-28-08-28.tar.gz",
+                    1L,
+                    "",
+                    1L,
+                    "2013-02-27T19:35:32Z"
+                ),
+                GHAsset(
+                    "OpenJDK16U-jre_x64_linux_hotspot_16.0.1_9.tar.gz",
+                    1L,
+                    "",
+                    1L,
+                    "2013-02-27T19:35:32Z"
+                ),
+            )
+            val binaryList = adoptBinaryMapper.toBinaryList(assets, assets, emptyMap())
+
+            assertEquals(ImageType.staticlibs, binaryList[0].image_type)
+            assertEquals(ImageType.staticlibs, binaryList[1].image_type)
+            assertNotEquals(ImageType.staticlibs, binaryList[2].image_type)
+            assertEquals(CLib.glibc, binaryList[0].c_lib)
+            assertEquals(CLib.musl, binaryList[1].c_lib)
+            assertEquals(null, binaryList[2].c_lib)
         }
     }
 

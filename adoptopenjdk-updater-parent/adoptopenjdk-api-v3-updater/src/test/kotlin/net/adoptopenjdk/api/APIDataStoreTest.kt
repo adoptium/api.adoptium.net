@@ -2,11 +2,13 @@ package net.adoptopenjdk.api
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import net.adoptopenjdk.api.v3.JsonMapper
 import net.adoptopenjdk.api.v3.TimeSource
 import net.adoptopenjdk.api.v3.dataSources.APIDataStore
 import net.adoptopenjdk.api.v3.dataSources.APIDataStoreImpl
 import net.adoptopenjdk.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptopenjdk.api.v3.dataSources.persitence.ApiPersistence
+import net.adoptopenjdk.api.v3.models.Binary
 import org.junit.jupiter.api.Test
 import org.skyscreamer.jsonassert.JSONAssert
 import org.slf4j.LoggerFactory
@@ -30,14 +32,29 @@ class APIDataStoreTest : MongoTest() {
     }
 
     @Test
+    fun `can deserialize binaries`() {
+        val binary = BaseTest.adoptRepos.allReleases
+            .getReleases()
+            .first()
+            .binaries
+            .first()
+        val str = JsonMapper.mapper.writeValueAsString(binary)
+
+        val read = JsonMapper.mapper.readValue(str, Binary::class.java)
+        assertEquals(binary, read)
+    }
+
+    @Test
     fun dataIsStoredToDbCorrectly(apiDataStore: APIDataStore, apiPersistence: ApiPersistence) {
         runBlocking {
             apiPersistence.updateAllRepos(BaseTest.adoptRepos, "")
             val dbData = apiDataStore.loadDataFromDb(false)
 
+            val before = UpdaterJsonMapper.mapper.writeValueAsString(dbData)
+            val after = UpdaterJsonMapper.mapper.writeValueAsString(BaseTest.adoptRepos)
             JSONAssert.assertEquals(
-                UpdaterJsonMapper.mapper.writeValueAsString(dbData),
-                UpdaterJsonMapper.mapper.writeValueAsString(BaseTest.adoptRepos),
+                before,
+                after,
                 true
             )
         }

@@ -45,4 +45,6 @@ Details of maven version ranges can be found at
         """
 <p>Type of release. Either a release version, known as General Availability(ga) or an Early Access(ea) </p>
 """
+
+    const val CLIB_TYPE = "C Lib type, typically would imply image_type has been set to staticlibs"
 }

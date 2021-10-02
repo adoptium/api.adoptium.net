@@ -8,6 +8,7 @@ import net.adoptopenjdk.api.v3.dataSources.SortOrder
 import net.adoptopenjdk.api.v3.filters.BinaryFilter
 import net.adoptopenjdk.api.v3.filters.ReleaseFilter
 import net.adoptopenjdk.api.v3.models.Binary
+import net.adoptopenjdk.api.v3.models.ImageType
 import net.adoptopenjdk.api.v3.models.Release
 import net.adoptopenjdk.api.v3.models.Vendor
 import org.jboss.weld.junit5.auto.AddPackages
@@ -34,10 +35,17 @@ open class FrontendTest {
     }
 
     protected fun getRandomBinary(): Pair<Release, Binary> {
+        return getRandomBinary(
+            ReleaseFilter(featureVersion = 8, vendor = Vendor.getDefault()),
+            BinaryFilter(imageType = ImageType.jdk)
+        )
+    }
+
+    protected fun getRandomBinary(releaseFilter: ReleaseFilter, binaryFilter: BinaryFilter): Pair<Release, Binary> {
         val release = BaseTest.adoptRepos
             .getFilteredReleases(
-                ReleaseFilter(featureVersion = 8, vendor = Vendor.getDefault()),
-                BinaryFilter(),
+                releaseFilter,
+                binaryFilter,
                 SortOrder.ASC,
                 SortMethod.DEFAULT
             ).first()

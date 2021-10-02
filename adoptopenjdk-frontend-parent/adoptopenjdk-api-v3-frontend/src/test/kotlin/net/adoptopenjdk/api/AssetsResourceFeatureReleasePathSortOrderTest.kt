@@ -64,7 +64,8 @@ class AssetsResourceFeatureReleasePathSortOrderTest : FrontendTest() {
                 Architecture.x64,
                 ImageType.jdk,
                 JvmImpl.hotspot,
-                Project.jdk
+                Project.jdk,
+                null
             )
 
             val repo = AdoptRepos(
@@ -109,7 +110,7 @@ class AssetsResourceFeatureReleasePathSortOrderTest : FrontendTest() {
     private fun getRelease(sortOrder: SortOrder, sortMethod: SortMethod?): List<Release> {
         return assetResource.get(
             version = 8, release_type = ReleaseType.ga, sortOrder = sortOrder, sortMethod = sortMethod,
-            arch = null, heap_size = null, jvm_impl = null, image_type = null, os = null, page = null, pageSize = null, project = null, vendor = null, before = null
+            arch = null, heap_size = null, jvm_impl = null, image_type = null, os = null, page = null, pageSize = null, project = null, vendor = null, before = null, cLib = null
         )
     }
 

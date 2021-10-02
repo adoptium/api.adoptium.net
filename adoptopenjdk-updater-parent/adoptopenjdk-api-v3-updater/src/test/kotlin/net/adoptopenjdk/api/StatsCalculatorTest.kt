@@ -73,7 +73,8 @@ class StatsCalculatorTest : BaseTest() {
                                 Architecture.x64,
                                 ImageType.jdk,
                                 JvmImpl.hotspot,
-                                Project.jdk
+                                Project.jdk,
+                                null,
                             ),
                             Binary(
                                 Package("a", "b", 1L, "v", "c", 250L, "d", "e"),
@@ -86,7 +87,8 @@ class StatsCalculatorTest : BaseTest() {
                                 Architecture.x64,
                                 ImageType.jdk,
                                 JvmImpl.hotspot,
-                                Project.jdk
+                                Project.jdk,
+                                null,
                             ),
                             Binary(
                                 Package("a", "b", 1L, "v", "c", 60L, "d", "e"),
@@ -99,7 +101,8 @@ class StatsCalculatorTest : BaseTest() {
                                 Architecture.x64,
                                 ImageType.jdk,
                                 JvmImpl.openj9,
-                                Project.jdk
+                                Project.jdk,
+                                null,
                             ),
                             Binary(
                                 Package("a", "b", 1L, "v", "c", 120L, "d", "e"),
@@ -112,7 +115,8 @@ class StatsCalculatorTest : BaseTest() {
                                 Architecture.x64,
                                 ImageType.jdk,
                                 JvmImpl.openj9,
-                                Project.jdk
+                                Project.jdk,
+                                null,
                             )
                         ),
                         445,
@@ -138,7 +142,8 @@ class StatsCalculatorTest : BaseTest() {
                                 Architecture.x64,
                                 ImageType.jdk,
                                 JvmImpl.hotspot,
-                                Project.jdk
+                                Project.jdk,
+                                null,
                             ),
                             Binary(
                                 Package("a", "b", 1L, "v", "c", 150L, "d", "e"),
@@ -151,7 +156,8 @@ class StatsCalculatorTest : BaseTest() {
                                 Architecture.x64,
                                 ImageType.jdk,
                                 JvmImpl.openj9,
-                                Project.jdk
+                                Project.jdk,
+                                null,
                             )
                         ),
                         450,

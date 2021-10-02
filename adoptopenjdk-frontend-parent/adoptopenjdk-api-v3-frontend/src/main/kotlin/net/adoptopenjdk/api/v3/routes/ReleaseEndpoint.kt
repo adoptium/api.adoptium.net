@@ -7,6 +7,7 @@ import net.adoptopenjdk.api.v3.filters.BinaryFilter
 import net.adoptopenjdk.api.v3.filters.ReleaseFilter
 import net.adoptopenjdk.api.v3.filters.VersionRangeFilter
 import net.adoptopenjdk.api.v3.models.Architecture
+import net.adoptopenjdk.api.v3.models.CLib
 import net.adoptopenjdk.api.v3.models.HeapSize
 import net.adoptopenjdk.api.v3.models.ImageType
 import net.adoptopenjdk.api.v3.models.JvmImpl
@@ -37,7 +38,8 @@ constructor(private val apiDataStore: APIDataStore) {
         image_type: ImageType?,
         jvm_impl: JvmImpl?,
         heap_size: HeapSize?,
-        project: Project?
+        project: Project?,
+        cLib: CLib?
     ): Sequence<Release> {
         val order = sortOrder ?: SortOrder.DESC
         val vendorNonNull = vendor ?: Vendor.getDefault()
@@ -52,7 +54,7 @@ constructor(private val apiDataStore: APIDataStore) {
         }
 
         val releaseFilter = ReleaseFilter(releaseType = release_type, vendor = vendorNonNull, versionRange = range, lts = lts, jvm_impl = jvm_impl)
-        val binaryFilter = BinaryFilter(os = os, arch = arch, imageType = image_type, jvmImpl = jvm_impl, heapSize = heap_size, project = project)
+        val binaryFilter = BinaryFilter(os = os, arch = arch, imageType = image_type, jvmImpl = jvm_impl, heapSize = heap_size, project = project, cLib = cLib)
 
         return apiDataStore
             .getAdoptRepos()

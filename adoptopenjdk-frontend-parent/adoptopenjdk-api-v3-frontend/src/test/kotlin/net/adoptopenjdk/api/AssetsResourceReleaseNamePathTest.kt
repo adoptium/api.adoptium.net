@@ -137,6 +137,7 @@ class AssetsResourceReleaseNamePathTest : FrontendTest() {
                     null,
                     null,
                     null,
+                    null,
                     null
                 )
         }
@@ -149,6 +150,7 @@ class AssetsResourceReleaseNamePathTest : FrontendTest() {
                 .get(
                     null,
                     "foo",
+                    null,
                     null,
                     null,
                     null,

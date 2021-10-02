@@ -6,6 +6,7 @@ import net.adoptopenjdk.api.v3.dataSources.models.AdoptRepos
 import net.adoptopenjdk.api.v3.dataSources.models.FeatureRelease
 import net.adoptopenjdk.api.v3.models.Architecture
 import net.adoptopenjdk.api.v3.models.Binary
+import net.adoptopenjdk.api.v3.models.CLib
 import net.adoptopenjdk.api.v3.models.DateTime
 import net.adoptopenjdk.api.v3.models.HeapSize
 import net.adoptopenjdk.api.v3.models.ImageType
@@ -34,7 +35,7 @@ object AdoptReposTestDataGenerator {
             listOf(ImageType.jre, ImageType.jdk),
             listOf(Architecture.x64, Architecture.x32, Architecture.arm),
             listOf(OperatingSystem.linux, OperatingSystem.mac, OperatingSystem.windows),
-            listOf(HeapSize.normal)
+            listOf(HeapSize.normal),
         ),
         PermittedValues(
             ReleaseType.values().asList(),
@@ -78,6 +79,18 @@ object AdoptReposTestDataGenerator {
             listOf(OperatingSystem.linux, OperatingSystem.mac, OperatingSystem.windows),
             listOf(HeapSize.normal),
             listOf(8, 11, 12)
+        ),
+        PermittedValues(
+            ReleaseType.values().asList(),
+            listOf(Vendor.eclipse),
+            listOf(Project.jdk),
+            listOf(JvmImpl.hotspot),
+            listOf(ImageType.staticlibs),
+            listOf(Architecture.x64),
+            listOf(OperatingSystem.linux),
+            listOf(HeapSize.normal),
+            listOf(8, 11, 12),
+            listOf(CLib.glibc, CLib.musl)
         )
     )
 
@@ -110,7 +123,8 @@ object AdoptReposTestDataGenerator {
         val architecture: List<Architecture>,
         val operatingSystem: List<OperatingSystem>,
         val heapSize: List<HeapSize>,
-        val versions: List<Int> = TEST_VERSIONS
+        val versions: List<Int> = TEST_VERSIONS,
+        val cLib: List<CLib>? = null
     ) {
         private fun releaseBuilder(): (ReleaseType) -> (Vendor) -> (VersionData) -> Release {
             return { releaseType: ReleaseType ->
@@ -174,7 +188,8 @@ object AdoptReposTestDataGenerator {
                         Architecture.x64,
                         ImageType.jdk,
                         JvmImpl.hotspot,
-                        Project.jdk
+                        Project.jdk,
+                        null
                     )
                 }
                 .union(
@@ -191,7 +206,8 @@ object AdoptReposTestDataGenerator {
                                 Architecture.x64,
                                 ImageType.jdk,
                                 JvmImpl.hotspot,
-                                Project.jdk
+                                Project.jdk,
+                                null
                             )
                         }
                 )
@@ -209,7 +225,8 @@ object AdoptReposTestDataGenerator {
                                 it,
                                 ImageType.jdk,
                                 JvmImpl.hotspot,
-                                Project.jdk
+                                Project.jdk,
+                                null
                             )
                         }
                 )
@@ -227,7 +244,8 @@ object AdoptReposTestDataGenerator {
                                 Architecture.x64,
                                 it,
                                 JvmImpl.hotspot,
-                                Project.jdk
+                                Project.jdk,
+                                null
                             )
                         }
                 )
@@ -245,7 +263,8 @@ object AdoptReposTestDataGenerator {
                                 Architecture.x64,
                                 ImageType.jdk,
                                 it,
-                                Project.jdk
+                                Project.jdk,
+                                null
                             )
                         }
                 )
@@ -263,33 +282,37 @@ object AdoptReposTestDataGenerator {
                                 Architecture.x64,
                                 ImageType.jdk,
                                 JvmImpl.hotspot,
-                                it
+                                it,
+                                null
                             )
                         }
                 )
                 .toList()
         }
 
-        private fun binaryBuilder(): (HeapSize) -> (OperatingSystem) -> (Architecture) -> (ImageType) -> (JvmImpl) -> (Project) -> Binary {
+        private fun binaryBuilder(): (HeapSize) -> (OperatingSystem) -> (Architecture) -> (ImageType) -> (JvmImpl) -> (Project) -> (CLib?) -> Binary {
             return { heapSize ->
                 { operatingSystem ->
                     { architecture ->
                         { imageType ->
                             { jvmImpl ->
                                 { project ->
-                                    Binary(
-                                        createPackage(),
-                                        1,
-                                        randomDate(),
-                                        randomString("scm ref"),
-                                        createInstaller(),
-                                        heapSize,
-                                        operatingSystem,
-                                        architecture,
-                                        imageType,
-                                        jvmImpl,
-                                        project
-                                    )
+                                    { cLib ->
+                                        Binary(
+                                            createPackage(),
+                                            1,
+                                            randomDate(),
+                                            randomString("scm ref"),
+                                            createInstaller(),
+                                            heapSize,
+                                            operatingSystem,
+                                            architecture,
+                                            imageType,
+                                            jvmImpl,
+                                            project,
+                                            cLib,
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -319,12 +342,15 @@ object AdoptReposTestDataGenerator {
                 .flatMap { builder -> imageType.map { builder(it) } }
                 .flatMap { builder -> jvmImpl.map { builder(it) } }
                 .flatMap { builder -> project.map { builder(it) } }
+                .flatMap { builder ->
+                    cLib?.map { builder(it) } ?: listOf(builder(null))
+                }
                 .union(exhaustiveBinaryList())
                 .filter { binary ->
                     JvmImpl.validJvmImpl(binary.jvm_impl)
                 }
                 .distinctBy {
-                    listOf(it.architecture, it.heap_size, it.image_type, it.jvm_impl, it.os, it.project)
+                    listOf(it.architecture, it.heap_size, it.image_type, it.jvm_impl, it.os, it.project, it.c_lib)
                 }
                 .toTypedArray()
         }

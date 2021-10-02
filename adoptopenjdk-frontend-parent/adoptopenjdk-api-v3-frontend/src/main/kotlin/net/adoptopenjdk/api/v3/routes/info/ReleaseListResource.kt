@@ -6,6 +6,7 @@ import net.adoptopenjdk.api.v3.Pagination.getPage
 import net.adoptopenjdk.api.v3.dataSources.SortMethod
 import net.adoptopenjdk.api.v3.dataSources.SortOrder
 import net.adoptopenjdk.api.v3.models.Architecture
+import net.adoptopenjdk.api.v3.models.CLib
 import net.adoptopenjdk.api.v3.models.HeapSize
 import net.adoptopenjdk.api.v3.models.ImageType
 import net.adoptopenjdk.api.v3.models.JvmImpl
@@ -67,6 +68,10 @@ constructor(
         @QueryParam("image_type")
         image_type: ImageType?,
 
+        @Parameter(name = "c_lib", description = OpenApiDocs.CLIB_TYPE, required = false)
+        @QueryParam("c_lib")
+        cLib: CLib?,
+
         @Parameter(name = "jvm_impl", description = "JVM Implementation", required = false)
         @QueryParam("jvm_impl")
         jvm_impl: JvmImpl?,
@@ -111,7 +116,8 @@ constructor(
             image_type,
             jvm_impl,
             heap_size,
-            project
+            project,
+            cLib
         )
             .map { it.release_name }
 
@@ -148,6 +154,10 @@ constructor(
         @Parameter(name = "image_type", description = "Image Type", required = false)
         @QueryParam("image_type")
         image_type: ImageType?,
+
+        @Parameter(name = "c_lib", description = OpenApiDocs.CLIB_TYPE, required = false)
+        @QueryParam("c_lib")
+        cLib: CLib?,
 
         @Parameter(name = "jvm_impl", description = "JVM Implementation", required = false)
         @QueryParam("jvm_impl")
@@ -194,7 +204,8 @@ constructor(
             image_type,
             jvm_impl,
             heap_size,
-            project
+            project,
+            cLib
         )
             .map { it.version_data }
             .distinct()
