@@ -1,6 +1,5 @@
 package net.adoptopenjdk.api
 
-import net.adoptopenjdk.api.v3.TimeSource
 import net.adoptopenjdk.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptopenjdk.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptopenjdk.api.v3.dataSources.github.graphql.models.GHRelease
@@ -13,7 +12,6 @@ import net.adoptopenjdk.api.v3.dataSources.github.graphql.models.summary.GHRepos
 import net.adoptopenjdk.api.v3.dataSources.models.AdoptRepos
 import net.adoptopenjdk.api.v3.dataSources.models.GitHubId
 import net.adoptopenjdk.api.v3.models.ReleaseType
-import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 object GHSummaryTestDataGenerator {
@@ -64,15 +62,12 @@ object GHSummaryTestDataGenerator {
                         GHReleaseSummary(
                             release.id,
                             release.publishedAt,
-                            release.updatedAt
+                            release.updatedAt,
+                            release.name
                         )
                     },
                 PageInfo(false, null)
             )
         )
-    }
-
-    private fun randomDate(): ZonedDateTime {
-        return TimeSource.now().minusDays(10)
     }
 }

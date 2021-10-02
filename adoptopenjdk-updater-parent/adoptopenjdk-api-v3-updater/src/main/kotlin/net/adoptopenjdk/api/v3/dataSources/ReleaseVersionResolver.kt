@@ -5,7 +5,9 @@ import net.adoptopenjdk.api.v3.models.ReleaseInfo
 import net.adoptopenjdk.api.v3.models.ReleaseType
 import net.adoptopenjdk.api.v3.models.Versions
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class ReleaseVersionResolver @Inject constructor(
     private val updaterHtmlClient: UpdaterHtmlClient
 ) {

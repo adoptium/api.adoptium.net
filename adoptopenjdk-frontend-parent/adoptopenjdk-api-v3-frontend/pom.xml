@@ -66,7 +66,9 @@
         <dependency>
             <groupId>net.adoptopenjdk.api</groupId>
             <artifactId>adoptopenjdk-api-v3-updater</artifactId>
+            <version>${project.version}</version>
             <scope>test</scope>
+            <classifier>classes</classifier>
         </dependency>
         <dependency>
             <groupId>net.adoptopenjdk.api</groupId>
