@@ -103,7 +103,7 @@ class AdoptReposBuilder @Inject constructor(private var adoptRepository: AdoptRe
                 if (release == null) {
                     LOGGER.warn("Failed to match update name $name")
                 }
-                release //return updated release
+                release // return updated release
             }
     }
 
