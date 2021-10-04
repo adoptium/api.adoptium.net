@@ -1,9 +1,9 @@
-# Contributing to AdoptOpenJDK API (V3)
+# Contributing to Adoptium API (V3)
 
 ## Overview
 
-The AdoptOpenJDK API V3 is a Kotlin application (fronted by Swagger and OpenAPI) which makes 
-calls via the GitHub API in order to retrieve AdoptOpenJDK binaries and metadata.
+The Adoptium API V3 is a Kotlin application (fronted by Swagger and OpenAPI) which makes 
+calls via the GitHub API in order to retrieve Adoptium binaries and metadata.
 
 Since the GitHub API is rate limited we use MongoDB as a caching mechanism.
 
@@ -25,7 +25,7 @@ For more details related to deployment of the API, see [the deployment section](
 
 ### Pre-Requisites
 
-[Java 11](https://adoptopenjdk.net/releases.html?variant=openjdk11) is a requirement to build the project.
+[Java 11](https://adoptium.net/releases.html?variant=openjdk11) is a requirement to build the project.
 
 ### Optional Set-up
 
@@ -91,7 +91,7 @@ Refer to `ktlint`'s [docs](https://github.com/pinterest/ktlint#-with-maven) for 
 
 ## Testing
 
-**WARN** This API is critical to the success of AdoptOpenJDK therefore it is 
+**WARN** This API is critical to the success of Adoptium therefore it is 
 essential that tests are provided for all new functionality. 
 
 ### Code Coverage
@@ -117,23 +117,23 @@ The Open API definition for this can be viewed at [openapi](https://api.adoptope
 
 ## Deployment / Continuous Deployment (CD)
 
-You can choose to deploy this API where you wish, for AdoptOpenJDK we use Continuous Deployment.
+You can choose to deploy this API where you wish, for Adoptium we use Continuous Deployment.
 
-### AdoptOpenJDK
+### Adoptium
 
-For AdoptOpenJDK, this API deploys to Red Hat OpenShift and is front ended by [Cloudflare](https://www.cloudflare.com) as a CDN.
+For Adoptium, this API deploys to Red Hat OpenShift and is front ended by [Cloudflare](https://www.cloudflare.com) as a CDN.
 
 The `production` branch is synchronised with `master` to perform a release of the latest API changes to the Production OpenShift environment.  
 
 This is done via a pull request that applies all outstanding commits from `master` to `production`.
 
-The Jenkins [AdoptOpenJDK CI Server](https://ci.adoptopenjdk.net) will automatically 
+The Jenkins [Adoptium CI Server](https://ci.adoptopenjdk.net) will automatically 
 deploy pull requests to the OpenShift Staging (the `master` branch) or Production (the `production` branch) environments.
 
 ## Code Architecture and Code
 
-The AdoptOpenJDK API V3 is a Kotlin application (fronted by Swagger and OpenAPI) which makes 
-calls via the GitHub API in order to retrieve AdoptOpenJDK binaries and metadata.
+The Adoptium API V3 is a Kotlin application (fronted by Swagger and OpenAPI) which makes 
+calls via the GitHub API in order to retrieve Adoptium binaries and metadata.
 
 Since the GitHub API is rate limited we use MongoDB as a caching mechanism.
 
