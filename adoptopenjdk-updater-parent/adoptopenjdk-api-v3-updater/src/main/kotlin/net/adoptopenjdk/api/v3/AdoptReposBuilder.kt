@@ -24,15 +24,15 @@ class AdoptReposBuilder @Inject constructor(private var adoptRepository: AdoptRe
 
     private val excluded: MutableSet<GitHubId> = HashSet()
 
-    suspend fun incrementalUpdate(repo: AdoptRepos): AdoptRepos {
+    suspend fun incrementalUpdate(toUpdate: Set<String>, repo: AdoptRepos): AdoptRepos {
         val updated = repo
             .repos
-            .map { entry -> getUpdatedFeatureRelease(entry, repo) }
+            .map { entry -> getUpdatedFeatureRelease(toUpdate, entry, repo) }
 
         return AdoptRepos(updated)
     }
 
-    private suspend fun getUpdatedFeatureRelease(entry: Map.Entry<Int, FeatureRelease>, repo: AdoptRepos): FeatureRelease {
+    private suspend fun getUpdatedFeatureRelease(toUpdate: Set<String>, entry: Map.Entry<Int, FeatureRelease>, repo: AdoptRepos): FeatureRelease {
         val summary = adoptRepository.getSummary(entry.key)
 
         // Update cycle
@@ -50,11 +50,13 @@ class AdoptReposBuilder @Inject constructor(private var adoptRepository: AdoptRe
             val newReleases = getNewReleases(summary, pruned)
             val updatedReleases = getUpdatedReleases(summary, pruned)
             val youngReleases = getYoungReleases(summary)
+            val explicitlyAdded = getExplicitlyAddedReleases(summary, toUpdate)
 
             pruned
                 .add(newReleases)
                 .add(updatedReleases)
                 .add(youngReleases)
+                .add(explicitlyAdded)
         } else {
             val newReleases = getNewReleases(summary, FeatureRelease(entry.key, emptyList()))
             FeatureRelease(entry.key, Releases(newReleases))
@@ -79,6 +81,30 @@ class AdoptReposBuilder @Inject constructor(private var adoptRepository: AdoptRe
             }
             .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
             .flatMap { getReleaseById(it) }
+    }
+
+    /**
+     * Fetches releases from github that have been explicitly requested by the user for an update
+     */
+    private suspend fun getExplicitlyAddedReleases(summary: GHRepositorySummary, releaseNames: Set<String>): List<Release> {
+        return releaseNames
+            .mapNotNull { name ->
+                val allReleases = summary.releases.releases
+                val release = allReleases
+                    .filter { !excluded.contains(it.id) } // Filter out excluded releases
+                    .filter { name == it.name } // Find release with the requested name
+                    .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
+                    .flatMap {
+                        LOGGER.info("Updating ${it.name}")
+                        getReleaseById(it) // fetch release from Github
+                    }
+                    .firstOrNull()
+
+                if (release == null) {
+                    LOGGER.warn("Failed to match update name $name")
+                }
+                release //return updated release
+            }
     }
 
     private suspend fun getNewReleases(summary: GHRepositorySummary, currentRelease: FeatureRelease): List<Release> {
@@ -113,8 +139,7 @@ class AdoptReposBuilder @Inject constructor(private var adoptRepository: AdoptRe
             .mapNotNull { version ->
                 adoptRepository.getRelease(version)
             }
-            .map { Pair(it.featureVersion, it) }
-            .toMap()
+            .associateBy { it.featureVersion }
         LOGGER.info("DONE")
         return AdoptRepos(reposMap)
     }

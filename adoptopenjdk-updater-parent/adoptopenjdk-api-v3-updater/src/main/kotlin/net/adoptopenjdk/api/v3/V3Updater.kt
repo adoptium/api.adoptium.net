@@ -1,5 +1,6 @@
 package net.adoptopenjdk.api.v3
 
+import io.quarkus.runtime.Startup
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -10,26 +11,51 @@ import net.adoptopenjdk.api.v3.dataSources.ReleaseVersionResolver
 import net.adoptopenjdk.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptopenjdk.api.v3.dataSources.models.AdoptRepos
 import net.adoptopenjdk.api.v3.dataSources.persitence.ApiPersistence
+import net.adoptopenjdk.api.v3.models.Release
 import net.adoptopenjdk.api.v3.models.Versions
 import net.adoptopenjdk.api.v3.stats.StatsInterface
 import org.slf4j.LoggerFactory
 import java.io.OutputStream
 import java.security.MessageDigest
 import java.util.Base64
+import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
+import javax.inject.Singleton
+import javax.ws.rs.ApplicationPath
+import javax.ws.rs.core.Application
 import kotlin.concurrent.timerTask
 
+@ApplicationScoped
+@ApplicationPath("/")
+@Startup
+class V3UpdaterApp : Application()
+
+@Singleton
+@Startup
+class KickOffUpdate @Inject constructor(
+    v3Updater: V3Updater
+) {
+    init {
+        if (!APIConfig.DISABLE_UPDATER) {
+            v3Updater.run(true)
+        }
+    }
+}
+
+@Singleton
 class V3Updater @Inject constructor(
     private val adoptReposBuilder: AdoptReposBuilder,
     private val apiDataStore: APIDataStore,
     private val database: ApiPersistence,
     private val statsInterface: StatsInterface,
     private val releaseVersionResolver: ReleaseVersionResolver
-) {
+) : Updater {
 
     private val mutex = Mutex()
+    private val toUpdate: ConcurrentSkipListSet<String> = ConcurrentSkipListSet<String>()
 
     companion object {
         @JvmStatic
@@ -52,12 +78,32 @@ class V3Updater @Inject constructor(
         AppInsightsTelemetry.start()
     }
 
-    fun incrementalUpdate(oldRepo: AdoptRepos): AdoptRepos? {
+    override fun addToUpdate(toUpdate: String): List<Release> {
+        val repo = apiDataStore.loadDataFromDb(true)
+        val toUpdateList = repo
+            .allReleases
+            .getReleases()
+            .filter { release ->
+                release.release_name == toUpdate
+            }
+            .toList()
+
+        if (toUpdateList.isNotEmpty()) {
+            toUpdate.plus(toUpdate)
+        }
+
+        return toUpdateList
+    }
+
+    private fun incrementalUpdate(oldRepo: AdoptRepos): AdoptRepos? {
         return runBlocking {
             // Must catch errors or may kill the scheduler
             try {
                 LOGGER.info("Starting Incremental update")
-                val updatedRepo = adoptReposBuilder.incrementalUpdate(oldRepo)
+                val toUpdateTmp = HashSet<String>()
+                toUpdateTmp.addAll(toUpdate)
+                toUpdate.clear()
+                val updatedRepo = adoptReposBuilder.incrementalUpdate(toUpdateTmp, oldRepo)
 
                 if (updatedRepo != oldRepo) {
                     val after = writeIncrementalUpdate(updatedRepo, oldRepo)

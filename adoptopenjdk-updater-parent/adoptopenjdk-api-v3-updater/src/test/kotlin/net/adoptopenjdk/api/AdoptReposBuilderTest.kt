@@ -22,7 +22,19 @@ class AdoptReposBuilderTest : BaseTest() {
         private val adoptReposBuilder: AdoptReposBuilder = AdoptReposBuilder(stub)
         private var before: AdoptRepos = stub.repo
         private var updated: AdoptRepos = runBlocking {
-            adoptReposBuilder.incrementalUpdate(before)
+            adoptReposBuilder.incrementalUpdate(emptySet(), before)
+        }
+    }
+
+    @Test
+    fun addReleaseIsUpdatedExplicitly(repo: AdoptRepos, adoptRepository: AdoptRepository) {
+        runBlocking {
+            val adoptRepo = spyk(adoptRepository)
+            val adoptReposBuilder = AdoptReposBuilder(adoptRepo)
+
+            adoptReposBuilder.incrementalUpdate(setOf(before.repos[8]?.releases?.nodeList?.first()?.release_name!!), before)
+
+            coVerify(exactly = 1) { adoptRepo.getReleaseById(GitHubId(before.repos[8]?.releases?.nodeList?.first()?.id!!)) }
         }
     }
 
@@ -66,10 +78,10 @@ class AdoptReposBuilderTest : BaseTest() {
         runBlocking {
 
             val updated2 = runBlocking {
-                adoptReposBuilder.incrementalUpdate(before)
+                adoptReposBuilder.incrementalUpdate(emptySet(), before)
             }
             val updated3 = runBlocking {
-                adoptReposBuilder.incrementalUpdate(before)
+                adoptReposBuilder.incrementalUpdate(emptySet(), before)
             }
 
             assertTrue { updated == updated2 }
@@ -85,8 +97,8 @@ class AdoptReposBuilderTest : BaseTest() {
 
             coEvery { adoptRepo.getReleaseById(GitHubId(AdoptRepositoryStub.toAddSemiYoungRelease.id)) } returns ReleaseResult(listOf(AdoptRepositoryStub.toAddSemiYoungRelease))
 
-            val updatedRepo = adoptReposBuilder.incrementalUpdate(repo)
-            adoptReposBuilder.incrementalUpdate(updatedRepo)
+            val updatedRepo = adoptReposBuilder.incrementalUpdate(emptySet(), repo)
+            adoptReposBuilder.incrementalUpdate(emptySet(), updatedRepo)
 
             coVerify(exactly = 3) { adoptRepo.getReleaseById(GitHubId(AdoptRepositoryStub.toAddSemiYoungRelease.id)) }
         }

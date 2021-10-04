@@ -114,7 +114,14 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
             val summary = QuerySummaryData(
                 GHRepositorySummary(
                     GHReleasesSummary(
-                        listOf(GHReleaseSummary(GitHubId("foo"), "a", "b")),
+                        listOf(
+                            GHReleaseSummary(
+                                GitHubId("foo"),
+                                "a",
+                                "b",
+                                "c"
+                            )
+                        ),
                         PageInfo(false, null)
                     )
                 ),

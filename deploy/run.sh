@@ -15,6 +15,12 @@ then
   JAVA_OPTS="$JAVA_OPTS -Dquarkus.http.insecure-requests=disabled"
 fi
 
+if [ -f "${UPDATE_TOKEN}" ];
+then
+  JAVA_OPTS="$JAVA_OPTS -Dquarkus.security.users.embedded.users.updater=${UPDATE_TOKEN}"
+  JAVA_OPTS="$JAVA_OPTS -Dquarkus.security.users.embedded.roles.updater=user"
+fi
+
 if [ -f "${MONGO_CERT_FILE}" ];
 then
   cp $JAVA_HOME/lib/security/cacerts .

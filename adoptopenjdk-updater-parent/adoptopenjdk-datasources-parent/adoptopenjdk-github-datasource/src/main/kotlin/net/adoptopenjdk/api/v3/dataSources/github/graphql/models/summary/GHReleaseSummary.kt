@@ -25,7 +25,8 @@ data class GHReleaseSummary @JsonCreator constructor(
     @JsonDeserialize(using = GitHubIdDeserializer::class)
     val id: GitHubId,
     @JsonProperty("publishedAt") val publishedAt: String,
-    @JsonProperty("updatedAt") val updatedAt: String
+    @JsonProperty("updatedAt") val updatedAt: String,
+    @JsonProperty("name") val name: String
 ) {
 
     fun getUpdatedTime(): ZonedDateTime {
@@ -36,7 +37,7 @@ data class GHReleaseSummary @JsonCreator constructor(
         return parseDate(publishedAt)
     }
 
-    fun parseDate(date: String): ZonedDateTime {
+    private fun parseDate(date: String): ZonedDateTime {
         return Instant.from(DateTimeFormatter.ISO_INSTANT.parse(date))
             .atZone(TimeSource.ZONE)
     }
