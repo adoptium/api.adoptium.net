@@ -11,6 +11,8 @@ class Binary {
 
     val image_type: ImageType
 
+    val c_lib: CLib?
+
     val jvm_impl: JvmImpl
 
     @Schema(implementation = Package::class)
@@ -42,7 +44,8 @@ class Binary {
         architecture: Architecture,
         image_type: ImageType,
         jvm_impl: JvmImpl,
-        project: Project = Project.jdk
+        project: Project = Project.jdk,
+        c_lib: CLib?,
     ) {
         this.`package` = `package`
         this.download_count = download_count
@@ -55,6 +58,7 @@ class Binary {
         this.image_type = image_type
         this.jvm_impl = jvm_impl
         this.project = project
+        this.c_lib = c_lib
     }
 
     override fun equals(other: Any?): Boolean {
@@ -73,6 +77,7 @@ class Binary {
         if (updated_at != other.updated_at) return false
         if (scm_ref != other.scm_ref) return false
         if (project != other.project) return false
+        if (c_lib != other.c_lib) return false
 
         return true
     }
@@ -88,10 +93,11 @@ class Binary {
         result = 31 * result + updated_at.hashCode()
         result = 31 * result + (scm_ref?.hashCode() ?: 0)
         result = 31 * result + project.hashCode()
+        result = 31 * result + (c_lib?.hashCode() ?: 0)
         return result
     }
 
     override fun toString(): String {
-        return "Binary(os=$os, architecture=$architecture, image_type=$image_type, jvm_impl=$jvm_impl, `package`=$`package`, installer=$installer, heap_size=$heap_size, download_count=$download_count, updated_at=$updated_at, scm_ref=$scm_ref, project=$project)"
+        return "Binary(os=$os, architecture=$architecture, image_type=$image_type, jvm_impl=$jvm_impl, `package`=$`package`, installer=$installer, heap_size=$heap_size, download_count=$download_count, updated_at=$updated_at, scm_ref=$scm_ref, project=$project, c_lib=$c_lib)"
     }
 }

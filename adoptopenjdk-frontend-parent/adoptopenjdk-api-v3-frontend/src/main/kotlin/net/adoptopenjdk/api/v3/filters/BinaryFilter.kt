@@ -2,6 +2,7 @@ package net.adoptopenjdk.api.v3.filters
 
 import net.adoptopenjdk.api.v3.models.Architecture
 import net.adoptopenjdk.api.v3.models.Binary
+import net.adoptopenjdk.api.v3.models.CLib
 import net.adoptopenjdk.api.v3.models.DateTime
 import net.adoptopenjdk.api.v3.models.HeapSize
 import net.adoptopenjdk.api.v3.models.ImageType
@@ -12,6 +13,7 @@ import java.util.function.Predicate
 
 class BinaryFilter : Predicate<Binary> {
 
+    private var cLib: CLib?
     private val os: OperatingSystem?
     private val arch: Architecture?
     private val imageType: ImageType?
@@ -27,7 +29,8 @@ class BinaryFilter : Predicate<Binary> {
         jvmImpl: JvmImpl? = null,
         heapSize: HeapSize? = null,
         project: Project? = null,
-        before: DateTime? = null
+        before: DateTime? = null,
+        cLib: CLib? = null,
     ) {
         this.os = os
         this.arch = arch
@@ -36,6 +39,7 @@ class BinaryFilter : Predicate<Binary> {
         this.heapSize = heapSize
         this.project = project ?: Project.jdk
         this.before = before
+        this.cLib = cLib
     }
 
     override fun test(binary: Binary): Boolean {
@@ -45,6 +49,7 @@ class BinaryFilter : Predicate<Binary> {
             (jvmImpl == null || binary.jvm_impl == jvmImpl) &&
             (heapSize == null || binary.heap_size == heapSize) &&
             (binary.project == project) &&
-            (before == null || binary.updated_at.dateTime.isBefore(before.dateTime))
+            (before == null || binary.updated_at.dateTime.isBefore(before.dateTime)) &&
+            (cLib == null || binary.c_lib == cLib)
     }
 }

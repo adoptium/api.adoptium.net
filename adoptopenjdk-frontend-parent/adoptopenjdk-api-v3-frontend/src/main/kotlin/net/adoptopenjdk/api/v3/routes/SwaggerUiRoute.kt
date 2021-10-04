@@ -21,7 +21,7 @@ class SwaggerUiRoute {
     fun redirectOpenAPIPaths(@PathParam("path") path: String): Response {
         return Response
             .status(Response.Status.FOUND)
-            .location(URI("/q/${path}"))
+            .location(URI("/q/$path"))
             .build()
     }
 }

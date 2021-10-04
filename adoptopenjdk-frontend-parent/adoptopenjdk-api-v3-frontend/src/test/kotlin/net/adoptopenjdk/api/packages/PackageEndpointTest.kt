@@ -3,7 +3,20 @@ package net.adoptopenjdk.api.packages
 import io.restassured.RestAssured
 import io.restassured.response.Response
 import net.adoptopenjdk.api.FrontendTest
-import net.adoptopenjdk.api.v3.models.*
+import net.adoptopenjdk.api.v3.filters.BinaryFilter
+import net.adoptopenjdk.api.v3.filters.ReleaseFilter
+import net.adoptopenjdk.api.v3.models.Architecture
+import net.adoptopenjdk.api.v3.models.Binary
+import net.adoptopenjdk.api.v3.models.CLib
+import net.adoptopenjdk.api.v3.models.HeapSize
+import net.adoptopenjdk.api.v3.models.ImageType
+import net.adoptopenjdk.api.v3.models.JvmImpl
+import net.adoptopenjdk.api.v3.models.OperatingSystem
+import net.adoptopenjdk.api.v3.models.Project
+import net.adoptopenjdk.api.v3.models.Release
+import net.adoptopenjdk.api.v3.models.ReleaseType
+import net.adoptopenjdk.api.v3.models.Vendor
+import org.hamcrest.Matchers
 
 abstract class PackageEndpointTest : FrontendTest() {
 
@@ -18,9 +31,14 @@ abstract class PackageEndpointTest : FrontendTest() {
         jvmImpl: JvmImpl,
         heapSize: HeapSize,
         vendor: Vendor,
-        project: Project
+        project: Project,
+        cLib: CLib? = null
     ): String {
-        return "${getPath()}/latest/$featureVersion/$releaseType/$os/$arch/$imageType/$jvmImpl/$heapSize/$vendor?project=$project"
+        return if (cLib != null) {
+            "${getPath()}/latest/$featureVersion/$releaseType/$os/$arch/$imageType/$jvmImpl/$heapSize/$vendor?project=$project&c_lib=$cLib"
+        } else {
+            "${getPath()}/latest/$featureVersion/$releaseType/$os/$arch/$imageType/$jvmImpl/$heapSize/$vendor?project=$project"
+        }
     }
 
     fun getVersionPath(
@@ -31,9 +49,14 @@ abstract class PackageEndpointTest : FrontendTest() {
         jvmImpl: JvmImpl,
         heapSize: HeapSize,
         vendor: Vendor,
-        project: Project
+        project: Project,
+        cLib: CLib? = null
     ): String {
-        return getVersionPathWithoutProject(releaseName, os, arch, imageType, jvmImpl, heapSize, vendor) + "?project=$project"
+        return if (cLib != null) {
+            getVersionPathWithoutProject(releaseName, os, arch, imageType, jvmImpl, heapSize, vendor) + "?project=$project&c_lib=$cLib"
+        } else {
+            getVersionPathWithoutProject(releaseName, os, arch, imageType, jvmImpl, heapSize, vendor) + "?project=$project"
+        }
     }
 
     fun getVersionPathWithoutProject(
@@ -53,5 +76,36 @@ abstract class PackageEndpointTest : FrontendTest() {
             .`when`()
             .redirects().follow(false)
             .get(path)
+    }
+
+    protected fun getClibBinary() = getRandomBinary(
+        ReleaseFilter(
+            featureVersion = 11,
+            releaseType = ReleaseType.ea,
+            vendor = Vendor.getDefault(),
+        ),
+        BinaryFilter(
+            cLib = CLib.glibc,
+            os = OperatingSystem.linux,
+            imageType = ImageType.staticlibs,
+            jvmImpl = JvmImpl.hotspot,
+            heapSize = HeapSize.normal,
+            project = Project.jdk,
+            arch = Architecture.x64
+        )
+    )
+
+    protected fun requestExpecting307(
+        releaseGetter: (() -> Pair<Release, Binary>),
+        getPath: ((Release, Binary) -> String)
+    ) {
+        val (release, binary) = releaseGetter()
+
+        val path = getPath(release, binary)
+
+        performRequest(path)
+            .then()
+            .statusCode(307)
+            .header("Location", Matchers.startsWith(binary.`package`.link))
     }
 }

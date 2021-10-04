@@ -58,15 +58,9 @@ class InstallerPathTest : PackageEndpointTest() {
 
     @Test
     fun versionRequestRedirects() {
-
-        val (release, binary) = getRandomBinary()
-
-        val path = getVersionPath(release.release_name, binary.os, binary.architecture, binary.image_type, binary.jvm_impl, binary.heap_size, release.vendor, binary.project)
-
-        performRequest(path)
-            .then()
-            .statusCode(307)
-            .header("Location", Matchers.equalTo(binary.installer?.link))
+        requestExpecting307(::getRandomBinary) { release, binary ->
+            getVersionPath(release.release_name, binary.os, binary.architecture, binary.image_type, binary.jvm_impl, binary.heap_size, release.vendor, binary.project)
+        }
     }
 
     @Test
@@ -75,5 +69,19 @@ class InstallerPathTest : PackageEndpointTest() {
         performRequest(path)
             .then()
             .statusCode(404)
+    }
+
+    @Test
+    fun `static lib and glibc latest works`() {
+        requestExpecting307(::getClibBinary) { release, binary ->
+            getLatestPath(release.version_data.major, release.release_type, binary.os, binary.architecture, binary.image_type, binary.jvm_impl, binary.heap_size, release.vendor, binary.project, binary.c_lib)
+        }
+    }
+
+    @Test
+    fun `static lib and glibc version works`() {
+        requestExpecting307(::getClibBinary) { release, binary ->
+            getVersionPath(release.release_name, binary.os, binary.architecture, binary.image_type, binary.jvm_impl, binary.heap_size, release.vendor, binary.project, binary.c_lib)
+        }
     }
 }

@@ -2,6 +2,7 @@ package net.adoptopenjdk.api
 
 import io.restassured.RestAssured
 import net.adoptopenjdk.api.v3.models.Architecture
+import net.adoptopenjdk.api.v3.models.CLib
 import net.adoptopenjdk.api.v3.models.HeapSize
 import net.adoptopenjdk.api.v3.models.ImageType
 import net.adoptopenjdk.api.v3.models.JvmImpl
@@ -34,6 +35,13 @@ abstract class AssetsPathTest : FrontendTest() {
     @TestFactory
     fun filtersImageType(): Stream<DynamicTest> {
         return runFilterTest("image_type", ImageType.values())
+    }
+
+    @TestFactory
+    fun `filters c_lib`(): Stream<DynamicTest> {
+        return runFilterTest("c_lib", CLib.values()) { _, query ->
+            "$query&image_type=staticlibs"
+        }
     }
 
     @TestFactory

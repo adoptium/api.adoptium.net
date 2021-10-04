@@ -7,7 +7,17 @@ import net.adoptopenjdk.api.v3.dataSources.github.GitHubHtmlClient
 import net.adoptopenjdk.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptopenjdk.api.v3.dataSources.github.graphql.models.GHMetaData
 import net.adoptopenjdk.api.v3.mapping.BinaryMapper
-import net.adoptopenjdk.api.v3.models.*
+import net.adoptopenjdk.api.v3.models.Architecture
+import net.adoptopenjdk.api.v3.models.Binary
+import net.adoptopenjdk.api.v3.models.CLib
+import net.adoptopenjdk.api.v3.models.DateTime
+import net.adoptopenjdk.api.v3.models.HeapSize
+import net.adoptopenjdk.api.v3.models.ImageType
+import net.adoptopenjdk.api.v3.models.Installer
+import net.adoptopenjdk.api.v3.models.JvmImpl
+import net.adoptopenjdk.api.v3.models.OperatingSystem
+import net.adoptopenjdk.api.v3.models.Package
+import net.adoptopenjdk.api.v3.models.Project
 import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
 import javax.inject.Inject
@@ -46,6 +56,8 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
 
                 val heapSize = getEnumFromFileName(ghBinaryAsset.name, HeapSize.values(), HeapSize.normal)
 
+                val cLib = getEnumFromFileNameNullable(ghBinaryAsset.name, CLib.values(), null)
+
                 val installer = getInstaller(ghBinaryAsset, allGhAssets)
                 val `package` = getPackage(allGhAssets, ghBinaryAsset, binaryMetadata)
                 val downloadCount = `package`.download_count + (installer?.download_count ?: 0)
@@ -57,10 +69,11 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
                         downloadCount,
                         updatedAt,
                         installer,
-                        heapSize
+                        heapSize,
+                        cLib
                     )
                 } else {
-                    return@async binaryFromName(ghBinaryAsset, `package`, downloadCount, updatedAt, installer, heapSize)
+                    return@async binaryFromName(ghBinaryAsset, `package`, downloadCount, updatedAt, installer, heapSize, cLib)
                 }
             } catch (e: Exception) {
                 LOGGER.error("Failed to fetch binary ${ghBinaryAsset.name}", e)
@@ -165,7 +178,8 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         download_count: Long,
         updated_at: ZonedDateTime,
         installer: Installer?,
-        heap_size: HeapSize
+        heap_size: HeapSize,
+        cLib: CLib?
     ): Binary {
         val scmRef = null
         val os = getEnumFromFileName(asset.name, OperatingSystem.values())
@@ -185,7 +199,8 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
             architecture,
             binaryType,
             jvmImpl,
-            project
+            project,
+            cLib,
         )
     }
 
@@ -195,7 +210,8 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         download_count: Long,
         updated_at: ZonedDateTime,
         installer: Installer?,
-        heap_size: HeapSize
+        heap_size: HeapSize,
+        cLib: CLib?
     ): Binary {
 
         // github metadata has concept of hotspot-jfr split this into
@@ -213,7 +229,8 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
             binaryMetadata.arch,
             binaryMetadata.binary_type,
             variant,
-            project
+            project,
+            cLib,
         )
     }
 

@@ -67,7 +67,8 @@ class AdoptReposTest : BaseTest() {
                     binary.architecture,
                     binary.image_type,
                     binary.jvm_impl,
-                    binary.project
+                    binary.project,
+                    binary.c_lib,
                 )
             )
 
@@ -132,7 +133,8 @@ class AdoptReposTest : BaseTest() {
                                 Architecture.x64,
                                 ImageType.jdk,
                                 JvmImpl.hotspot,
-                                Project.jdk
+                                Project.jdk,
+                                null,
                             )
                         ),
                         2,

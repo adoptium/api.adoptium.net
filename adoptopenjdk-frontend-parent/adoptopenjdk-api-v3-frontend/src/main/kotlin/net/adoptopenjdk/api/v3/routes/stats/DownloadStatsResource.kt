@@ -15,7 +15,6 @@ import org.eclipse.microprofile.openapi.annotations.Operation
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter
-import javax.ws.rs.PathParam
 import java.time.LocalDate
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
@@ -24,6 +23,7 @@ import javax.inject.Inject
 import javax.ws.rs.BadRequestException
 import javax.ws.rs.GET
 import javax.ws.rs.Path
+import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
 import javax.ws.rs.QueryParam
 import javax.ws.rs.core.MediaType
@@ -77,9 +77,9 @@ class DownloadStatsResource {
             .map { grouped ->
                 Pair(
                     grouped.release_name,
-                    grouped.binaries.map {
-                        it.download_count + ((it.installer?.download_count) ?: 0L)
-                    }.sum()
+                    grouped.binaries.sumOf {
+                        it.download_count
+                    }
                 )
             }
             .toMap()

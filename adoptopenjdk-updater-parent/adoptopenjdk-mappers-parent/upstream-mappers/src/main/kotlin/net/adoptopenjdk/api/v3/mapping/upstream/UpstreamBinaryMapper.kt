@@ -56,7 +56,8 @@ object UpstreamBinaryMapper : BinaryMapper() {
                     architecture,
                     imageType,
                     JvmImpl.hotspot,
-                    projectType
+                    projectType,
+                    null,
                 )
             } catch (e: Exception) {
                 LOGGER.error("Failed to parse binary data", e)

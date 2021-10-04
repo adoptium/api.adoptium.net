@@ -16,11 +16,7 @@ abstract class BinaryMapper {
     }
 
     fun <T : FileNameMatcher> getEnumFromFileName(fileName: String, values: Array<T>, default: T? = null): T {
-
-        val matched = values
-            .filter { it.matchesFile(fileName) }
-            .sortedBy { it.priority }
-            .toList()
+        val matched = matchFileName(values, fileName)
 
         if (matched.isEmpty()) {
             if (default != null) {
@@ -32,6 +28,24 @@ abstract class BinaryMapper {
             // Select match with highest priority
             return matched.last()
         }
+    }
+
+    fun <T : FileNameMatcher> getEnumFromFileNameNullable(fileName: String, values: Array<T>, default: T?): T? {
+        val matched = matchFileName(values, fileName)
+
+        return if (matched.isEmpty()) {
+            default
+        } else {
+            // Select match with highest priority
+            matched.last()
+        }
+    }
+
+    private fun <T : FileNameMatcher> matchFileName(values: Array<T>, fileName: String): List<T> {
+        return values
+            .filter { it.matchesFile(fileName) }
+            .sortedBy { it.priority }
+            .toList()
     }
 
     fun getUpdatedTime(asset: GHAsset): ZonedDateTime = ReleaseMapper.parseDate(asset.updatedAt)

@@ -3,6 +3,7 @@ package net.adoptopenjdk.api.v3.routes.packages
 import net.adoptopenjdk.api.v3.OpenApiDocs
 import net.adoptopenjdk.api.v3.models.Architecture
 import net.adoptopenjdk.api.v3.models.Binary
+import net.adoptopenjdk.api.v3.models.CLib
 import net.adoptopenjdk.api.v3.models.HeapSize
 import net.adoptopenjdk.api.v3.models.ImageType
 import net.adoptopenjdk.api.v3.models.Installer
@@ -19,13 +20,13 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
-import javax.ws.rs.PathParam
-import javax.ws.rs.QueryParam
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
 import javax.ws.rs.GET
 import javax.ws.rs.Path
+import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
+import javax.ws.rs.QueryParam
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 
@@ -70,6 +71,10 @@ class InstallerResource @Inject constructor(private val packageEndpoint: Package
         @PathParam("image_type")
         image_type: ImageType?,
 
+        @Parameter(name = "c_lib", description = OpenApiDocs.CLIB_TYPE, required = false)
+        @QueryParam("c_lib")
+        cLib: CLib?,
+
         @Parameter(name = "jvm_impl", description = "JVM Implementation", required = true)
         @PathParam("jvm_impl")
         jvm_impl: JvmImpl?,
@@ -86,7 +91,7 @@ class InstallerResource @Inject constructor(private val packageEndpoint: Package
         @QueryParam("project")
         project: Project?
     ): Response {
-        val releases = packageEndpoint.getReleases(release_name, vendor, os, arch, image_type, jvm_impl, heap_size, project)
+        val releases = packageEndpoint.getReleases(release_name, vendor, os, arch, image_type, jvm_impl, heap_size, project, cLib)
         return formResponseInstaller(releases)
     }
 
@@ -129,6 +134,10 @@ class InstallerResource @Inject constructor(private val packageEndpoint: Package
         @PathParam("image_type")
         image_type: ImageType?,
 
+        @Parameter(name = "c_lib", description = OpenApiDocs.CLIB_TYPE, required = false)
+        @QueryParam("c_lib")
+        cLib: CLib?,
+
         @Parameter(name = "jvm_impl", description = "JVM Implementation", required = true)
         @PathParam("jvm_impl")
         jvm_impl: JvmImpl?,
@@ -145,7 +154,7 @@ class InstallerResource @Inject constructor(private val packageEndpoint: Package
         @QueryParam("project")
         project: Project?
     ): Response {
-        val releaseList = packageEndpoint.getRelease(release_type, version, vendor, os, arch, image_type, jvm_impl, heap_size, project)
+        val releaseList = packageEndpoint.getRelease(release_type, version, vendor, os, arch, image_type, jvm_impl, heap_size, project, cLib)
 
         val release = releaseList
             .lastOrNull { release ->
