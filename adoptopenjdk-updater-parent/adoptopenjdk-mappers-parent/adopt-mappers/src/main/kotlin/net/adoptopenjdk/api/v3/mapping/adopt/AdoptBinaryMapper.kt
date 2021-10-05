@@ -64,6 +64,7 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
 
                 if (binaryMetadata != null) {
                     return@async binaryFromMetadata(
+                        ghBinaryAsset,
                         binaryMetadata,
                         `package`,
                         downloadCount,
@@ -205,6 +206,7 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
     }
 
     private fun binaryFromMetadata(
+        asset: GHAsset,
         binaryMetadata: GHMetaData,
         pack: Package,
         download_count: Long,
@@ -217,6 +219,7 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         // github metadata has concept of hotspot-jfr split this into
         val variant = parseJvmImpl(binaryMetadata)
         val project = parseProject(binaryMetadata)
+        val imageType = getImageType(asset, binaryMetadata)
 
         return Binary(
             pack,
@@ -227,11 +230,21 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
             heap_size,
             binaryMetadata.os,
             binaryMetadata.arch,
-            binaryMetadata.binary_type,
+            imageType,
             variant,
             project,
             cLib,
         )
+    }
+
+    private fun getImageType(asset: GHAsset, binaryMetadata: GHMetaData): ImageType {
+        // static-libs incorrectly labeled as JDK, if the name tells us it's a static-lib, trust that over the metadata file
+        val binaryTypeFromName = getEnumFromFileName(asset.name, ImageType.values(), ImageType.jdk)
+        return if (binaryTypeFromName == ImageType.staticlibs) {
+            ImageType.staticlibs
+        } else {
+            binaryMetadata.binary_type
+        }
     }
 
     private fun parseProject(binaryMetadata: GHMetaData): Project {

@@ -139,5 +139,4 @@ class BinaryPathTest : PackageEndpointTest() {
             getLatestPath(release.version_data.major, release.release_type, binary.os, binary.architecture, binary.image_type, binary.jvm_impl, binary.heap_size, release.vendor, binary.project, binary.c_lib)
         }
     }
-
 }

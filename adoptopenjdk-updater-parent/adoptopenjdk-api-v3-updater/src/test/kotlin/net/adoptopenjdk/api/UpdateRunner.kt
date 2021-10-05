@@ -36,7 +36,6 @@ class UpdateRunner {
         Awaitility.await().atMost(Long.MAX_VALUE, TimeUnit.NANOSECONDS).until({ 4 == 5 })
     }
 
-
     @Test
     @Ignore("For manual execution")
     fun runSingleUpdate() {
@@ -68,7 +67,7 @@ class UpdateRunner {
             )
 
             val repo = AdoptRepositoryImpl(client, AdoptReleaseMapperFactory(AdoptBinaryMapper(gitHubHtmlClient), gitHubHtmlClient))
-            repo.getRelease(8);
+            repo.getRelease(8)
         }
     }
 }

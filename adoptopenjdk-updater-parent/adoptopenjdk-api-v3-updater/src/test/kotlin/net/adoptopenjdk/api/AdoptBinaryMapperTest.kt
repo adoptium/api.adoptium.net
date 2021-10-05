@@ -12,12 +12,12 @@ import net.adoptopenjdk.api.v3.dataSources.github.graphql.models.GHVersion
 import net.adoptopenjdk.api.v3.mapping.adopt.AdoptBinaryMapper
 import net.adoptopenjdk.api.v3.models.Architecture
 import net.adoptopenjdk.api.v3.models.Binary
+import net.adoptopenjdk.api.v3.models.CLib
 import net.adoptopenjdk.api.v3.models.DateTime
 import net.adoptopenjdk.api.v3.models.HeapSize
 import net.adoptopenjdk.api.v3.models.ImageType
 import net.adoptopenjdk.api.v3.models.Installer
 import net.adoptopenjdk.api.v3.models.JvmImpl
-import net.adoptopenjdk.api.v3.models.CLib
 import net.adoptopenjdk.api.v3.models.OperatingSystem
 import net.adoptopenjdk.api.v3.models.Package
 import net.adoptopenjdk.api.v3.models.Project
@@ -394,6 +394,68 @@ class AdoptBinaryMapperTest {
             assertEquals(CLib.glibc, binaryList[0].c_lib)
             assertEquals(CLib.musl, binaryList[1].c_lib)
             assertEquals(null, binaryList[2].c_lib)
+        }
+    }
+
+    @Test
+    fun `should trust file name over metadata file if the file name indicates a static-lib`() {
+        runBlocking {
+            val updatedAt = Instant.from(DateTimeFormatter.ISO_INSTANT.parse("2013-02-27T19:35:32Z"))
+                .atZone(TimeSource.ZONE)
+            val updatedAtFormatted = DateTimeFormatter.ISO_INSTANT.format(updatedAt)
+
+            val packageAsset = GHAsset(
+                name = "OpenJDK11U-static-libs-musl_x64_linux_hotspot_2021-09-28-08-28.tar.gz",
+                size = 1,
+                downloadUrl = "http://package-link",
+                downloadCount = 1,
+                updatedAt = updatedAtFormatted
+            )
+
+            val packageMetadata = GHMetaData(
+                warning = "THIS METADATA FILE IS STILL IN ALPHA DO NOT USE ME",
+                os = OperatingSystem.mac,
+                arch = Architecture.x64,
+                variant = "hotspot",
+                version = GHVersion(0, 1, 2, "", 4, "", 6, "", "", null),
+                scmRef = "scm-ref",
+                version_data = "",
+                binary_type = ImageType.jdk,
+                sha256 = "package-checksum"
+            )
+
+            val ghBinaryAssetsWithMetadata: Map<GHAsset, GHMetaData> = mapOf(
+                Pair(packageAsset, packageMetadata)
+            )
+
+            val actualBinaries = adoptBinaryMapper.toBinaryList(listOf(packageAsset), listOf(packageAsset), ghBinaryAssetsWithMetadata)
+
+            val expectedBinary =
+                Binary(
+                    `package` = Package(
+                        name = "OpenJDK11U-static-libs-musl_x64_linux_hotspot_2021-09-28-08-28.tar.gz",
+                        link = "http://package-link",
+                        size = 1,
+                        checksum = "package-checksum",
+                        checksum_link = null,
+                        download_count = 1,
+                        signature_link = null,
+                        metadata_link = null
+                    ),
+                    download_count = 1,
+                    updated_at = DateTime(updatedAt),
+                    scm_ref = "scm-ref",
+                    installer = null,
+                    heap_size = HeapSize.normal,
+                    os = OperatingSystem.mac,
+                    architecture = Architecture.x64,
+                    image_type = ImageType.staticlibs,
+                    jvm_impl = JvmImpl.hotspot,
+                    project = Project.jdk,
+                    c_lib = CLib.musl
+                )
+
+            assertEquals(expectedBinary, actualBinaries[0])
         }
     }
 
