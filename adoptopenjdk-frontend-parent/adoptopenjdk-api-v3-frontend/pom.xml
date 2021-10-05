@@ -41,10 +41,6 @@
             <artifactId>adoptopenjdk-api-v3-persistence</artifactId>
         </dependency>
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-        </dependency>
-        <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit5</artifactId>
             <scope>test</scope>
@@ -140,6 +136,10 @@
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkiverse.logging.logback</groupId>
+            <artifactId>quarkus-logging-logback</artifactId>
         </dependency>
     </dependencies>
 
