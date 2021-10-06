@@ -5,6 +5,7 @@
     <logger name="com.microsoft.applicationinsights" level="WARN"/>
     <logger name="org.mongodb" level="INFO"/>
     <logger name="io.quarkus.vertx.http.runtime.ForwardedParser" level="INFO"/>
+    <logger name="io.netty" level="INFO"/>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>/logs/frontend.log</file>
