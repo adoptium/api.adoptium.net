@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>AdoptOpenJDK Migration</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="container">
+
+    <h1>Migrate to api.adoptium.net</h1>
+    <a href="https://blog.adoptopenjdk.net/2021/03/transition-to-eclipse-an-update/">AdoptOpenJDK has moved to the Eclipse Foundation</a>.
+
+    <p>As part of the move to Eclipse the AdoptOpenJDK will no longer produce new builds. It is therefore recommended that projects should
+        migrate to using <a href="https://api.adoptium.net">api.adoptium.net</a> as soon as possible.</p>
+
+    <h2>Terms</h2>
+    <ul>
+        <li><span class="adoptopenjdk">AdoptOpenJDK</span> - The legacy project</li>
+        <li><span class="adoptopenjdk">api.adoptopenjdk.net</span> - Legacy API of the AdoptOpenJDK project</li>
+        <li><span class="adoptium">Adoptium</span> - New Eclipse Project</li>
+        <li><span class="adoptium">api.adoptium.net</span> - New API for the Eclipse Adoptium project</li>
+        <li><span class="adoptium">Temurin</span> - The TCKed OpenJDK hotspot distribution that Eclipse Adoptium produces</li>
+        <li><span>Semeru</span> - The name of the new distribution of the OpenJ9 project</li>
+    </ul>
+    <h3>API Remains the Same</h3>
+    <p>In order to ease migration the v3 api at <span class="adoptium">api.adoptium.net</span> has an identical API to the deprecated <span class="adoptopenjdk">AdoptOpenJDK API</span>.
+        And we plan to continue to maintain it as backwards compatible with the <span class="adoptopenjdk">AdoptOpenJDK API</span>.</p>
+
+    <h3>Update Vendor List</h3>
+
+    <p><b>tl;dr :
+    <ul>
+        <li><span class="adoptopenjdk">AdoptOpenJDK</span> API will deliver <span class="adoptium">Eclipse Temurin</span> binaries</li>
+        <li><span class="adoptium">Eclipse Adoptium API</span> will not deliver <span class="adoptopenjdk">AdoptOpenJDK</span> binaries</li>
+    </ul>
+    </b></p>
+
+    <h4>Changes at AdoptOpenJDK</h4>
+
+    <p>The Vendor list in the <span class="adoptopenjdk">AdoptOpenJDK API</span> (at time of writing) is as follows:</p>
+
+    <code>adoptopenjdk, openjdk, alibaba, ibm, eclipse</code>
+
+    <p>In the past we distributed both Hotspot and OpenJ9 under the <code>adoptopenjdk</code> Vendor
+        and when requests were made that did not explicitly state which Vendor is required,
+        the request would default to <code>adoptopenjdk</code>.
+    </p>
+
+    <p>Now that <span class="adoptopenjdk">AdoptOpenJDK</span> will no-longer produce binaries, in order to keep delivering
+        updates to those depending on the <span class="adoptopenjdk">AdoptOpenJDK API</span>, <code>adoptopenjdk</code> has been
+        made synonymous to <code>eclipse</code> in the <span class="adoptopenjdk">AdoptOpenJDK API</span>. Requests that explicitly
+        ask for <code>adoptopenjdk</code>, or do not specify a specific Vendor, will return
+        assets that match both <code>adoptopenjdk</code> and the new <code>eclipse</code> builds. The
+        synonym only works one way, requests asking specifically for <code>eclipse</code> will ONLY
+        return builds produced by <span class="adoptium">Eclipse Adoptium</span> and NOT builds that were created at <span class="adoptopenjdk">AdoptOpenJDK</span>.</p>
+
+    <p>The addition of the <code>ibm</code> vendor is to support the new Semeru project who will
+        be distributing OpenJ9 builds.</p>
+
+    <p>Soon
+        with the exception of legacy binaries, most requests for Hotspot JVMs should
+        ultimately return an <span class="adoptium">Eclipse Temurin</span> binary.</p>
+
+    <h4>Changes at Eclipse Adoptium</h4>
+    <p><code>eclipse</code> has become the new default and only Vendor at <span class="adoptium">api.adoptium.net</span>. New releases will
+        have the vendor <code>eclipse</code>. <span class="adoptium">api.adoptium.net</span> will only distribute binaries produced
+        by Eclipse.
+    </p>
+
+
+    <h3>Update jvm_impl List</h3>
+
+    <p>The jvm_impl list in the <span class="adoptopenjdk">AdoptOpenJDK API</span> is as follows:</p>
+    <code>hotspot, openj9, dragonwell</code>
+
+    <p>At <span class="adoptium">api.adoptium.net</span> (at time of writing), we are only distributing <code>hotspot</code> binaries,
+        this has therefore become the one and only <code>jvm_impl</code> at <span class="adoptium">api.adoptium.net</span></p>
+
+    <h3>Reset stats</h3>
+
+    <p>Download statistics at <span class="adoptium">Adoptium</span> will only show downloads of <span class="adoptium">Adoptium</span> binaries.</p>
+    <p>The <span class="adoptopenjdk">AdoptOpenJDK API</span> will show download statistics of ONLY <span class="adoptopenjdk">AdoptOpenJDK</span> binaries.</p>
+</div>
+</body>
+</html>
