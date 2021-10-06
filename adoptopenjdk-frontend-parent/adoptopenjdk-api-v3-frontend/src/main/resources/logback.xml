@@ -6,12 +6,12 @@
     <logger name="org.mongodb" level="INFO"/>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>/tmp/updater.log</file>
+        <file>/logs/frontend.log</file>
         <encoder>
             <pattern>%date %level [%thread] %logger{10} [%file:%line]%n%msg%n</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>/logs/updater.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>/logs/frontend.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>100MB</maxFileSize>
             <maxHistory>10</maxHistory>
             <totalSizeCap>500MB</totalSizeCap>
@@ -19,7 +19,7 @@
     </appender>
 
     <appender name="FILETMP" class="ch.qos.logback.core.FileAppender">
-        <file>/tmp/updater.log</file>
+        <file>/tmp/frontend.log</file>
         <encoder>
             <pattern>%date %level [%thread] %logger{10} [%file:%line]%n%msg%n</pattern>
         </encoder>
