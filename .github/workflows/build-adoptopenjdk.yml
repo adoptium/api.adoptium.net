@@ -1,0 +1,25 @@
+name: Build AdoptOpenJDK
+
+on: [ push, pull_request ]
+
+jobs:
+  build:
+    name: Build AdoptOpenJDK
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/setup-java@v2
+      with:
+        java-version: '11'
+        java-package: jdk
+        architecture: x64
+        distribution: 'adopt'
+
+    - uses: actions/checkout@v2
+
+    - name: Build app
+      run: ./mvnw --batch-mode clean install jacoco:report jacoco:report-aggregate -Padoptopenjdk,-adoptium
+
+    - uses: codecov/codecov-action@v2.1.0
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
