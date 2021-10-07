@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>AdoptOpenJDK Migration</title>
+    <title>Migration to Eclipse Adoptium</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -23,21 +23,22 @@
         <li><span class="adoptopenjdk">api.adoptopenjdk.net</span> - Legacy API of the AdoptOpenJDK project</li>
         <li><span class="adoptium">Adoptium</span> - New Eclipse Project</li>
         <li><span class="adoptium">api.adoptium.net</span> - New API for the Eclipse Adoptium project</li>
-        <li><span class="adoptium">Temurin</span> - The TCKed OpenJDK hotspot distribution that Eclipse Adoptium produces</li>
+        <li><span class="adoptium">Temurin</span> - The (TCK'd and AQA tested) OpenJDK binary produced by the Eclipse Adoptium project. Temurin binaries are the successor to AdoptOpenJDK binaries</li>
         <li><span>Semeru</span> - The name of the new distribution of the OpenJ9 project</li>
     </ul>
-    <h3>API Remains the Same</h3>
-    <p>In order to ease migration the v3 api at <span class="adoptium">api.adoptium.net</span> has an identical API to the deprecated <span class="adoptopenjdk">AdoptOpenJDK API</span>.
+    <h3>API compatibility</h3>
+    <p>We have kept the API usage identical between the <span class="adoptopenjdk">AdoptOpenJDK V3 API</span> and <span class="adoptium">api.adoptium.net</span> for ease of migration.
         And we plan to continue to maintain it as backwards compatible with the <span class="adoptopenjdk">AdoptOpenJDK API</span>.</p>
 
     <h3>Update Vendor List</h3>
 
-    <p><b>tl;dr :
+    <p>
+            tl;dr :
     <ul>
         <li><span class="adoptopenjdk">AdoptOpenJDK</span> API will deliver <span class="adoptium">Eclipse Temurin</span> binaries</li>
-        <li><span class="adoptium">Eclipse Adoptium API</span> will not deliver <span class="adoptopenjdk">AdoptOpenJDK</span> binaries</li>
+        <li><span class="adoptium">Eclipse Adoptium API</span> will <strong>NOT</strong> deliver <span class="adoptopenjdk">AdoptOpenJDK</span> binaries</li>
     </ul>
-    </b></p>
+    </p>
 
     <h4>Changes at AdoptOpenJDK</h4>
 
