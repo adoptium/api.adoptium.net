@@ -76,13 +76,3 @@ blockquote code {
 a code {
     color: #428bca;
 }
-
-.adoptopenjdk {
-    background-color: #ffc172;
-    padding: 3px;
-}
-
-.adoptium {
-    background-color: #af8196;
-    padding: 3px;
-}
