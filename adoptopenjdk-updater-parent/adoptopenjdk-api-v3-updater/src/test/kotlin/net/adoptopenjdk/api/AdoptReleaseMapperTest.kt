@@ -20,7 +20,7 @@ import org.apache.http.message.BasicHeader
 import org.apache.http.message.BasicStatusLine
 import org.jboss.weld.junit5.auto.AddPackages
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -268,4 +268,38 @@ class AdoptReleaseMapperTest : BaseTest() {
             val release = createAdoptReleaseMapper(client).toAdoptRelease(ghRelease)
         }
     }
+
+    @Test
+    fun `identifies the source repo if present in a release`() {
+        runBlocking {
+            val source = GHAssets(
+                listOf(
+                    GHAsset(
+                        "OpenJDK11U-sources_11.0.13_6_ea.tar.gz",
+                        1L,
+                        "the-source-link",
+                        1L,
+                        "2013-02-27T19:35:32Z"
+                    )
+                ),
+                PageInfo(false, "")
+            )
+
+            val ghRelease = GHRelease(
+                id = GitHubId("1"),
+                name = "jdk9u-2018-09-27-08-50",
+                isPrerelease = true,
+                publishedAt = "2013-02-27T19:35:32Z",
+                updatedAt = "2013-02-27T19:35:32Z",
+                releaseAssets = source,
+                resourcePath = "8",
+                url = "https://github.com/AdoptOpenJDK/openjdk9-binaries/releases/download/jdk9u-2018-09-27-08-50/OpenJDK9U-jre_aarch64_linux_hotspot_2018-09-27-08-50.tar.gz"
+            )
+
+            val release = createAdoptReleaseMapper().toAdoptRelease(ghRelease)
+
+            assertEquals("the-source-link", release.result!!.first().source!!.link)
+        }
+    }
+
 }
