@@ -15,6 +15,7 @@ import net.adoptopenjdk.api.v3.mapping.ReleaseMapper
 import net.adoptopenjdk.api.v3.models.DateTime
 import net.adoptopenjdk.api.v3.models.Release
 import net.adoptopenjdk.api.v3.models.ReleaseType
+import net.adoptopenjdk.api.v3.models.SourcePackage
 import net.adoptopenjdk.api.v3.models.Vendor
 import net.adoptopenjdk.api.v3.models.VersionData
 import net.adoptopenjdk.api.v3.parser.FailedToParse
@@ -70,6 +71,7 @@ private class AdoptReleaseMapper constructor(
         val updatedAt = parseDate(ghRelease.updatedAt)
 
         val ghAssetsWithMetadata = associateMetadataWithBinaries(ghRelease.releaseAssets)
+        val sourcePackage = getSourcePackage(ghRelease)
 
         try {
             val ghAssetsGroupedByVersion = ghAssetsWithMetadata
@@ -86,7 +88,7 @@ private class AdoptReleaseMapper constructor(
                     val ghAssets: List<GHAsset> = ghAssetsForVersion.value.map { ghAssetWithMetadata -> ghAssetWithMetadata.key }
                     val id = generateIdForSplitRelease(version, ghRelease)
 
-                    toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghRelease.releaseAssets.assets)
+                    toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghRelease.releaseAssets.assets, sourcePackage)
                 }
                 .ifEmpty {
                     try {
@@ -95,7 +97,7 @@ private class AdoptReleaseMapper constructor(
                         val ghAssets = ghRelease.releaseAssets.assets
                         val id = ghRelease.id.id
 
-                        return@ifEmpty listOf(toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghAssets))
+                        return@ifEmpty listOf(toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghAssets, sourcePackage))
                     } catch (e: Exception) {
                         throw FailedToParse("Failed to parse version $releaseName", e)
                     }
@@ -161,7 +163,8 @@ private class AdoptReleaseMapper constructor(
         updatedAt: ZonedDateTime,
         vendor: Vendor,
         version: VersionData,
-        fullGhAssetList: List<GHAsset>
+        fullGhAssetList: List<GHAsset>,
+        sourcePackage: SourcePackage?
     ): Release {
         LOGGER.debug("Getting binaries $releaseName")
         val binaries = adoptBinaryMapper.toBinaryList(ghAssets, fullGhAssetList, ghAssetWithMetadata)
@@ -173,7 +176,7 @@ private class AdoptReleaseMapper constructor(
             }
             .map { it.downloadCount }.sum()
 
-        return Release(id, release_type, releaseLink, releaseName, DateTime(timestamp), DateTime(updatedAt), binaries.toTypedArray(), downloadCount, vendor, version)
+        return Release(id, release_type, releaseLink, releaseName, DateTime(timestamp), DateTime(updatedAt), binaries.toTypedArray(), downloadCount, vendor, version, sourcePackage)
     }
 
     private fun formReleaseType(release: GHRelease): ReleaseType {
@@ -246,4 +249,14 @@ private class AdoptReleaseMapper constructor(
     private fun getFeatureVersion(release: GHRelease): VersionData {
         return VersionParser.parse(release.name)
     }
+
+    private fun getSourcePackage(release: GHRelease): SourcePackage? {
+        return release.releaseAssets
+            .assets
+            .filter { it.name.endsWith("tar.gz") }
+            .filter { it.name.contains("-sources") }
+            .map { SourcePackage(it.name, it.downloadUrl, it.size) }
+            .firstOrNull()
+    }
+
 }
