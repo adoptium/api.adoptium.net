@@ -13,6 +13,7 @@ import net.adoptopenjdk.api.v3.dataSources.models.GitHubId
 import net.adoptopenjdk.api.v3.mapping.BinaryMapper
 import net.adoptopenjdk.api.v3.mapping.ReleaseMapper
 import net.adoptopenjdk.api.v3.models.DateTime
+import net.adoptopenjdk.api.v3.models.ImageType
 import net.adoptopenjdk.api.v3.models.Release
 import net.adoptopenjdk.api.v3.models.ReleaseType
 import net.adoptopenjdk.api.v3.models.SourcePackage
@@ -71,7 +72,7 @@ private class AdoptReleaseMapper constructor(
         val updatedAt = parseDate(ghRelease.updatedAt)
 
         val ghAssetsWithMetadata = associateMetadataWithBinaries(ghRelease.releaseAssets)
-        val sourcePackage = getSourcePackage(ghRelease)
+        val sourcePackage = getSourcePackage(ghRelease, ghAssetsWithMetadata)
 
         try {
             val ghAssetsGroupedByVersion = ghAssetsWithMetadata
@@ -250,7 +251,15 @@ private class AdoptReleaseMapper constructor(
         return VersionParser.parse(release.name)
     }
 
-    private fun getSourcePackage(release: GHRelease): SourcePackage? {
+    private fun getSourcePackage(release: GHRelease, ghAssetsWithMetadata: Map<GHAsset, GHMetaData>): SourcePackage? {
+        val sources = ghAssetsWithMetadata
+            .entries
+            .firstOrNull { it.value.binary_type == ImageType.sources }
+
+        if (sources != null) {
+            return SourcePackage(sources.key.name, sources.key.downloadUrl, sources.key.size)
+        }
+
         return release.releaseAssets
             .assets
             .filter { it.name.endsWith("tar.gz") }
