@@ -267,5 +267,4 @@ private class AdoptReleaseMapper constructor(
             .map { SourcePackage(it.name, it.downloadUrl, it.size) }
             .firstOrNull()
     }
-
 }

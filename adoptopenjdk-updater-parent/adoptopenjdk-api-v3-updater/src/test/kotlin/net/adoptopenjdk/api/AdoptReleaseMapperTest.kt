@@ -301,5 +301,4 @@ class AdoptReleaseMapperTest : BaseTest() {
             assertEquals("the-source-link", release.result!!.first().source!!.link)
         }
     }
-
 }
