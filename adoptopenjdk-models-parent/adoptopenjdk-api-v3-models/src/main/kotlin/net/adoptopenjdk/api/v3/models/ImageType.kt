@@ -3,13 +3,14 @@ package net.adoptopenjdk.api.v3.models
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 
-@Schema(type = SchemaType.STRING, enumeration = ["jdk", "jre", "testimage", "debugimage", "staticlibs"], example = "jdk")
+@Schema(type = SchemaType.STRING, enumeration = ["jdk", "jre", "testimage", "debugimage", "staticlibs", "sources"], example = "jdk")
 enum class ImageType : FileNameMatcher {
     jdk,
     jre(1),
     testimage(1),
     debugimage(1),
-    staticlibs(1, "static-libs");
+    staticlibs(1, "static-libs"),
+    sources(1, "sources");
 
     override lateinit var names: List<String>
     override var priority: Int = 0

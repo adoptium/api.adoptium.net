@@ -32,9 +32,12 @@ class AdoptReposBuilderTest : BaseTest() {
             val adoptRepo = spyk(adoptRepository)
             val adoptReposBuilder = AdoptReposBuilder(adoptRepo)
 
-            adoptReposBuilder.incrementalUpdate(setOf(before.repos[8]?.releases?.nodeList?.first()?.release_name!!), before)
+            updated = adoptReposBuilder.incrementalUpdate(setOf(), before)
 
-            coVerify(exactly = 1) { adoptRepo.getReleaseById(GitHubId(before.repos[8]?.releases?.nodeList?.first()?.id!!)) }
+            val toUpdate = updated.getFeatureRelease(8)!!.releases.nodes.values.take(AdoptRepositoryStub.unchangedIndex).last()
+
+            updated = adoptReposBuilder.incrementalUpdate(setOf(toUpdate.release_name), before)
+            coVerify(exactly = 1) { adoptRepo.getReleaseById(match { it.id == toUpdate!!.id }) }
         }
     }
 
@@ -66,8 +69,8 @@ class AdoptReposBuilderTest : BaseTest() {
     @Test
     fun updatedReleaseIsUpdatedWhenUpdated() {
         runBlocking {
-            assertTrue { before.getFeatureRelease(8)!!.releases.getReleases().contains(stub.originaToUpdate) }
-            assertTrue { !updated.getFeatureRelease(8)!!.releases.getReleases().contains(stub.originaToUpdate) }
+            assertTrue { before.getFeatureRelease(8)!!.releases.getReleases().contains(stub.originalToUpdate) }
+            assertTrue { !updated.getFeatureRelease(8)!!.releases.getReleases().contains(stub.originalToUpdate) }
             assertTrue { updated.getFeatureRelease(8)!!.releases.getReleases().contains(stub.toUpdate) }
             assertTrue { updated != before }
         }
