@@ -28,12 +28,12 @@ open class AdoptRepositoryStub : AdoptRepository {
     @ExcludeBean
     val repo = BaseTest.adoptRepos
     val toRemove = repo.getFeatureRelease(8)!!.releases.nodes.values.first()
-    val originaToUpdate = repo.getFeatureRelease(8)!!.releases.nodes.values.take(2).last()
+    val originalToUpdate = repo.getFeatureRelease(8)!!.releases.nodes.values.take(2).last()
 
     val toUpdate = Release(
-        originaToUpdate.id, ReleaseType.ga, "openjdk-8u", "jdk8u-2018-09-27-08-50",
-        DateTime(TimeSource.now().minusDays(2)),
-        DateTime(TimeSource.now().minusDays(2)),
+        originalToUpdate.id, ReleaseType.ga, "openjdk-8u", "jdk8u-2018-09-27-08-50",
+        DateTime(TimeSource.now().minusDays(2).withSecond(0).withMinute(0)),
+        DateTime(TimeSource.now().minusDays(2).withSecond(0).withMinute(0)),
         arrayOf(), 2, Vendor.adoptopenjdk,
         VersionData(8, 2, 3, "", 1, 4, "", "")
     )
@@ -42,15 +42,17 @@ open class AdoptRepositoryStub : AdoptRepository {
         .removeRelease(8, toRemove)
         .addRelease(8, toAdd)
         .addRelease(8, toAddYoung)
-        .removeRelease(8, originaToUpdate)
+        .removeRelease(8, originalToUpdate)
         .addRelease(8, toUpdate)
         .addRelease(8, toAddSemiYoungRelease)
 
     companion object {
+        val unchangedIndex = 3
+
         val toAdd = Release(
             "foo", ReleaseType.ga, "openjdk-8u", "jdk8u-2018-09-27-08-50",
-            DateTime(TimeSource.now().minusDays(2)),
-            DateTime(TimeSource.now().minusDays(2)),
+            DateTime(TimeSource.now().minusDays(2).withSecond(0).withMinute(0)),
+            DateTime(TimeSource.now().minusDays(2).withSecond(0).withMinute(0)),
             arrayOf(), 2, Vendor.adoptopenjdk,
             VersionData(8, 2, 3, "", 1, 4, "", "")
         )

@@ -39,12 +39,13 @@ class LatestAssetsPathTest : FrontendTest() {
     private fun hasEntryFor(binaries: JsonArray, os: OperatingSystem, imageType: ImageType, architecture: Architecture, vendor: Vendor): Boolean {
         return binaries
             .map { JsonMapper.mapper.readValue(it.toString(), BinaryAssetView::class.java) }
-            .filter { release ->
+            .any { release ->
+                val vendorMatch = release.vendor == vendor || vendor == Vendor.adoptopenjdk && release.vendor == Vendor.eclipse
+
                 release.binary.os == os &&
                     release.binary.image_type == imageType &&
                     release.binary.architecture == architecture &&
-                    release.vendor == vendor
+                    vendorMatch
             }
-            .count() > 0
     }
 }
