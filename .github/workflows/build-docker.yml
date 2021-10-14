@@ -17,7 +17,7 @@ jobs:
           login-server: adoptopenjdkacr.azurecr.io
           username: ${{ secrets.AZURE_CLIENT_ID }}
           password: ${{ secrets.AZURE_CLIENT_SECRET }}
-   
+ 
       - name: Build image and push to Azure
         run: |
           docker build -f ./deploy/Dockerfile . -t adoptopenjdkacr.azurecr.io/adoptopenjdk-api-staging:latest
