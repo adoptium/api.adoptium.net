@@ -22,7 +22,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
             dockerfile: ./deploy/Dockerfile
-            repository: adoptopenjdkacr.azurecr.io/adoptopenjdk-api-deployment
+            repository: adoptopenjdkacr.azurecr.io/adoptopenjdk-api-staging
             tags: latest
             push: true
 
