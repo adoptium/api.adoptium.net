@@ -1,0 +1,28 @@
+name: Docker Build
+
+on:
+  workflow_dispatch:
+  push:
+   branches: [ main ]
+
+jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+    
+      - name: Login to Azure Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: adoptopenjdkacr.azurecr.io
+          username: ${{ secrets.AZURE_CLIENT_ID }}
+          password: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+      - name: Build image and push to Azure
+        uses: docker/build-push-action@v2
+        with:
+            dockerfile: ./deploy/Dockerfile
+            repository: adoptopenjdkacr.azurecr.io/adoptopenjdk-api-staging
+            tags: latest
+            push: true
+
