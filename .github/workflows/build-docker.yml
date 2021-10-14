@@ -10,14 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-    
+
       - name: Login to Azure Container Registry
         uses: azure/docker-login@v1
         with:
           login-server: adoptopenjdkacr.azurecr.io
           username: ${{ secrets.AZURE_CLIENT_ID }}
           password: ${{ secrets.AZURE_CLIENT_SECRET }}
- 
+
       - name: Build image and push to Azure
         run: |
           docker build -f ./deploy/Dockerfile . -t adoptopenjdkacr.azurecr.io/adoptopenjdk-api-staging:latest
