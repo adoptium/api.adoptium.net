@@ -1,4 +1,3 @@
-![Build](https://github.com/AdoptOpenJDK/openjdk-api-v3/workflows/Build/badge.svg?branch=master) [![codecov](https://codecov.io/gh/AdoptOpenJDK/openjdk-api-v3/branch/master/graph/badge.svg)](https://codecov.io/gh/AdoptOpenJDK/openjdk-api-v3)
 
 # Adoptium API
 
