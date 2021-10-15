@@ -29,8 +29,8 @@ jobs:
         uses: azure/aks-set-context@v1
         with:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
-          cluster-name: api-staging
+          cluster-name: aksff92
           resource-group: adopt-api
           
       - name: Redeploy frontend-service
-        run: kubectl rollout restart deployment frontend-service
+        run: kubectl config set-context --current --namespace=api-staging && kubectl rollout restart deployment frontend-service
