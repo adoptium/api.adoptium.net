@@ -6,12 +6,12 @@ on:
   push:
     branches: [ main, production ]
 
-jobs:
-  # Cancel existing runs if user makes another push
-  concurrency:
-    group: "${{ github.ref }}"
-    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# Cancel existing runs if user makes another push
+concurrency:
+  group: "${{ github.ref }}"
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
