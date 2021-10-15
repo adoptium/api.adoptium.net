@@ -18,10 +18,19 @@ jobs:
           username: ${{ secrets.AZURE_CLIENT_ID }}
           password: ${{ secrets.AZURE_CLIENT_SECRET }}
 
-      - name: Build image and push to Azure
+      - name: Build container image and push to Azure
         uses: docker/build-push-action@v2
         with:
           file: ./deploy/Dockerfile
           tags: adoptopenjdkacr.azurecr.io/adoptopenjdk-api-staging:latest
           push: true
 
+      - name: Set the target Azure Kubernetes Service (AKS) cluster. 
+        uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: api-staging
+          resource-group: adopt-api
+          
+      - name: Redeploy frontend-service
+        run: kubectl rollout restart deployment frontend-service
