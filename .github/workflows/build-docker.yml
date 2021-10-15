@@ -22,9 +22,8 @@ jobs:
       - name: Detect Branch
         run: |
           case ${GITHUB_REF##*/} in
-            main) echo ("NAMESPACE=api-staging") >> $env:GITHUB_ENV ;;
-            production) echo ("NAMESPACE=api") >> $env:GITHUB_ENV ;;
-            *) echo "${GITHUB_REF##*/} not supported" && exit 1 ;;
+            production) echo "NAMESPACE=api" >> $GITHUB_ENV ;;
+            *) echo "NAMESPACE=api-staging" >> $GITHUB_ENV ;;
           esac
 
       - name: Build container image and push to Azure
