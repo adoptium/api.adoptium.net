@@ -23,7 +23,7 @@ jobs:
     steps:
     - name: Setup mvnw arguments
       run: |
-        case ${{ matrix.version }} in
+        case ${{ matrix.ecosystem }} in
           adoptium) echo "ARGS=-Decosystem=adoptium" >> $GITHUB_ENV ;;
         esac
 
