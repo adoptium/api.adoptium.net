@@ -3,7 +3,7 @@ name: Docker Build
 on:
   workflow_dispatch:
   push:
-   branches: [ main ]
+   branches: [ main, production ]
 
 jobs:
   docker-build:
@@ -19,11 +19,19 @@ jobs:
           username: ${{ secrets.AZURE_CLIENT_ID }}
           password: ${{ secrets.AZURE_CLIENT_SECRET }}
 
+      - name: Detect Branch
+        run: |
+          case ${GITHUB_REF##*/} in
+            main) echo ("NAMESPACE=api-staging") >> $env:GITHUB_ENV ;;
+            production) echo ("NAMESPACE=api") >> $env:GITHUB_ENV ;;
+            *) echo "${GITHUB_REF##*/} not supported" && exit 1 ;;
+          esac
+
       - name: Build container image and push to Azure
         uses: docker/build-push-action@v2
         with:
           file: ./deploy/Dockerfile
-          tags: adoptopenjdkacr.azurecr.io/adoptopenjdk-api-staging:latest
+          tags: adoptopenjdkacr.azurecr.io/adoptopenjdk-${NAMESPACE}:latest
           push: true
 
       - name: Set the target Azure Kubernetes Service (AKS) cluster. 
@@ -34,4 +42,4 @@ jobs:
           resource-group: adopt-api
           
       - name: Redeploy frontend-service
-        run: kubectl config set-context --current --namespace=api-staging && kubectl rollout restart deployment frontend-service
+        run: kubectl config set-context --current --namespace=${NAMESPACE} && kubectl rollout restart deployment frontend-service
