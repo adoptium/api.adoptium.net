@@ -30,7 +30,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           file: ./deploy/Dockerfile
-          tags: adoptopenjdkacr.azurecr.io/adoptopenjdk-${{ NAMESPACE }}:latest
+          tags: adoptopenjdkacr.azurecr.io/adoptopenjdk-${{ env.NAMESPACE }}:latest
           push: true
 
       - name: Set the target Azure Kubernetes Service (AKS) cluster. 
@@ -41,4 +41,4 @@ jobs:
           resource-group: adopt-api
           
       - name: Redeploy frontend-service
-        run: kubectl config set-context --current --namespace=${{ NAMESPACE }} && kubectl rollout restart deployment frontend-service
+        run: kubectl config set-context --current --namespace=${{ env.NAMESPACE }} && kubectl rollout restart deployment frontend-service
