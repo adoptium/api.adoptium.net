@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main, production ]
+  push:
+    branches: [ main, production ]
+
+# Cancel existing runs if user makes another push
+concurrency:
+  group: "${{ github.ref }}"
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ecosystem: [adoptium, adoptopenjdk]
+
+    steps:
+    - name: Setup mvnw arguments
+      run: |
+        case ${{ matrix.ecosystem }} in
+          adoptium) echo "ARGS=-Decosystem=adoptium" >> $GITHUB_ENV ;;
+        esac
+
+    - uses: actions/setup-java@v2
+      with:
+        java-version: '11'
+        java-package: jdk
+        architecture: x64
+        distribution: 'adopt'
+
+    - uses: actions/checkout@v2
+
+    - name: Build app
+      run: ./mvnw --batch-mode clean install jacoco:report jacoco:report-aggregate -P-adoptopenjdk,adoptium ${{ env.ARGS }}
+
