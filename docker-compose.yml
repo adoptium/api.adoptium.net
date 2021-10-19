@@ -7,7 +7,7 @@ services:
   frontend:
     depends_on:
       - mongodb
-    image: "adoptopenjdk-api"
+    image: "adoptium-api"
     build:
       context: .
       dockerfile: Dockerfile
@@ -18,8 +18,8 @@ services:
   updater:
     depends_on:
       - mongodb
-    image: "adoptopenjdk-api"
-    command: "java -jar /deployments/adoptopenjdk-api-v3-updater-runner.jar"
+    image: "adoptium-api"
+    command: "java -jar /deployments/adoptium-api-v3-updater-runner.jar"
     build:
       context: .
       dockerfile: Dockerfile

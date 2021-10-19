@@ -2,8 +2,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>net.adoptopenjdk.api</groupId>
-    <artifactId>adoptopenjdk-api-v3</artifactId>
+    <groupId>net.adoptium.api</groupId>
+    <artifactId>adoptium-api-v3</artifactId>
     <version>3.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
@@ -33,11 +33,11 @@
     </properties>
 
     <modules>
-        <module>adoptopenjdk-models-parent</module>
-        <module>adoptopenjdk-api-v3-persistence</module>
-        <module>adoptopenjdk-api-v3-telemetry</module>
-        <module>adoptopenjdk-updater-parent</module>
-        <module>adoptopenjdk-frontend-parent</module>
+        <module>adoptium-models-parent</module>
+        <module>adoptium-api-v3-persistence</module>
+        <module>adoptium-api-v3-telemetry</module>
+        <module>adoptium-updater-parent</module>
+        <module>adoptium-frontend-parent</module>
     </modules>
 
     <dependencyManagement>
@@ -118,23 +118,23 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>net.adoptopenjdk.api</groupId>
-                <artifactId>adoptopenjdk-api-v3-models</artifactId>
+                <groupId>net.adoptium.api</groupId>
+                <artifactId>adoptium-api-v3-models</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>net.adoptopenjdk.api</groupId>
-                <artifactId>adoptopenjdk-api-v3-persistence</artifactId>
+                <groupId>net.adoptium.api</groupId>
+                <artifactId>adoptium-api-v3-persistence</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>net.adoptopenjdk.api</groupId>
-                <artifactId>adoptopenjdk-api-v3-telemetry</artifactId>
+                <groupId>net.adoptium.api</groupId>
+                <artifactId>adoptium-api-v3-telemetry</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>net.adoptopenjdk.api</groupId>
-                <artifactId>adoptopenjdk-api-v3-updater</artifactId>
+                <groupId>net.adoptium.api</groupId>
+                <artifactId>adoptium-api-v3-updater</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

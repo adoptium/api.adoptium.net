@@ -10,14 +10,14 @@ Since the GitHub API is rate limited we use MongoDB as a caching mechanism.
 ## Source code management & branching
 
 There are two main branches in the project:
-- `master`
+- `main`
 - `production`
 
 All contributions should be made by forking the project and raising a pull request (PR) against the `master` branch.
 
-The `master` branch represents the current live state of the [Staging environment](https://staging-api.adoptopenjdk.net/).
+The `main` branch represents the current live state of the [Staging environment](https://staging-api.adoptium.net/).
 
-The `production` branch represents the current live state of the [Production environment](https://api.adoptopenjdk.net/).
+The `production` branch represents the current live state of the [Production environment](https://api.adoptium.net/).
 
 For more details related to deployment of the API, see [the deployment section](#deployment--continuous-deployment-cd) of this guide.
 
@@ -112,8 +112,8 @@ in GitHub uses to build and test a Pull Request.
 
 ## API Definition and Usage
 
-We use Swagger to document the API. The Swagger documentation can be viewed at: [swagger-ui](https://api.adoptopenjdk.net/swagger-ui). 
-The Open API definition for this can be viewed at [openapi](https://api.adoptopenjdk.net/openapi).
+We use Swagger to document the API. The Swagger documentation can be viewed at: [swagger-ui](https://api.adoptium.net/swagger-ui). 
+The Open API definition for this can be viewed at [openapi](https://api.adoptium.net/openapi).
 
 ## Deployment / Continuous Deployment (CD)
 
@@ -151,10 +151,10 @@ In this section we list some common tasks and where to start.
 
 ### I want support a new version string
 
-If you need to add/edit/remove a supported version string then you need to update the [VersionParser](adoptopenjdk-api-v3-models/src/main/kotlin/net/adoptopenjdk/api/v3/parser/VersionParser.kt) and 
-its corresponding [VersionParserTest](adoptopenjdk-api-v3-models/src/test/kotlin/net/adoptopenjdk/api/VersionParserTest.kt).
+If you need to add/edit/remove a supported version string then you need to update the [VersionParser](adoptium-api-v3-models/src/main/kotlin/net/adoptium/api/v3/parser/VersionParser.kt) and 
+its corresponding [VersionParserTest](adoptium-api-v3-models/src/test/kotlin/net/adoptium/api/VersionParserTest.kt).
 
 ### I want to add a new variant such as OpenJDK's project amber or 
 
-You'll need to start at the [Platforms JSON](adoptopenjdk-api-v3-frontend/src/main/resources/JSON/platforms.json) and 
-[Variants JSON](adoptopenjdk-api-v3-frontend/src/main/resources/JSON/variants.json).
+You'll need to start at the [Platforms JSON](adoptium-api-v3-frontend/src/main/resources/JSON/platforms.json) and 
+[Variants JSON](adoptium-api-v3-frontend/src/main/resources/JSON/variants.json).
