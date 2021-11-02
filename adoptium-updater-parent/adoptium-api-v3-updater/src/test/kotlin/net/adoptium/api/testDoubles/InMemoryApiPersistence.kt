@@ -3,9 +3,11 @@ package net.adoptium.api.testDoubles
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
+import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.dataSources.persitence.mongo.UpdatedInfo
 import net.adoptium.api.v3.models.DockerDownloadStatsDbEntry
+import net.adoptium.api.v3.models.GHReleaseMetadata
 import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
 import net.adoptium.api.v3.models.ReleaseInfo
 import java.time.ZonedDateTime
@@ -23,6 +25,7 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos) : A
 
     private var githubStats = ArrayList<GitHubDownloadStatsDbEntry>()
     private var dockerStats = ArrayList<DockerDownloadStatsDbEntry>()
+    private var ghReleaseMetadata = HashMap<GitHubId, GHReleaseMetadata>()
 
     override suspend fun updateAllRepos(repos: AdoptRepos, checksum: String) {
         this.repos = repos
@@ -86,5 +89,13 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos) : A
 
     override suspend fun getUpdatedAt(): UpdatedInfo {
         return updatedAtInfo ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
+    }
+
+    override suspend fun getGhReleaseMetadata(gitHubId: GitHubId): GHReleaseMetadata? {
+        return ghReleaseMetadata[gitHubId]
+    }
+
+    override suspend fun setGhReleaseMetadata(ghReleaseMetadata: GHReleaseMetadata) {
+        this.ghReleaseMetadata[ghReleaseMetadata.gitHubId] = ghReleaseMetadata
     }
 }

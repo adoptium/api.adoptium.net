@@ -5,9 +5,11 @@ import com.mongodb.client.model.UpdateOptions
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
+import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.Releases
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.DockerDownloadStatsDbEntry
+import net.adoptium.api.v3.models.GHReleaseMetadata
 import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseInfo
@@ -24,6 +26,7 @@ import javax.inject.Singleton
 
 @Singleton
 open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : MongoInterface(mongoClient), ApiPersistence {
+    private val githubReleaseMetadataCollection: CoroutineCollection<GHReleaseMetadata> = createCollection(database, GH_RELEASE_METADATA)
     private val releasesCollection: CoroutineCollection<Release> = createCollection(database, RELEASE_DB)
     private val gitHubStatsCollection: CoroutineCollection<GitHubDownloadStatsDbEntry> = createCollection(database, GITHUB_STATS_DB)
     private val dockerStatsCollection: CoroutineCollection<DockerDownloadStatsDbEntry> = createCollection(database, DOCKER_STATS_DB)
@@ -33,6 +36,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     companion object {
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
+        const val GH_RELEASE_METADATA = "githubReleaseMetadata"
         const val RELEASE_DB = "release"
         const val GITHUB_STATS_DB = "githubStats"
         const val DOCKER_STATS_DB = "dockerStats"
@@ -169,4 +173,19 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     }
 
     private fun majorVersionMatcher(featureVersion: Int) = Document("version_data.major", featureVersion)
+
+    override suspend fun getGhReleaseMetadata(gitHubId: GitHubId): GHReleaseMetadata? {
+        return githubReleaseMetadataCollection.findOne(matchGithubId(gitHubId))
+    }
+
+    override suspend fun setGhReleaseMetadata(ghReleaseMetadata: GHReleaseMetadata) {
+        githubReleaseMetadataCollection
+            .updateOne(
+                matchGithubId(ghReleaseMetadata.gitHubId),
+                ghReleaseMetadata,
+                UpdateOptions().upsert(true)
+            )
+    }
+
+    private fun matchGithubId(gitHubId: GitHubId) = Document("gitHubId.id", gitHubId.id)
 }

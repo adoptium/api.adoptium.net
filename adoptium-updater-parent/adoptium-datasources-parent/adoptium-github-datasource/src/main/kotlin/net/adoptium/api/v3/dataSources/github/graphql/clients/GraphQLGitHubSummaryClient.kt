@@ -57,7 +57,10 @@ class GraphQLGitHubSummaryClient @Inject constructor(
                                         id,
                                         publishedAt,
                                         updatedAt,
-                                        name
+                                        name,
+                                        releaseAssets {
+                                            totalCount
+                                        }
                                     },
                                     pageInfo {
                                         hasNextPage,

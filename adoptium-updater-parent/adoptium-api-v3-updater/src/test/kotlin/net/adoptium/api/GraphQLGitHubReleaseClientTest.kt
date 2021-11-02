@@ -20,6 +20,7 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.QueryData
 import net.adoptium.api.v3.dataSources.github.graphql.models.QuerySummaryData
 import net.adoptium.api.v3.dataSources.github.graphql.models.RateLimit
+import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHAssetsSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleaseSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleasesSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
@@ -46,7 +47,8 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                     "2013-02-27T19:35:32Z"
                 )
             ),
-            PageInfo(false, "")
+            PageInfo(false, ""),
+            2
         )
         val response = GHRelease(
             id = GitHubId("1"),
@@ -119,7 +121,8 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                                 GitHubId("foo"),
                                 "a",
                                 "b",
-                                "c"
+                                "c",
+                                GHAssetsSummary(0)
                             )
                         ),
                         PageInfo(false, null)

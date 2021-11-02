@@ -103,7 +103,11 @@ class V3Updater @Inject constructor(
                 val toUpdateTmp = HashSet<String>()
                 toUpdateTmp.addAll(toUpdate)
                 toUpdate.clear()
-                val updatedRepo = adoptReposBuilder.incrementalUpdate(toUpdateTmp, oldRepo)
+                val updatedRepo = adoptReposBuilder.incrementalUpdate(
+                    toUpdateTmp,
+                    oldRepo,
+                    database::getGhReleaseMetadata
+                )
 
                 if (updatedRepo != oldRepo) {
                     val after = writeIncrementalUpdate(updatedRepo, oldRepo)

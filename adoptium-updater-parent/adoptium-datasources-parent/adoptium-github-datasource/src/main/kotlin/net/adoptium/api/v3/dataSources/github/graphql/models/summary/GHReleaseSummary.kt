@@ -26,7 +26,8 @@ data class GHReleaseSummary @JsonCreator constructor(
     val id: GitHubId,
     @JsonProperty("publishedAt") val publishedAt: String,
     @JsonProperty("updatedAt") val updatedAt: String,
-    @JsonProperty("name") val name: String
+    @JsonProperty("name") val name: String,
+    @JsonProperty("releaseAssets") val releaseAssets: GHAssetsSummary
 ) {
 
     fun getUpdatedTime(): ZonedDateTime {
@@ -42,3 +43,7 @@ data class GHReleaseSummary @JsonCreator constructor(
             .atZone(TimeSource.ZONE)
     }
 }
+
+data class GHAssetsSummary @JsonCreator constructor(
+    @JsonProperty("totalCount") val totalCount: Int
+)

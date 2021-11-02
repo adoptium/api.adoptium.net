@@ -70,6 +70,7 @@ class GraphQLGitHubRepositoryClient @Inject constructor(
                                         isPrerelease,
                                         resourcePath,
                                         releaseAssets(first:50) {
+                                            totalCount,
                                             nodes {
                                                 downloadCount,
                                                 updatedAt,

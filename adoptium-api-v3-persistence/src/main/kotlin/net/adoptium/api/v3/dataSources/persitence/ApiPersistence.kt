@@ -2,8 +2,10 @@ package net.adoptium.api.v3.dataSources.persitence
 
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
+import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.persitence.mongo.UpdatedInfo
 import net.adoptium.api.v3.models.DockerDownloadStatsDbEntry
+import net.adoptium.api.v3.models.GHReleaseMetadata
 import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
 import net.adoptium.api.v3.models.ReleaseInfo
 import java.time.ZonedDateTime
@@ -23,4 +25,6 @@ interface ApiPersistence {
     suspend fun setReleaseInfo(version: ReleaseInfo)
     suspend fun getReleaseInfo(): ReleaseInfo?
     suspend fun getUpdatedAt(): UpdatedInfo
+    suspend fun getGhReleaseMetadata(gitHubId: GitHubId): GHReleaseMetadata?
+    suspend fun setGhReleaseMetadata(ghReleaseMetadata: GHReleaseMetadata)
 }

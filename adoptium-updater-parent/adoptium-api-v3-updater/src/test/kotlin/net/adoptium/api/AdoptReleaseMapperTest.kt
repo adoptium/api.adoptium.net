@@ -48,7 +48,7 @@ class AdoptReleaseMapperTest : BaseTest() {
     @Test
     fun ignoresUnparsableVersion() {
         runBlocking {
-            val source = GHAssets(listOf(jdk), PageInfo(false, ""))
+            val source = GHAssets(listOf(jdk), PageInfo(false, ""), 1)
 
             val ghRelease = GHRelease(
                 id = GitHubId("1"),
@@ -71,7 +71,7 @@ class AdoptReleaseMapperTest : BaseTest() {
     @Test
     fun statsIgnoresNonBinaryAssets() {
         runBlocking {
-            val source = GHAssets(listOf(jdk, checksum), PageInfo(false, ""))
+            val source = GHAssets(listOf(jdk, checksum), PageInfo(false, ""), 2)
 
             val ghRelease = GHRelease(
                 id = GitHubId("1"),
@@ -94,7 +94,7 @@ class AdoptReleaseMapperTest : BaseTest() {
     fun obeysReleaseTypeforBinaryRepos() {
         runBlocking {
 
-            val source = GHAssets(listOf(jdk), PageInfo(false, ""))
+            val source = GHAssets(listOf(jdk), PageInfo(false, ""), 1)
 
             val ghRelease = GHRelease(
                 id = GitHubId("1"),
@@ -163,11 +163,12 @@ class AdoptReleaseMapperTest : BaseTest() {
                     )
 
                 ),
-                PageInfo(false, "")
+                PageInfo(false, ""),
+                6
             )
 
             val client = object : UpdaterHtmlClient {
-                override suspend fun get(url: String): String? {
+                override suspend fun get(url: String): String {
                     return getMetadata(url)
                 }
 
@@ -199,7 +200,7 @@ class AdoptReleaseMapperTest : BaseTest() {
                         .replace("\n", "")
                 }
 
-                override suspend fun getFullResponse(request: UrlRequest): HttpResponse? {
+                override suspend fun getFullResponse(request: UrlRequest): HttpResponse {
 
                     val metadataResponse = mockk<HttpResponse>()
 
@@ -243,16 +244,12 @@ class AdoptReleaseMapperTest : BaseTest() {
                     throw RuntimeException("Failed to get metadata")
                 }
 
-                fun getMetadata(url: String): String {
-                    throw RuntimeException("Failed to get metadata")
-                }
-
                 override suspend fun getFullResponse(request: UrlRequest): HttpResponse? {
                     throw RuntimeException("Failed to get metadata")
                 }
             }
 
-            val source = GHAssets(listOf(jdk), PageInfo(false, ""))
+            val source = GHAssets(listOf(jdk), PageInfo(false, ""), 1)
 
             val ghRelease = GHRelease(
                 id = GitHubId("1"),
@@ -265,7 +262,7 @@ class AdoptReleaseMapperTest : BaseTest() {
                 url = "https://github.com/AdoptOpenJDK/openjdk9-binaries/releases/download/jdk9u-2018-09-27-08-50/OpenJDK9U-jre_aarch64_linux_hotspot_2018-09-27-08-50.tar.gz"
             )
 
-            val release = createAdoptReleaseMapper(client).toAdoptRelease(ghRelease)
+            createAdoptReleaseMapper(client).toAdoptRelease(ghRelease)
         }
     }
 
@@ -282,7 +279,8 @@ class AdoptReleaseMapperTest : BaseTest() {
                         "2013-02-27T19:35:32Z"
                     )
                 ),
-                PageInfo(false, "")
+                PageInfo(false, ""),
+                1
             )
 
             val ghRelease = GHRelease(
