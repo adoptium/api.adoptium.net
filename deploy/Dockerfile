@@ -1,7 +1,6 @@
 FROM eclipse-temurin:11
 
-ARG ECOSYSTEM=adoptium
-ENV ECOSYSTEM=$ECOSYSTEM
+# BUILDS FOR ADOPTIUM, NOT ADOPTOPENJDK
 
 ARG REPOSITORY="https://github.com/adoptium/api.adoptium.net.git"
 ENV REPOSITORY=$REPOSITORY
@@ -25,7 +24,7 @@ RUN chown -R api: /tmp/build
 
 USER api
 
-RUN     ./mvnw clean install -Decosystem=${ECOSYSTEM} -P${ECOSYSTEM} && \
+RUN     ./mvnw clean install -Padoptium,-adoptopenjdk && \
         cp adoptium-updater-parent/adoptium-api-v3-updater/target/adoptium-api-v3-updater-*-jar-with-dependencies.jar /home/api/deployment/updater.jar && \
         cp -r adoptium-frontend-parent/adoptium-api-v3-frontend/target/quarkus-app/* /home/api/deployment/ && \
         mv /home/api/deployment/quarkus-run.jar /home/api/deployment/frontend.jar && \

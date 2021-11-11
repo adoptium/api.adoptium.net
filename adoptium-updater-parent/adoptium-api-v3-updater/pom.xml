@@ -5,7 +5,7 @@
     <parent>
         <groupId>net.adoptium.api</groupId>
         <artifactId>adoptium-updater-parent</artifactId>
-        <version>3.0.0-SNAPSHOT</version>
+        <version>3.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -199,9 +199,7 @@
         <profile>
             <id>adoptopenjdk</id>
             <activation>
-                <property>
-                    <name>!ecosystem</name>
-                </property>
+                <activeByDefault>false</activeByDefault>
             </activation>
             <dependencies>
                 <dependency>
@@ -214,10 +212,7 @@
         <profile>
             <id>adoptium</id>
             <activation>
-                <property>
-                    <name>ecosystem</name>
-                    <value>adoptium</value>
-                </property>
+                <activeByDefault>false</activeByDefault>
             </activation>
             <dependencies>
                 <dependency>

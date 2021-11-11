@@ -9,7 +9,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema
     enumeration = ["adoptopenjdk", "openjdk", "eclipse", "alibaba", "ibm"],
     example = "adoptopenjdk"
 )
-class AdoptVendor {
+internal class AdoptVendor {
     companion object {
         const val DEFAULT_VALUE = "adoptopenjdk"
 

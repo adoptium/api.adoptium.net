@@ -9,7 +9,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema
     enumeration = ["eclipse"],
     example = "eclipse"
 )
-class AdoptiumVendor {
+internal class AdoptiumVendor {
     companion object {
         const val DEFAULT_VALUE = "eclipse"
 

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# BUILDS FOR ADOPTOPENJDK, NOT ADOPTIUM
+
 set -euxo pipefail
 
 if [ "$(ls /tmp/artifacts/ 2>/dev/null)" ]; then
