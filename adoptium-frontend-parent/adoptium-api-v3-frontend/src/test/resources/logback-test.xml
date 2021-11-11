@@ -1,0 +1,22 @@
+<configuration>
+    <logger name="ch.qos.logback" level="WARN"/>
+    <logger name="org.apache.http.client.protocol.ResponseProcessCookies" level="ERROR"/>
+    <logger name="net.adoptium.api.v3.dataSources.APIDataStore" level="WARN"/>
+    <logger name="io.netty" level="WARN"/>
+    <logger name="org.mongodb" level="WARN"/>
+    <logger name="org.apache.http" level="INFO"/>
+    <logger name="io.restassured" level="INFO"/>
+    <logger name="io.smallrye" level="INFO"/>
+    <logger name="io.quarkus" level="INFO"/>
+    <logger name="org.jboss" level="WARN"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date %level [%thread] %logger{10} [%file:%line]%n%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="debug">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>

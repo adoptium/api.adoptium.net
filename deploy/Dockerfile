@@ -26,8 +26,8 @@ RUN chown -R api: /tmp/build
 USER api
 
 RUN     ./mvnw clean install -Decosystem=${ECOSYSTEM} -P${ECOSYSTEM} && \
-        cp adoptopenjdk-updater-parent/adoptopenjdk-api-v3-updater/target/adoptopenjdk-api-v3-updater-*-jar-with-dependencies.jar /home/api/deployment/updater.jar && \
-        cp -r adoptopenjdk-frontend-parent/adoptopenjdk-api-v3-frontend/target/quarkus-app/* /home/api/deployment/ && \
+        cp adoptium-updater-parent/adoptium-api-v3-updater/target/adoptium-api-v3-updater-*-jar-with-dependencies.jar /home/api/deployment/updater.jar && \
+        cp -r adoptium-frontend-parent/adoptium-api-v3-frontend/target/quarkus-app/* /home/api/deployment/ && \
         mv /home/api/deployment/quarkus-run.jar /home/api/deployment/frontend.jar && \
         cp deploy/run.sh /home/api/deployment/ && \
         chmod +x /home/api/deployment/run.sh && \
