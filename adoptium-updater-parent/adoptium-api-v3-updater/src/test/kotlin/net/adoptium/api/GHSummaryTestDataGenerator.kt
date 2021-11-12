@@ -6,6 +6,7 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHReleases
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRepository
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
+import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHAssetsSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleaseSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleasesSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
@@ -41,7 +42,8 @@ object GHSummaryTestDataGenerator {
                                             DateTimeFormatter.ISO_INSTANT.format(asset.updated_at.dateTime)
                                         )
                                     },
-                                PageInfo(false, null)
+                                PageInfo(false, null),
+                                it.binaries.size
                             ),
                             it.id,
                             url
@@ -63,7 +65,8 @@ object GHSummaryTestDataGenerator {
                             release.id,
                             release.publishedAt,
                             release.updatedAt,
-                            release.name
+                            release.name,
+                            GHAssetsSummary(release.releaseAssets.totalCount)
                         )
                     },
                 PageInfo(false, null)

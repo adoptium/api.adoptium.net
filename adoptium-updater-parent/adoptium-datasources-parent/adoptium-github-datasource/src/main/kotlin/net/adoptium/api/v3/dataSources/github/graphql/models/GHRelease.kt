@@ -27,3 +27,9 @@ data class GHRelease @JsonCreator constructor(
     @JsonProperty("resourcePath") val resourcePath: String,
     @JsonProperty("url") val url: String
 )
+
+data class GHAssets @JsonCreator constructor(
+    @JsonProperty("nodes") val assets: List<GHAsset>,
+    @JsonProperty("pageInfo") val pageInfo: PageInfo,
+    @JsonProperty("totalCount") val totalCount: Int,
+)

@@ -7,6 +7,7 @@ import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.Releases
 import net.adoptium.api.v3.mapping.ReleaseMapper
+import net.adoptium.api.v3.models.GHReleaseMetadata
 import net.adoptium.api.v3.models.Release
 import org.slf4j.LoggerFactory
 import java.time.temporal.ChronoUnit
@@ -24,15 +25,24 @@ class AdoptReposBuilder @Inject constructor(private var adoptRepository: AdoptRe
 
     private val excluded: MutableSet<GitHubId> = HashSet()
 
-    suspend fun incrementalUpdate(toUpdate: Set<String>, repo: AdoptRepos): AdoptRepos {
+    suspend fun incrementalUpdate(
+        toUpdate: Set<String>,
+        repo: AdoptRepos,
+        gitHubMetadataSupplier: suspend (GitHubId) -> GHReleaseMetadata?,
+    ): AdoptRepos {
         val updated = repo
             .repos
-            .map { entry -> getUpdatedFeatureRelease(toUpdate, entry, repo) }
+            .map { entry -> getUpdatedFeatureRelease(toUpdate, entry, repo, gitHubMetadataSupplier) }
 
         return AdoptRepos(updated)
     }
 
-    private suspend fun getUpdatedFeatureRelease(toUpdate: Set<String>, entry: Map.Entry<Int, FeatureRelease>, repo: AdoptRepos): FeatureRelease {
+    private suspend fun getUpdatedFeatureRelease(
+        toUpdate: Set<String>,
+        entry: Map.Entry<Int, FeatureRelease>,
+        repo: AdoptRepos,
+        gitHubMetadataSupplier: suspend (GitHubId) -> GHReleaseMetadata?,
+    ): FeatureRelease {
         val summary = adoptRepository.getSummary(entry.key)
 
         // Update cycle
@@ -49,6 +59,7 @@ class AdoptReposBuilder @Inject constructor(private var adoptRepository: AdoptRe
             // Find newly added releases
             val newReleases = getNewReleases(summary, pruned)
             val updatedReleases = getUpdatedReleases(summary, pruned)
+            val binaryCountChanged = binaryCountHasChanged(summary, gitHubMetadataSupplier)
             val youngReleases = getYoungReleases(summary)
             val explicitlyAdded = getExplicitlyAddedReleases(summary, toUpdate)
 
@@ -57,6 +68,7 @@ class AdoptReposBuilder @Inject constructor(private var adoptRepository: AdoptRe
                 .add(updatedReleases)
                 .add(youngReleases)
                 .add(explicitlyAdded)
+                .add(binaryCountChanged)
         } else {
             val newReleases = getNewReleases(summary, FeatureRelease(entry.key, emptyList()))
             FeatureRelease(entry.key, Releases(newReleases))
@@ -71,13 +83,26 @@ class AdoptReposBuilder @Inject constructor(private var adoptRepository: AdoptRe
             .flatMap { getReleaseById(it) }
     }
 
+    private suspend fun binaryCountHasChanged(
+        summary: GHRepositorySummary,
+        gitHubMetadataSupplier: suspend (GitHubId) -> GHReleaseMetadata?
+    ): List<Release> {
+        return summary.releases.releases
+            .filter { !excluded.contains(it.id) }
+            .filter {
+                gitHubMetadataSupplier(it.id)?.totalBinaryCount?.equals(it.releaseAssets.totalCount)?.not() ?: false
+            }
+            .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
+            .flatMap { getReleaseById(it) }
+    }
+
     private suspend fun getYoungReleases(summary: GHRepositorySummary): List<Release> {
         return summary.releases.releases
             .filter { !excluded.contains(it.id) }
             .filter {
-                // Re-pull data if the release is less than 24h old
-                ChronoUnit.HOURS.between(it.getPublishedTime(), TimeSource.now()).absoluteValue < 24 ||
-                    ChronoUnit.HOURS.between(it.getUpdatedTime(), TimeSource.now()).absoluteValue < 24
+                // Re-pull data if the release is less than 7 days old
+                ChronoUnit.DAYS.between(it.getPublishedTime(), TimeSource.now()).absoluteValue < 7 ||
+                    ChronoUnit.DAYS.between(it.getUpdatedTime(), TimeSource.now()).absoluteValue < 7
             }
             .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
             .flatMap { getReleaseById(it) }

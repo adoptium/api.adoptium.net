@@ -35,7 +35,20 @@ abstract class GraphQLGitHubReleaseRequest(
 
         val assets = release.releaseAssets.assets.union(moreAssets)
 
-        return GHRelease(release.id, release.name, release.isPrerelease, release.publishedAt, release.updatedAt, GHAssets(assets.toList(), PageInfo(false, null)), release.resourcePath, release.url)
+        return GHRelease(
+            release.id,
+            release.name,
+            release.isPrerelease,
+            release.publishedAt,
+            release.updatedAt,
+            GHAssets(
+                assets.toList(),
+                PageInfo(false, null),
+                0
+            ),
+            release.resourcePath,
+            release.url
+        )
     }
 
     private fun getMoreReleasesQuery(releaseId: GitHubId): GraphQLRequestEntity.RequestBuilder {

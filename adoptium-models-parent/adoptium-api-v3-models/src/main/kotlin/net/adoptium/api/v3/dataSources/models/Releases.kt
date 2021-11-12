@@ -10,7 +10,7 @@ import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.VersionData
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
-import java.util.*
+import java.util.TreeSet
 import java.util.function.Predicate
 
 class Releases {
@@ -25,9 +25,7 @@ class Releases {
     private val nodeListTimeThenVersion: TreeSet<Release> = TreeSet(TIME_THEN_VERSION_SORTER)
 
     constructor(nodes: List<Release>) {
-        this.nodes = nodes
-            .map { it.id to it }
-            .toMap()
+        this.nodes = nodes.associateBy { it.id }
         nodeList.addAll(nodes)
         nodeListTimeThenVersion.addAll(nodes)
     }
@@ -74,7 +72,10 @@ class Releases {
             .any { release -> release.startsWith(gitHubId.id) }
     }
 
-    fun hasReleaseBeenUpdated(gitHubId: GitHubId, updatedAt: ZonedDateTime): Boolean {
+    fun hasReleaseBeenUpdated(
+        gitHubId: GitHubId,
+        updatedAt: ZonedDateTime
+    ): Boolean {
         return nodes
             .filter { it.key.startsWith(gitHubId.id) }
             .any {
@@ -106,7 +107,7 @@ class Releases {
     }
 
     fun getReleaseById(id: String): Release? {
-        return nodes.get(id)
+        return nodes[id]
     }
 
     companion object {
@@ -134,7 +135,7 @@ class Releases {
 
         private val TIME_COMPARATOR = compareBy { release: Release -> release.timestamp.dateTime }
 
-        val RELEASE_COMPARATOR = compareBy<Release, VersionData>(VERSION_COMPARATOR, { it.version_data })
+        val RELEASE_COMPARATOR = compareBy<Release, VersionData>(VERSION_COMPARATOR) { it.version_data }
 
         private val RELEASE_NAME_AND_ID_COMPARATOR = compareBy { release: Release -> release.release_name }
             .thenComparing { release: Release -> release.id }

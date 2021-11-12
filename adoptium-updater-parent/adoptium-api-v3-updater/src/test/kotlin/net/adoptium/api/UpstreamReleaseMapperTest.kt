@@ -19,9 +19,9 @@ class UpstreamReleaseMapperTest {
 
             val release = UpstreamReleaseMapper.toAdoptRelease(ghRelease)
 
-            assertEquals(ghRelease.releaseAssets.assets.get(0).downloadUrl, release.result!!.first().source!!.link)
-            assertEquals(ghRelease.releaseAssets.assets.get(0).name, release.result!!.first().source!!.name)
-            assertEquals(ghRelease.releaseAssets.assets.get(0).size, release.result!!.first().source!!.size)
+            assertEquals(ghRelease.releaseAssets.assets[0].downloadUrl, release.result!!.first().source!!.link)
+            assertEquals(ghRelease.releaseAssets.assets[0].name, release.result!!.first().source!!.name)
+            assertEquals(ghRelease.releaseAssets.assets[0].size, release.result!!.first().source!!.size)
         }
     }
 
@@ -52,10 +52,10 @@ class UpstreamReleaseMapperTest {
                     1, "", 1, "2013-02-27T19:35:32Z"
                 )
             ),
-            PageInfo(false, "")
+            PageInfo(false, ""),
+            3
         )
 
-        val ghRelease = GHRelease(GitHubId("1"), "OpenJDK 8u232 GA Release", true, "2013-02-27T19:35:32Z", "2013-02-27T19:35:32Z", source, "8", "a-url")
-        return ghRelease
+        return GHRelease(GitHubId("1"), "OpenJDK 8u232 GA Release", true, "2013-02-27T19:35:32Z", "2013-02-27T19:35:32Z", source, "8", "a-url")
     }
 }
