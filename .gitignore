@@ -10,3 +10,4 @@ adoptium-api.iml
 .settings
 .vscode
 .java-version
+runLocalAPI.sh
