@@ -24,7 +24,8 @@ jobs:
     - name: Setup mvnw arguments
       run: |
         case ${{ matrix.ecosystem }} in
-          adoptium) echo "ARGS=-Decosystem=adoptium" >> $GITHUB_ENV ;;
+          adoptium) echo "ARGS=-Padoptium,-adoptopenjdk" >> $GITHUB_ENV ;;
+          adoptopenjdk) echo "ARGS=-Padoptopenjdk,-adoptium" >> $GITHUB_ENV ;;
         esac
 
     - uses: actions/setup-java@v2
@@ -37,5 +38,5 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Build app
-      run: ./mvnw --batch-mode clean install jacoco:report jacoco:report-aggregate -P-adoptopenjdk,adoptium ${{ env.ARGS }}
+      run: ./mvnw --batch-mode clean install jacoco:report jacoco:report-aggregate ${{ env.ARGS }}
 

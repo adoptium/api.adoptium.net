@@ -4,7 +4,7 @@
 
     <groupId>net.adoptium.api</groupId>
     <artifactId>adoptium-api-v3</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <!-- This throws a warning, but the versions plugin does actually require it if you're checking plugin versions -->
@@ -29,7 +29,6 @@
         <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
         <jackson.version>2.13.0</jackson.version>
         <kmongo.version>4.3.0</kmongo.version>
-        <ecosystem>adoptopenjdk</ecosystem>
     </properties>
 
     <modules>
