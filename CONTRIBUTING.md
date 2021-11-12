@@ -131,12 +131,12 @@ You can choose to deploy this API where you wish, for Adoptium we use Continuous
 
 For Adoptium, this API deploys to Red Hat OpenShift and is front ended by [Cloudflare](https://www.cloudflare.com) as a CDN.
 
-The `production` branch is synchronized with `master` to perform a release of the latest API changes to the Production OpenShift environment.  
+The `production` branch is synchronized with `main` to perform a release of the latest API changes to the Production OpenShift environment.  
 
-This is done via a pull request that applies all outstanding commits from `master` to `production`.
+This is done via a pull request that applies all outstanding commits from `main` to `production`.
 
 The Jenkins [Adoptium CI Server](https://ci.adoptopenjdk.net) will automatically
-deploy pull requests to the OpenShift Staging (the `master` branch) or Production (the `production` branch) environments.
+deploy pull requests to the OpenShift Staging (the `main` branch) or Production (the `production` branch) environments.
 
 ## Code Architecture and Code
 
