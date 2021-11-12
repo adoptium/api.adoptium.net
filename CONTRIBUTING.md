@@ -11,7 +11,11 @@ Since the GitHub API is rate limited we use MongoDB as a caching mechanism.
 
 There are two main branches in the project:
 
+<<<<<<< HEAD
 - `main`
+=======
+- `master`
+>>>>>>> 1abe08e087738755e3fdd9194de4e6d6f4f1a880
 - `production`
 
 All contributions should be made by forking the project and raising a pull request (PR) against the `main` branch.
@@ -135,8 +139,7 @@ The `production` branch is synchronized with `main` to perform a release of the 
 
 This is done via a pull request that applies all outstanding commits from `main` to `production`.
 
-The Jenkins [Adoptium CI Server](https://ci.adoptopenjdk.net) will automatically
-deploy pull requests to the OpenShift Staging (the `main` branch) or Production (the `production` branch) environments.
+The Jenkins [Adoptium CI Server](https://ci.adoptopenjdk.net) will automatically deploy pull requests to the OpenShift Staging (the `main` branch) or Production (the `production` branch) environments.
 
 ## Code Architecture and Code
 
@@ -161,7 +164,10 @@ In this section we list some common tasks and where to start.
 
 If you need to add/edit/remove a supported version string then you need to update the [VersionParser](adoptium-api-v3-models/src/main/kotlin/net/adoptium/api/v3/parser/VersionParser.kt) and its corresponding [VersionParserTest](adoptium-api-v3-models/src/test/kotlin/net/adoptium/api/VersionParserTest.kt).
 
+If you need to add/edit/remove a supported version string then you need to update the [VersionParser](adoptopenjdk-api-v3-models/src/main/kotlin/net/adoptopenjdk/api/v3/parser/VersionParser.kt) and
+its corresponding [VersionParserTest](adoptopenjdk-api-v3-models/src/test/kotlin/net/adoptopenjdk/api/VersionParserTest.kt).
+
 ### I want to add a new variant such as OpenJDK's project amber
 
-You'll need to start at the [Platforms JSON](adoptium-api-v3-frontend/src/main/resources/JSON/platforms.json) and
-[Variants JSON](adoptium-api-v3-frontend/src/main/resources/JSON/variants.json).
+You'll need to start at the [Platforms JSON](adoptopenjdk-api-v3-frontend/src/main/resources/JSON/platforms.json) and
+[Variants JSON](adoptopenjdk-api-v3-frontend/src/main/resources/JSON/variants.json).
