@@ -154,10 +154,10 @@ class BinaryResource @Inject constructor(private val packageEndpoint: PackageEnd
 
         @Parameter(hidden = true, required = false)
         @HeaderParam("User-Agent")
-        userAgent: String
+        userAgent: String?
     ): Response {
         val releases = packageEndpoint.getReleases(release_name, vendor, os, arch, image_type, jvm_impl, heap_size, project, cLib)
-        return if (userAgent.contains("Gradle")) {
+        return if (userAgent != null && userAgent.contains("Gradle")) {
             return formResponse(releases) { `package` ->
                 Response.status(200)
                     .header("size", `package`.size)
