@@ -6,7 +6,7 @@ WORKDIR /tmp/build
 
 COPY . /tmp/build
 
-RUN ./mvnw clean install
+RUN ./mvnw clean install -Padoptium
 
 FROM eclipse-temurin:11
 
