@@ -58,7 +58,7 @@ If you wish to view all of the Maven reporting about the project you run the fol
 
 `./mvnw clean install site -Padoptium`
 
-If you wish to produce an AdoptOpenJDK ecosystem build, use `-Padoptopenjdk` i.e 
+If you wish to produce an AdoptOpenJDK ecosystem build, use `-Padoptopenjdk` i.e.
 
 `./mvnw clean install -Padoptopenjdk`
 
@@ -120,7 +120,7 @@ in GitHub uses to build and test a Pull Request.
 
 ## API Definition and Usage
 
-We use Swagger to document the API. The Swagger documentation can be viewed at: [swagger-ui](https://api.adoptium.net/swagger-ui). 
+We use Swagger to document the API. The Swagger documentation can be viewed at: [swagger-ui](https://api.adoptium.net/swagger-ui).
 The Open API definition for this can be viewed at [openapi](https://api.adoptium.net/openapi).
 
 ## Deployment / Continuous Deployment (CD)
@@ -163,5 +163,5 @@ If you need to add/edit/remove a supported version string then you need to updat
 
 ### I want to add a new variant such as OpenJDK's project amber
 
-You'll need to start at the [Platforms JSON](adoptium-api-v3-frontend/src/main/resources/JSON/platforms.json) and 
+You'll need to start at the [Platforms JSON](adoptium-api-v3-frontend/src/main/resources/JSON/platforms.json) and
 [Variants JSON](adoptium-api-v3-frontend/src/main/resources/JSON/variants.json).
