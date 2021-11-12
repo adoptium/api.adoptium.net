@@ -47,13 +47,20 @@ of the configuration that the children inherit from.
 
 ### Build Command
 
+Builds can be targeted to build for Adoptium or AdoptOpenJDK, these are chosen by activating either the `adoptium`
+or `adoptopenjdk` profiles.
+
 To perform a full build and test you run the following:
 
-`./mvnw clean install`
+`./mvnw clean install -Padoptium`
 
 If you wish to view all of the Maven reporting about the project you run the following:
 
-`./mvnw clean install site`
+`./mvnw clean install site -Padoptium`
+
+If you wish to produce an AdoptOpenJDK ecosystem build, use `-Padoptopenjdk` i.e 
+
+`./mvnw clean install -Padoptopenjdk`
 
 ### Docker
 For convenience, you can build the API components with `Docker` and `docker-compose`. 
