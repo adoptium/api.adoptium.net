@@ -2,6 +2,8 @@ package net.adoptium.api
 
 import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured
+import org.hamcrest.Matcher
+import org.hamcrest.core.IsNull
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -23,8 +25,28 @@ class ReleaseNamesPathTest : AssetsPathTest() {
     }
 
     @Test
-    fun releaseNamesPageSize() {
+    fun `next page link is added`() {
+        RestAssured.given()
+            .`when`()
+            .get("/v3/info/release_names?page_size=10")
+            .then()
+            .statusCode(200)
+            .header("Link", """<http://localhost:8080/v3/info/release_names?page=1&page_size=10>; rel="next"""")
+    }
 
+    @Test
+    fun `next page link is not added when there is no next page`() {
+        val lastPage = BaseTest.adoptRepos.allReleases.getReleases().count() / 10
+        RestAssured.given()
+            .`when`()
+            .get("/v3/info/release_names?page_size=10&page=$lastPage")
+            .then()
+            .statusCode(200)
+            .header("Link", IsNull<String>())
+    }
+
+    @Test
+    fun releaseNamesPageSize() {
         RestAssured.given()
             .`when`()
             .get("/v3/info/release_names?page_size=50")

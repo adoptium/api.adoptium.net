@@ -1,5 +1,6 @@
 package net.adoptium.api
 
+import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.APIDataStoreImpl
@@ -24,9 +25,10 @@ import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.models.VersionData
 import net.adoptium.api.v3.routes.AssetsResource
 import net.adoptium.api.v3.routes.ReleaseEndpoint
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.ZonedDateTime
-import org.junit.jupiter.api.Assertions.assertEquals
+import javax.ws.rs.core.UriInfo
 
 class AssetsResourceFeatureReleasePathSortOrderTest : FrontendTest() {
 
@@ -108,10 +110,13 @@ class AssetsResourceFeatureReleasePathSortOrderTest : FrontendTest() {
     }
 
     private fun getRelease(sortOrder: SortOrder, sortMethod: SortMethod?): List<Release> {
+        val uriInfo = mockk<UriInfo>()
+
         return assetResource.get(
             version = 8, release_type = ReleaseType.ga, sortOrder = sortOrder, sortMethod = sortMethod,
-            arch = null, heap_size = null, jvm_impl = null, image_type = null, os = null, page = null, pageSize = null, project = null, vendor = null, before = null, cLib = null
-        )
+            arch = null, heap_size = null, jvm_impl = null, image_type = null, os = null, page = null, pageSize = null, project = null, vendor = null, before = null, cLib = null,
+            uriInfo = uriInfo
+        ).entity as List<Release>
     }
 
     @Test
