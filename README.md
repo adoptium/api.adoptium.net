@@ -12,19 +12,19 @@ To learn more about how we build & run the API, check out [CONTRIBUTING.md](CONT
 
 ## Usage
 
-The API is documented using Swagger.  The Swagger documentation can be viewed at: [api.adoptium.net/swagger-ui](https://api.adoptium.net/swagger-ui) 
+The API is documented using Swagger.  The Swagger documentation can be viewed at: [api.adoptium.net/swagger-ui](https://api.adoptium.net/swagger-ui).
 The Open API spec for this can be viewed at: [api.adoptium.net/openapi](https://api.adoptium.net/openapi)
 
 For more information, including example queries, please look at [STRUCTURE.md](docs/STRUCTURE.md)
 
 ## Who's using the Adoptium API?
 
-The Adoptium API (and its predecessor at AdoptOpenJDK) has served over 200 million downloads by a wide variety consumers, from individuals to organisations.
+The Adoptium API (and its predecessor at AdoptOpenJDK) has served over 200 million downloads by a wide variety consumers, from individuals to organizations.
 
 Check the [Download Statistics Dashboard](https://dash.adoptium.net/) for the latest numbers.  
 
 The following list highlights a small subset of consumers and their use-cases:
 
-- [Adoptium Website](https://adoptium.net/) - the API drives the release listings on the AdoptOpenJDK website allowing individuals to download the JDK distribution of their choice
-- [Gradle](https://docs.gradle.org/) - the Gradle project defaults to use the API for its [toolchains](https://docs.gradle.org/current/userguide/toolchains.html#sec:provisioning) feature
-- [Update Watcher for Adoptium & AdoptOpenJDK](https://github.com/tushev/aojdk-updatewatcher) - uses the API to automatically manage the JDK installations on an individual's machine   
+- [Adoptium Website](https://adoptium.net/) - the API drives the release listings on the AdoptOpenJDK website allowing individuals to download the JDK distribution of their choice.
+- [Gradle](https://docs.gradle.org/) - the Gradle project defaults to use the API for its [toolchains](https://docs.gradle.org/current/userguide/toolchains.html#sec:provisioning) feature.
+- [Update Watcher for Adoptium & AdoptOpenJDK](https://github.com/tushev/aojdk-updatewatcher) - uses the API to automatically manage the JDK installations on an individual's machine.
