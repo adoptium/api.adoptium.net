@@ -231,7 +231,7 @@ class V3Updater @Inject constructor(
             timerTask {
                 repo = incrementalUpdate(repo) ?: repo
             },
-            1, 3, TimeUnit.MINUTES
+            1, 6, TimeUnit.MINUTES
         )
     }
 
