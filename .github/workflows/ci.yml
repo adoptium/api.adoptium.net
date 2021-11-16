@@ -39,4 +39,3 @@ jobs:
 
     - name: Build app
       run: ./mvnw --batch-mode clean install jacoco:report jacoco:report-aggregate ${{ env.ARGS }}
-
