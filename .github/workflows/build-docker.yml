@@ -39,6 +39,9 @@ jobs:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
           cluster-name: aksff92
           resource-group: adopt-api
-          
+
+      - name: Redeploy updater-api
+        run: kubectl config set-context --current --namespace=${{ env.NAMESPACE }} && kubectl rollout restart deployment updater-api
+
       - name: Redeploy frontend-service
         run: kubectl config set-context --current --namespace=${{ env.NAMESPACE }} && kubectl rollout restart deployment frontend-service

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# BUILDS FOR ADOPTOPENJDK, NOT ADOPTIUM
+
 set -euxo pipefail
 
 if [ "$(ls /tmp/artifacts/ 2>/dev/null)" ]; then
@@ -10,7 +12,7 @@ cd /tmp/src
 ./mvnw -B clean install -Padoptopenjdk,-adoptium
 
 if [ -v SWAGGERHUB_APIKEY ]; then
-  cd adoptopenjdk-frontend-parent/adoptopenjdk-api-v3-frontend
+  cd adoptium-frontend-parent/adoptium-api-v3-frontend
   unzip target/quarkus-app/quarkus/generated-bytecode.jar META-INF/quarkus-generated-openapi-doc.JSON || true
   ../../mvnw io.swagger:swaggerhub-maven-plugin:upload || true
   cd ../..
@@ -18,10 +20,10 @@ fi
 
 mkdir -p /deployments
 
-cp -r adoptopenjdk-frontend-parent/adoptopenjdk-api-v3-frontend/target/quarkus-app/* /deployments/
+cp -r adoptium-frontend-parent/adoptium-api-v3-frontend/target/quarkus-app/* /deployments/
 
-cp adoptopenjdk-updater-parent/adoptopenjdk-api-v3-updater/target/adoptopenjdk-api-v3-updater-*-jar-with-dependencies.jar /deployments/adoptopenjdk-api-v3-updater-runner.jar
-mv /deployments/quarkus-run.jar /deployments/adoptopenjdk-api-v3-frontend.jar
+cp adoptium-updater-parent/adoptium-api-v3-updater/target/adoptium-api-v3-updater-*-jar-with-dependencies.jar /deployments/adoptium-api-v3-updater-runner.jar
+mv /deployments/quarkus-run.jar /deployments/adoptium-api-v3-frontend.jar
 
 mkdir -p /deployments/scripts
 chmod +x scripts/*

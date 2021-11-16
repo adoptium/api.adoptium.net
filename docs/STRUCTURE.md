@@ -57,8 +57,8 @@ We pull data from the DockerHub API inside DockerStatsInterface.
 ### Running
 To run the updater tool:
  - generate the artifacts by running `mvnw clean install`. 
- - `cd` into the `adoptopenjdk-api-v3-updater` directory
- - run `java -jar ./target/adoptopenjdk-api-v3-updater-3.0.0-SNAPSHOT-jar-with-dependencies.jar`
+ - `cd` into the `adoptium-api-v3-updater` directory
+ - run `java -jar ./target/adoptium-api-v3-updater-3.0.0-SNAPSHOT-jar-with-dependencies.jar`
 
 ### Database
 The database stores 3 main types of data:
@@ -78,5 +78,5 @@ Data is polled from the database into memory and requests are then serviced from
 A full list of endpoints and each of the parameters can be found at <https://api.adoptium.net/swagger-ui/>
 
 ### Running
-To run the front-end quarkus tool, `cd` into the `adoptopenjdk-api-v3-frontend` directory and run `../../mvnw quarkus:dev`. This will then run the tool on port 8080.
+To run the front-end quarkus tool, `cd` into the `adoptium-api-v3-frontend` directory and run `../../mvnw quarkus:dev -Padoptium`. This will then run the tool on port 8080.
 NOTE: You will need to have let the Updater run a full cycle before any data is shown.

@@ -2,9 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>net.adoptopenjdk.api</groupId>
-    <artifactId>adoptopenjdk-api-v3</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <groupId>net.adoptium.api</groupId>
+    <artifactId>adoptium-api-v3</artifactId>
+    <version>3.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <!-- This throws a warning, but the versions plugin does actually require it if you're checking plugin versions -->
@@ -16,7 +16,7 @@
         <jacoco.version>0.8.7</jacoco.version>
         <jdk.version>11</jdk.version>
         <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
-        <kotlin.version>1.5.31</kotlin.version>
+        <kotlin.version>1.6.0</kotlin.version>
         <coroutine.version>1.5.2</coroutine.version>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
@@ -29,15 +29,14 @@
         <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
         <jackson.version>2.13.0</jackson.version>
         <kmongo.version>4.3.0</kmongo.version>
-        <ecosystem>adoptopenjdk</ecosystem>
     </properties>
 
     <modules>
-        <module>adoptopenjdk-models-parent</module>
-        <module>adoptopenjdk-api-v3-persistence</module>
-        <module>adoptopenjdk-api-v3-telemetry</module>
-        <module>adoptopenjdk-updater-parent</module>
-        <module>adoptopenjdk-frontend-parent</module>
+        <module>adoptium-models-parent</module>
+        <module>adoptium-api-v3-persistence</module>
+        <module>adoptium-api-v3-telemetry</module>
+        <module>adoptium-updater-parent</module>
+        <module>adoptium-frontend-parent</module>
     </modules>
 
     <dependencyManagement>
@@ -118,23 +117,23 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>net.adoptopenjdk.api</groupId>
-                <artifactId>adoptopenjdk-api-v3-models</artifactId>
+                <groupId>net.adoptium.api</groupId>
+                <artifactId>adoptium-api-v3-models</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>net.adoptopenjdk.api</groupId>
-                <artifactId>adoptopenjdk-api-v3-persistence</artifactId>
+                <groupId>net.adoptium.api</groupId>
+                <artifactId>adoptium-api-v3-persistence</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>net.adoptopenjdk.api</groupId>
-                <artifactId>adoptopenjdk-api-v3-telemetry</artifactId>
+                <groupId>net.adoptium.api</groupId>
+                <artifactId>adoptium-api-v3-telemetry</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>net.adoptopenjdk.api</groupId>
-                <artifactId>adoptopenjdk-api-v3-updater</artifactId>
+                <groupId>net.adoptium.api</groupId>
+                <artifactId>adoptium-api-v3-updater</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -188,7 +187,7 @@
             <dependency>
                 <groupId>org.awaitility</groupId>
                 <artifactId>awaitility</artifactId>
-                <version>4.1.0</version>
+                <version>4.1.1</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -199,7 +198,7 @@
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq</artifactId>
-                <version>3.15.3</version>
+                <version>3.15.4</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -266,12 +265,12 @@
             <dependency>
                 <groupId>io.quarkiverse.logging.logback</groupId>
                 <artifactId>quarkus-logging-logback</artifactId>
-                <version>0.4.0</version>
+                <version>0.5.0</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkiverse.logging.logback</groupId>
                 <artifactId>quarkus-logging-logback-impl</artifactId>
-                <version>0.4.0</version>
+                <version>0.5.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -311,7 +310,7 @@
                 <plugin>
                     <groupId>com.github.spotbugs</groupId>
                     <artifactId>spotbugs-maven-plugin</artifactId>
-                    <version>4.4.2.1</version>
+                    <version>4.4.2.2</version>
                 </plugin>
                 <plugin>
                     <groupId>com.ning.maven.plugins</groupId>
@@ -564,7 +563,7 @@
                 <plugin>
                     <groupId>org.pitest</groupId>
                     <artifactId>pitest-maven</artifactId>
-                    <version>1.7.2</version>
+                    <version>1.7.3</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -726,7 +725,7 @@
                     <dependency>
                         <groupId>com.pinterest</groupId>
                         <artifactId>ktlint</artifactId>
-                        <version>0.42.1</version>
+                        <version>0.43.0</version>
                     </dependency>
                     <!-- additional 3rd party ruleset(s) can be specified here -->
                 </dependencies>
@@ -739,7 +738,7 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.4.2.1</version>
+                <version>4.4.2.2</version>
                 <configuration>
                     <plugins>
                         <plugin>

@@ -1,7 +1,7 @@
 .mvn
 .iml
 target/
-adoptopenjdk-api.iml
+adoptium-api.iml
 .idea
 *.iml
 *.log
@@ -10,3 +10,4 @@ adoptopenjdk-api.iml
 .settings
 .vscode
 .java-version
+runLocalAPI.sh
