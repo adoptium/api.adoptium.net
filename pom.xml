@@ -9,7 +9,7 @@
 
     <!-- This throws a warning, but the versions plugin does actually require it if you're checking plugin versions -->
     <prerequisites>
-        <maven>3.6.3</maven>
+        <maven>3.8.4</maven>
     </prerequisites>
 
     <properties>
