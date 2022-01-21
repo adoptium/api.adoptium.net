@@ -14,15 +14,13 @@ import net.adoptium.api.v3.models.JvmImpl
 import net.adoptium.api.v3.models.StatsSource
 import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.routes.stats.DownloadStatsResource
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.format.DateTimeFormatter
 import javax.ws.rs.BadRequestException
-import kotlin.test.assertEquals
-import kotlin.test.assertFails
-import kotlin.test.assertTrue
 
 @ExtendWith(value = [DbExtension::class])
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -294,7 +292,7 @@ class DownloadStatsPathTest : FrontendTest() {
 
     @Test
     fun throwsOnABadDate() {
-        assertFails {
+        assertThrows<Throwable> {
             requestStats(
                 null,
                 "foo",

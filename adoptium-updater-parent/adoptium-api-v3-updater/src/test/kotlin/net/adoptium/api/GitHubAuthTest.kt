@@ -11,8 +11,8 @@ import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty
 import java.io.File
 import java.nio.file.Files
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 
 /**
  * GitHubAuth makes actual calls to System.getenv and System.getProperty, so ignore these tests if an

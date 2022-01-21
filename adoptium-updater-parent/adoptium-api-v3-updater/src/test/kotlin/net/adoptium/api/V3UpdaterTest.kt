@@ -4,7 +4,7 @@ import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.V3Updater
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
-import kotlin.test.assertTrue
+import org.junit.jupiter.api.Assertions.assertTrue
 
 class V3UpdaterTest {
 

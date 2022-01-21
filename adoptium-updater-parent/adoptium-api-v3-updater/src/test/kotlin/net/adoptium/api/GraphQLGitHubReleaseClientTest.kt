@@ -26,7 +26,7 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleasesS
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
+import org.junit.jupiter.api.Assertions.assertEquals
 
 class GraphQLGitHubReleaseClientTest : BaseTest() {
     companion object {

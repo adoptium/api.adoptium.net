@@ -4,8 +4,8 @@ import net.adoptium.api.v3.Startup
 import net.adoptium.api.v3.Startup.Companion.ENABLE_PERIODIC_UPDATES
 import net.adoptium.api.v3.dataSources.APIDataStore
 import org.junit.jupiter.api.extension.ExtendWith
-import kotlin.test.Test
-import kotlin.test.assertNotNull
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.assertNotNull
 
 @ExtendWith(value = [DbExtension::class])
 class V3Test : FrontendTest() {

@@ -21,8 +21,8 @@ import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.ZonedDateTime
 import java.util.stream.Stream
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 
 @ExtendWith(MockKExtension::class)
 class CachedGitHubHtmlClientTest {

@@ -85,12 +85,12 @@ open class AdoptRepositoryStub : AdoptRepository {
         )
     }
 
-    override suspend fun getReleaseById(id: GitHubId): ReleaseResult? {
+    override suspend fun getReleaseById(gitHubId: GitHubId): ReleaseResult? {
         return updated
             .allReleases
             .getReleases()
             .filter {
-                GitHubId(it.id) == id
+                GitHubId(it.id) == gitHubId
             }
             .map {
                 ReleaseResult(listOf(it))

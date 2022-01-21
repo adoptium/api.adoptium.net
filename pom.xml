@@ -14,17 +14,17 @@
 
     <properties>
         <jacoco.version>0.8.7</jacoco.version>
-        <jdk.version>11</jdk.version>
-        <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
-        <kotlin.version>1.6.0</kotlin.version>
+        <jdk.version>17</jdk.version>
+        <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
+        <kotlin.version>1.6.10</kotlin.version>
         <coroutine.version>1.5.2</coroutine.version>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <maven.compiler.testSource>11</maven.compiler.testSource>
-        <maven.compiler.testTarget>11</maven.compiler.testTarget>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.testSource>17</maven.compiler.testSource>
+        <maven.compiler.testTarget>17</maven.compiler.testTarget>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>2.3.0.Final</quarkus.version>
+        <quarkus.version>2.6.3.Final</quarkus.version>
         <rest-assured.version>4.4.0</rest-assured.version>
         <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
         <jackson.version>2.13.0</jackson.version>
@@ -144,7 +144,7 @@
             <dependency>
                 <groupId>org.eclipse.microprofile.openapi</groupId>
                 <artifactId>microprofile-openapi-api</artifactId>
-                <version>2.0</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>org.glassfish</groupId>
@@ -166,7 +166,30 @@
                         <groupId>org.slf4j</groupId>
                         <artifactId>slf4j-simple</artifactId>
                     </exclusion>
+                    <!-- Flapdoodle does not enforce itself and asks for 4.12 and 4.13.2, this is sad. -->
+                    <exclusion>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                    </exclusion>
+                    <!-- We exclude this not to get junit 4 style annotations -->
+                    <exclusion>
+                        <groupId>org.jetbrains.kotlin</groupId>
+                        <artifactId>kotlin-test-junit</artifactId>
+                    </exclusion>
                 </exclusions>
+            </dependency>
+            <!-- We exclude this not to get junit 4 style annotations -->
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-test-junit5</artifactId>
+                <version>1.6.0</version>
+            </dependency>
+            <!-- Explicitly adding this because Maven can't see it via the kmongo dep -->
+            <dependency>
+                <groupId>de.flapdoodle.embed</groupId>
+                <artifactId>de.flapdoodle.embed.mongo</artifactId>
+                <version>2.2.0</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
@@ -265,12 +288,12 @@
             <dependency>
                 <groupId>io.quarkiverse.logging.logback</groupId>
                 <artifactId>quarkus-logging-logback</artifactId>
-                <version>0.5.0</version>
+                <version>0.10.0</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkiverse.logging.logback</groupId>
                 <artifactId>quarkus-logging-logback-impl</artifactId>
-                <version>0.5.0</version>
+                <version>0.10.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -684,6 +707,8 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- ktlint needs to fix bug 1195, then we can have nice things again with Java 17 supprot -->
+            <!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
@@ -727,9 +752,9 @@
                         <artifactId>ktlint</artifactId>
                         <version>0.43.2</version>
                     </dependency>
-                    <!-- additional 3rd party ruleset(s) can be specified here -->
                 </dependencies>
             </plugin>
+            -->
         </plugins>
     </build>
 

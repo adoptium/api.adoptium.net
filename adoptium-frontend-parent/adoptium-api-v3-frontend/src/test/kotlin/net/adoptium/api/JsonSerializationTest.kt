@@ -6,7 +6,7 @@ import org.hamcrest.Description
 import org.hamcrest.TypeSafeMatcher
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import kotlin.test.assertTrue
+import org.junit.jupiter.api.Assertions.assertTrue
 
 @QuarkusTest
 @ExtendWith(value = [DbExtension::class])

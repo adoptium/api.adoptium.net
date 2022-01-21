@@ -20,7 +20,7 @@ import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.models.VersionData
 import org.junit.jupiter.api.Test
 import java.time.ZonedDateTime
-import kotlin.test.assertTrue
+import org.junit.jupiter.api.Assertions.assertTrue
 
 class AdoptReposTest : BaseTest() {
 
