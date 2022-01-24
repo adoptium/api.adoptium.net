@@ -117,7 +117,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
             ) { previous: Release?, next: Release ->
                 if (previous != null) {
                     if (Releases.VERSION_COMPARATOR.compare(previous.version_data, next.version_data) > 0) {
-                        fail("${previous.version_data} is before ${next.version_data}")
+                        fail<String>("${previous.version_data} is before ${next.version_data}")
                     }
                 }
                 next
@@ -132,7 +132,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
             ) { previous: Release?, next: Release ->
                 if (previous != null) {
                     if (Releases.VERSION_COMPARATOR.compare(previous.version_data, next.version_data) < 0) {
-                        // TODO fail("${previous.version_data} is before ${next.version_data}")
+                        fail<String>("${previous.version_data} is before ${next.version_data}")
                     }
                 }
                 next
