@@ -1,0 +1,62 @@
+{
+  "releases": [
+    {
+      "binaries": [
+        {
+          "architecture": "aarch64",
+          "heap_size": "normal",
+          "image_type": "jre",
+          "jvm_impl": "hotspot",
+          "os": "mac",
+          "package": {
+            "checksum": "3c4c249f5410f4afe9c80abfb0a370a986c8a4d09f10956542f7dae6e90915b1",
+            "checksum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-jre_aarch64_mac_hotspot_17.0.1_12.tar.gz.sha256.txt",
+            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-jre_aarch64_mac_hotspot_17.0.1_12.tar.gz",
+            "metadata_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-jre_aarch64_mac_hotspot_17.0.1_12.tar.gz.json",
+            "name": "OpenJDK17U-jre_aarch64_mac_hotspot_17.0.1_12.tar.gz",
+            "size": 41120726
+          },
+          "project": "jdk",
+          "scm_ref": "jdk-17.0.1+12_adopt",
+          "updated_at": "2021-12-15T16:10:28Z"
+        },
+        {
+          "architecture": "x64",
+          "heap_size": "normal",
+          "image_type": "jre",
+          "jvm_impl": "hotspot",
+          "os": "mac",
+          "package": {
+            "checksum": "d7eefa08d893d1ae263dc4ba427baa67b3cb9d48e1151654e423007fb2801358",
+            "checksum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-jre_x64_mac_hotspot_17.0.1_12.tar.gz.sha256.txt",
+            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-jre_x64_mac_hotspot_17.0.1_12.tar.gz",
+            "metadata_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-jre_x64_mac_hotspot_17.0.1_12.tar.gz.json",
+            "name": "OpenJDK17U-jre_x64_mac_hotspot_17.0.1_12.tar.gz",
+            "size": 49381283
+          },
+          "project": "jdk",
+          "scm_ref": "jdk-17.0.1+12_adopt",
+          "updated_at": "2021-12-15T16:10:33Z"
+        }
+      ],
+      "release_link": "https://github.com/adoptium/temurin17-binaries/releases/tag/jdk-17.0.1%2B12",
+      "release_name": "jdk-17.0.1+12",
+      "release_type": "ga",
+      "source": {
+        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-sources_17.0.1_12.tar.gz",
+        "name": "OpenJDK17U-sources_17.0.1_12.tar.gz",
+        "size": 105458676
+      },
+      "timestamp": "2021-10-27T13:36:51Z",
+      "updated_at": "2021-12-20T13:59:47Z",
+      "vendor": "eclipse",
+      "version_data": {
+        "build": 12,
+        "major": 17,
+        "minor": 0,
+        "openjdk_version": "17.0.1+12",
+        "security": 1
+      }
+    }
+  ]
+}
