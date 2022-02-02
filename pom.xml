@@ -593,11 +593,6 @@
                     <artifactId>maven-enforcer-plugin</artifactId>
                     <version>3.0.0-M3</version>
                 </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>${surefire-plugin.version}</version>
-                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -613,7 +608,7 @@
                                     <uniqueVersions>true</uniqueVersions>
                                 </dependencyConvergence>
                                 <requireMavenVersion>
-                                    <version>3.6.3</version>
+                                    <version>3.8.4</version>
                                 </requireMavenVersion>
                             </rules>
                         </configuration>
@@ -626,7 +621,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
