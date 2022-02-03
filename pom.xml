@@ -242,7 +242,7 @@
             <dependency>
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>applicationinsights-logging-logback</artifactId>
-                <version>2.6.3</version>
+                <version>2.6.4</version>
                 <exclusions>
                     <exclusion>
                         <groupId>ch.qos.logback</groupId>
