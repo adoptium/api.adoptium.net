@@ -4,8 +4,8 @@ import io.quarkus.test.junit.QuarkusTest
 import net.adoptium.api.v3.filters.VersionRangeFilter
 import net.adoptium.api.v3.parser.VersionParser
 import org.junit.jupiter.api.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 
 @QuarkusTest
 class VersionRangeFilterTest {

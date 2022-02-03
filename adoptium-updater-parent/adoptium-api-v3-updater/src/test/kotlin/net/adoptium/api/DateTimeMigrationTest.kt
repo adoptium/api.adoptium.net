@@ -55,7 +55,7 @@ class DateTimeMigrationTest : MongoTest() {
     }
 
     @Test
-    fun `writes datetime as string`(mongoClient: MongoClient) {
+    fun `writes datetime as string`() {
         val hzdt = HasDateTime(DateTime(ZonedDateTime.ofInstant(Instant.ofEpochMilli(0), ZoneOffset.UTC)))
         val serialized = JsonMapper.mapper.writeValueAsString(hzdt)
         assertEquals("{\"zdt\":\"1970-01-01T00:00:00Z\"}", serialized)

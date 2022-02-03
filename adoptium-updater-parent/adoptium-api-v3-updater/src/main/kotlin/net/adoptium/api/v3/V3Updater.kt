@@ -1,5 +1,6 @@
 package net.adoptium.api.v3
 
+import io.quarkus.arc.profile.UnlessBuildProfile
 import io.quarkus.runtime.Startup
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -28,11 +29,13 @@ import javax.ws.rs.ApplicationPath
 import javax.ws.rs.core.Application
 import kotlin.concurrent.timerTask
 
+@UnlessBuildProfile("test")
 @ApplicationScoped
 @ApplicationPath("/")
 @Startup
 class V3UpdaterApp : Application()
 
+@UnlessBuildProfile("test")
 @Singleton
 @Startup
 class KickOffUpdate @Inject constructor(

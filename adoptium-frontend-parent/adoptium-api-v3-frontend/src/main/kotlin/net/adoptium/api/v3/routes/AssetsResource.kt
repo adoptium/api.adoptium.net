@@ -151,7 +151,7 @@ constructor(
 
     ): List<Release> {
         val order = sortOrder ?: SortOrder.DESC
-        val sortMethod = sortMethod ?: SortMethod.DEFAULT
+        val releaseSortMethod = sortMethod ?: SortMethod.DEFAULT
         val vendorNonNull = vendor ?: Vendor.getDefault()
 
         val releaseFilter = ReleaseFilter(releaseType = release_type, featureVersion = version, vendor = vendorNonNull, jvm_impl = jvm_impl)
@@ -164,7 +164,7 @@ constructor(
 
         val releases = apiDataStore
             .getAdoptRepos()
-            .getFilteredReleases(version, releaseFilter, binaryFilter, order, sortMethod)
+            .getFilteredReleases(version, releaseFilter, binaryFilter, order, releaseSortMethod)
 
         return getPage(pageSize, page, releases)
     }
@@ -386,8 +386,8 @@ constructor(
         vendor: Vendor?
 
     ): List<BinaryAssetView> {
-        val vendor = vendor ?: Vendor.getDefault()
-        val releaseFilter = ReleaseFilter(ReleaseType.ga, featureVersion = version, vendor = vendor, jvm_impl = jvm_impl)
+        val binaryVendor = vendor ?: Vendor.getDefault()
+        val releaseFilter = ReleaseFilter(ReleaseType.ga, featureVersion = version, vendor = binaryVendor, jvm_impl = jvm_impl)
         val binaryFilter = BinaryFilter(null, null, null, jvm_impl, null, null)
         val releases = apiDataStore
             .getAdoptRepos()

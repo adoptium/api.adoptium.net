@@ -5,19 +5,19 @@ import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import org.awaitility.Awaitility
 import org.jboss.weld.junit5.auto.AddPackages
-import org.junit.BeforeClass
-import org.junit.Ignore
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @QuarkusTest
-@Ignore("For manual execution")
+@Disabled("For manual execution")
 @AddPackages(value = [ApiPersistence::class])
 class TestRunner : BaseTest() {
 
     companion object {
-        @BeforeClass
+        @BeforeAll
         @Inject
         fun init(apiPersistence: ApiPersistence) {
             runBlocking {

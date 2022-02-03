@@ -26,7 +26,7 @@ import net.adoptium.api.v3.routes.AssetsResource
 import net.adoptium.api.v3.routes.ReleaseEndpoint
 import org.junit.jupiter.api.Test
 import java.time.ZonedDateTime
-import kotlin.test.assertEquals
+import org.junit.jupiter.api.Assertions.assertEquals
 
 class AssetsResourceFeatureReleasePathSortOrderTest : FrontendTest() {
 
