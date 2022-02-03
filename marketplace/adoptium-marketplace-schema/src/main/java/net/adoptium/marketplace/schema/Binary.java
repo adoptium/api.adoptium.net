@@ -25,8 +25,6 @@ public class Binary {
     @Schema(implementation = Installer.class)
     private final Installer installer;
 
-    private final HeapSize heap_size;
-
     private final Date updated_at;
 
     @Schema(example = "dd28d6d2cde2b931caf94ac2422a2ad082ea62f0beee3bf7057317c53093de93")
@@ -43,7 +41,6 @@ public class Binary {
             @JsonProperty("jvm_impl") JvmImpl jvm_impl,
             @JsonProperty("package") Package aPackage,
             @JsonProperty("installer") Installer installer,
-            @JsonProperty("heap_size") HeapSize heap_size,
             @JsonProperty("updated_at") Date updated_at,
             @JsonProperty("scm_ref") String scm_ref,
             @JsonProperty("project") Project project) {
@@ -54,7 +51,6 @@ public class Binary {
         this.jvm_impl = jvm_impl;
         _package = aPackage;
         this.installer = installer;
-        this.heap_size = heap_size;
         this.updated_at = updated_at;
         this.scm_ref = scm_ref;
         this.project = project;
@@ -86,10 +82,6 @@ public class Binary {
 
     public Installer getInstaller() {
         return installer;
-    }
-
-    public HeapSize getHeap_size() {
-        return heap_size;
     }
 
     public Date getUpdated_at() {

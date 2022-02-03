@@ -46,13 +46,11 @@ public class DeserializationTest {
                                                         "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-jre_x64_mac_hotspot_17.0.1_12.tar.gz.json"
                                                 ),
                                                 null,
-                                                HeapSize.normal,
                                                 Date.from(Instant.now()),
                                                 "scmref",
                                                 Project.jdk
                                         )
                                 ),
-                                ReleaseType.ga,
                                 Vendor.adoptium,
                                 new VersionData(
                                         8,
