@@ -32,18 +32,21 @@ public class Binary {
 
     private final Project project;
 
+    private final Distribution distribution;
+
     @JsonCreator
     public Binary(
-            @JsonProperty("os") OperatingSystem os,
-            @JsonProperty("architecture") Architecture architecture,
-            @JsonProperty("image_type") ImageType image_type,
-            @JsonProperty("c_lib") CLib c_lib,
-            @JsonProperty("jvm_impl") JvmImpl jvm_impl,
-            @JsonProperty("package") Package aPackage,
-            @JsonProperty("installer") Installer installer,
-            @JsonProperty("updated_at") Date updated_at,
-            @JsonProperty("scm_ref") String scm_ref,
-            @JsonProperty("project") Project project) {
+        @JsonProperty("os") OperatingSystem os,
+        @JsonProperty("architecture") Architecture architecture,
+        @JsonProperty("image_type") ImageType image_type,
+        @JsonProperty("c_lib") CLib c_lib,
+        @JsonProperty("jvm_impl") JvmImpl jvm_impl,
+        @JsonProperty("package") Package aPackage,
+        @JsonProperty("installer") Installer installer,
+        @JsonProperty("updated_at") Date updated_at,
+        @JsonProperty("scm_ref") String scm_ref,
+        @JsonProperty("project") Project project,
+        @JsonProperty("distribution") Distribution distribution) {
         this.os = os;
         this.architecture = architecture;
         this.image_type = image_type;
@@ -54,6 +57,7 @@ public class Binary {
         this.updated_at = updated_at;
         this.scm_ref = scm_ref;
         this.project = project;
+        this.distribution = distribution;
     }
 
     public OperatingSystem getOs() {
@@ -94,5 +98,9 @@ public class Binary {
 
     public Project getProject() {
         return project;
+    }
+
+    public Distribution getDistribution() {
+        return distribution;
     }
 }
