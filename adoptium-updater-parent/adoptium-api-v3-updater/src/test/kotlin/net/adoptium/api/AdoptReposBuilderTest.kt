@@ -13,7 +13,7 @@ import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.models.GHReleaseMetadata
 import org.jboss.weld.junit5.auto.EnableAutoWeld
 import org.junit.jupiter.api.Test
-import kotlin.test.assertTrue
+import org.junit.jupiter.api.Assertions.assertTrue
 
 @EnableAutoWeld
 class AdoptReposBuilderTest : BaseTest() {
@@ -28,7 +28,7 @@ class AdoptReposBuilderTest : BaseTest() {
     }
 
     @Test
-    fun addReleaseIsUpdatedExplicitly(repo: AdoptRepos, adoptRepository: AdoptRepository) {
+    fun addReleaseIsUpdatedExplicitly(adoptRepository: AdoptRepository) {
         runBlocking {
             val adoptRepo = spyk(adoptRepository)
             val adoptReposBuilder = AdoptReposBuilder(adoptRepo)
@@ -109,7 +109,7 @@ class AdoptReposBuilderTest : BaseTest() {
     }
 
     @Test
-    fun `release is updated when binary count changes`(repo: AdoptRepos, adoptRepository: AdoptRepository) {
+    fun `release is updated when binary count changes`(adoptRepository: AdoptRepository) {
         runBlocking {
             val adoptRepo = spyk(adoptRepository)
             val adoptReposBuilder = AdoptReposBuilder(adoptRepo)
@@ -133,7 +133,7 @@ class AdoptReposBuilderTest : BaseTest() {
     }
 
     @Test
-    fun `release is not updated when binary count does not change`(repo: AdoptRepos, adoptRepository: AdoptRepository) {
+    fun `release is not updated when binary count does not change`(adoptRepository: AdoptRepository) {
         runBlocking {
             val adoptRepo = spyk(adoptRepository)
             val adoptReposBuilder = AdoptReposBuilder(adoptRepo)

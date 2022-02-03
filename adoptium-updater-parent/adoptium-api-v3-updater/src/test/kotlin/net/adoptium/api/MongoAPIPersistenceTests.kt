@@ -5,9 +5,9 @@ import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.persitence.mongo.MongoApiPersistence
 import net.adoptium.api.v3.models.GHReleaseMetadata
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
+import org.junit.jupiter.api.Assertions.assertEquals
 
 class MongoAPIPersistenceTests : MongoTest() {
     @Test
@@ -22,7 +22,7 @@ class MongoAPIPersistenceTests : MongoTest() {
 
             val stored = api.getUpdatedAt()
 
-            Assert.assertEquals(time, stored.time)
+            Assertions.assertEquals(time, stored.time)
         }
     }
 

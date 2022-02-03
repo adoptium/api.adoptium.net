@@ -43,7 +43,7 @@ constructor(private val apiDataStore: APIDataStore) {
     ): Sequence<Release> {
         val order = sortOrder ?: SortOrder.DESC
         val vendorNonNull = vendor ?: Vendor.getDefault()
-        val sortMethod = sortMethod ?: SortMethod.DEFAULT
+        val releaseSortMethod = sortMethod ?: SortMethod.DEFAULT
 
         val range = try {
             VersionRangeFilter(version)
@@ -58,6 +58,6 @@ constructor(private val apiDataStore: APIDataStore) {
 
         return apiDataStore
             .getAdoptRepos()
-            .getFilteredReleases(releaseFilter, binaryFilter, order, sortMethod)
+            .getFilteredReleases(releaseFilter, binaryFilter, order, releaseSortMethod)
     }
 }

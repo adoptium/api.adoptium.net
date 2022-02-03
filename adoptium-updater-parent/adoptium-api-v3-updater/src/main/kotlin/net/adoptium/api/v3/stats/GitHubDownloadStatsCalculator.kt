@@ -62,25 +62,24 @@ open class GitHubDownloadStatsCalculator @Inject constructor(private val databas
                     .releases
                     .getReleases()
                     .filter { it.vendor == Vendor.getDefault() }
-                    .sumBy {
+                    .sumOf {
                         it.download_count.toInt()
                     }
 
                 // Tally up jvmImpl download stats
                 val jvmImplMap: Map<JvmImpl, Long> = JvmImpl.values().map { jvmImpl ->
                     jvmImpl to
-                        featureRelease
-                            .releases
-                            .getReleases()
-                            .filter { it.vendor == Vendor.getDefault() }
-                            .sumBy {
-                                it.binaries
-                                    .filter { binary -> binary.jvm_impl == jvmImpl }
-                                    .sumBy {
-                                        binary ->
-                                        binary.download_count.toInt()
-                                    }
-                            }
+                            featureRelease
+                                .releases
+                                .getReleases()
+                                .filter { it.vendor == Vendor.getDefault() }
+                                .sumOf {
+                                    it.binaries
+                                        .filter { binary -> binary.jvm_impl == jvmImpl }
+                                        .sumOf { binary ->
+                                            binary.download_count.toInt()
+                                        }
+                                }
                             .toLong()
                 }.toMap()
 

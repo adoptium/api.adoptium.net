@@ -1,7 +1,7 @@
 package net.adoptium.api
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import kotlin.test.assertEquals
+import org.junit.jupiter.api.Assertions.assertEquals
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHMetaData
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHVersion
