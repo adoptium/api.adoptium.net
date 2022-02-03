@@ -12,7 +12,6 @@ import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.models.Release
 import org.jboss.weld.junit5.auto.EnableAlternatives
 import org.jboss.weld.junit5.auto.EnableAutoWeld
-import org.junit.Before
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import javax.annotation.Priority
@@ -51,7 +50,7 @@ class UpdateTriggerTest : BaseTest() {
         }
     }
 
-    @Before
+    @BeforeEach
     fun setUp() = MockKAnnotations.init(this, relaxUnitFun = true)
 
     @BeforeEach

@@ -27,8 +27,8 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle
 import java.time.Instant
 import java.time.format.DateTimeFormatter
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 
 @TestInstance(Lifecycle.PER_CLASS)
 class AdoptBinaryMapperTest {

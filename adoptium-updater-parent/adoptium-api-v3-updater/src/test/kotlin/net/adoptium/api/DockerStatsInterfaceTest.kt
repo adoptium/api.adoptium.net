@@ -17,10 +17,10 @@ import net.adoptium.api.v3.stats.dockerstats.DockerStats
 import net.adoptium.api.v3.stats.dockerstats.DockerStatsInterface
 import net.adoptium.api.v3.stats.dockerstats.DockerStatsInterfaceFactory
 import org.jboss.weld.junit5.auto.AddPackages
-import org.junit.Assert
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions
 import java.time.ZonedDateTime
-import kotlin.test.assertEquals
+import org.junit.jupiter.api.Assertions.assertEquals
 
 @AddPackages(value = [DockerStatsInterface::class, DefaultUpdaterHtmlClient::class, HttpClientFactory::class])
 class DockerStatsInterfaceTest : BaseTest() {
@@ -33,7 +33,7 @@ class DockerStatsInterfaceTest : BaseTest() {
             dockerStatsInterface.updateDb()
 
             val stats = apiPersistence.getLatestAllDockerStats()
-            Assert.assertTrue(stats.size > 0)
+            Assertions.assertTrue(stats.size > 0)
         }
     }
 

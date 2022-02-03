@@ -22,7 +22,7 @@ import javax.inject.Singleton
 interface AdoptRepository {
     suspend fun getRelease(version: Int): FeatureRelease?
     suspend fun getSummary(version: Int): GHRepositorySummary
-    suspend fun getReleaseById(id: GitHubId): ReleaseResult?
+    suspend fun getReleaseById(gitHubId: GitHubId): ReleaseResult?
 }
 
 @Singleton

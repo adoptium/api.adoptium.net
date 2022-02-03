@@ -129,11 +129,11 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         gitHubStatsCollection.deleteMany(deleteQuery)
     }
 
-    override suspend fun setReleaseInfo(version: ReleaseInfo) {
+    override suspend fun setReleaseInfo(releaseInfo: ReleaseInfo) {
         releaseInfoCollection.deleteMany(releaseVersionDbEntryMatcher())
         releaseInfoCollection.updateOne(
             releaseVersionDbEntryMatcher(),
-            version,
+            releaseInfo,
             UpdateOptions().upsert(true)
         )
     }

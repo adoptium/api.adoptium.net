@@ -31,7 +31,7 @@ import org.apache.http.message.BasicHeader
 import org.apache.http.message.BasicStatusLine
 import org.jboss.weld.junit5.auto.AddPackages
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
+import org.junit.jupiter.api.Assertions.assertEquals
 
 @AddPackages(value = [DefaultUpdaterHtmlClient::class, HttpClientFactory::class])
 class SemeruReleaseMapperTest : BaseTest() {

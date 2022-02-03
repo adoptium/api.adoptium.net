@@ -14,8 +14,8 @@ import net.adoptium.api.v3.models.StatsSource
 import net.adoptium.api.v3.routes.stats.DownloadStatsResource
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 
 @ExtendWith(value = [DbExtension::class])
 class MonthlyStatsPathTest : FrontendTest() {

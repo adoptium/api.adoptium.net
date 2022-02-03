@@ -22,7 +22,7 @@ interface ApiPersistence {
     suspend fun addDockerDownloadStatsEntries(stats: List<DockerDownloadStatsDbEntry>)
     suspend fun getLatestAllDockerStats(): List<DockerDownloadStatsDbEntry>
     suspend fun removeStatsBetween(start: ZonedDateTime, end: ZonedDateTime)
-    suspend fun setReleaseInfo(version: ReleaseInfo)
+    suspend fun setReleaseInfo(releaseInfo: ReleaseInfo)
     suspend fun getReleaseInfo(): ReleaseInfo?
     suspend fun getUpdatedAt(): UpdatedInfo
     suspend fun getGhReleaseMetadata(gitHubId: GitHubId): GHReleaseMetadata?

@@ -2,6 +2,7 @@ package net.adoptium.api.v3.models
 
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
 import org.eclipse.microprofile.openapi.annotations.media.Schema
+import java.util.*
 
 @Schema(type = SchemaType.STRING, enumeration = ["normal", "large"], example = "normal")
 enum class HeapSize : FileNameMatcher {
@@ -16,7 +17,7 @@ enum class HeapSize : FileNameMatcher {
     }
 
     override fun matchesFile(fileName: String): Boolean {
-        val lowerCaseFileName = fileName.toLowerCase()
+        val lowerCaseFileName = fileName.lowercase(Locale.getDefault())
         return names
             .firstOrNull {
                 lowerCaseFileName.contains(Regex("${it}_"))
