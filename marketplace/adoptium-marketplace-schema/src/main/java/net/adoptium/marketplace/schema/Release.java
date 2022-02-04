@@ -31,14 +31,14 @@ public class Release {
 
     @JsonCreator
     public Release(
-            @JsonProperty("release_link") String release_link,
-            @JsonProperty("release_name") String release_name,
-            @JsonProperty("timestamp") Date timestamp,
-            @JsonProperty("updated_at") Date updated_at,
-            @JsonProperty("binaries") List<Binary> binaries,
-            @JsonProperty("vendor") Vendor vendor,
-            @JsonProperty("version_data") VersionData version_data,
-            @JsonProperty("source") SourcePackage source
+        @JsonProperty("release_link") String release_link,
+        @JsonProperty("release_name") String release_name,
+        @JsonProperty("timestamp") Date timestamp,
+        @JsonProperty("updated_at") Date updated_at,
+        @JsonProperty("binaries") List<Binary> binaries,
+        @JsonProperty("vendor") Vendor vendor,
+        @JsonProperty("version_data") VersionData version_data,
+        @JsonProperty("source") SourcePackage source
     ) {
         this.release_link = release_link;
         this.release_name = release_name;
