@@ -73,11 +73,6 @@
                 <version>1.70</version>
             </dependency>
             <dependency>
-                <groupId>com.google.crypto.tink</groupId>
-                <artifactId>tink</artifactId>
-                <version>1.6.1</version>
-            </dependency>
-            <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>2.13.1</version>
@@ -97,6 +92,11 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>1.7.32</version>
+            </dependency>
+            <dependency>
+                <groupId>net.adoptium.marketplace</groupId>
+                <artifactId>adoptium-marketplace-client</artifactId>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

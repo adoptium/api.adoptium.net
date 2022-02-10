@@ -3,12 +3,12 @@ package net.adoptium.marketplace.client;
 import net.adoptium.marketplace.client.signature.FailedToValidateSignatureException;
 import net.adoptium.marketplace.client.signature.SignatureVerifier;
 import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 public class MarketplaceHttpClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(MarketplaceHttpClient.class.getName());
@@ -23,23 +23,31 @@ public class MarketplaceHttpClient {
 
     public static MarketplaceHttpClient build(SignatureVerifier signatureVerifier) throws Exception {
         HttpClient httpClient = new HttpClient();
+        httpClient.setFollowRedirects(true);
         httpClient.start();
         return new MarketplaceHttpClient(httpClient, signatureVerifier);
     }
 
-    public String pullAndVerify(String url) throws FailedToPullDataException {
-        try {
-            String body = httpClient.GET(URI.create(url)).getContentAsString();
-            String signature = httpClient.GET(URI.create(url + "." + signatureVerifier.signatureSuffix())).getContentAsString();
+    public String pullAndVerify(String url) throws FailedToPullDataException, FailedToValidateSignatureException {
+        String body = getRequest(url);
+        String signature = getRequest(url + "." + signatureVerifier.signatureSuffix());
 
-            if (!signatureVerifier.verifySignature(body, signature)) {
-                throw new FailedToValidateSignatureException();
-            }
-
-            return body;
-        } catch (FailedToValidateSignatureException | InterruptedException | ExecutionException | TimeoutException e) {
-            LOGGER.warn("Failed to read and verify file", e);
-            throw new FailedToPullDataException(e);
+        if (!signatureVerifier.verifySignature(body, signature)) {
+            throw new FailedToValidateSignatureException();
         }
+
+        return body;
+    }
+
+    private String getRequest(String url) throws FailedToPullDataException {
+        try {
+            ContentResponse response = httpClient.GET(URI.create(url));
+            if (response.getStatus() == HttpStatus.OK_200) {
+                return response.getContentAsString();
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to get url", e);
+        }
+        throw new FailedToPullDataException(url);
     }
 }

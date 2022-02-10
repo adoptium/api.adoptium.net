@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.adoptium.marketplace.schema.IndexFile;
 import net.adoptium.marketplace.schema.Release;
 import net.adoptium.marketplace.schema.ReleaseList;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,6 +20,10 @@ public class MarketplaceClient {
 
     private final MarketplaceHttpClient marketplaceHttpClient;
     private final ObjectMapper mapper = new ObjectMapper();
+
+    static {
+        Security.addProvider(new BouncyCastleProvider());
+    }
 
     public MarketplaceClient(MarketplaceHttpClient marketplaceHttpClient) {
         this.marketplaceHttpClient = marketplaceHttpClient;
@@ -47,33 +53,33 @@ public class MarketplaceClient {
 
     private List<Release> recursivelyPullReleases(String finalBaseUrl, IndexFile index) {
         return index
-                .getIndexes()
-                .stream()
-                .flatMap(indexLink -> {
-                    String url = appendUrl(finalBaseUrl, indexLink);
-                    try {
-                        return readRepositoryData(url).stream();
-                    } catch (FailedToPullDataException e) {
-                        LOGGER.error("Failed to pull file", e);
-                    }
-                    return Stream.empty();
-                })
-                .collect(Collectors.toList());
+            .getIndexes()
+            .stream()
+            .flatMap(indexLink -> {
+                String url = appendUrl(finalBaseUrl, indexLink);
+                try {
+                    return readRepositoryData(url).stream();
+                } catch (FailedToPullDataException e) {
+                    LOGGER.error("Failed to pull file", e);
+                }
+                return Stream.empty();
+            })
+            .collect(Collectors.toList());
     }
 
     private List<Release> pullReleases(String finalBaseUrl, List<String> paths) {
         return paths
-                .stream()
-                .flatMap(releaseLink -> {
-                    String url = appendUrl(finalBaseUrl, releaseLink);
-                    try {
-                        return pullRelease(url).stream();
-                    } catch (FailedToPullDataException e) {
-                        LOGGER.warn("Failed to pull data " + url, e);
-                    }
-                    return Stream.empty();
-                })
-                .collect(Collectors.toList());
+            .stream()
+            .flatMap(releaseLink -> {
+                String url = appendUrl(finalBaseUrl, releaseLink);
+                try {
+                    return pullRelease(url).stream();
+                } catch (FailedToPullDataException e) {
+                    LOGGER.warn("Failed to pull data " + url, e);
+                }
+                return Stream.empty();
+            })
+            .collect(Collectors.toList());
     }
 
     private String removeIndexFileFromPath(String baseUrl) {
@@ -107,8 +113,8 @@ public class MarketplaceClient {
         try {
             String data = marketplaceHttpClient.pullAndVerify(url);
             return mapper
-                    .readValue(data, ReleaseList.class)
-                    .getReleases();
+                .readValue(data, ReleaseList.class)
+                .getReleases();
         } catch (Exception e) {
             throw new FailedToPullDataException(e);
         }
