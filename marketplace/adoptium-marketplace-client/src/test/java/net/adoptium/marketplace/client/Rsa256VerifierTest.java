@@ -5,12 +5,16 @@ import net.adoptium.marketplace.client.signature.SignatureVerifier;
 import net.adoptium.marketplace.schema.Release;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 
 public class Rsa256VerifierTest extends TestServer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Rsa256VerifierTest.class.getName());
 
     private static final String KEY;
 
@@ -21,8 +25,7 @@ public class Rsa256VerifierTest extends TestServer {
             key = new String(new FileInputStream("../exampleRepositories/keys/public.pem").readAllBytes());
         } catch (IOException e) {
             key = null;
-            System.out.println("Failed to read key");
-            e.printStackTrace();
+            LOGGER.error("Failed to read key", e);
         }
         KEY = key;
     }

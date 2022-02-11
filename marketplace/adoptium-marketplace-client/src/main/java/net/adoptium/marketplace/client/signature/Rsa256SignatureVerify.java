@@ -24,8 +24,8 @@ public class Rsa256SignatureVerify implements SignatureVerifier {
         this.publicKey = publicKey;
     }
 
-    public static Rsa256SignatureVerify build(String key) {
-        try (PemReader pemReader = new PemReader(new StringReader(key))) {
+    public static Rsa256SignatureVerify build(String publicKey) {
+        try (PemReader pemReader = new PemReader(new StringReader(publicKey))) {
             X509EncodedKeySpec spec = new X509EncodedKeySpec(pemReader.readPemObject().getContent());
             KeyFactory factory = KeyFactory.getInstance("RSA");
             return new Rsa256SignatureVerify(factory.generatePublic(spec));
@@ -46,7 +46,7 @@ public class Rsa256SignatureVerify implements SignatureVerifier {
             signatureSHA256.verify(signature);
             return true;
         } catch (GeneralSecurityException ex) {
-            LOGGER.error("Signature verification failed.");
+            LOGGER.error("Signature verification failed.", ex);
             return false;
         }
     }
