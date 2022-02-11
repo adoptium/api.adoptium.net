@@ -28,7 +28,6 @@ public class DeserializationTest {
                     "https://github.com/adoptium/temurin17-binaries/releases/tag/jdk-17.0.1%2B12",
                     "jdk-17.0.1+12",
                     Date.from(Instant.now()),
-                    Date.from(Instant.now()),
                     List.of(
                         new Binary(
                             OperatingSystem.linux,

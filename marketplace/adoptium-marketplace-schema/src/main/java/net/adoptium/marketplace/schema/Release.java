@@ -18,8 +18,6 @@ public class Release {
 
     private final Date timestamp;
 
-    private final Date updated_at;
-
     @Schema(type = SchemaType.ARRAY, implementation = Binary.class)
     private final List<Binary> binaries;
 
@@ -34,7 +32,6 @@ public class Release {
         @JsonProperty("release_link") String release_link,
         @JsonProperty("release_name") String release_name,
         @JsonProperty("timestamp") Date timestamp,
-        @JsonProperty("updated_at") Date updated_at,
         @JsonProperty("binaries") List<Binary> binaries,
         @JsonProperty("vendor") Vendor vendor,
         @JsonProperty("version_data") VersionData version_data,
@@ -43,7 +40,6 @@ public class Release {
         this.release_link = release_link;
         this.release_name = release_name;
         this.timestamp = timestamp;
-        this.updated_at = updated_at;
         this.binaries = binaries;
         this.vendor = vendor;
         this.version_data = version_data;
@@ -63,10 +59,6 @@ public class Release {
         return timestamp;
     }
 
-    public Date getUpdated_at() {
-        return updated_at;
-    }
-
     public List<Binary> getBinaries() {
         return binaries;
     }
@@ -82,4 +74,6 @@ public class Release {
     public SourcePackage getSource() {
         return source;
     }
+
+
 }

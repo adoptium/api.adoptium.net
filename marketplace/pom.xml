@@ -20,6 +20,8 @@
         <module>adoptium-marketplace-schema-tests</module>
         <module>adoptium-marketplace-client</module>
         <module>adoptium-marketplace-utils</module>
+
+        <module>adoptium-marketplace-server</module>
     </modules>
 
     <dependencyManagement>
@@ -96,6 +98,11 @@
             <dependency>
                 <groupId>net.adoptium.marketplace</groupId>
                 <artifactId>adoptium-marketplace-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.adoptium.marketplace</groupId>
+                <artifactId>adoptium-marketplace-schema</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
