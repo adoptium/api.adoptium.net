@@ -1,6 +1,6 @@
 package net.adoptium.marketplace.client;
 
-public class FailedToPullDataException extends Throwable {
+public class FailedToPullDataException extends Exception {
     public FailedToPullDataException(Exception e) {
         super(e);
     }
