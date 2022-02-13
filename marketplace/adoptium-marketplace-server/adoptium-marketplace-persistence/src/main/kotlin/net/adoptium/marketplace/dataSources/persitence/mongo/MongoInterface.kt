@@ -7,13 +7,17 @@ import org.litote.kmongo.coroutine.CoroutineDatabase
 abstract class MongoInterface(mongoClient: MongoClient) {
     protected val database: CoroutineDatabase = mongoClient.database
 
-    inline fun <reified T : Any> createCollection(database: CoroutineDatabase, collectionName: String): CoroutineCollection<T> {
+    inline fun <reified T : Any> initUpdateTimeDb(database: CoroutineDatabase, collectionName: String, crossinline onCollectionCreated: ((CoroutineCollection<T>) -> Unit) = {}): CoroutineCollection<T> {
         return runBlocking {
-            if (!database.listCollectionNames().contains(collectionName)) {
+            return@runBlocking if (!database.listCollectionNames().contains(collectionName)) {
                 // TODO add indexes
                 database.createCollection(collectionName)
+                val collection = database.getCollection<T>(collectionName)
+                onCollectionCreated(collection)
+                collection
+            } else {
+                database.getCollection<T>(collectionName)
             }
-            return@runBlocking database.getCollection<T>(collectionName)
         }
     }
 }

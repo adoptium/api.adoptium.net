@@ -4,6 +4,7 @@ import net.adoptium.marketplace.dataSources.persitence.VendorPersistence
 import net.adoptium.marketplace.dataSources.persitence.VendorPersistenceFactory
 import net.adoptium.marketplace.schema.ReleaseList
 import net.adoptium.marketplace.schema.Vendor
+import java.time.Duration
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -22,22 +23,36 @@ class VendorReleases constructor(
 ) {
     private var releaseList: ReleaseList? = null
     private var lastUpdated: ZonedDateTime? = null
+    private var lastCheck: ZonedDateTime? = null
+
+    companion object {
+        var UPDATE_COOLOFF_IN_SECONDS = 60
+    }
 
     suspend fun getAllReleases(): ReleaseList {
         releaseList = if (releaseList == null) {
+            lastCheck = TimeSource.now()
             vendorPersistence.getAllReleases()
         } else {
-            val updateTime = vendorPersistence.getUpdatedAt().time
-
-            if (vendorPersistence.getUpdatedAt().time != lastUpdated) {
-                // Possible race condition here
-                lastUpdated = updateTime
-                vendorPersistence.getAllReleases()
+            if (Duration.between(lastCheck, TimeSource.now()).seconds > UPDATE_COOLOFF_IN_SECONDS) {
+                lastCheck = TimeSource.now()
+                val updated = vendorPersistence.getUpdatedInfoIfUpdatedSince(lastUpdated!!)
+                if (updated != null) {
+                    // Possible race condition here
+                    lastUpdated = updated.time
+                    vendorPersistence.getAllReleases()
+                } else {
+                    releaseList
+                }
             } else {
-                releaseList
+                vendorPersistence.getAllReleases()
             }
         }
 
         return releaseList!!
+    }
+
+    suspend fun writeReleases(releaseList: ReleaseList): ReleaseList {
+        return vendorPersistence.writeReleases(releaseList)
     }
 }

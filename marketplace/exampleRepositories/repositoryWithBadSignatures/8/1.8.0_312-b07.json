@@ -17,8 +17,7 @@
             "size": 156640789
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-10-21T22:05:59Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "x64",
@@ -35,8 +34,7 @@
             "size": 103016010
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-10-21T22:06:05Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "x64",
@@ -53,8 +51,7 @@
             "size": 18618788
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-10-24T09:50:57Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "x64",
@@ -79,8 +76,7 @@
             "size": 104315798
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-10-24T09:51:08Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "aarch64",
@@ -97,8 +93,7 @@
             "size": 147172865
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-10-24T09:51:46Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "aarch64",
@@ -115,8 +110,7 @@
             "size": 102144826
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-10-24T09:51:52Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "x64",
@@ -133,8 +127,7 @@
             "size": 30831971
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-10-25T19:13:04Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "x64",
@@ -159,8 +152,7 @@
             "size": 107991615
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-10-25T19:13:18Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "ppc64",
@@ -177,8 +169,7 @@
             "size": 69960383
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-03T14:22:34Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "x32",
@@ -195,8 +186,7 @@
             "size": 25243095
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-03T14:22:37Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "ppc64",
@@ -213,8 +203,7 @@
             "size": 104802385
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-03T14:22:45Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "x32",
@@ -239,8 +228,7 @@
             "size": 105261756
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-03T14:22:50Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "ppc64le",
@@ -257,8 +245,7 @@
             "size": 136775022
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-04T12:55:42Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "ppc64le",
@@ -275,8 +262,7 @@
             "size": 100571080
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-04T12:55:49Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "aarch64",
@@ -293,8 +279,7 @@
             "size": 40312760
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-05T10:09:43Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "ppc64",
@@ -311,8 +296,7 @@
             "size": 42806130
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-05T10:09:47Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "ppc64le",
@@ -329,8 +313,7 @@
             "size": 40743435
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-05T10:09:50Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "x64",
@@ -347,8 +330,7 @@
             "size": 41286015
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-05T10:09:54Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "x64",
@@ -373,8 +355,7 @@
             "size": 45027148
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-05T10:10:03Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "x64",
@@ -399,8 +380,7 @@
             "size": 39046089
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-05T10:10:10Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "x32",
@@ -425,8 +405,7 @@
             "size": 37494360
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-05T10:10:17Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "x64",
@@ -443,8 +422,7 @@
             "size": 88460654
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-05T10:10:23Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "arm",
@@ -461,8 +439,7 @@
             "size": 92245387
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07-aarch32-20211101",
-          "updated_at": "2021-11-05T10:52:45Z"
+          "scm_ref": "jdk8u312-b07-aarch32-20211101"
         },
         {
           "architecture": "arm",
@@ -479,8 +456,7 @@
             "size": 98364180
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07-aarch32-20211101",
-          "updated_at": "2021-11-05T10:52:45Z"
+          "scm_ref": "jdk8u312-b07-aarch32-20211101"
         },
         {
           "architecture": "arm",
@@ -497,8 +473,7 @@
             "size": 38706993
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07-aarch32-20211101",
-          "updated_at": "2021-11-05T10:52:45Z"
+          "scm_ref": "jdk8u312-b07-aarch32-20211101"
         },
         {
           "architecture": "sparcv9",
@@ -515,8 +490,7 @@
             "size": 210402350
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-11T10:03:56Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "x64",
@@ -533,8 +507,7 @@
             "size": 213218302
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-11T10:04:06Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "sparcv9",
@@ -551,8 +524,7 @@
             "size": 115234164
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-11T10:04:12Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "x64",
@@ -569,8 +541,7 @@
             "size": 112165083
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-11T10:04:19Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "sparcv9",
@@ -587,8 +558,7 @@
             "size": 53232710
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-11T10:04:24Z"
+          "scm_ref": "jdk8u312-b07"
         },
         {
           "architecture": "x64",
@@ -605,8 +575,7 @@
             "size": 50196314
           },
           "project": "jdk",
-          "scm_ref": "jdk8u312-b07",
-          "updated_at": "2021-11-11T10:04:27Z"
+          "scm_ref": "jdk8u312-b07"
         }
       ],
       "release_link": "https://github.com/adoptium/temurin8-binaries/releases/tag/jdk8u312-b07",
@@ -617,7 +586,6 @@
         "size": 88460654
       },
       "timestamp": "2021-10-21T22:05:48Z",
-      "updated_at": "2021-11-25T14:08:09Z",
       "vendor": "adoptium",
       "version_data": {
         "build": 7,

@@ -17,8 +17,7 @@
             "size": 41120726
           },
           "project": "jdk",
-          "scm_ref": "jdk-17.0.1+12_adopt",
-          "updated_at": "2021-12-15T16:10:28Z"
+          "scm_ref": "jdk-17.0.1+12_adopt"
         },
         {
           "architecture": "x64",
@@ -35,8 +34,7 @@
             "size": 49381283
           },
           "project": "jdk",
-          "scm_ref": "jdk-17.0.1+12_adopt",
-          "updated_at": "2021-12-15T16:10:33Z"
+          "scm_ref": "jdk-17.0.1+12_adopt"
         }
       ],
       "release_link": "https://github.com/adoptium/temurin17-binaries/releases/tag/jdk-17.0.1%2B12",
@@ -47,7 +45,6 @@
         "size": 105458676
       },
       "timestamp": "2021-10-27T13:36:51Z",
-      "updated_at": "2021-12-20T13:59:47Z",
       "vendor": "adoptium",
       "version_data": {
         "build": 12,
