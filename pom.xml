@@ -25,7 +25,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.version>2.7.1.Final</quarkus.version>
-        <rest-assured.version>4.5.0</rest-assured.version>
+        <rest-assured.version>4.5.1</rest-assured.version>
         <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
         <jackson.version>2.13.1</jackson.version>
         <kmongo.version>4.4.0</kmongo.version>
