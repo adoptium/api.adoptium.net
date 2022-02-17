@@ -17,6 +17,10 @@
             <artifactId>kmongo-coroutine</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.litote.kmongo</groupId>
+            <artifactId>kmongo-id-jackson</artifactId>
+        </dependency>
+        <dependency>
             <groupId>net.adoptium.marketplace</groupId>
             <artifactId>adoptium-marketplace-schema</artifactId>
         </dependency>

@@ -6,35 +6,53 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.io.File;
+import java.nio.file.Files;
 
-public abstract class TestServer {
+public class TestServer implements BeforeAllCallback, AfterAllCallback {
 
-    private static Server server;
+    public static Server server;
 
-    @BeforeAll
-    public static void startServer() throws Exception {
+    @Override
+    public void beforeAll(ExtensionContext extensionContext) throws Exception {
+
         server = new Server();
         ServerConnector connector = new ServerConnector(server);
-        connector.setPort(8080);
+        connector.setPort(8090);
         server.addConnector(connector);
 
         ResourceHandler resource_handler = new ResourceHandler();
 
-        resource_handler.setResourceBase(new File("../exampleRepositories/").getAbsolutePath());
+        String repo = searchForRepo("marketplace/exampleRepositories");
+        resource_handler.setResourceBase(new File(repo).getAbsolutePath());
 
         HandlerList handlers = new HandlerList();
         handlers.setHandlers(new Handler[]{resource_handler, new DefaultHandler()});
         server.setHandler(handlers);
-
         server.start();
     }
 
-    @AfterAll
-    public static void shutdown() throws Exception {
+    private String searchForRepo(String exampleRepositories) {
+        for (int i = 0; i < 10; i++) {
+            if (Files.exists(new File(exampleRepositories).toPath())) {
+                return exampleRepositories;
+            }
+            exampleRepositories = "../" + exampleRepositories;
+        }
+        return null;
+    }
+
+    @Override
+    public void afterAll(ExtensionContext extensionContext) throws Exception {
         server.stop();
+    }
+
+    public static void main(String[] args) throws Exception {
+        new TestServer().beforeAll(null);
+        Thread.sleep(Long.MAX_VALUE);
     }
 }

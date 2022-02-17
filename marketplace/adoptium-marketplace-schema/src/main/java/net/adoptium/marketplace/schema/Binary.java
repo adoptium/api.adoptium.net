@@ -25,7 +25,7 @@ public class Binary {
     @Schema(implementation = Installer.class)
     private final Installer installer;
 
-    private final Date updated_at;
+    private final Date timestamp;
 
     @Schema(example = "dd28d6d2cde2b931caf94ac2422a2ad082ea62f0beee3bf7057317c53093de93")
     private final String scm_ref;
@@ -43,7 +43,7 @@ public class Binary {
         @JsonProperty("jvm_impl") JvmImpl jvm_impl,
         @JsonProperty("package") Package aPackage,
         @JsonProperty("installer") Installer installer,
-        @JsonProperty("updated_at") Date updated_at,
+        @JsonProperty("timestamp") Date timestamp,
         @JsonProperty("scm_ref") String scm_ref,
         @JsonProperty("project") Project project,
         @JsonProperty("distribution") Distribution distribution) {
@@ -54,7 +54,7 @@ public class Binary {
         this.jvm_impl = jvm_impl;
         _package = aPackage;
         this.installer = installer;
-        this.updated_at = updated_at;
+        this.timestamp = timestamp;
         this.scm_ref = scm_ref;
         this.project = project;
         this.distribution = distribution;
@@ -88,8 +88,8 @@ public class Binary {
         return installer;
     }
 
-    public Date getUpdated_at() {
-        return updated_at;
+    public Date getTimestamp() {
+        return timestamp;
     }
 
     public String getScm_ref() {

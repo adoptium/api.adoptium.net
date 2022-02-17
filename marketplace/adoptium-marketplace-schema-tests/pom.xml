@@ -34,10 +34,14 @@
             <artifactId>smallrye-open-api-core</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>net.adoptium.marketplace</groupId>
+            <artifactId>adoptium-marketplace-client</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>

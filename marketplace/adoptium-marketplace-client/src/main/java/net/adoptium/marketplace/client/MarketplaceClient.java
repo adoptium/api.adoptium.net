@@ -1,16 +1,13 @@
 package net.adoptium.marketplace.client;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.adoptium.marketplace.client.signature.Rsa256SignatureVerify;
 import net.adoptium.marketplace.client.signature.SignatureVerifier;
 import net.adoptium.marketplace.schema.IndexFile;
 import net.adoptium.marketplace.schema.Release;
 import net.adoptium.marketplace.schema.ReleaseList;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,29 +17,30 @@ import java.util.stream.Stream;
  * Build and read a repository by:
  * <p>
  * var client = MarketplaceClient.build(publicKey);
- * var releases = client.readRepositoryData("https://localhost:8080/repo");
+ * var releases = client.readRepositoryData("https://localhost:8090/repo");
  */
 public class MarketplaceClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(MarketplaceClient.class.getName());
     private static final String INDEX_FILE = "index.json";
 
     private final MarketplaceHttpClient marketplaceHttpClient;
-    private final ObjectMapper repositoryObjectMapper = new ObjectMapper();
+    private final String repoAddress;
 
-    static {
-        Security.addProvider(new BouncyCastleProvider());
-    }
-
-    public static MarketplaceClient build(String publicKey) throws Exception {
+    public static MarketplaceClient build(String repoAddress, String publicKey) throws Exception {
         SignatureVerifier sv = Rsa256SignatureVerify.build(publicKey);
-        return new MarketplaceClient(MarketplaceHttpClient.build(sv));
+        return new MarketplaceClient(repoAddress, MarketplaceHttpClient.build(sv));
     }
 
-    public MarketplaceClient(MarketplaceHttpClient marketplaceHttpClient) {
+    public MarketplaceClient(String repoAddress, MarketplaceHttpClient marketplaceHttpClient) {
+        this.repoAddress = repoAddress;
         this.marketplaceHttpClient = marketplaceHttpClient;
     }
 
-    public List<Release> readRepositoryData(String baseUrl) throws FailedToPullDataException {
+    public ReleaseList readRepositoryData() throws FailedToPullDataException {
+        return new ReleaseList(readRepositoryDataForUrl(repoAddress));
+    }
+
+    private List<Release> readRepositoryDataForUrl(String baseUrl) throws FailedToPullDataException {
         baseUrl = removeIndexFileFromPath(baseUrl);
 
         String indexUrl = appendUrl(baseUrl, INDEX_FILE);
@@ -71,7 +69,7 @@ public class MarketplaceClient {
             .flatMap(indexLink -> {
                 String url = appendUrl(finalBaseUrl, indexLink);
                 try {
-                    return readRepositoryData(url).stream();
+                    return readRepositoryDataForUrl(url).stream();
                 } catch (FailedToPullDataException e) {
                     LOGGER.error("Failed to pull file", e);
                 }
@@ -116,7 +114,7 @@ public class MarketplaceClient {
     private IndexFile pullIndex(String url) throws FailedToPullDataException {
         try {
             String data = marketplaceHttpClient.pullAndVerify(url);
-            return repositoryObjectMapper.readValue(data, IndexFile.class);
+            return MarketplaceMapper.repositoryObjectMapper.readValue(data, IndexFile.class);
         } catch (Exception e) {
             throw new FailedToPullDataException(e);
         }
@@ -125,7 +123,7 @@ public class MarketplaceClient {
     private List<Release> pullRelease(String url) throws FailedToPullDataException {
         try {
             String data = marketplaceHttpClient.pullAndVerify(url);
-            return repositoryObjectMapper
+            return MarketplaceMapper.repositoryObjectMapper
                 .readValue(data, ReleaseList.class)
                 .getReleases();
         } catch (Exception e) {

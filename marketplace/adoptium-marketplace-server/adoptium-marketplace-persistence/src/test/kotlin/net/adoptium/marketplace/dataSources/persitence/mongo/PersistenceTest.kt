@@ -2,17 +2,22 @@ package net.adoptium.marketplace.dataSources.persitence.mongo
 
 import kotlinx.coroutines.runBlocking
 import net.adoptium.marketplace.dataSources.APIDataStore
+import net.adoptium.marketplace.dataSources.APIDataStoreImpl
 import net.adoptium.marketplace.dataSources.ModelComparators
 import net.adoptium.marketplace.schema.ReleaseList
 import net.adoptium.marketplace.schema.RepoGenerator
 import net.adoptium.marketplace.schema.Vendor
+import org.jboss.weld.junit5.auto.AddPackages
 import org.jboss.weld.junit5.auto.EnableAutoWeld
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
 @EnableAutoWeld
-class PersistenceTest : MongoTest() {
+@AddPackages(value = [APIDataStoreImpl::class])
+@ExtendWith(value = [MongoTest::class])
+class PersistenceTest {
 
     companion object {
         val releaseList = RepoGenerator.generate()!!
@@ -21,9 +26,9 @@ class PersistenceTest : MongoTest() {
     @BeforeEach
     fun cleanDb(mongoClient: MongoClient) {
         runBlocking {
-            mongoClient.database.dropCollection("adoptium_" + MongoVendorPersistence.RELEASE_DB)
-            mongoClient.database.dropCollection("adoptium_" + MongoVendorPersistence.RELEASE_INFO_DB)
-            mongoClient.database.dropCollection("adoptium_" + MongoVendorPersistence.UPDATE_TIME_DB)
+            mongoClient.getDatabase().dropCollection("adoptium_" + MongoVendorPersistence.RELEASE_DB)
+            mongoClient.getDatabase().dropCollection("adoptium_" + MongoVendorPersistence.RELEASE_INFO_DB)
+            mongoClient.getDatabase().dropCollection("adoptium_" + MongoVendorPersistence.UPDATE_TIME_DB)
         }
     }
 

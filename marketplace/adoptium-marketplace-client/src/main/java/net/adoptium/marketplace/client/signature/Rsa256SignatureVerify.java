@@ -1,15 +1,13 @@
 package net.adoptium.marketplace.client.signature;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.io.pem.PemReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
-import java.security.PublicKey;
-import java.security.Signature;
+import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
@@ -19,6 +17,10 @@ public class Rsa256SignatureVerify implements SignatureVerifier {
     public static final String FILE_SUFFIX = "sha256.sign";
 
     private final PublicKey publicKey;
+
+    static {
+        Security.addProvider(new BouncyCastleProvider());
+    }
 
     public Rsa256SignatureVerify(PublicKey publicKey) {
         this.publicKey = publicKey;

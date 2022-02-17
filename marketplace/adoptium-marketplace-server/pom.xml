@@ -35,6 +35,8 @@
 
     <modules>
         <module>adoptium-marketplace-persistence</module>
+        <module>adoptium-marketplace-updater-parent</module>
+        <module>adoptium-marketplace-frontend-parent</module>
     </modules>
 
     <dependencyManagement>
@@ -152,6 +154,11 @@
             <dependency>
                 <groupId>org.litote.kmongo</groupId>
                 <artifactId>kmongo-coroutine</artifactId>
+                <version>${kmongo.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.litote.kmongo</groupId>
+                <artifactId>kmongo-id-jackson</artifactId>
                 <version>${kmongo.version}</version>
             </dependency>
             <dependency>
@@ -292,6 +299,40 @@
                 <groupId>io.quarkiverse.logging.logback</groupId>
                 <artifactId>quarkus-logging-logback-impl</artifactId>
                 <version>0.10.0</version>
+            </dependency>
+            <dependency>
+                <groupId>net.adoptium.marketplace</groupId>
+                <artifactId>adoptium-marketplace-client</artifactId>
+                <classifier>tests</classifier>
+                <scope>test</scope>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.adoptium.marketplace.server</groupId>
+                <artifactId>adoptium-marketplace-persistence</artifactId>
+                <classifier>tests</classifier>
+                <scope>test</scope>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.adoptium.marketplace.server</groupId>
+                <artifactId>adoptium-marketplace-persistence</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.adoptium.marketplace.server.frontend</groupId>
+                <artifactId>adoptium-marketplace-frontend-models</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.adoptium.marketplace.server.frontend</groupId>
+                <artifactId>adoptium-marketplace-version-utils</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.adoptium.marketplace.server.frontend</groupId>
+                <artifactId>adoptium-marketplace-telemetry</artifactId>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

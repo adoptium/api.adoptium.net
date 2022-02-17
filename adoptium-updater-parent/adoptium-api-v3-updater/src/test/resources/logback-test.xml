@@ -1,6 +1,6 @@
 <configuration>
     <logger name="org.apache.http.client.protocol.ResponseProcessCookies" level="ERROR"/>
-    <logger name="net.adoptium.marketplace.dataSources.APIDataStoreImpl" level="WARN"/>
+    <logger name="net.adoptium.api.v3.dataSources.APIDataStoreImpl" level="WARN"/>
     <logger name="org.mongodb" level="WARN"/>
     <logger name="org.jboss.weld" level="WARN"/>
 

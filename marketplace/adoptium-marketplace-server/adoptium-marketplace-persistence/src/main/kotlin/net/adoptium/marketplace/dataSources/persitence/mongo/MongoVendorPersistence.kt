@@ -19,28 +19,27 @@ import org.bson.Document
 import org.litote.kmongo.EMPTY_BSON
 import org.litote.kmongo.coroutine.CoroutineCollection
 import org.litote.kmongo.util.KMongoUtil
-import org.slf4j.LoggerFactory
-import java.time.ZonedDateTime
+import java.util.*
 
 open class MongoVendorPersistence constructor(
     mongoClient: MongoClient,
     private val vendor: Vendor
 ) : MongoInterface(mongoClient), VendorPersistence {
 
-    private val releasesCollection: CoroutineCollection<Release> = initUpdateTimeDb(database, vendor.name + "_" + RELEASE_DB)
-    private val releaseInfoCollection: CoroutineCollection<ReleaseInfo> = initUpdateTimeDb(database, vendor.name + "_" + RELEASE_INFO_DB)
-    private val updateTimeCollection: CoroutineCollection<UpdatedInfo> = initUpdateTimeDb(database, vendor.name + "_" + UPDATE_TIME_DB, MongoVendorPersistence::initUptimeDb)
+    private val releasesCollection: CoroutineCollection<Release> = initDb(database, vendor.name + "_" + RELEASE_DB)
+    private val releaseInfoCollection: CoroutineCollection<ReleaseInfo> = initDb(database, vendor.name + "_" + RELEASE_INFO_DB)
+    private val updateTimeCollection: CoroutineCollection<UpdatedInfo> = initDb(database, vendor.name + "_" + UPDATE_TIME_DB, MongoVendorPersistence::initUptimeDb)
 
     companion object {
-        @JvmStatic
-        private val LOGGER = LoggerFactory.getLogger(this::class.java)
         const val RELEASE_DB = "release"
         const val RELEASE_INFO_DB = "releaseInfo"
         const val UPDATE_TIME_DB = "updateTime"
 
         fun initUptimeDb(collection: CoroutineCollection<UpdatedInfo>) {
             runBlocking {
-                collection.insertOne(UpdatedInfo(TimeSource.now().minusMinutes(5)))
+                val set = KMongoUtil.filterIdToBson(UpdatedInfo(Date.from(TimeSource.now().minusMinutes(5).toInstant())))
+                collection.insertOne(UpdatedInfo(Date.from(TimeSource.now().minusMinutes(5).toInstant())))
+                set.toString()
             }
         }
     }
@@ -60,11 +59,10 @@ open class MongoVendorPersistence constructor(
                     """.trimIndent()
 
                 val matcher = releaseMatcher(release)
+
                 val result = releasesCollection
                     .updateOne(matcher, BsonDocument.parse(updateQuery), UpdateOptions().upsert(true))
 
-                val count = releasesCollection.countDocuments(EMPTY_BSON)
-                println(count)
                 return@map if (result.upsertedId != null) {
                     release
                 } else {
@@ -74,11 +72,7 @@ open class MongoVendorPersistence constructor(
             .filterNotNull()
 
         if (updated.isNotEmpty()) {
-            val newTime = updated
-                .map { it.timestamp }
-                .maxOf { it }
-
-            updateUpdatedTime(newTime.toInstant().atZone(TimeSource.ZONE))
+            updateUpdatedTime(Date())
         }
 
         return ReleaseList(updated)
@@ -93,7 +87,7 @@ open class MongoVendorPersistence constructor(
         )
     }
 
-    private suspend fun updateUpdatedTime(dateTime: ZonedDateTime) {
+    private suspend fun updateUpdatedTime(dateTime: Date) {
         updateTimeCollection.updateOne(
             Document(),
             UpdatedInfo(dateTime),
@@ -102,8 +96,9 @@ open class MongoVendorPersistence constructor(
         updateTimeCollection.deleteMany(Document("time", BsonDocument("\$lt", BsonDateTime(dateTime.toInstant().toEpochMilli()))))
     }
 
-    override suspend fun getUpdatedInfoIfUpdatedSince(since: ZonedDateTime): UpdatedInfo? {
+    override suspend fun getUpdatedInfoIfUpdatedSince(since: Date): UpdatedInfo? {
         val result = updateTimeCollection.find(Document("time", BsonDocument("\$gt", BsonDateTime(since.toInstant().toEpochMilli()))))
+
         return result.first()
     }
 
@@ -130,15 +125,30 @@ open class MongoVendorPersistence constructor(
     }
 
     private fun versionMatcher(versionData: VersionData): List<BsonElement> {
-        return listOf(
+        var matcher = listOf(
             BsonElement("version_data.openjdk_version", BsonString(versionData.openjdk_version)),
-            BsonElement("version_data.pre", BsonString(versionData.pre)),
-            BsonElement("version_data.optional", BsonString(versionData.optional)),
-            BsonElement("version_data.build", BsonInt32(versionData.build)),
-            BsonElement("version_data.major", BsonInt32(versionData.major)),
-            BsonElement("version_data.minor", BsonInt32(versionData.minor)),
-            BsonElement("version_data.patch", BsonInt32(versionData.patch)),
-            BsonElement("version_data.security", BsonInt32(versionData.security)),
+            BsonElement("version_data.major", BsonInt32(versionData.major))
         )
+
+        if (versionData.build.isPresent) {
+            matcher = matcher.plus(BsonElement("version_data.build", BsonInt32(versionData.build.get())))
+        }
+        if (versionData.minor.isPresent) {
+            matcher = matcher.plus(BsonElement("version_data.minor", BsonInt32(versionData.minor.get())))
+        }
+        if (versionData.pre.isPresent) {
+            matcher = matcher.plus(BsonElement("version_data.pre", BsonString(versionData.pre.get())))
+        }
+        if (versionData.optional.isPresent) {
+            matcher = matcher.plus(BsonElement("version_data.optional", BsonString(versionData.optional.get())))
+        }
+        if (versionData.patch.isPresent) {
+            matcher = matcher.plus(BsonElement("version_data.patch", BsonInt32(versionData.patch.get())))
+        }
+        if (versionData.security.isPresent) {
+            matcher = matcher.plus(BsonElement("version_data.security", BsonInt32(versionData.security.get())))
+        }
+
+        return matcher
     }
 }

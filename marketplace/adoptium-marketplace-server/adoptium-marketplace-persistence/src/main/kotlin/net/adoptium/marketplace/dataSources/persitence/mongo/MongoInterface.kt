@@ -5,9 +5,9 @@ import org.litote.kmongo.coroutine.CoroutineCollection
 import org.litote.kmongo.coroutine.CoroutineDatabase
 
 abstract class MongoInterface(mongoClient: MongoClient) {
-    protected val database: CoroutineDatabase = mongoClient.database
+    protected val database: CoroutineDatabase = mongoClient.getDatabase()
 
-    inline fun <reified T : Any> initUpdateTimeDb(database: CoroutineDatabase, collectionName: String, crossinline onCollectionCreated: ((CoroutineCollection<T>) -> Unit) = {}): CoroutineCollection<T> {
+    inline fun <reified T : Any> initDb(database: CoroutineDatabase, collectionName: String, crossinline onCollectionCreated: ((CoroutineCollection<T>) -> Unit) = {}): CoroutineCollection<T> {
         return runBlocking {
             return@runBlocking if (!database.listCollectionNames().contains(collectionName)) {
                 // TODO add indexes
@@ -16,7 +16,7 @@ abstract class MongoInterface(mongoClient: MongoClient) {
                 onCollectionCreated(collection)
                 collection
             } else {
-                database.getCollection<T>(collectionName)
+                database.getCollection(collectionName)
             }
         }
     }

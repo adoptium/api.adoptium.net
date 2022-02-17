@@ -6,7 +6,7 @@ import net.adoptium.marketplace.dataSources.persitence.mongo.MongoVendorPersiste
 import net.adoptium.marketplace.dataSources.persitence.mongo.UpdatedInfo
 import net.adoptium.marketplace.schema.ReleaseList
 import net.adoptium.marketplace.schema.Vendor
-import java.time.ZonedDateTime
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,5 +32,5 @@ interface VendorPersistence {
     suspend fun setReleaseInfo(releaseInfo: ReleaseInfo)
     suspend fun getReleaseInfo(): ReleaseInfo?
 
-    suspend fun getUpdatedInfoIfUpdatedSince(since: ZonedDateTime): UpdatedInfo?
+    suspend fun getUpdatedInfoIfUpdatedSince(since: Date): UpdatedInfo?
 }

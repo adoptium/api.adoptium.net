@@ -1,19 +1,19 @@
-package net.adoptium.api.v3.routes
+package net.adoptium.marketplace.server.frontend.routes
 
-import net.adoptium.api.v3.models.VersionData
-import net.adoptium.api.v3.parser.FailedToParse
-import net.adoptium.api.v3.parser.VersionParser
+import net.adoptium.marketplace.schema.VersionData
+import net.adoptium.marketplace.server.frontend.versions.FailedToParse
+import net.adoptium.marketplace.server.frontend.versions.VersionParser
 import org.eclipse.microprofile.openapi.annotations.Operation
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
-import javax.ws.rs.PathParam
 import org.slf4j.LoggerFactory
 import javax.enterprise.context.ApplicationScoped
 import javax.ws.rs.BadRequestException
 import javax.ws.rs.GET
 import javax.ws.rs.Path
+import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
 

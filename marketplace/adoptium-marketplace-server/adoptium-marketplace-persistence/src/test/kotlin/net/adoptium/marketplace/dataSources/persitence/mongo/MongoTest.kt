@@ -6,18 +6,13 @@ import de.flapdoodle.embed.mongo.config.MongodConfigBuilder
 import de.flapdoodle.embed.mongo.config.Net
 import de.flapdoodle.embed.mongo.distribution.Version
 import de.flapdoodle.embed.process.runtime.Network
-import net.adoptium.marketplace.dataSources.APIDataStoreImpl
-import org.jboss.weld.junit5.auto.AddPackages
-import org.jboss.weld.junit5.auto.EnableAutoWeld
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.extension.AfterAllCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.slf4j.LoggerFactory
 import kotlin.random.Random
 
-@EnableAutoWeld
-@AddPackages(value = [APIDataStoreImpl::class])
-abstract class MongoTest {
+class MongoTest : BeforeAllCallback, AfterAllCallback {
 
     companion object {
         @JvmStatic
@@ -26,18 +21,14 @@ abstract class MongoTest {
         private var mongodExecutable: MongodExecutable? = null
 
         @JvmStatic
-        @BeforeAll
-        fun startDb() {
-            System.setProperty("GITHUB_TOKEN", "stub-token")
-            startFongo()
+        fun startFongo() {
+            startFongo(Random.nextInt(10000, 16000))
         }
 
-        @JvmStatic
-        fun startFongo() {
+        fun startFongo(port: Int) {
             val starter = MongodStarter.getDefaultInstance()
 
             val bindIp = "localhost"
-            val port = Random.nextInt(10000, 16000)
             val mongodConfig = MongodConfigBuilder()
                 .version(Version.V4_0_2)
                 .net(Net(bindIp, port, Network.localhostIsIPv6()))
@@ -52,11 +43,14 @@ abstract class MongoTest {
 
             LOGGER.info("FMongo started")
         }
+    }
 
-        @JvmStatic
-        @AfterAll
-        fun closeMongo() {
-            mongodExecutable!!.stop()
-        }
+    override fun beforeAll(p0: ExtensionContext?) {
+        System.setProperty("GITHUB_TOKEN", "stub-token")
+        startFongo()
+    }
+
+    override fun afterAll(p0: ExtensionContext?) {
+        mongodExecutable!!.stop()
     }
 }

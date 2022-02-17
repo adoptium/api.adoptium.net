@@ -45,11 +45,11 @@ public class RepoGenerator {
                         8,
                         1,
                         2,
-                        3,
-                        "",
-                        "",
+                        null,
+                        null,
                         1,
-                        ""
+                        "foo",
+                        "bar"
                     ),
                     new SourcePackage(
                         "OpenJDK17U-sources_17.0.1_12.tar.gz",

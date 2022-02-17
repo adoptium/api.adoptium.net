@@ -20,7 +20,6 @@
         <module>adoptium-marketplace-schema-tests</module>
         <module>adoptium-marketplace-client</module>
         <module>adoptium-marketplace-utils</module>
-
         <module>adoptium-marketplace-server</module>
     </modules>
 
@@ -34,6 +33,16 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
+                <version>2.13.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+                <version>2.13.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jdk8</artifactId>
                 <version>2.13.1</version>
             </dependency>
             <dependency>

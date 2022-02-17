@@ -2,17 +2,19 @@ package net.adoptium.marketplace.client;
 
 import net.adoptium.marketplace.client.signature.Rsa256SignatureVerify;
 import net.adoptium.marketplace.client.signature.SignatureVerifier;
-import net.adoptium.marketplace.schema.Release;
+import net.adoptium.marketplace.schema.ReleaseList;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
 
-public class Rsa256VerifierTest extends TestServer {
+
+@ExtendWith({TestServer.class})
+public class Rsa256VerifierTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Rsa256VerifierTest.class.getName());
 
@@ -32,25 +34,25 @@ public class Rsa256VerifierTest extends TestServer {
 
     @Test
     public void pullFullRepository() throws Exception, FailedToPullDataException {
-        MarketplaceClient client = getMarketplaceClient();
+        MarketplaceClient client = getMarketplaceClient("http://localhost:8090/workingRepository");
 
-        List<Release> releases = client.readRepositoryData("http://localhost:8080/workingRepository");
-        Assertions.assertFalse(releases.isEmpty());
+        ReleaseList releases = client.readRepositoryData();
+        Assertions.assertFalse(releases.getReleases().isEmpty());
     }
 
     @Test
     public void pullFullRepositoryWithBadSignatures() throws Exception, FailedToPullDataException {
-        MarketplaceClient client = getMarketplaceClient();
+        MarketplaceClient client = getMarketplaceClient("http://localhost:8090/repositoryWithBadSignatures");
 
-        List<Release> releases = client.readRepositoryData("http://localhost:8080/repositoryWithBadSignatures");
+        ReleaseList releases = client.readRepositoryData();
 
         // jdk8u302-b08 is the only release with a valid signature
-        Assertions.assertEquals(1, releases.size());
-        Assertions.assertEquals("jdk8u302-b08", releases.get(0).getRelease_name());
+        Assertions.assertEquals(1, releases.getReleases().size());
+        Assertions.assertEquals("jdk8u302-b08", releases.getReleases().get(0).getRelease_name());
     }
 
-    public MarketplaceClient getMarketplaceClient() throws Exception {
+    public MarketplaceClient getMarketplaceClient(String url) throws Exception {
         SignatureVerifier sv = Rsa256SignatureVerify.build(KEY);
-        return new MarketplaceClient(MarketplaceHttpClient.build(sv));
+        return new MarketplaceClient(url, MarketplaceHttpClient.build(sv));
     }
 }

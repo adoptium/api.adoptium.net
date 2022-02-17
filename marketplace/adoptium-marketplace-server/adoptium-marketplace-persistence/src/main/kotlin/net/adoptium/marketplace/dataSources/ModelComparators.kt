@@ -16,10 +16,8 @@ object ModelComparators {
             1
         } else if (a == null && b == null) {
             0
-        } else if (a!!.size < b!!.size) {
-            -1
-        } else if (a.size > b.size) {
-            1
+        } else if (a!!.size != b!!.size) {
+            a.size - b.size
         } else {
             a.zip(b)
                 .map { (c, d) ->
@@ -34,13 +32,13 @@ object ModelComparators {
     }
 
     val VERSION_DATA = compareBy<VersionData?> { it?.openjdk_version }
-        .thenBy { it?.build }
+        .thenBy { it?.build?.orElse(null) }
         .thenBy { it?.major }
-        .thenBy { it?.minor }
-        .thenBy { it?.optional }
-        .thenBy { it?.patch }
-        .thenBy { it?.pre }
-        .thenBy { it?.security }
+        .thenBy { it?.minor?.orElse(null) }
+        .thenBy { it?.optional?.orElse(null) }
+        .thenBy { it?.patch?.orElse(null) }
+        .thenBy { it?.pre?.orElse(null) }
+        .thenBy { it?.security?.orElse(null) }
 
     val SOURCE = compareBy<SourcePackage?> { it?.link }
         .thenBy { it?.name }
@@ -53,7 +51,7 @@ object ModelComparators {
         .thenBy { it?.image_type }
         .thenBy { it?.jvm_impl }
         .thenBy { it?.scm_ref }
-        .thenBy { it?.updated_at }
+        .thenBy { it?.timestamp }
         .thenBy { it?.project }
         .then { a, b -> ASSET.compare(a?._package, b?._package) }
         .then { a, b -> ASSET.compare(a?.installer, b?.installer) }

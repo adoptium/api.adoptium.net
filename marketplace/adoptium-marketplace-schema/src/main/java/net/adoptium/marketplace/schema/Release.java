@@ -46,6 +46,13 @@ public class Release {
         this.source = source;
     }
 
+    public Release(
+        Release release,
+        List<Binary> binaries
+    ) {
+        this(release.release_link, release.release_name, release.timestamp, binaries, release.vendor, release.version_data, release.source);
+    }
+
 
     public String getRelease_link() {
         return release_link;
