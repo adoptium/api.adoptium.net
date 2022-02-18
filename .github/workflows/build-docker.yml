@@ -34,7 +34,7 @@ jobs:
           push: true
 
       - name: Set the target Azure Kubernetes Service (AKS) cluster. 
-        uses: azure/aks-set-context@v1
+        uses: azure/aks-set-context@v2.0
         with:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
           cluster-name: aksff92

@@ -24,11 +24,11 @@
         <maven.compiler.testTarget>17</maven.compiler.testTarget>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>2.7.0.Final</quarkus.version>
-        <rest-assured.version>4.5.0</rest-assured.version>
+        <quarkus.version>2.7.1.Final</quarkus.version>
+        <rest-assured.version>4.5.1</rest-assured.version>
         <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
         <jackson.version>2.13.1</jackson.version>
-        <kmongo.version>4.4.0</kmongo.version>
+        <kmongo.version>4.5.0</kmongo.version>
     </properties>
 
     <modules>
@@ -221,12 +221,12 @@
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq</artifactId>
-                <version>3.16.3</version>
+                <version>3.16.4</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>1.7.35</version>
+                <version>1.7.36</version>
             </dependency>
             <dependency>
                 <groupId>org.skyscreamer</groupId>
@@ -354,7 +354,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.9.0</version>
+                    <version>3.10.0</version>
                     <configuration>
                         <source>${maven.compiler.source}</source>
                         <testSource>${maven.compiler.testSource}</testSource>
@@ -431,7 +431,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.3.1</version>
+                    <version>3.3.2</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -446,7 +446,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
-                    <version>3.15.0</version>
+                    <version>3.16.0</version>
                     <configuration>
                         <targetJdk>${jdk.version}</targetJdk>
                     </configuration>
@@ -479,7 +479,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.10.0</version>
+                    <version>3.11.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -801,7 +801,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.15.0</version>
+                <version>3.16.0</version>
                 <configuration>
                     <targetJdk>${jdk.version}</targetJdk>
                 </configuration>
