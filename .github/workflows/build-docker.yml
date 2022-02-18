@@ -38,11 +38,6 @@ jobs:
           tags: adoptopenjdkacr.azurecr.io/adoptopenjdk-${{ env.NAMESPACE }}:latest
           push: true
 
-      #- name: Login to our Azure subscription.
-      #  uses: azure/login@v1
-      #  with:
-      #    creds: ${{ secrets.AZURE_CREDENTIALS }}
-
       - name: Set the target Azure Kubernetes Service (AKS) cluster.
         uses: azure/aks-set-context@v2.0
         with:
