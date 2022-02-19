@@ -2,18 +2,6 @@ package net.adoptium.marketplace.server.frontend
 
 object OpenApiDocs {
 
-    const val RELASE_NAME =
-        """
-<p>
-    Name of the release as displayed in github or <a href="https://adoptopenjdk.net/">https://adoptopenjdk.net/</a> e.g
-    <code>jdk-11.0.4+11, jdk8u172-b00-201807161800</code>.
-</p>
-<p>
-    A list of release names can be obtained from 
-    <a href="${ServerConfig.SERVER}/v3/info/release_names">${ServerConfig.SERVER}/v3/info/release_names</a>
-</p>
-"""
-
     const val FEATURE_RELEASE =
         """
 <p>
@@ -39,11 +27,6 @@ e.g:
 
 Details of maven version ranges can be found at
     <https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html>
-"""
-
-    const val RELEASE_TYPE =
-        """
-<p>Type of release. Either a release version, known as General Availability(ga) or an Early Access(ea) </p>
 """
 
     const val CLIB_TYPE = "C Lib type, typically would imply image_type has been set to staticlibs"

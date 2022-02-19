@@ -1,6 +1,7 @@
 package net.adoptium.api
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.mongodb.ConnectionString
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.litote.kmongo.coroutine.CoroutineDatabase
 import org.litote.kmongo.coroutine.coroutine
+import org.litote.kmongo.id.jackson.IdJacksonModule
 import org.litote.kmongo.reactivestreams.KMongo
 import org.litote.kmongo.util.KMongoConfiguration
 import javax.annotation.Priority
@@ -58,9 +60,12 @@ class FongoClient : MongoClient {
     private val db = KMongo.createClient(settingsBuilder.build()).coroutine.getDatabase("test-api")
 
     init {
+        KMongoConfiguration.registerBsonModule(IdJacksonModule())
         KMongoConfiguration.registerBsonModule(Jdk8Module())
         KMongoConfiguration.registerBsonModule(JavaTimeModule())
-        KMongoConfiguration.bsonMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        KMongoConfiguration.bsonMapper.disable(SerializationFeature.WRITE_DATES_WITH_ZONE_ID)
+        KMongoConfiguration.bsonMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        KMongoConfiguration.bsonMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
     }
 
     override fun getDatabase(): CoroutineDatabase {

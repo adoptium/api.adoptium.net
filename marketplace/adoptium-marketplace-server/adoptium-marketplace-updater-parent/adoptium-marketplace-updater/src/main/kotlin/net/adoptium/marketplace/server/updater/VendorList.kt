@@ -1,6 +1,7 @@
 package net.adoptium.marketplace.server.updater
 
 import net.adoptium.marketplace.schema.Vendor
+import org.slf4j.LoggerFactory
 import javax.inject.Singleton
 
 interface VendorList {
@@ -11,9 +12,20 @@ interface VendorList {
 class DefaultVendorList : VendorList {
 
     companion object {
-        val VENDORS = mapOf(
-            Vendor.adoptium to VendorInfo(Vendor.adoptium, "http://localhost:8090", "adoptium.pub")
-        )
+        @JvmStatic
+        private val LOGGER = LoggerFactory.getLogger(this::class.java)
+        val VENDORS = Vendor
+            .values()
+            .map { it to VendorInfo(it) }
+            .filter { it.second.valid() }
+            .toMap()
+    }
+
+    init {
+        VENDORS
+            .forEach {
+                LOGGER.info("Loaded config for ${it.key}")
+            }
     }
 
     override fun getVendorInfo(): Map<Vendor, VendorInfo> {

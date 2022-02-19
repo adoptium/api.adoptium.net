@@ -1,0 +1,21 @@
+FROM eclipse-temurin:17
+
+RUN     useradd -ms /bin/bash api && \
+        mkdir -p /home/api/deployment/ && \
+        chown -R api: /home/api/
+
+USER api
+
+COPY ./assets/adoptium-marketplace-updater*.jar /home/api/deployment/updater.jar
+COPY ./assets/adoptium-marketplace-frontend*.jar /home/api/deployment/frontend.jar
+COPY ./run.sh /home/api/deployment/
+COPY ./assets/keys /home/api/deployment/
+COPY ./assets/adoptium-marketplace-frontend*.jar /home/api/deployment/frontend.jar
+
+WORKDIR /home/api/deployment/
+
+ENV JAVA_OPTS=""
+ARG type=frontend
+ENV typeEnv=$type
+
+CMD cd /home/api/deployment/ && ./run.sh ${typeEnv}

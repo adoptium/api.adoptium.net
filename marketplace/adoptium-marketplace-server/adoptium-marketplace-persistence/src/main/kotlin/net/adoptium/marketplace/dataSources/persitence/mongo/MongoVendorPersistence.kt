@@ -19,6 +19,7 @@ import org.bson.Document
 import org.litote.kmongo.EMPTY_BSON
 import org.litote.kmongo.coroutine.CoroutineCollection
 import org.litote.kmongo.util.KMongoUtil
+import org.slf4j.LoggerFactory
 import java.util.*
 
 open class MongoVendorPersistence constructor(
@@ -31,15 +32,22 @@ open class MongoVendorPersistence constructor(
     private val updateTimeCollection: CoroutineCollection<UpdatedInfo> = initDb(database, vendor.name + "_" + UPDATE_TIME_DB, MongoVendorPersistence::initUptimeDb)
 
     companion object {
+        @JvmStatic
+        private val LOGGER = LoggerFactory.getLogger(this::class.java)
+
         const val RELEASE_DB = "release"
         const val RELEASE_INFO_DB = "releaseInfo"
         const val UPDATE_TIME_DB = "updateTime"
 
         fun initUptimeDb(collection: CoroutineCollection<UpdatedInfo>) {
             runBlocking {
-                val set = KMongoUtil.filterIdToBson(UpdatedInfo(Date.from(TimeSource.now().minusMinutes(5).toInstant())))
-                collection.insertOne(UpdatedInfo(Date.from(TimeSource.now().minusMinutes(5).toInstant())))
-                set.toString()
+                try {
+                    val set = KMongoUtil.filterIdToBson(UpdatedInfo(Date.from(TimeSource.now().minusMinutes(5).toInstant())))
+                    collection.insertOne(UpdatedInfo(Date.from(TimeSource.now().minusMinutes(5).toInstant())))
+                    set.toString()
+                } catch (e: Exception) {
+                    LOGGER.error("Failed to run init", e)
+                }
             }
         }
     }

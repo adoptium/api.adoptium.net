@@ -28,5 +28,40 @@
             <artifactId>adoptium-marketplace-client</artifactId>
             <scope>test</scope>
         </dependency>
+
+
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-client</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.adoptium.api</groupId>
+            <artifactId>adoptium-api-v3-models</artifactId>
+            <version>3.0.1-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.adoptium.api</groupId>
+            <artifactId>adoptium-api-v3-adoptium-specific-models</artifactId>
+            <version>3.0.1-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.adoptium.api</groupId>
+            <artifactId>adoptium-api-v3-persistence</artifactId>
+            <version>3.0.1-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.adoptium.marketplace</groupId>
+            <artifactId>adoptium-marketplace-schema</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.adoptium.marketplace</groupId>
+            <artifactId>adoptium-marketplace-client</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

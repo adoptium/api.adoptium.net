@@ -1,0 +1,38 @@
+version: '3.6'
+services:
+  mongodb:
+    image: mongo:4.2
+  frontend:
+    depends_on:
+      - mongodb
+    image: "adoptium-marketplace-frontend"
+    ports:
+      - "8080:8080"
+    build:
+      context: .
+      dockerfile: marketplace.docker
+    environment:
+      JAVA_OPTS: ""
+      type: "frontend"
+      typeEnv: "frontend"
+      MONGODB_PORT: 27017
+      MONGODB_HOST: mongodb
+  updater:
+    depends_on:
+      - mongodb
+    image: "adoptium-marketplace-updater"
+    build:
+      context: .
+      dockerfile: marketplace.docker
+    environment:
+      JAVA_OPTS: "-DADOPTIUM_URL=http://adoptiumAssets:80/ -DUPDATE_PERIOD_IN_MIN=1 -DADOPTIUM_KEY=adoptium.pub -DKEY_DIR=/home/api/deployment/keys/"
+      type: "updater"
+      typeEnv: "updater"
+      MONGODB_PORT: 27017
+      MONGODB_HOST: mongodb
+  adoptiumAssets:
+    image: "adoptium-assets"
+    build:
+      context: .
+      dockerfile: adoptium-assets.docker
+

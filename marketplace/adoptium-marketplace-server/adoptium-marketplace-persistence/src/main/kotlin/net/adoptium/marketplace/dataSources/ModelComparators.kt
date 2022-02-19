@@ -53,7 +53,7 @@ object ModelComparators {
         .thenBy { it?.scm_ref }
         .thenBy { it?.timestamp }
         .thenBy { it?.project }
-        .then { a, b -> ASSET.compare(a?._package, b?._package) }
+        .then { a, b -> ASSET.compare(a?.`package`, b?.`package`) }
         .then { a, b -> ASSET.compare(a?.installer, b?.installer) }
 
     val ASSET = compareBy<Asset?> { it?.link }

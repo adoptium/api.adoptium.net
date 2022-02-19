@@ -1,6 +1,7 @@
 package net.adoptium.marketplace.schema;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
@@ -20,6 +21,7 @@ public class Binary {
     private final JvmImpl jvm_impl;
 
     @Schema(implementation = Package.class, name = "package")
+    @JsonProperty("package")
     private final Package _package;
 
     @Schema(implementation = Installer.class)
@@ -80,7 +82,8 @@ public class Binary {
         return jvm_impl;
     }
 
-    public Package get_package() {
+    @JsonProperty("package")
+    public Package getPackage() {
         return _package;
     }
 
@@ -88,6 +91,7 @@ public class Binary {
         return installer;
     }
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
     public Date getTimestamp() {
         return timestamp;
     }

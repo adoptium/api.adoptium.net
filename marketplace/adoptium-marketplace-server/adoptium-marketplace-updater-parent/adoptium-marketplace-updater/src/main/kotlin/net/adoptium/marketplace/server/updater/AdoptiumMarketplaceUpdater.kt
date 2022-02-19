@@ -53,18 +53,20 @@ class AdoptiumMarketplaceUpdater @Inject constructor(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
+    private var UPDATE_PERIOD_IN_MIN: Long
     private val clients: Map<Vendor, MarketplaceClient>
 
     private val mutex = Mutex()
 
     init {
         clients = buildClientMap()
+        UPDATE_PERIOD_IN_MIN = Integer.parseInt(System.getProperty("UPDATE_PERIOD_IN_MIN", "60")).toLong()
     }
 
     private fun buildClientMap(): Map<Vendor, MarketplaceClient> {
         return vendorList.getVendorInfo()
             .map {
-                return@map it.key to MarketplaceClient.build(it.value.repoUrl, it.value.getKey())!!
+                return@map it.key to MarketplaceClient.build(it.value.getUrl(), it.value.getKey())!!
             }.toMap()
     }
 
@@ -78,7 +80,7 @@ class AdoptiumMarketplaceUpdater @Inject constructor(
                 } catch (e: Throwable) {
                     LOGGER.error("Caught exception", e)
                 }
-            }, 0, 1, TimeUnit.HOURS
+            }, 0, UPDATE_PERIOD_IN_MIN, TimeUnit.MINUTES
         )
     }
 
@@ -112,6 +114,8 @@ class AdoptiumMarketplaceUpdater @Inject constructor(
 
     private suspend fun logInfoAboutUpdate(vendor: Vendor, newReleases: ReleaseList, releasesBeforeUpdate: ReleaseList) {
         val releasesAfter = apiDataStore.getReleases(vendor).getAllReleases()
+
+        LOGGER.info("Updated $vendor, found ${releasesAfter.releases.size} releases, ${newReleases.releases.size} updated")
 
         newReleases
             .releases

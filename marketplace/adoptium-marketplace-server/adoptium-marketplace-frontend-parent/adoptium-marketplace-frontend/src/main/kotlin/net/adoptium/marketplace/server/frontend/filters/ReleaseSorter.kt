@@ -24,11 +24,14 @@ class ReleaseSorter {
 
         // Cant use the default sort as we want to ignore optional
         val VERSION_COMPARATOR = compareBy<VersionData> { it.major }
-            .thenBy { it.minor.orElseGet(null) }
-            .thenBy { it.security.orElseGet(null) }
-            .thenBy { it.patch.orElseGet(null) }
-            .thenBy { it.pre.orElseGet(null) }
-            .thenBy { it.build.orElseGet(null) }
+            .thenBy { it.minor.orElse(null) }
+            .thenBy { it.security.orElse(null) }
+            .thenBy { it.patch.orElse(null) }
+            .thenBy { it.pre.orElse(null) }
+            .thenBy { it.build.orElse(null) }
+            .thenBy { it.optional.orElse(null) }
+            .thenBy { it.openjdk_version }
+
 
         private val TIME_COMPARATOR = compareBy { release: Release -> release.timestamp }
 

@@ -7,10 +7,9 @@ import kotlin.io.path.readBytes
 
 class VendorInfo(
     private val vendor: Vendor,
-    val repoUrl: String,
-    private val publicKey: String
+    private val repoUrl: String? = null,
+    private val publicKey: String? = null
 ) {
-
     companion object {
         private val KEY_DIR: String?
 
@@ -21,17 +20,40 @@ class VendorInfo(
         }
     }
 
-    fun getKey(): String {
-        var key = getKey(publicKey)
+    fun valid(): Boolean {
+        return getUrl() != null && getKey() != null
+    }
+
+    fun getUrl(): String? {
+        var key = getConfigValue(repoUrl)
 
         if (key == null) {
-            key = getKey(vendor.name.uppercase() + "_KEY")
+            key = getConfigValue(vendor.name.uppercase() + "_URL")
+        }
+
+        return key ?: repoUrl
+    }
+
+    fun getKey(): String? {
+        var key = getConfigValue(publicKey)
+
+        if (key == null) {
+            key = getConfigValue(vendor.name.uppercase() + "_KEY")
+
+            //look up again as this may point to a file
+            if (key != null) {
+                key = getConfigValue(key)
+            }
         }
 
         return key ?: publicKey
     }
 
-    private fun getKey(keyName: String): String? {
+    private fun getConfigValue(keyName: String?): String? {
+        if (keyName == null) {
+            return null
+        }
+
         if (System.getenv().containsKey(keyName)) {
             return System.getenv()[keyName]!!
         }
