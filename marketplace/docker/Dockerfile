@@ -21,7 +21,7 @@ RUN     ./mvnw clean install -Padoptium,-adoptopenjdk && \
         ../mvnw clean install && \
         cp adoptium-marketplace-server/adoptium-marketplace-updater-parent/adoptium-marketplace-updater/target/adoptium-marketplace-updater-*-jar-with-dependencies.jar /home/api/deployment/updater.jar && \
         cp adoptium-marketplace-server/adoptium-marketplace-frontend-parent/adoptium-marketplace-frontend/target/adoptium-marketplace-frontend-*-jar-with-dependencies.jar /home/api/deployment/frontend.jar && \
-        cp marketplace/docker/run.sh /home/api/deployment/ && \
+        cp docker/run.sh /home/api/deployment/ && \
         chmod +x /home/api/deployment/run.sh && \
         cd /tmp && \
         rm -rf /tmp/build ~/.m2 && \
