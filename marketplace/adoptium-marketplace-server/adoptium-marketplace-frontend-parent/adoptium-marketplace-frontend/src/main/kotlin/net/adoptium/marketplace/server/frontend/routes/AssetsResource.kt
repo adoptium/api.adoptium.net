@@ -1,5 +1,6 @@
 package net.adoptium.marketplace.server.frontend.routes
 
+import net.adoptium.marketplace.dataSources.APIDataStore
 import net.adoptium.marketplace.schema.Architecture
 import net.adoptium.marketplace.schema.CLib
 import net.adoptium.marketplace.schema.ImageType
@@ -13,7 +14,9 @@ import net.adoptium.marketplace.server.frontend.Pagination.defaultPageSize
 import net.adoptium.marketplace.server.frontend.Pagination.getPage
 import net.adoptium.marketplace.server.frontend.Pagination.maxPageSize
 import net.adoptium.marketplace.server.frontend.filters.BinaryFilter
+import net.adoptium.marketplace.server.frontend.filters.BinaryFilterMultiple
 import net.adoptium.marketplace.server.frontend.filters.ReleaseFilter
+import net.adoptium.marketplace.server.frontend.filters.ReleaseFilterMultiple
 import net.adoptium.marketplace.server.frontend.models.BinaryAssetView
 import net.adoptium.marketplace.server.frontend.models.DateTime
 import net.adoptium.marketplace.server.frontend.models.SortMethod
@@ -46,7 +49,8 @@ import javax.ws.rs.core.Response
 class AssetsResource
 @Inject
 constructor(
-    private val releaseEndpoint: ReleaseEndpoint
+    private val releaseEndpoint: ReleaseEndpoint,
+    private val apiDataStore: APIDataStore
 ) {
     @GET
     @Path("/feature_releases/{vendor}/{feature_version}")
@@ -333,13 +337,67 @@ constructor(
         jvm_impl: JvmImpl,
 
 
-    ): List<BinaryAssetView> {
+        ): List<BinaryAssetView> {
         val releaseFilter = ReleaseFilter(featureVersion = version)
         val binaryFilter = BinaryFilter(null, null, null, jvm_impl, null, null)
 
         val releases = releaseEndpoint.getReleases(vendor, releaseFilter, binaryFilter, SortOrder.ASC, SortMethod.DEFAULT)
 
         return releases
+            .flatMap { release ->
+                release.binaries
+                    .asSequence()
+                    .map { Pair(release, it) }
+            }
+            .associateBy {
+                binaryPermutation(it.second.architecture, it.second.image_type, it.second.os)
+            }
+            .values
+            .map { BinaryAssetView(it.first.release_name, it.first.vendor, it.second, it.first.version_data) }
+            .toList()
+    }
+
+
+    @GET
+    @Path("/latestForVendors")
+    @Operation(summary = "Returns list of latest assets for the given feature version and jvm impl", operationId = "latestForVendors")
+    suspend fun latestForVendors(
+
+        @Parameter(name = "vendor", description = OpenApiDocs.VENDOR, required = true)
+        @QueryParam("vendor")
+        vendors: List<Vendor>,
+
+        @Parameter(name = "os", description = "Operating System", required = false)
+        @QueryParam("os")
+        os: List<OperatingSystem>?,
+
+        @Parameter(name = "architecture", description = "Architecture", required = false)
+        @QueryParam("architecture")
+        arch: List<Architecture>?,
+
+        @Parameter(name = "image_type", description = "Image Type", required = false)
+        @QueryParam("image_type")
+        image_type: List<ImageType>?,
+
+        @Parameter(name = "feature_version", description = OpenApiDocs.FEATURE_RELEASE, required = false)
+        @QueryParam("feature_version")
+        version: List<Int>?
+
+    ): List<BinaryAssetView> {
+
+        val versions = if (version == null || version.isEmpty()) {
+            apiDataStore.getReleases(Vendor.adoptium).getReleaseInfo().available_releases.toList()
+        } else {
+            version
+        }
+
+        return vendors
+            .flatMap { vendor ->
+                val releaseFilter = ReleaseFilterMultiple(versions, null, listOf(vendor), null, null)
+                val binaryFilter = BinaryFilterMultiple(os, arch, image_type, null, null, null)
+
+                releaseEndpoint.getReleases(vendor, releaseFilter, binaryFilter, SortOrder.ASC, SortMethod.DEFAULT)
+            }
             .flatMap { release ->
                 release.binaries
                     .asSequence()

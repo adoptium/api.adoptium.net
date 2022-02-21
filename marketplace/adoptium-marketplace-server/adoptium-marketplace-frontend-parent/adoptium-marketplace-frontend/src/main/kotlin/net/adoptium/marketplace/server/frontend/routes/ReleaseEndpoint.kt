@@ -3,6 +3,7 @@ package net.adoptium.marketplace.server.frontend.routes
 import net.adoptium.api.marketplace.parser.maven.InvalidVersionSpecificationException
 import net.adoptium.marketplace.dataSources.APIDataStore
 import net.adoptium.marketplace.schema.Architecture
+import net.adoptium.marketplace.schema.Binary
 import net.adoptium.marketplace.schema.CLib
 import net.adoptium.marketplace.schema.ImageType
 import net.adoptium.marketplace.schema.JvmImpl
@@ -17,6 +18,7 @@ import net.adoptium.marketplace.server.frontend.filters.VersionRangeFilter
 import net.adoptium.marketplace.server.frontend.models.SortMethod
 import net.adoptium.marketplace.server.frontend.models.SortOrder
 import net.adoptium.marketplace.server.frontend.versions.FailedToParse
+import java.util.function.Predicate
 import javax.inject.Inject
 import javax.inject.Singleton
 import javax.ws.rs.BadRequestException
@@ -57,8 +59,8 @@ constructor(private val apiDataStore: APIDataStore) {
 
     suspend fun getReleases(
         vendor: Vendor,
-        releaseFilter: ReleaseFilter,
-        binaryFilter: BinaryFilter,
+        releaseFilter: Predicate<Release>,
+        binaryFilter: Predicate<Binary>,
         order: SortOrder,
         sortMethod: SortMethod): Sequence<Release> {
         return apiDataStore
