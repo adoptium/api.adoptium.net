@@ -29,7 +29,5 @@ then
   export MONGODB_SSL="true"
 fi
 
-ls -alh
-pwd
 echo "java $JAVA_OPTS -jar ${deploymentType}.jar"
 java $JAVA_OPTS -jar ${deploymentType}.jar
