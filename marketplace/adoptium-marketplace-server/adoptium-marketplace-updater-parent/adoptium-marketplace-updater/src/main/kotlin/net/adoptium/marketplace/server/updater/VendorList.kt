@@ -14,9 +14,14 @@ class DefaultVendorList : VendorList {
     companion object {
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
+
+
         val VENDORS = Vendor
             .values()
-            .map { it to VendorInfo(it) }
+            .map {
+                LOGGER.info("Loading config for ${it}")
+                it to VendorInfo(it)
+            }
             .filter { it.second.valid() }
             .toMap()
     }
@@ -24,7 +29,7 @@ class DefaultVendorList : VendorList {
     init {
         VENDORS
             .forEach {
-                LOGGER.info("Loaded config for ${it.key}")
+                LOGGER.info("Loaded config for ${it.key}, ${it.value.getUrl()} ${it.value.getKey()}")
             }
     }
 

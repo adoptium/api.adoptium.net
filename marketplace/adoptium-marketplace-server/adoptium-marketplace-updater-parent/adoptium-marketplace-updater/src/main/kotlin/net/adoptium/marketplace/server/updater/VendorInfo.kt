@@ -46,7 +46,16 @@ class VendorInfo(
             }
         }
 
-        return key ?: publicKey
+        if (key == null || key.isEmpty() || key == vendor.name.uppercase() + "_KEY") {
+            return publicKey
+        }
+
+        if (!key.contains("BEGIN PUBLIC KEY")) {
+            key = "-----BEGIN PUBLIC KEY-----\n" +
+                key + "\n" +
+                "-----END PUBLIC KEY-----"
+        }
+        return key
     }
 
     private fun getConfigValue(keyName: String?): String? {
@@ -75,6 +84,6 @@ class VendorInfo(
             return Paths.get(keyName).readBytes().decodeToString()
         }
 
-        return null
+        return keyName
     }
 }
