@@ -56,7 +56,7 @@ class ExtractAdoptiumReleases {
                     versionDir.mkdirs()
 
                     // Possibly might need to check next page...one day
-                    val response = httpClient.GET("https://api.adoptium.net/v3/assets/feature_releases/${version}/ga?page_size=50&vendor=eclipse")
+                    val response = httpClient.GET("https://api.adoptium.net/v1/assets/feature_releases/${version}/ga?page_size=50&vendor=eclipse")
 
                     val releases = JsonMapper.mapper.readValue<List<Release>>(response.content)
 

@@ -43,7 +43,7 @@ import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 
 @Tag(name = "Assets")
-@Path("/v3/assets/")
+@Path("/v1/assets/")
 @Produces(MediaType.APPLICATION_JSON)
 @ApplicationScoped
 class AssetsResource

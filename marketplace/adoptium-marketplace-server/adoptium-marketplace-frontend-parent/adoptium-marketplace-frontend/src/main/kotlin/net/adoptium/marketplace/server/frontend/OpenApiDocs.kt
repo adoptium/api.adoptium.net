@@ -9,7 +9,7 @@ object OpenApiDocs {
 </p>
 <p>
     Available Feature versions can be obtained from 
-    <a href="${ServerConfig.SERVER}/v3/info/available_releases">${ServerConfig.SERVER}/v3/info/available_releases</a>
+    <a href="${ServerConfig.SERVER}/v1/info/available_releases">${ServerConfig.SERVER}/v1/info/available_releases</a>
 </p>
 """
 

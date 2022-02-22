@@ -30,7 +30,7 @@ import javax.ws.rs.QueryParam
 import javax.ws.rs.core.MediaType
 
 @Tag(name = "Release Info")
-@Path("/v3/info")
+@Path("/v1/info")
 @Produces(MediaType.APPLICATION_JSON)
 @ApplicationScoped
 class ReleaseListResource
