@@ -359,7 +359,6 @@ constructor(
     }
 
     data class binaryPermutation(
-        val vendor: Vendor,
         val arch: Architecture,
         val heapSize: HeapSize,
         val imageType: ImageType,
@@ -401,7 +400,7 @@ constructor(
                     .map { Pair(release, it) }
             }
             .associateBy {
-                binaryPermutation(it.first.vendor, it.second.architecture, it.second.heap_size, it.second.image_type, it.second.os)
+                binaryPermutation(it.second.architecture, it.second.heap_size, it.second.image_type, it.second.os)
             }
             .values
             .map { BinaryAssetView(it.first.release_name, it.first.vendor, it.second, it.first.version_data) }
