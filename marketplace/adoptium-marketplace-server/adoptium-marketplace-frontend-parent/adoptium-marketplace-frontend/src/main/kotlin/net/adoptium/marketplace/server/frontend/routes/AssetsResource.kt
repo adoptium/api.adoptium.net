@@ -351,7 +351,7 @@ constructor(
                     .map { Pair(release, it) }
             }
             .associateBy {
-                binaryPermutation(it.second.architecture, it.second.image_type, it.second.os)
+                binaryPermutation(it.first.vendor, it.second.architecture, it.second.image_type, it.second.os)
             }
             .values
             .map { BinaryAssetView(it.first.release_name, it.first.vendor, it.second, it.first.version_data) }

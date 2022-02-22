@@ -13,8 +13,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_x64_linux_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_x64_linux_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_x64_linux_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-debugimage_x64_linux_hotspot_8u312b07.tar.gz",
-            "size": 156640789
+            "name": "OpenJDK8U-debugimage_x64_linux_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -30,8 +29,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_linux_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_linux_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_linux_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-jdk_x64_linux_hotspot_8u312b07.tar.gz",
-            "size": 103016010
+            "name": "OpenJDK8U-jdk_x64_linux_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -47,8 +45,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_x64_windows_hotspot_8u312b07.zip.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_x64_windows_hotspot_8u312b07.zip",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_x64_windows_hotspot_8u312b07.zip.json",
-            "name": "OpenJDK8U-debugimage_x64_windows_hotspot_8u312b07.zip",
-            "size": 18618788
+            "name": "OpenJDK8U-debugimage_x64_windows_hotspot_8u312b07.zip"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -62,8 +59,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_windows_hotspot_8u312b07.msi.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_windows_hotspot_8u312b07.msi",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_windows_hotspot_8u312b07.msi.json",
-            "name": "OpenJDK8U-jdk_x64_windows_hotspot_8u312b07.msi",
-            "size": 90120192
+            "name": "OpenJDK8U-jdk_x64_windows_hotspot_8u312b07.msi"
           },
           "jvm_impl": "hotspot",
           "os": "windows",
@@ -72,8 +68,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_windows_hotspot_8u312b07.zip.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_windows_hotspot_8u312b07.zip",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_windows_hotspot_8u312b07.zip.json",
-            "name": "OpenJDK8U-jdk_x64_windows_hotspot_8u312b07.zip",
-            "size": 104315798
+            "name": "OpenJDK8U-jdk_x64_windows_hotspot_8u312b07.zip"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -89,8 +84,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_aarch64_linux_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_aarch64_linux_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_aarch64_linux_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-debugimage_aarch64_linux_hotspot_8u312b07.tar.gz",
-            "size": 147172865
+            "name": "OpenJDK8U-debugimage_aarch64_linux_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -106,8 +100,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_aarch64_linux_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_aarch64_linux_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_aarch64_linux_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-jdk_aarch64_linux_hotspot_8u312b07.tar.gz",
-            "size": 102144826
+            "name": "OpenJDK8U-jdk_aarch64_linux_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -123,8 +116,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_x64_mac_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_x64_mac_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_x64_mac_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-debugimage_x64_mac_hotspot_8u312b07.tar.gz",
-            "size": 30831971
+            "name": "OpenJDK8U-debugimage_x64_mac_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -138,8 +130,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_mac_hotspot_8u312b07.pkg.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_mac_hotspot_8u312b07.pkg",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_mac_hotspot_8u312b07.pkg.json",
-            "name": "OpenJDK8U-jdk_x64_mac_hotspot_8u312b07.pkg",
-            "size": 108186547
+            "name": "OpenJDK8U-jdk_x64_mac_hotspot_8u312b07.pkg"
           },
           "jvm_impl": "hotspot",
           "os": "mac",
@@ -148,8 +139,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_mac_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_mac_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_mac_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-jdk_x64_mac_hotspot_8u312b07.tar.gz",
-            "size": 107991615
+            "name": "OpenJDK8U-jdk_x64_mac_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -165,8 +155,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_ppc64_aix_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_ppc64_aix_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_ppc64_aix_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-debugimage_ppc64_aix_hotspot_8u312b07.tar.gz",
-            "size": 69960383
+            "name": "OpenJDK8U-debugimage_ppc64_aix_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -182,8 +171,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_x86-32_windows_hotspot_8u312b07.zip.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_x86-32_windows_hotspot_8u312b07.zip",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_x86-32_windows_hotspot_8u312b07.zip.json",
-            "name": "OpenJDK8U-debugimage_x86-32_windows_hotspot_8u312b07.zip",
-            "size": 25243095
+            "name": "OpenJDK8U-debugimage_x86-32_windows_hotspot_8u312b07.zip"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -199,8 +187,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_ppc64_aix_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_ppc64_aix_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_ppc64_aix_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-jdk_ppc64_aix_hotspot_8u312b07.tar.gz",
-            "size": 104802385
+            "name": "OpenJDK8U-jdk_ppc64_aix_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -214,8 +201,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x86-32_windows_hotspot_8u312b07.msi.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x86-32_windows_hotspot_8u312b07.msi",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x86-32_windows_hotspot_8u312b07.msi.json",
-            "name": "OpenJDK8U-jdk_x86-32_windows_hotspot_8u312b07.msi",
-            "size": 90993664
+            "name": "OpenJDK8U-jdk_x86-32_windows_hotspot_8u312b07.msi"
           },
           "jvm_impl": "hotspot",
           "os": "windows",
@@ -224,8 +210,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x86-32_windows_hotspot_8u312b07.zip.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x86-32_windows_hotspot_8u312b07.zip",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x86-32_windows_hotspot_8u312b07.zip.json",
-            "name": "OpenJDK8U-jdk_x86-32_windows_hotspot_8u312b07.zip",
-            "size": 105261756
+            "name": "OpenJDK8U-jdk_x86-32_windows_hotspot_8u312b07.zip"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -241,8 +226,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_ppc64le_linux_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_ppc64le_linux_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_ppc64le_linux_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-debugimage_ppc64le_linux_hotspot_8u312b07.tar.gz",
-            "size": 136775022
+            "name": "OpenJDK8U-debugimage_ppc64le_linux_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -258,8 +242,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_ppc64le_linux_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_ppc64le_linux_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_ppc64le_linux_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-jdk_ppc64le_linux_hotspot_8u312b07.tar.gz",
-            "size": 100571080
+            "name": "OpenJDK8U-jdk_ppc64le_linux_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -275,8 +258,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_aarch64_linux_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_aarch64_linux_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_aarch64_linux_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-jre_aarch64_linux_hotspot_8u312b07.tar.gz",
-            "size": 40312760
+            "name": "OpenJDK8U-jre_aarch64_linux_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -292,8 +274,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_ppc64_aix_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_ppc64_aix_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_ppc64_aix_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-jre_ppc64_aix_hotspot_8u312b07.tar.gz",
-            "size": 42806130
+            "name": "OpenJDK8U-jre_ppc64_aix_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -309,8 +290,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_ppc64le_linux_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_ppc64le_linux_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_ppc64le_linux_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-jre_ppc64le_linux_hotspot_8u312b07.tar.gz",
-            "size": 40743435
+            "name": "OpenJDK8U-jre_ppc64le_linux_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -326,8 +306,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_linux_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_linux_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_linux_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-jre_x64_linux_hotspot_8u312b07.tar.gz",
-            "size": 41286015
+            "name": "OpenJDK8U-jre_x64_linux_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -341,8 +320,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_mac_hotspot_8u312b07.pkg.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_mac_hotspot_8u312b07.pkg",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_mac_hotspot_8u312b07.pkg.json",
-            "name": "OpenJDK8U-jre_x64_mac_hotspot_8u312b07.pkg",
-            "size": 45095085
+            "name": "OpenJDK8U-jre_x64_mac_hotspot_8u312b07.pkg"
           },
           "jvm_impl": "hotspot",
           "os": "mac",
@@ -351,8 +329,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_mac_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_mac_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_mac_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-jre_x64_mac_hotspot_8u312b07.tar.gz",
-            "size": 45027148
+            "name": "OpenJDK8U-jre_x64_mac_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -366,8 +343,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_windows_hotspot_8u312b07.msi.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_windows_hotspot_8u312b07.msi",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_windows_hotspot_8u312b07.msi.json",
-            "name": "OpenJDK8U-jre_x64_windows_hotspot_8u312b07.msi",
-            "size": 32330240
+            "name": "OpenJDK8U-jre_x64_windows_hotspot_8u312b07.msi"
           },
           "jvm_impl": "hotspot",
           "os": "windows",
@@ -376,8 +352,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_windows_hotspot_8u312b07.zip.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_windows_hotspot_8u312b07.zip",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_windows_hotspot_8u312b07.zip.json",
-            "name": "OpenJDK8U-jre_x64_windows_hotspot_8u312b07.zip",
-            "size": 39046089
+            "name": "OpenJDK8U-jre_x64_windows_hotspot_8u312b07.zip"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -391,8 +366,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x86-32_windows_hotspot_8u312b07.msi.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x86-32_windows_hotspot_8u312b07.msi",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x86-32_windows_hotspot_8u312b07.msi.json",
-            "name": "OpenJDK8U-jre_x86-32_windows_hotspot_8u312b07.msi",
-            "size": 31112704
+            "name": "OpenJDK8U-jre_x86-32_windows_hotspot_8u312b07.msi"
           },
           "jvm_impl": "hotspot",
           "os": "windows",
@@ -401,8 +375,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x86-32_windows_hotspot_8u312b07.zip.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x86-32_windows_hotspot_8u312b07.zip",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x86-32_windows_hotspot_8u312b07.zip.json",
-            "name": "OpenJDK8U-jre_x86-32_windows_hotspot_8u312b07.zip",
-            "size": 37494360
+            "name": "OpenJDK8U-jre_x86-32_windows_hotspot_8u312b07.zip"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -418,8 +391,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-sources_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-sources_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-sources_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-sources_8u312b07.tar.gz",
-            "size": 88460654
+            "name": "OpenJDK8U-sources_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -435,8 +407,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_arm_linux_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_arm_linux_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_arm_linux_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-debugimage_arm_linux_hotspot_8u312b07.tar.gz",
-            "size": 92245387
+            "name": "OpenJDK8U-debugimage_arm_linux_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07-aarch32-20211101"
@@ -452,8 +423,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_arm_linux_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_arm_linux_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_arm_linux_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-jdk_arm_linux_hotspot_8u312b07.tar.gz",
-            "size": 98364180
+            "name": "OpenJDK8U-jdk_arm_linux_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07-aarch32-20211101"
@@ -469,8 +439,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_arm_linux_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_arm_linux_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_arm_linux_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-jre_arm_linux_hotspot_8u312b07.tar.gz",
-            "size": 38706993
+            "name": "OpenJDK8U-jre_arm_linux_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07-aarch32-20211101"
@@ -486,8 +455,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_sparcv9_solaris_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_sparcv9_solaris_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_sparcv9_solaris_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-debugimage_sparcv9_solaris_hotspot_8u312b07.tar.gz",
-            "size": 210402350
+            "name": "OpenJDK8U-debugimage_sparcv9_solaris_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -503,8 +471,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_x64_solaris_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_x64_solaris_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-debugimage_x64_solaris_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-debugimage_x64_solaris_hotspot_8u312b07.tar.gz",
-            "size": 213218302
+            "name": "OpenJDK8U-debugimage_x64_solaris_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -520,8 +487,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_sparcv9_solaris_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_sparcv9_solaris_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_sparcv9_solaris_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-jdk_sparcv9_solaris_hotspot_8u312b07.tar.gz",
-            "size": 115234164
+            "name": "OpenJDK8U-jdk_sparcv9_solaris_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -537,8 +503,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_solaris_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_solaris_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jdk_x64_solaris_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-jdk_x64_solaris_hotspot_8u312b07.tar.gz",
-            "size": 112165083
+            "name": "OpenJDK8U-jdk_x64_solaris_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -554,8 +519,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_sparcv9_solaris_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_sparcv9_solaris_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_sparcv9_solaris_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-jre_sparcv9_solaris_hotspot_8u312b07.tar.gz",
-            "size": 53232710
+            "name": "OpenJDK8U-jre_sparcv9_solaris_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -571,8 +535,7 @@
             "checksum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_solaris_hotspot_8u312b07.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_solaris_hotspot_8u312b07.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-jre_x64_solaris_hotspot_8u312b07.tar.gz.json",
-            "name": "OpenJDK8U-jre_x64_solaris_hotspot_8u312b07.tar.gz",
-            "size": 50196314
+            "name": "OpenJDK8U-jre_x64_solaris_hotspot_8u312b07.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk8u312-b07"
@@ -582,8 +545,7 @@
       "release_name": "jdk8u312-b07",
       "source": {
         "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u312-b07/OpenJDK8U-sources_8u312b07.tar.gz",
-        "name": "OpenJDK8U-sources_8u312b07.tar.gz",
-        "size": 88460654
+        "name": "OpenJDK8U-sources_8u312b07.tar.gz"
       },
       "timestamp": "2021-10-21T22:05:48Z",
       "vendor": "adoptium",

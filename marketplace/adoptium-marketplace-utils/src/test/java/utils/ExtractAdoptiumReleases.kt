@@ -118,8 +118,7 @@ class ExtractAdoptiumReleases {
                 if (release.source != null) {
                     SourcePackage(
                         release.source!!.name,
-                        release.source!!.link,
-                        release.source!!.size
+                        release.source!!.link
                     )
                 } else null
             )
@@ -142,7 +141,6 @@ class ExtractAdoptiumReleases {
                     Package(
                         binary.`package`.name,
                         binary.`package`.link,
-                        binary.`package`.size,
                         binary.`package`.checksum,
                         binary.`package`.checksum_link,
                         binary.`package`.signature_link,
@@ -152,7 +150,6 @@ class ExtractAdoptiumReleases {
                         Installer(
                             binary.installer!!.name,
                             binary.installer!!.link,
-                            binary.installer!!.size,
                             binary.installer!!.checksum,
                             binary.installer!!.checksum_link,
                             binary.installer!!.signature_link,

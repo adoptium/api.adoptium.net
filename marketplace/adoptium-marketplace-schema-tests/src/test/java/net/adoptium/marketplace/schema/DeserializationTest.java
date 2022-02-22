@@ -12,7 +12,7 @@ public class DeserializationTest {
 
     @Test
     public void canDeserializeExampleDoc() throws IOException {
-        ReleaseList deserialized = new ObjectMapper().readValue(DeserializationTest.class.getResourceAsStream("example.json"), ReleaseList.class);
+        ReleaseList deserialized = MarketplaceMapper.repositoryObjectMapper.readValue(DeserializationTest.class.getResourceAsStream("example.json"), ReleaseList.class);
 
         Assertions.assertNotNull(deserialized);
     }

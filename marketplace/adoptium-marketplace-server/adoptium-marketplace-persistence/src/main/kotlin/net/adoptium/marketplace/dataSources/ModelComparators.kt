@@ -42,7 +42,6 @@ object ModelComparators {
 
     val SOURCE = compareBy<SourcePackage?> { it?.link }
         .thenBy { it?.name }
-        .thenBy { it?.size }
 
     val BINARY = compareBy<Binary?> { it?.architecture }
         .thenBy { it?.distribution }
@@ -58,7 +57,6 @@ object ModelComparators {
 
     val ASSET = compareBy<Asset?> { it?.link }
         .thenBy { it?.name }
-        .thenBy { it?.size }
         .thenBy { it?.checksum }
         .thenBy { it?.checksum_link }
         .thenBy { it?.metadata_link }

@@ -12,8 +12,7 @@
             "checksum": "bb57aee502ed28ba8b558db445f3a9f81c453b29f597ff18639b539527df3ef1",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-debugimage_aarch64_linux_hotspot_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-debugimage_aarch64_linux_hotspot_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-debugimage_aarch64_linux_hotspot_11.0.14_9.tar.gz",
-            "size": 206246177
+            "name": "OpenJDK11U-debugimage_aarch64_linux_hotspot_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -28,8 +27,7 @@
             "checksum": "376c354ce7341d2bdf8577ec7bfbf4214b7fc97a76465b70e6cd7b426eed909b",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-debugimage_ppc64_aix_hotspot_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-debugimage_ppc64_aix_hotspot_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-debugimage_ppc64_aix_hotspot_11.0.14_9.tar.gz",
-            "size": 69188012
+            "name": "OpenJDK11U-debugimage_ppc64_aix_hotspot_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -44,8 +42,7 @@
             "checksum": "a5f71ef534f5b9c2b2767b559283c91419804f16496af79b25c062ccecb3ed8b",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-debugimage_x64_linux_hotspot_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-debugimage_x64_linux_hotspot_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-debugimage_x64_linux_hotspot_11.0.14_9.tar.gz",
-            "size": 239471685
+            "name": "OpenJDK11U-debugimage_x64_linux_hotspot_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -60,8 +57,7 @@
             "checksum": "0ba188a2a739733163cd0049344429d2284867e04ca452879be24f3b54320c9a",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_aarch64_linux_hotspot_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_aarch64_linux_hotspot_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-jdk_aarch64_linux_hotspot_11.0.14_9.tar.gz",
-            "size": 189849188
+            "name": "OpenJDK11U-jdk_aarch64_linux_hotspot_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -76,8 +72,7 @@
             "checksum": "e3765eefc44bffe2672799ae7c96a4c0a1b6c5e95a1f3a27e9a65bedd11b4c0a",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_ppc64_aix_hotspot_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_ppc64_aix_hotspot_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-jdk_ppc64_aix_hotspot_11.0.14_9.tar.gz",
-            "size": 176074116
+            "name": "OpenJDK11U-jdk_ppc64_aix_hotspot_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -92,8 +87,7 @@
             "checksum": "1189bee178d11402a690edf3fbba0c9f2ada1d3a36ff78929d81935842ef24a9",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_x64_linux_hotspot_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_x64_linux_hotspot_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-jdk_x64_linux_hotspot_11.0.14_9.tar.gz",
-            "size": 193109331
+            "name": "OpenJDK11U-jdk_x64_linux_hotspot_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -108,8 +102,7 @@
             "checksum": "f20bcf8c29057b7275876b1d9e68c13dca03789750ddfabdb213a69f3aa3fcf5",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_aarch64_linux_hotspot_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_aarch64_linux_hotspot_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-jre_aarch64_linux_hotspot_11.0.14_9.tar.gz",
-            "size": 40790045
+            "name": "OpenJDK11U-jre_aarch64_linux_hotspot_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -124,8 +117,7 @@
             "checksum": "87dc91bc9be63d190a7b33993ea77e208ba7ab897c08aa5ccfaa28ea5190c03f",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_ppc64_aix_hotspot_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_ppc64_aix_hotspot_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-jre_ppc64_aix_hotspot_11.0.14_9.tar.gz",
-            "size": 40690341
+            "name": "OpenJDK11U-jre_ppc64_aix_hotspot_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -140,8 +132,7 @@
             "checksum": "f9c0b0c5f379f57424a1cb9fb304003aeb827817d8b12164388792e145011480",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_x64_linux_hotspot_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_x64_linux_hotspot_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-jre_x64_linux_hotspot_11.0.14_9.tar.gz",
-            "size": 42435138
+            "name": "OpenJDK11U-jre_x64_linux_hotspot_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -157,8 +148,7 @@
             "checksum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-sources_11.0.14_9.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-sources_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-sources_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-sources_11.0.14_9.tar.gz",
-            "size": 123602585
+            "name": "OpenJDK11U-sources_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -174,8 +164,7 @@
             "checksum": "f9fb7339c925d7f1d4edc2c78fec78c07535f3b0efc1818633ed7ad5e4de2c23",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-static-libs-glibc_aarch64_linux_hotspot_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-static-libs-glibc_aarch64_linux_hotspot_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-static-libs-glibc_aarch64_linux_hotspot_11.0.14_9.tar.gz",
-            "size": 3091331
+            "name": "OpenJDK11U-static-libs-glibc_aarch64_linux_hotspot_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -191,8 +180,7 @@
             "checksum": "16e144a79d2d8698dfb3b9bb1f95cab1f8b333e515afd9665e274a8f4598851f",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-static-libs-glibc_x64_linux_hotspot_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-static-libs-glibc_x64_linux_hotspot_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-static-libs-glibc_x64_linux_hotspot_11.0.14_9.tar.gz",
-            "size": 3236124
+            "name": "OpenJDK11U-static-libs-glibc_x64_linux_hotspot_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -207,8 +195,7 @@
             "checksum": "bddf236ecdba86934679fa51489023b5bc8c3b17971b6ae16753cd9f89a7777a",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-static-libs_ppc64_aix_hotspot_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-static-libs_ppc64_aix_hotspot_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-static-libs_ppc64_aix_hotspot_11.0.14_9.tar.gz",
-            "size": 4922735
+            "name": "OpenJDK11U-static-libs_ppc64_aix_hotspot_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -224,8 +211,7 @@
             "checksum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-debugimage_x64_mac_hotspot_11.0.14_9.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-debugimage_x64_mac_hotspot_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-debugimage_x64_mac_hotspot_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-debugimage_x64_mac_hotspot_11.0.14_9.tar.gz",
-            "size": 40021076
+            "name": "OpenJDK11U-debugimage_x64_mac_hotspot_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -241,8 +227,7 @@
             "checksum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-debugimage_x64_windows_hotspot_11.0.14_9.zip.sha256.txt",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-debugimage_x64_windows_hotspot_11.0.14_9.zip",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-debugimage_x64_windows_hotspot_11.0.14_9.zip.json",
-            "name": "OpenJDK11U-debugimage_x64_windows_hotspot_11.0.14_9.zip",
-            "size": 51395305
+            "name": "OpenJDK11U-debugimage_x64_windows_hotspot_11.0.14_9.zip"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -256,8 +241,7 @@
             "checksum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_x64_mac_hotspot_11.0.14_9.pkg.sha256.txt",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_x64_mac_hotspot_11.0.14_9.pkg",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_x64_mac_hotspot_11.0.14_9.pkg.json",
-            "name": "OpenJDK11U-jdk_x64_mac_hotspot_11.0.14_9.pkg",
-            "size": 191765140
+            "name": "OpenJDK11U-jdk_x64_mac_hotspot_11.0.14_9.pkg"
           },
           "jvm_impl": "hotspot",
           "os": "mac",
@@ -266,8 +250,7 @@
             "checksum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_x64_mac_hotspot_11.0.14_9.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_x64_mac_hotspot_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_x64_mac_hotspot_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-jdk_x64_mac_hotspot_11.0.14_9.tar.gz",
-            "size": 191414234
+            "name": "OpenJDK11U-jdk_x64_mac_hotspot_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -281,8 +264,7 @@
             "checksum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_x64_windows_hotspot_11.0.14_9.msi.sha256.txt",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_x64_windows_hotspot_11.0.14_9.msi",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_x64_windows_hotspot_11.0.14_9.msi.json",
-            "name": "OpenJDK11U-jdk_x64_windows_hotspot_11.0.14_9.msi",
-            "size": 175193600
+            "name": "OpenJDK11U-jdk_x64_windows_hotspot_11.0.14_9.msi"
           },
           "jvm_impl": "hotspot",
           "os": "windows",
@@ -291,8 +273,7 @@
             "checksum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_x64_windows_hotspot_11.0.14_9.zip.sha256.txt",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_x64_windows_hotspot_11.0.14_9.zip",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_x64_windows_hotspot_11.0.14_9.zip.json",
-            "name": "OpenJDK11U-jdk_x64_windows_hotspot_11.0.14_9.zip",
-            "size": 196821226
+            "name": "OpenJDK11U-jdk_x64_windows_hotspot_11.0.14_9.zip"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -306,8 +287,7 @@
             "checksum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_x64_mac_hotspot_11.0.14_9.pkg.sha256.txt",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_x64_mac_hotspot_11.0.14_9.pkg",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_x64_mac_hotspot_11.0.14_9.pkg.json",
-            "name": "OpenJDK11U-jre_x64_mac_hotspot_11.0.14_9.pkg",
-            "size": 43585630
+            "name": "OpenJDK11U-jre_x64_mac_hotspot_11.0.14_9.pkg"
           },
           "jvm_impl": "hotspot",
           "os": "mac",
@@ -316,8 +296,7 @@
             "checksum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_x64_mac_hotspot_11.0.14_9.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_x64_mac_hotspot_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_x64_mac_hotspot_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-jre_x64_mac_hotspot_11.0.14_9.tar.gz",
-            "size": 43424054
+            "name": "OpenJDK11U-jre_x64_mac_hotspot_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -331,8 +310,7 @@
             "checksum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_x64_windows_hotspot_11.0.14_9.msi.sha256.txt",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_x64_windows_hotspot_11.0.14_9.msi",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_x64_windows_hotspot_11.0.14_9.msi.json",
-            "name": "OpenJDK11U-jre_x64_windows_hotspot_11.0.14_9.msi",
-            "size": 31763968
+            "name": "OpenJDK11U-jre_x64_windows_hotspot_11.0.14_9.msi"
           },
           "jvm_impl": "hotspot",
           "os": "windows",
@@ -341,8 +319,7 @@
             "checksum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_x64_windows_hotspot_11.0.14_9.zip.sha256.txt",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_x64_windows_hotspot_11.0.14_9.zip",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jre_x64_windows_hotspot_11.0.14_9.zip.json",
-            "name": "OpenJDK11U-jre_x64_windows_hotspot_11.0.14_9.zip",
-            "size": 42699266
+            "name": "OpenJDK11U-jre_x64_windows_hotspot_11.0.14_9.zip"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -358,8 +335,7 @@
             "checksum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-static-libs_x64_mac_hotspot_11.0.14_9.tar.gz.sha256.txt",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-static-libs_x64_mac_hotspot_11.0.14_9.tar.gz",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-static-libs_x64_mac_hotspot_11.0.14_9.tar.gz.json",
-            "name": "OpenJDK11U-static-libs_x64_mac_hotspot_11.0.14_9.tar.gz",
-            "size": 3094336
+            "name": "OpenJDK11U-static-libs_x64_mac_hotspot_11.0.14_9.tar.gz"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -375,8 +351,7 @@
             "checksum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-static-libs_x64_windows_hotspot_11.0.14_9.zip.sha256.txt",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-static-libs_x64_windows_hotspot_11.0.14_9.zip",
             "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-static-libs_x64_windows_hotspot_11.0.14_9.zip.json",
-            "name": "OpenJDK11U-static-libs_x64_windows_hotspot_11.0.14_9.zip",
-            "size": 7839207
+            "name": "OpenJDK11U-static-libs_x64_windows_hotspot_11.0.14_9.zip"
           },
           "project": "jdk",
           "scm_ref": "jdk-11.0.14+9_adopt"
@@ -386,8 +361,7 @@
       "release_name": "jdk-11.0.14+9",
       "source": {
         "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-sources_11.0.14_9.tar.gz",
-        "name": "OpenJDK11U-sources_11.0.14_9.tar.gz",
-        "size": 123602585
+        "name": "OpenJDK11U-sources_11.0.14_9.tar.gz"
       },
       "timestamp": "2022-01-21T22:58:05Z",
       "vendor": "adoptium",
