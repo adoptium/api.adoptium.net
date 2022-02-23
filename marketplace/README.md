@@ -7,3 +7,4 @@ you wish to modify test assets they need to be re-signed once they have been mod
     - Look in the `exampleRepositories/keys` directory for scripts that detail generating keys
 - Re-sign assets
     - Run `SignTestAssets` in the `adoptium-marketplace-utils` project.
+
