@@ -8,13 +8,9 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
         name = "project",
         description = "Project",
         defaultValue = "jdk",
-        enumeration = {"jdk", "valhalla", "metropolis", "jfr", "shenandoah"},
+        enumeration = {"jdk"},
         required = false
 )
 public enum Project {
-    jdk,
-    valhalla,
-    metropolis,
-    jfr,
-    shenandoah;
+    jdk;
 }
