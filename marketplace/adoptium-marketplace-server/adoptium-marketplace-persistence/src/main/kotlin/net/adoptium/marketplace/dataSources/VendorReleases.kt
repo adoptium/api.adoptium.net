@@ -3,6 +3,7 @@ package net.adoptium.marketplace.dataSources
 import net.adoptium.marketplace.dataSources.persitence.VendorPersistence
 import net.adoptium.marketplace.dataSources.persitence.VendorPersistenceFactory
 import net.adoptium.marketplace.schema.ReleaseList
+import net.adoptium.marketplace.schema.ReleaseUpdateInfo
 import net.adoptium.marketplace.schema.Vendor
 import java.time.Duration
 import java.time.ZonedDateTime
@@ -101,7 +102,11 @@ class VendorReleases constructor(
         )
     }
 
-    suspend fun writeReleases(releaseList: ReleaseList): ReleaseList {
+    suspend fun getReleaseVendorStatus(): List<ReleaseUpdateInfo> {
+        return vendorPersistence.getReleaseVendorStatus()
+    }
+
+    suspend fun writeReleases(releaseList: ReleaseList): ReleaseUpdateInfo {
         val newReleases = vendorPersistence.writeReleases(releaseList)
         update()
         return newReleases

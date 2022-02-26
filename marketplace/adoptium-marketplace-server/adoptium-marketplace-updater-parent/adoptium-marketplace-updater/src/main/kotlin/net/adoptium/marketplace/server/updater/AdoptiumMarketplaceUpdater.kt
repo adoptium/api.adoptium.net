@@ -9,6 +9,7 @@ import net.adoptium.marketplace.client.MarketplaceClient
 import net.adoptium.marketplace.dataSources.APIDataStore
 import net.adoptium.marketplace.dataSources.ModelComparators
 import net.adoptium.marketplace.schema.ReleaseList
+import net.adoptium.marketplace.schema.ReleaseUpdateInfo
 import net.adoptium.marketplace.schema.Vendor
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
@@ -38,7 +39,7 @@ class KickOffUpdate @Inject constructor(
 }
 
 interface Updater {
-    suspend fun update(vendor: Vendor): ReleaseList
+    suspend fun update(vendor: Vendor): ReleaseUpdateInfo
     fun scheduleUpdates()
 }
 
@@ -91,14 +92,12 @@ class AdoptiumMarketplaceUpdater @Inject constructor(
                 .forEach { vendor ->
                     val newReleases = update(vendor)
 
-                    newReleases
-                        .releases
-                        .forEach { LOGGER.info("Added release: ${it.release_name}") }
+                    logInfoAboutUpdate(vendor, newReleases)
                 }
         }
     }
 
-    override suspend fun update(vendor: Vendor): ReleaseList {
+    override suspend fun update(vendor: Vendor): ReleaseUpdateInfo {
         mutex.withLock {
             val releasesBefore = apiDataStore.getReleases(vendor).getAllReleases()
 
@@ -112,23 +111,34 @@ class AdoptiumMarketplaceUpdater @Inject constructor(
         }
     }
 
-    private suspend fun logInfoAboutUpdate(vendor: Vendor, newReleases: ReleaseList, releasesBeforeUpdate: ReleaseList) {
+    private suspend fun logInfoAboutUpdate(vendor: Vendor, newReleases: ReleaseUpdateInfo, releasesBeforeUpdate: ReleaseList? = null) {
         val releasesAfter = apiDataStore.getReleases(vendor).getAllReleases()
 
-        LOGGER.info("Updated $vendor, found ${releasesAfter.releases.size} releases, ${newReleases.releases.size} updated")
+        LOGGER.info("Updated $vendor, found ${releasesAfter.releases.size} releases, ${newReleases.updated.releases.size} updated, ${newReleases.added.releases.size} added, ${newReleases.removed.releases.size} removed")
 
         newReleases
+            .updated
             .releases
-            .forEach { LOGGER.info("New release added $vendor ${it.release_name}") }
+            .forEach { LOGGER.info("Updated $vendor ${it.release_name}") }
+
+        newReleases
+            .added
+            .releases
+            .forEach { LOGGER.info("Added $vendor ${it.release_name}") }
+
+        newReleases
+            .removed
+            .releases
+            .forEach { LOGGER.info("Deleted $vendor ${it.release_name}") }
 
         releasesBeforeUpdate
-            .releases
-            .filter { release ->
+            ?.releases
+            ?.filter { release ->
                 releasesAfter
                     .releases
                     .none { ModelComparators.RELEASE.compare(release, it) == 0 }
             }
-            .forEach {
+            ?.forEach {
                 LOGGER.error("Release disappeared or has mutated, contact $vendor to find out why ${it.release_name} ${it.release_link}")
             }
     }

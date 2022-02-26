@@ -1,6 +1,7 @@
 package net.adoptium.marketplace.server.updater.routes
 
 import kotlinx.coroutines.runBlocking
+import net.adoptium.marketplace.schema.ReleaseUpdateInfo
 import net.adoptium.marketplace.schema.Vendor
 import net.adoptium.marketplace.server.updater.Updater
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter
@@ -62,15 +63,7 @@ class UpdateTrigger @Inject constructor(private var updater: Updater) {
         }
     }
 
-    private suspend fun runUpdate(vendor: Vendor): String {
-        val newReleases = updater.update(vendor)
-
-        return if (newReleases.releases.isNotEmpty()) {
-            newReleases
-                .releases
-                .joinToString("\n") { "Added release: ${it.release_name}" }
-        } else {
-            "No new releases found in repo"
-        }
+    private suspend fun runUpdate(vendor: Vendor): ReleaseUpdateInfo {
+        return updater.update(vendor)
     }
 }

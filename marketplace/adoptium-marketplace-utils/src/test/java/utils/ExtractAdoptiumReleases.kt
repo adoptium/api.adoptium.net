@@ -120,7 +120,9 @@ class ExtractAdoptiumReleases {
                         release.source!!.name,
                         release.source!!.link
                     )
-                } else null
+                } else null,
+                "",
+                "https://adoptium.net/tck_affidavit.html"
             )
         }
 
