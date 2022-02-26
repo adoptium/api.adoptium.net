@@ -15,7 +15,7 @@ A repository consists of 3 types of files:
   - Files that contain a sha256 signature for the associated Index or Release file 
   - Has the same path as the file it is signing, with the suffix `sha256.sign`
 
-##Example repository layout
+## Example repository layout
 
 ```json
 /17/jdk_17_0_2_8.json
