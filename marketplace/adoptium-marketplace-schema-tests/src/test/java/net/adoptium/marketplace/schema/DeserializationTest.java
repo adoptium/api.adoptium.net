@@ -67,7 +67,9 @@ public class DeserializationTest {
                         "OpenJDK17U-sources_17.0.1_12.tar.gz",
                         "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-sources_17.0.1_12.tar.gz",
                         105458676l
-                    )
+                    ),
+                    "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz.aqavit.zip",
+                    "https://adoptium.net/tck_affidavit.html"
                 )
             )
         );
