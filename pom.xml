@@ -293,7 +293,7 @@
             <dependency>
                 <groupId>io.quarkiverse.logging.logback</groupId>
                 <artifactId>quarkus-logging-logback-impl</artifactId>
-                <version>0.10.0</version>
+                <version>0.11.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
