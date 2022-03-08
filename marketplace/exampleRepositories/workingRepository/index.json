@@ -1,6 +1,8 @@
 {
-    "indexes": [
-        "8/index.json",
-        "11/index.json"
-    ]
+  "indexes": [
+    "8/index.json",
+    "11/index.json",
+    "17/index.json"
+  ],
+  "releases": []
 }

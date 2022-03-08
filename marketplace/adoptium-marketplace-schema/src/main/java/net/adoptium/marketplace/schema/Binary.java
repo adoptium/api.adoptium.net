@@ -29,12 +29,23 @@ public class Binary {
 
     private final Date timestamp;
 
-    @Schema(example = "dd28d6d2cde2b931caf94ac2422a2ad082ea62f0beee3bf7057317c53093de93")
+    @Schema(description = "Scm reference to the commit inside the vendors own repository upon which this build is based",
+        example = "dd28d6d2cde2b931caf94ac2422a2ad082ea62f0beee3bf7057317c53093de93")
     private final String scm_ref;
+
+    @Schema(description = "Scm reference to the commit inside the OpenJDK project, upon which this build is based",
+        example = "dd28d6d2cde2b931caf94ac2422a2ad082ea62f0beee3bf7057317c53093de93")
+    private final String openjdk_scm_ref;
 
     private final Project project;
 
     private final Distribution distribution;
+
+    @Schema(required = true, example = "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz.aqavit.zip")
+    private final String aqavit_results_link;
+
+    @Schema(example = "https://adoptium.net/tck_affidavit.html")
+    private final String tck_affidavit_link;
 
     @JsonCreator
     public Binary(
@@ -47,8 +58,12 @@ public class Binary {
         @JsonProperty("installer") Installer installer,
         @JsonProperty("timestamp") Date timestamp,
         @JsonProperty("scm_ref") String scm_ref,
+        @JsonProperty("openjdk_scm_ref") String openjdk_scm_ref,
         @JsonProperty("project") Project project,
-        @JsonProperty("distribution") Distribution distribution) {
+        @JsonProperty("distribution") Distribution distribution,
+        @JsonProperty("aqavit_results_link") String aqavit_results_link,
+        @JsonProperty("tck_affidavit_link") String tck_affidavit_link
+    ) {
         this.os = os;
         this.architecture = architecture;
         this.image_type = image_type;
@@ -58,8 +73,11 @@ public class Binary {
         this.installer = installer;
         this.timestamp = timestamp;
         this.scm_ref = scm_ref;
+        this.openjdk_scm_ref = openjdk_scm_ref;
         this.project = project;
         this.distribution = distribution;
+        this.aqavit_results_link = aqavit_results_link;
+        this.tck_affidavit_link = tck_affidavit_link;
     }
 
     public OperatingSystem getOs() {
@@ -106,5 +124,17 @@ public class Binary {
 
     public Distribution getDistribution() {
         return distribution;
+    }
+
+    public String getAqavit_results_link() {
+        return aqavit_results_link;
+    }
+
+    public String getTck_affidavit_link() {
+        return tck_affidavit_link;
+    }
+
+    public String getOpenjdk_scm_ref() {
+        return openjdk_scm_ref;
     }
 }

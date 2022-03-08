@@ -147,6 +147,12 @@
             <groupId>net.adoptium.marketplace.server.frontend</groupId>
             <artifactId>adoptium-marketplace-frontend-assets</artifactId>
         </dependency>
+        <dependency>
+            <groupId>net.adoptium.marketplace.server</groupId>
+            <artifactId>adoptium-marketplace-persistence</artifactId>
+            <scope>test</scope>
+            <classifier>tests</classifier>
+        </dependency>
     </dependencies>
 
     <build>

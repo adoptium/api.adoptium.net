@@ -28,12 +28,6 @@ public class Release {
 
     private final SourcePackage source;
 
-    @Schema(required = true, example = "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz.aqavit.zip")
-    private final String aqavit_results_link;
-    
-    @Schema(example = "https://adoptium.net/tck_affidavit.html")
-    private final String tck_affidavit_link;
-
     @JsonCreator
     public Release(
         @JsonProperty("release_link") String release_link,
@@ -42,9 +36,7 @@ public class Release {
         @JsonProperty("binaries") List<Binary> binaries,
         @JsonProperty("vendor") Vendor vendor,
         @JsonProperty("version_data") VersionData version_data,
-        @JsonProperty("source") SourcePackage source,
-        @JsonProperty("aqavit_results_link") String aqavit_results_link,
-        @JsonProperty("tck_affidavit_link") String tck_affidavit_link
+        @JsonProperty("source") SourcePackage source
     ) {
         this.release_link = release_link;
         this.release_name = release_name;
@@ -53,8 +45,6 @@ public class Release {
         this.vendor = vendor;
         this.version_data = version_data;
         this.source = source;
-        this.aqavit_results_link = aqavit_results_link;
-        this.tck_affidavit_link = tck_affidavit_link;
     }
 
     public Release(
@@ -63,14 +53,12 @@ public class Release {
     ) {
         this(
             release.release_link,
-            release.release_name, 
-            release.timestamp, 
-            binaries, 
-            release.vendor, 
-            release.version_data, 
-            release.source,
-            release.aqavit_results_link,
-            release.tck_affidavit_link
+            release.release_name,
+            release.timestamp,
+            binaries,
+            release.vendor,
+            release.version_data,
+            release.source
         );
     }
 
@@ -102,13 +90,5 @@ public class Release {
 
     public SourcePackage getSource() {
         return source;
-    }
-
-    public String getAqavit_results_link() {
-        return aqavit_results_link;
-    }
-
-    public String getTck_affidavit_link() {
-        return tck_affidavit_link;
     }
 }

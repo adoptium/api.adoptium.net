@@ -1,0 +1,8 @@
+{
+  "indexes": [],
+  "releases": [
+    "jdk_17_0_2_8.json",
+    "jdk_17_0_1_12.json",
+    "jdk_17_35.json"
+  ]
+}
