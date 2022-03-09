@@ -30,6 +30,7 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
         private const val HOTSPOT_JFR = "hotspot-jfr"
+        private const val TEMURIN = "temurin"
     }
 
     private val EXCLUDED = listOf<String>("corretto")
@@ -256,7 +257,10 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
     }
 
     private fun parseJvmImpl(binaryMetadata: GHMetaData): JvmImpl {
-        return if (binaryMetadata.variant == HOTSPOT_JFR) {
+        return if (
+            binaryMetadata.variant == HOTSPOT_JFR ||
+            binaryMetadata.variant == TEMURIN
+        ) {
             JvmImpl.hotspot
         } else {
             JvmImpl.valueOf(binaryMetadata.variant)
