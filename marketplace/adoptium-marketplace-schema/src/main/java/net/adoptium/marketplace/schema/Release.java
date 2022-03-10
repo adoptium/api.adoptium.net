@@ -11,13 +11,26 @@ import java.util.List;
 
 public class Release {
 
-    @Schema(example = "https://github.com/AdoptOpenJDK/openjdk8-openj9-releases/ga/tag/jdk8u162-b12_openj9-0.8.0")
+    public static final String RELEASE_LINK_NAME = "release_link";
+    public static final String RELEASE_NAME_NAME = "release_name";
+    public static final String VERSION_DATA_NAME = "version_data";
+    @Schema(
+        example = "https://github.com/AdoptOpenJDK/openjdk8-openj9-releases/ga/tag/jdk8u162-b12_openj9-0.8.0",
+        name = RELEASE_LINK_NAME
+    )
     private final String releaseLink;
 
-    @Schema(example = "jdk8u162-b12_openj9-0.8.0", required = true)
+    @Schema(
+        example = "jdk8u162-b12_openj9-0.8.0",
+        required = true,
+        name = RELEASE_NAME_NAME
+    )
     private final String releaseName;
 
-    @Schema(description = "Timestamp of the release creation", required = true)
+    @Schema(
+        description = "Timestamp of the release creation",
+        required = true
+    )
     private final Date timestamp;
 
     @Schema(type = SchemaType.ARRAY, implementation = Binary.class, required = true)
@@ -26,19 +39,19 @@ public class Release {
     @Schema(required = true)
     private final Vendor vendor;
 
-    @Schema(required = true)
+    @Schema(required = true, name = VERSION_DATA_NAME)
     private final VersionData versionData;
 
     private final SourcePackage source;
 
     @JsonCreator
     public Release(
-        @JsonProperty("release_link") String releaseLink,
-        @JsonProperty("release_name") String releaseName,
+        @JsonProperty(RELEASE_LINK_NAME) String releaseLink,
+        @JsonProperty(RELEASE_NAME_NAME) String releaseName,
         @JsonProperty("timestamp") Date timestamp,
         @JsonProperty("binaries") List<Binary> binaries,
         @JsonProperty("vendor") Vendor vendor,
-        @JsonProperty("version_data") VersionData versionData,
+        @JsonProperty(VERSION_DATA_NAME) VersionData versionData,
         @JsonProperty("source") SourcePackage source
     ) {
         this.releaseLink = releaseLink;
@@ -65,12 +78,12 @@ public class Release {
         );
     }
 
-    @JsonProperty("release_link")
+    @JsonProperty(RELEASE_LINK_NAME)
     public String getReleaseLink() {
         return releaseLink;
     }
 
-    @JsonProperty("release_name")
+    @JsonProperty(RELEASE_NAME_NAME)
     public String getReleaseName() {
         return releaseName;
     }
@@ -88,7 +101,7 @@ public class Release {
         return vendor;
     }
 
-    @JsonProperty("version_data")
+    @JsonProperty(VERSION_DATA_NAME)
     public VersionData getVersionData() {
         return versionData;
     }

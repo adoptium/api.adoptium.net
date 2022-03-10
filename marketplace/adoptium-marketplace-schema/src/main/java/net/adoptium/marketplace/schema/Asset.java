@@ -6,6 +6,9 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 public class Asset {
 
+    public static final String CHECKSUM_LINK_NAME = "checksum_link";
+    public static final String SIGNATURE_LINK_NAME = "signature_link";
+    public static final String METADATA_LINK_NAME = "metadata_link";
     @Schema(example = "OpenJDK8U-jre_x86-32_windows_hotspot_8u212b04.msi", required = true)
     private final String name;
 
@@ -15,13 +18,22 @@ public class Asset {
     @Schema(example = "dd28d6d2cde2b931caf94ac2422a2ad082ea62f0beee3bf7057317c53093de93")
     private final String checksum;
 
-    @Schema(example = "https://github.com/AdoptOpenJDK/openjdk8-openj9-releases/ga/download/jdk8u162-b12_openj9-0.8.0/OpenJDK8-OPENJ9_x64_Linux_jdk8u162-b12_openj9-0.8.0.tar.gz.sha256.txt")
+    @Schema(
+        example = "https://github.com/AdoptOpenJDK/openjdk8-openj9-releases/ga/download/jdk8u162-b12_openj9-0.8.0/OpenJDK8-OPENJ9_x64_Linux_jdk8u162-b12_openj9-0.8.0.tar.gz.sha256.txt",
+        name = CHECKSUM_LINK_NAME
+    )
     private final String checksumLink;
 
-    @Schema(example = "https://github.com/AdoptOpenJDK/openjdk11-upstream-binaries/releases/download/jdk-11.0.5%2B10/OpenJDK11U-jdk_x64_linux_11.0.5_10.tar.gz.sign")
+    @Schema(
+        example = "https://github.com/AdoptOpenJDK/openjdk11-upstream-binaries/releases/download/jdk-11.0.5%2B10/OpenJDK11U-jdk_x64_linux_11.0.5_10.tar.gz.sign",
+        name = SIGNATURE_LINK_NAME
+    )
     private final String signatureLink;
 
-    @Schema(example = "https://github.com/AdoptOpenJDK/openjdk8-openj9-releases/ga/download/jdk8u162-b12_openj9-0.8.0/OpenJDK8-OPENJ9_x64_Linux_jdk8u162-b12_openj9-0.8.0.tar.gz.json")
+    @Schema(
+        example = "https://github.com/AdoptOpenJDK/openjdk8-openj9-releases/ga/download/jdk8u162-b12_openj9-0.8.0/OpenJDK8-OPENJ9_x64_Linux_jdk8u162-b12_openj9-0.8.0.tar.gz.json",
+        name = METADATA_LINK_NAME
+    )
     private final String metadataLink;
 
     @JsonCreator
@@ -29,9 +41,9 @@ public class Asset {
         @JsonProperty("name") String name,
         @JsonProperty("link") String link,
         @JsonProperty("checksum") String checksum,
-        @JsonProperty("checksum_link") String checksumLink,
-        @JsonProperty("signature_link") String signatureLink,
-        @JsonProperty("metadata_link") String metadataLink) {
+        @JsonProperty(CHECKSUM_LINK_NAME) String checksumLink,
+        @JsonProperty(SIGNATURE_LINK_NAME) String signatureLink,
+        @JsonProperty(METADATA_LINK_NAME) String metadataLink) {
         this.name = name;
         this.link = link;
         this.checksum = checksum;
@@ -40,7 +52,7 @@ public class Asset {
         this.metadataLink = metadataLink;
     }
 
-    @JsonProperty("metadata_link")
+    @JsonProperty(METADATA_LINK_NAME)
     public String getMetadataLink() {
         return metadataLink;
     }
@@ -57,12 +69,12 @@ public class Asset {
         return checksum;
     }
 
-    @JsonProperty("checksum_link")
+    @JsonProperty(CHECKSUM_LINK_NAME)
     public String getChecksumLink() {
         return checksumLink;
     }
 
-    @JsonProperty("signature_link")
+    @JsonProperty(SIGNATURE_LINK_NAME)
     public String getSignatureLink() {
         return signatureLink;
     }
