@@ -33,7 +33,7 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos) : A
     }
 
     override suspend fun readReleaseData(featureVersion: Int): FeatureRelease {
-        return repos!!.getFeatureRelease(featureVersion) ?: FeatureRelease(featureVersion, emptyList())
+        return repos.getFeatureRelease(featureVersion) ?: FeatureRelease(featureVersion, emptyList())
     }
 
     override suspend fun addGithubDownloadStatsEntries(stats: List<GitHubDownloadStatsDbEntry>) {

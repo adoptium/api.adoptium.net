@@ -129,14 +129,19 @@ You can choose to deploy this API where you wish, for Adoptium we use Continuous
 
 ### Adoptium
 
-For Adoptium, this API deploys to Red Hat OpenShift and is front ended by [Cloudflare](https://www.cloudflare.com) as a CDN.
+For Adoptium, this API deploys to Microsoft Azure.
 
-The `production` branch is synchronized with `main` to perform a release of the latest API changes to the Production OpenShift environment.  
+The `production` branch is synchronized with `main` (via a pull request that applies all outstanding commits from `main` to `production`) to perform a release of the latest API changes to the Production environment.  
 
-This is done via a pull request that applies all outstanding commits from `main` to `production`.
+A build and deploy then happens as governed by the [Build Docker](./github/workflows/build-docker.yml) and [Publish](./github/workflows/publish.yml) files.
 
-The Jenkins [Adoptium CI Server](https://ci.adoptopenjdk.net) will automatically
-deploy pull requests to the OpenShift Staging (the `main` branch) or Production (the `production` branch) environments.
+### AdoptOpenJDK
+
+For AdoptOpenJDK, this API deploys to Red Hat OpenShift and is front ended by [Cloudflare](https://www.cloudflare.com) as a CDN.
+
+The `production` branch is synchronized with `main` (via a pull request that applies all outstanding commits from `main` to `production`) to perform a release of the latest API changes to the Production OpenShift environment.  
+
+A build then happens in OpenShift as governed by the [Source To Image (s2i) Assembly file](./s2i/bin/assemble) file.
 
 ## Code Architecture and Code
 

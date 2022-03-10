@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.stream.Stream
-import kotlin.test.assertEquals
-import kotlin.test.fail
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.fail
 
 @QuarkusTest
 @ExtendWith(value = [DbExtension::class])
@@ -117,7 +117,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
             ) { previous: Release?, next: Release ->
                 if (previous != null) {
                     if (Releases.VERSION_COMPARATOR.compare(previous.version_data, next.version_data) > 0) {
-                        fail("${previous.version_data} is before ${next.version_data}")
+                        fail<String>("${previous.version_data} is before ${next.version_data}")
                     }
                 }
                 next
@@ -132,7 +132,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
             ) { previous: Release?, next: Release ->
                 if (previous != null) {
                     if (Releases.VERSION_COMPARATOR.compare(previous.version_data, next.version_data) < 0) {
-                        fail("${previous.version_data} is before ${next.version_data}")
+                        fail<String>("${previous.version_data} is before ${next.version_data}")
                     }
                 }
                 next
@@ -186,7 +186,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
         }
 
         fun parseReleases(json: String?): List<Release> =
-            JsonMapper.mapper.readValue(json, JsonMapper.mapper.getTypeFactory().constructCollectionType(MutableList::class.java, Release::class.java))
+            JsonMapper.mapper.readValue(json, JsonMapper.mapper.typeFactory.constructCollectionType(MutableList::class.java, Release::class.java))
     }
 
     @Test

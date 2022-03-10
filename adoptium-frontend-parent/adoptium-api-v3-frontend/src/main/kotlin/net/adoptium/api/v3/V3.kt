@@ -1,5 +1,6 @@
 package net.adoptium.api.v3
 
+import io.quarkus.arc.profile.UnlessBuildProfile
 import io.quarkus.runtime.Startup
 import org.eclipse.microprofile.openapi.annotations.OpenAPIDefinition
 import org.eclipse.microprofile.openapi.annotations.info.Info
@@ -15,6 +16,7 @@ import javax.ws.rs.core.Application
     ],
     info = Info(title = "v3", version = "3.0.0", description = ServerConfig.DESCRIPTION)
 )
+@UnlessBuildProfile("test")
 @ApplicationScoped
 @ApplicationPath("/")
 @Startup

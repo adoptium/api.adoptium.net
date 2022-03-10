@@ -1,5 +1,7 @@
 package net.adoptium.api.v3.models
 
+import java.util.*
+
 interface FileNameMatcher {
     var names: List<String>
 
@@ -21,7 +23,7 @@ interface FileNameMatcher {
     fun setNames(instanceName: String, alternativeNames: List<String>) {
         names = listOf(instanceName)
             .union(alternativeNames.toList())
-            .map { it.toLowerCase() }
+            .map { it.lowercase(Locale.getDefault()) }
             .toList()
     }
 }

@@ -6,7 +6,7 @@ import net.adoptium.api.v3.mapping.upstream.UpstreamBinaryMapper
 import net.adoptium.api.v3.models.ImageType
 import net.adoptium.api.v3.models.Project
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
+import org.junit.jupiter.api.Assertions.assertEquals
 
 class UpstreamBinaryMapperTest : BaseTest() {
 

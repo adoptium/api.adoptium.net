@@ -8,21 +8,19 @@ import net.adoptium.api.v3.dataSources.UrlRequest
 import net.adoptium.api.v3.models.ReleaseInfo
 import org.apache.http.HttpResponse
 import org.junit.jupiter.api.Test
-import kotlin.test.assertTrue
+import org.junit.jupiter.api.Assertions.assertTrue
 
 class ReleaseVersionResolverTest : BaseTest() {
 
-    private fun getReleaseVersionResolver(
-        apiPersistence: InMemoryApiPersistence = InMemoryApiPersistence(adoptRepos)
-    ): ReleaseVersionResolver {
+    private fun getReleaseVersionResolver(): ReleaseVersionResolver {
         return ReleaseVersionResolver(
 
             object : UpdaterHtmlClient {
                 override suspend fun get(url: String): String? {
-                    return getTipMetadata(url)
+                    return getTipMetadata()
                 }
 
-                fun getTipMetadata(url: String): String {
+                fun getTipMetadata(): String {
                     return """
                         DEFAULT_VERSION_FEATURE=15
                         DEFAULT_VERSION_INTERIM=0
