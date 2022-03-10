@@ -108,7 +108,7 @@ constructor(
             project,
             cLib
         )
-            .map { it.release_name }
+            .map { it.releaseName }
 
         val pagedReleases = getPage(pageSize, page, releases)
 
@@ -187,7 +187,7 @@ constructor(
             project,
             cLib
         )
-            .map { it.version_data }
+            .map { it.versionData }
             .distinct()
 
         val pagedReleases = getPage(pageSize, page, releases, maxPageSizeNum = Pagination.largerPageSizeNum)

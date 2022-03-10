@@ -88,17 +88,17 @@ open class MongoVendorPersistence constructor(
             .filter { currentRelease ->
                 releases.releases.none {
                     it.vendor == currentRelease.vendor &&
-                        it.release_name == currentRelease.release_name &&
-                        it.release_link == currentRelease.release_link &&
-                        it.version_data.compareTo(currentRelease.version_data) == 0
+                        it.releaseName == currentRelease.releaseName &&
+                        it.releaseLink == currentRelease.releaseLink &&
+                        it.versionData.compareTo(currentRelease.versionData) == 0
                 }
             }
             .map { toRemove ->
-                LOGGER.info("Removing old release ${toRemove.release_name}")
+                LOGGER.info("Removing old release ${toRemove.releaseName}")
                 val matcher = releaseMatcher(toRemove)
                 val deleted = releasesCollection.deleteMany(matcher)
                 if (deleted.deletedCount != 1L) {
-                    LOGGER.error("Failed to delete release ${toRemove.release_name}")
+                    LOGGER.error("Failed to delete release ${toRemove.releaseName}")
                 }
                 return@map toRemove
             }
@@ -158,11 +158,11 @@ open class MongoVendorPersistence constructor(
     private fun releaseMatcher(release: Release): BsonDocument {
         return BsonDocument(
             listOf(
-                BsonElement("release_name", BsonString(release.release_name)),
-                BsonElement("release_link", BsonString(release.release_link)),
+                BsonElement("release_name", BsonString(release.releaseName)),
+                BsonElement("release_link", BsonString(release.releaseLink)),
                 BsonElement("vendor", BsonString(release.vendor.name))
             )
-                .plus(versionMatcher(release.version_data))
+                .plus(versionMatcher(release.versionData))
         )
     }
 

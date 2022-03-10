@@ -25,11 +25,17 @@ import kotlin.concurrent.timerTask
 @ApplicationScoped
 @ApplicationPath("/")
 @Startup
+/**
+ * Root application for the updater project
+ */
 class AdoptiumMarketplaceUpdaterApp : Application()
 
 @UnlessBuildProfile("test")
 @Singleton
 @Startup
+/**
+ * Init application tasks
+ */
 class KickOffUpdate @Inject constructor(
     adoptiumMarketplaceUpdater: AdoptiumMarketplaceUpdater
 ) {
@@ -119,17 +125,17 @@ class AdoptiumMarketplaceUpdater @Inject constructor(
         newReleases
             .updated
             .releases
-            .forEach { LOGGER.info("Updated $vendor ${it.release_name}") }
+            .forEach { LOGGER.info("Updated $vendor ${it.releaseName}") }
 
         newReleases
             .added
             .releases
-            .forEach { LOGGER.info("Added $vendor ${it.release_name}") }
+            .forEach { LOGGER.info("Added $vendor ${it.releaseName}") }
 
         newReleases
             .removed
             .releases
-            .forEach { LOGGER.info("Deleted $vendor ${it.release_name}") }
+            .forEach { LOGGER.info("Deleted $vendor ${it.releaseName}") }
 
         releasesBeforeUpdate
             ?.releases
@@ -139,7 +145,7 @@ class AdoptiumMarketplaceUpdater @Inject constructor(
                     .none { ModelComparators.RELEASE.compare(release, it) == 0 }
             }
             ?.forEach {
-                LOGGER.error("Release disappeared or has mutated, contact $vendor to find out why ${it.release_name} ${it.release_link}")
+                LOGGER.error("Release disappeared or has mutated, contact $vendor to find out why ${it.releaseName} ${it.releaseLink}")
             }
     }
 }

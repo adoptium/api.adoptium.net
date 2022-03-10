@@ -7,7 +7,7 @@ import net.adoptium.marketplace.schema.ImageType
 import net.adoptium.marketplace.schema.JvmImpl
 import net.adoptium.marketplace.schema.OperatingSystem
 import net.adoptium.marketplace.schema.Project
-import net.adoptium.marketplace.server.frontend.models.DateTime
+import net.adoptium.marketplace.server.frontend.models.APIDateTime
 import java.util.function.Predicate
 
 class BinaryFilterMultiple : Predicate<Binary> {
@@ -18,16 +18,16 @@ class BinaryFilterMultiple : Predicate<Binary> {
     private val imageType: List<ImageType>?
     private val jvmImpl: List<JvmImpl>?
     private val project: List<Project>?
-    private val before: DateTime?
+    private val before: APIDateTime?
 
     constructor(
-        os: List<OperatingSystem>? = null,
-        arch: List<Architecture>? = null,
-        imageType: List<ImageType>? = null,
-        jvmImpl: List<JvmImpl>? = null,
-        project: List<Project>? = null,
-        before: DateTime? = null,
-        cLib: List<CLib>? = null,
+            os: List<OperatingSystem>? = null,
+            arch: List<Architecture>? = null,
+            imageType: List<ImageType>? = null,
+            jvmImpl: List<JvmImpl>? = null,
+            project: List<Project>? = null,
+            before: APIDateTime? = null,
+            cLib: List<CLib>? = null,
     ) {
         this.os = os
         this.arch = arch
@@ -41,11 +41,11 @@ class BinaryFilterMultiple : Predicate<Binary> {
     override fun test(binary: Binary): Boolean {
         return test(binary.os, os) &&
             test(binary.architecture, arch) &&
-            test(binary.image_type, imageType) &&
-            test(binary.jvm_impl, jvmImpl) &&
+            test(binary.imageType, imageType) &&
+            test(binary.jvmImpl, jvmImpl) &&
             test(binary.project, project) &&
             (before == null || binary.timestamp.toInstant().isBefore(before.dateTime.toInstant())) &&
-            test(binary.c_lib, cLib)
+            test(binary.cLib, cLib)
     }
 
     fun <T> test(value: T, matcher: List<T>?): Boolean {

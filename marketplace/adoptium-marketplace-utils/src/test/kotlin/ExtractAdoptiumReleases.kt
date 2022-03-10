@@ -92,7 +92,7 @@ class ExtractAdoptiumReleases {
     }
 
     private fun toFileName(it: net.adoptium.marketplace.schema.Release) = it
-        .release_name
+        .releaseName
         .replace("+", "_")
         .replace(".", "_")
         .replace("-", "_")

@@ -32,8 +32,7 @@ import java.util.concurrent.TimeUnit
     type = SchemaType.STRING,
     description = "<p>Date/time. When only a date is given the time is set to the end of the given day. <ul> <li>2020-01-21</li> <li>2020-01-21T10:15:30</li> <li>20200121</li> <li>2020-12-21T10:15:30Z</li> <li>2020-12-21+01:00</li> </ul></p>"
 )
-class
-DateTime {
+class APIDateTime {
 
     @Schema(hidden = true)
     val dateTime: ZonedDateTime
@@ -72,7 +71,7 @@ DateTime {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as DateTime
+        other as APIDateTime
 
         if (dateTime != other.dateTime) return false
 
@@ -141,35 +140,39 @@ DateTime {
     }
 }
 
-class DateTimeSerializer : JsonSerializer<DateTime>() {
-    override fun serialize(dateTime: DateTime?, jsonGenerator: JsonGenerator, serializerProvider: SerializerProvider?) {
-        if (dateTime != null) {
-            jsonGenerator.writeString(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(dateTime.dateTime))
+class DateTimeSerializer : JsonSerializer<APIDateTime>() {
+    override fun serialize(APIDateTime: APIDateTime?, jsonGenerator: JsonGenerator, serializerProvider: SerializerProvider?) {
+        if (APIDateTime != null) {
+            jsonGenerator.writeString(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(APIDateTime.dateTime))
         } else {
             jsonGenerator.writeNull()
         }
     }
 }
 
-class DateTimeDeSerializer : JsonDeserializer<DateTime>() {
-    override fun deserialize(parser: JsonParser?, context: DeserializationContext?): DateTime {
+/*
+ * Deserializes date times from a number of different formats. This is due to we are parsing dates provided by the user in a number
+ * of possible formats, try to guess which the user has provided
+ */
+class DateTimeDeSerializer : JsonDeserializer<APIDateTime>() {
+    override fun deserialize(parser: JsonParser?, context: DeserializationContext?): APIDateTime {
         if (parser!!.currentToken() == JsonToken.VALUE_NUMBER_FLOAT) {
-            return DateTime(InstantDeserializer.ZONED_DATE_TIME.deserialize(parser, context))
+            return APIDateTime(InstantDeserializer.ZONED_DATE_TIME.deserialize(parser, context))
         } else if (parser.currentToken() == JsonToken.VALUE_EMBEDDED_OBJECT) {
             return when (val obj = parser.embeddedObject) {
                 is Date -> {
                     val date = parser.readValueAs(Date::class.java)
-                    DateTime(date.toInstant().atZone(ZoneOffset.of("Z")))
+                    APIDateTime(date.toInstant().atZone(ZoneOffset.of("Z")))
                 }
-                is DateTime -> obj
-                is ZonedDateTime -> DateTime(obj)
+                is APIDateTime -> obj
+                is ZonedDateTime -> APIDateTime(obj)
                 else -> throw RuntimeException("Unknown type " + obj::class.java)
             }
         } else if (parser.currentToken() == JsonToken.START_OBJECT) {
             val fieldName = parser.nextFieldName()
             parser.nextToken()
             if (fieldName == "dateTime") {
-                val dt = DateTime(parser.readValueAs(ZonedDateTime::class.java))
+                val dt = APIDateTime(parser.readValueAs(ZonedDateTime::class.java))
                 // Pop end token
                 parser.nextValue()
                 return dt
@@ -179,7 +182,7 @@ class DateTimeDeSerializer : JsonDeserializer<DateTime>() {
         } else if (parser.currentToken() == JsonToken.VALUE_STRING) {
             val field = parser.text
             if (field != null) {
-                return DateTime(field)
+                return APIDateTime(field)
             } else {
                 throw RuntimeException("Null DateTime detected")
             }

@@ -6,10 +6,10 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 public class SourcePackage {
 
-    @Schema(example = "OpenJDK8U-sources_8u232b09.tar.gz")
+    @Schema(example = "OpenJDK8U-sources_8u232b09.tar.gz", required = true)
     private final String name;
 
-    @Schema(example = "https://github.com/AdoptOpenJDK/openjdk8-upstream-binaries/releases/download/jdk8u232-b09/OpenJDK8U-sources_8u232b09.tar.gz")
+    @Schema(example = "https://github.com/AdoptOpenJDK/openjdk8-upstream-binaries/releases/download/jdk8u232-b09/OpenJDK8U-sources_8u232b09.tar.gz", required = true)
     private final String link;
 
     @JsonCreator

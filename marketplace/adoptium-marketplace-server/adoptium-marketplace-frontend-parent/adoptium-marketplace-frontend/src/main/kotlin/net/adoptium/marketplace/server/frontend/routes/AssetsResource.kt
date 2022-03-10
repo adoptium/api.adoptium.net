@@ -17,8 +17,8 @@ import net.adoptium.marketplace.server.frontend.filters.BinaryFilter
 import net.adoptium.marketplace.server.frontend.filters.BinaryFilterMultiple
 import net.adoptium.marketplace.server.frontend.filters.ReleaseFilter
 import net.adoptium.marketplace.server.frontend.filters.ReleaseFilterMultiple
+import net.adoptium.marketplace.server.frontend.models.APIDateTime
 import net.adoptium.marketplace.server.frontend.models.BinaryAssetView
-import net.adoptium.marketplace.server.frontend.models.DateTime
 import net.adoptium.marketplace.server.frontend.models.SortMethod
 import net.adoptium.marketplace.server.frontend.models.SortOrder
 import org.eclipse.microprofile.openapi.annotations.Operation
@@ -110,7 +110,7 @@ constructor(
             required = false
         )
         @QueryParam("before")
-        before: DateTime?,
+        before: APIDateTime?,
 
         @Parameter(
             name = "page_size", description = "Pagination page size",
@@ -351,10 +351,10 @@ constructor(
                     .map { Pair(release, it) }
             }
             .associateBy {
-                binaryPermutation(it.first.vendor, it.second.architecture, it.second.image_type, it.second.os)
+                binaryPermutation(it.first.vendor, it.second.architecture, it.second.imageType, it.second.os)
             }
             .values
-            .map { BinaryAssetView(it.first.release_name, it.first.vendor, it.second, it.first.version_data) }
+            .map { BinaryAssetView(it.first.releaseName, it.first.vendor, it.second, it.first.versionData) }
             .toList()
     }
 
@@ -394,7 +394,7 @@ constructor(
 
         return vendors
             .flatMap { vendor ->
-                val releaseFilter = ReleaseFilterMultiple(versions, null, listOf(vendor), null, null)
+                val releaseFilter = ReleaseFilterMultiple(versions, null, listOf(vendor), null)
                 val binaryFilter = BinaryFilterMultiple(os, arch, image_type, null, null, null)
 
                 releaseEndpoint.getReleases(vendor, releaseFilter, binaryFilter, SortOrder.ASC, SortMethod.DEFAULT)
@@ -405,10 +405,10 @@ constructor(
                     .map { Pair(release, it) }
             }
             .associateBy {
-                binaryPermutation(it.first.vendor, it.second.architecture, it.second.image_type, it.second.os)
+                binaryPermutation(it.first.vendor, it.second.architecture, it.second.imageType, it.second.os)
             }
             .values
-            .map { BinaryAssetView(it.first.release_name, it.first.vendor, it.second, it.first.version_data) }
+            .map { BinaryAssetView(it.first.releaseName, it.first.vendor, it.second, it.first.versionData) }
             .toList()
     }
 }

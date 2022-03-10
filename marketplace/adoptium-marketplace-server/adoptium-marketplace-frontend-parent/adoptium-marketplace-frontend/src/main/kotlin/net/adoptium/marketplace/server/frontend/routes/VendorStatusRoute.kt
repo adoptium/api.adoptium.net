@@ -38,6 +38,6 @@ constructor(private val apiDataStore: APIDataStore) {
     }
 
     private fun toSummary(list: ReleaseList): List<String> {
-        return list.releases.map { it.release_name }
+        return list.releases.map { it.releaseName }
     }
 }

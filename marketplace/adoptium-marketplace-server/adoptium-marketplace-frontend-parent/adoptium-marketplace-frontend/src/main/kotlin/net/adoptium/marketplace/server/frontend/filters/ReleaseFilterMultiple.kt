@@ -12,10 +12,10 @@ class ReleaseFilterMultiple(
     private val lts: List<Boolean>? = null,
 ) : Predicate<Release> {
     override fun test(release: Release): Boolean {
-        return (featureVersion == null || featureVersion.isEmpty() || featureVersion.contains(release.version_data.major)) &&
-            (releaseName == null || releaseName.isEmpty() || releaseName.contains(release.release_name)) &&
+        return (featureVersion == null || featureVersion.isEmpty() || featureVersion.contains(release.versionData.major)) &&
+            (releaseName == null || releaseName.isEmpty() || releaseName.contains(release.releaseName)) &&
             (vendor == null || vendor.isEmpty() || vendor.contains(release.vendor)) &&
-            (versionRange == null || versionRange.isEmpty() || versionRange.any { it.test(release.version_data) }) &&
-            (lts == null || lts.isEmpty() || lts.contains(release.version_data.isLts))
+            (versionRange == null || versionRange.isEmpty() || versionRange.any { it.test(release.versionData) }) &&
+            (lts == null || lts.isEmpty() || lts.contains(release.versionData.isLts))
     }
 }

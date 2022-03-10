@@ -7,97 +7,116 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 import java.util.Date;
 
-@Schema
+@Schema(description = "Details of a binary that can be downloaded including either or both a package and platform specific installer")
 public class Binary {
 
+    @Schema(implementation = OperatingSystem.class, required = true)
     private final OperatingSystem os;
 
+    @Schema(implementation = Architecture.class, required = true)
     private final Architecture architecture;
 
-    private final ImageType image_type;
+    @Schema(implementation = ImageType.class, required = true)
+    private final ImageType imageType;
 
-    private final CLib c_lib;
+    @Schema(implementation = CLib.class)
+    private final CLib cLib;
 
-    private final JvmImpl jvm_impl;
+    @Schema(implementation = JvmImpl.class, required = true)
+    private final JvmImpl jvmImpl;
 
-    @Schema(implementation = Package.class, name = "package")
+    @Schema(implementation = Package.class, description = "Describes details of the archive", name = "package", required = false)
     @JsonProperty("package")
     private final Package _package;
 
-    @Schema(implementation = Installer.class)
+    @Schema(implementation = Installer.class, description = "Describes details of the installer archive associated with this binary", required = false)
     private final Installer installer;
 
+    @Schema(required = true, description = "Timestamp of the creation time of the binary")
     private final Date timestamp;
 
     @Schema(description = "Scm reference to the commit inside the vendors own repository upon which this build is based",
-        example = "dd28d6d2cde2b931caf94ac2422a2ad082ea62f0beee3bf7057317c53093de93")
-    private final String scm_ref;
+        example = "dd28d6d2cde2b931caf94ac2422a2ad082ea62f0beee3bf7057317c53093de93",
+        required = true)
+    private final String scmRef;
 
     @Schema(description = "Scm reference to the commit inside the OpenJDK project, upon which this build is based",
-        example = "dd28d6d2cde2b931caf94ac2422a2ad082ea62f0beee3bf7057317c53093de93")
-    private final String openjdk_scm_ref;
+        example = "dd28d6d2cde2b931caf94ac2422a2ad082ea62f0beee3bf7057317c53093de93",
+        required = true)
+    private final String openjdkScmRef;
 
+    @Schema(implementation = Project.class, required = true)
     private final Project project;
 
+    @Schema(implementation = Distribution.class, required = true)
     private final Distribution distribution;
 
-    @Schema(required = true, example = "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz.aqavit.zip")
-    private final String aqavit_results_link;
+    @Schema(required = true,
+        description = "Link to the aquavit results details for this binary",
+        example = "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz.aqavit.zip")
+    private final String aqavitResultsLink;
 
-    @Schema(example = "https://adoptium.net/tck_affidavit.html")
-    private final String tck_affidavit_link;
+    @Schema(required = true,
+        example = "https://adoptium.net/tck_affidavit.html",
+        description = "Link to the tck affidavit for this binary")
+    private final String tckAffidavitLink;
 
     @JsonCreator
     public Binary(
         @JsonProperty("os") OperatingSystem os,
         @JsonProperty("architecture") Architecture architecture,
-        @JsonProperty("image_type") ImageType image_type,
-        @JsonProperty("c_lib") CLib c_lib,
-        @JsonProperty("jvm_impl") JvmImpl jvm_impl,
+        @JsonProperty("image_type") ImageType imageType,
+        @JsonProperty("c_lib") CLib cLib,
+        @JsonProperty("jvm_impl") JvmImpl jvmImpl,
         @JsonProperty("package") Package aPackage,
         @JsonProperty("installer") Installer installer,
         @JsonProperty("timestamp") Date timestamp,
-        @JsonProperty("scm_ref") String scm_ref,
-        @JsonProperty("openjdk_scm_ref") String openjdk_scm_ref,
+        @JsonProperty("scm_ref") String scmRef,
+        @JsonProperty("openjdk_scm_ref") String openjdkScmRef,
         @JsonProperty("project") Project project,
         @JsonProperty("distribution") Distribution distribution,
-        @JsonProperty("aqavit_results_link") String aqavit_results_link,
-        @JsonProperty("tck_affidavit_link") String tck_affidavit_link
+        @JsonProperty("aqavit_results_link") String aqavitResultsLink,
+        @JsonProperty("tck_affidavit_link") String tckAffidavitLink
     ) {
         this.os = os;
         this.architecture = architecture;
-        this.image_type = image_type;
-        this.c_lib = c_lib;
-        this.jvm_impl = jvm_impl;
+        this.imageType = imageType;
+        this.cLib = cLib;
+        this.jvmImpl = jvmImpl;
         _package = aPackage;
         this.installer = installer;
         this.timestamp = timestamp;
-        this.scm_ref = scm_ref;
-        this.openjdk_scm_ref = openjdk_scm_ref;
+        this.scmRef = scmRef;
+        this.openjdkScmRef = openjdkScmRef;
         this.project = project;
         this.distribution = distribution;
-        this.aqavit_results_link = aqavit_results_link;
-        this.tck_affidavit_link = tck_affidavit_link;
+        this.aqavitResultsLink = aqavitResultsLink;
+        this.tckAffidavitLink = tckAffidavitLink;
     }
 
+    @JsonProperty("os")
     public OperatingSystem getOs() {
         return os;
     }
 
+    @JsonProperty("architecture")
     public Architecture getArchitecture() {
         return architecture;
     }
 
-    public ImageType getImage_type() {
-        return image_type;
+    @JsonProperty("image_type")
+    public ImageType getImageType() {
+        return imageType;
     }
 
-    public CLib getC_lib() {
-        return c_lib;
+    @JsonProperty("c_lib")
+    public CLib getCLib() {
+        return cLib;
     }
 
-    public JvmImpl getJvm_impl() {
-        return jvm_impl;
+    @JsonProperty("jvm_impl")
+    public JvmImpl getJvmImpl() {
+        return jvmImpl;
     }
 
     @JsonProperty("package")
@@ -105,36 +124,44 @@ public class Binary {
         return _package;
     }
 
+    @JsonProperty("installer")
     public Installer getInstaller() {
         return installer;
     }
 
+    @JsonProperty("timestamp")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     public Date getTimestamp() {
         return timestamp;
     }
 
-    public String getScm_ref() {
-        return scm_ref;
+    @JsonProperty("scm_ref")
+    public String getScmRef() {
+        return scmRef;
     }
 
+    @JsonProperty("project")
     public Project getProject() {
         return project;
     }
 
+    @JsonProperty("distribution")
     public Distribution getDistribution() {
         return distribution;
     }
 
-    public String getAqavit_results_link() {
-        return aqavit_results_link;
+    @JsonProperty("aqavit_results_link")
+    public String getAqavitResultsLink() {
+        return aqavitResultsLink;
     }
 
-    public String getTck_affidavit_link() {
-        return tck_affidavit_link;
+    @JsonProperty("tck_affidavit_link")
+    public String getTckAffidavitLink() {
+        return tckAffidavitLink;
     }
 
-    public String getOpenjdk_scm_ref() {
-        return openjdk_scm_ref;
+    @JsonProperty("openjdk_scm_ref")
+    public String getOpenjdkScmRef() {
+        return openjdkScmRef;
     }
 }

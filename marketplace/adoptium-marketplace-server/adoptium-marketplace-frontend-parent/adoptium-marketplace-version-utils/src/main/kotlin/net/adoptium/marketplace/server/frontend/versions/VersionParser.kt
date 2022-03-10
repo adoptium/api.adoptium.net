@@ -1,7 +1,5 @@
 package net.adoptium.marketplace.server.frontend.versions
 
-/* ktlint-disable no-wildcard-imports */
-/* ktlint-enable no-wildcard-imports */
 import net.adoptium.marketplace.schema.VersionData
 import org.slf4j.LoggerFactory
 import java.util.*

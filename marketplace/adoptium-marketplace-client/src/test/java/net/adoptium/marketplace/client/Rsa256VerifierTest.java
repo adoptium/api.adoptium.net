@@ -48,7 +48,7 @@ public class Rsa256VerifierTest {
 
         // jdk8u302-b08 is the only release with a valid signature
         Assertions.assertEquals(1, releases.getReleases().size());
-        Assertions.assertEquals("jdk8u302-b08", releases.getReleases().get(0).getRelease_name());
+        Assertions.assertEquals("jdk8u302-b08", releases.getReleases().get(0).getReleaseName());
     }
 
     public MarketplaceClient getMarketplaceClient(String url) throws Exception {

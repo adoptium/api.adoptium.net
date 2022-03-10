@@ -7,7 +7,7 @@ import net.adoptium.marketplace.schema.ImageType
 import net.adoptium.marketplace.schema.JvmImpl
 import net.adoptium.marketplace.schema.OperatingSystem
 import net.adoptium.marketplace.schema.Project
-import net.adoptium.marketplace.server.frontend.models.DateTime
+import net.adoptium.marketplace.server.frontend.models.APIDateTime
 import java.util.function.Predicate
 
 class BinaryFilter : Predicate<Binary> {
@@ -18,16 +18,16 @@ class BinaryFilter : Predicate<Binary> {
     private val imageType: ImageType?
     private val jvmImpl: JvmImpl?
     private val project: Project
-    private val before: DateTime?
+    private val before: APIDateTime?
 
     constructor(
-        os: OperatingSystem? = null,
-        arch: Architecture? = null,
-        imageType: ImageType? = null,
-        jvmImpl: JvmImpl? = null,
-        project: Project? = null,
-        before: DateTime? = null,
-        cLib: CLib? = null,
+            os: OperatingSystem? = null,
+            arch: Architecture? = null,
+            imageType: ImageType? = null,
+            jvmImpl: JvmImpl? = null,
+            project: Project? = null,
+            before: APIDateTime? = null,
+            cLib: CLib? = null,
     ) {
         this.os = os
         this.arch = arch
@@ -41,10 +41,10 @@ class BinaryFilter : Predicate<Binary> {
     override fun test(binary: Binary): Boolean {
         return (os == null || binary.os == os) &&
             (arch == null || binary.architecture == arch) &&
-            (imageType == null || binary.image_type == imageType) &&
-            (jvmImpl == null || binary.jvm_impl == jvmImpl) &&
+            (imageType == null || binary.imageType == imageType) &&
+            (jvmImpl == null || binary.jvmImpl == jvmImpl) &&
             (binary.project == project) &&
             (before == null || binary.timestamp.toInstant().isBefore(before.dateTime.toInstant())) &&
-            (cLib == null || binary.c_lib == cLib)
+            (cLib == null || binary.cLib == cLib)
     }
 }

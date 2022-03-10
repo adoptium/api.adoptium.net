@@ -28,3 +28,7 @@ The following list highlights a small subset of consumers and their use-cases:
 - [Adoptium Website](https://adoptium.net/) - the API drives the release listings on the AdoptOpenJDK website allowing individuals to download the JDK distribution of their choice.
 - [Gradle](https://docs.gradle.org/) - the Gradle project defaults to use the API for its [toolchains](https://docs.gradle.org/current/userguide/toolchains.html#sec:provisioning) feature.
 - [Update Watcher for Adoptium & AdoptOpenJDK](https://github.com/tushev/aojdk-updatewatcher) - uses the API to automatically manage the JDK installations on an individual's machine.
+
+## Marketplace
+
+See [Marketplace](marketplace/README.md)

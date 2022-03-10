@@ -34,8 +34,8 @@ public class IndexFile {
 
     @JsonCreator
     public IndexFile(
-            @JsonProperty(value = "indexes") List<String> indexes,
-            @JsonProperty(value = "releases") List<String> releases) {
+        @JsonProperty(value = "indexes") List<String> indexes,
+        @JsonProperty(value = "releases") List<String> releases) {
         this.indexes = indexes;
         this.releases = releases;
     }

@@ -11,9 +11,9 @@ public class Package extends Asset {
             @JsonProperty("name") String name,
             @JsonProperty("link") String link,
             @JsonProperty("checksum") String checksum,
-            @JsonProperty("checksum_link") String checksum_link,
-            @JsonProperty(value = "signature_link", required = false) String signature_link,
-            @JsonProperty("metadata_link") String metadata_link) {
-        super(name, link, checksum, checksum_link, signature_link, metadata_link);
+            @JsonProperty("checksum_link") String checksumLink,
+            @JsonProperty("signature_link") String signatureLink,
+            @JsonProperty("metadata_link") String metadataLink) {
+        super(name, link, checksum, checksumLink, signatureLink, metadataLink);
     }
 }

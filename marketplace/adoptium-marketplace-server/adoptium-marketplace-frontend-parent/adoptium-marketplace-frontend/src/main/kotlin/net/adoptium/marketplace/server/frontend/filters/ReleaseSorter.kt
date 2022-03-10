@@ -35,9 +35,9 @@ class ReleaseSorter {
 
         private val TIME_COMPARATOR = compareBy { release: Release -> release.timestamp }
 
-        val RELEASE_COMPARATOR = compareBy<Release, VersionData>(VERSION_COMPARATOR) { it.version_data }
+        val RELEASE_COMPARATOR = compareBy<Release, VersionData>(VERSION_COMPARATOR) { it.versionData }
 
-        private val RELEASE_NAME_COMPARATOR = compareBy { release: Release -> release.release_name }
+        private val RELEASE_NAME_COMPARATOR = compareBy { release: Release -> release.releaseName }
 
         val VERSION_THEN_TIME_SORTER: Comparator<Release> =
             RELEASE_COMPARATOR

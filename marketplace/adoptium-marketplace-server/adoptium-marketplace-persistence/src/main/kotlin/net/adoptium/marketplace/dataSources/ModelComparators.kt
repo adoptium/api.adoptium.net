@@ -45,11 +45,11 @@ object ModelComparators {
 
     val BINARY = compareBy<Binary?> { it?.architecture }
         .thenBy { it?.distribution }
-        .thenBy { it?.c_lib }
+        .thenBy { it?.cLib }
         .thenBy { it?.os }
-        .thenBy { it?.image_type }
-        .thenBy { it?.jvm_impl }
-        .thenBy { it?.scm_ref }
+        .thenBy { it?.imageType }
+        .thenBy { it?.jvmImpl }
+        .thenBy { it?.scmRef }
         .thenBy { it?.timestamp }
         .thenBy { it?.project }
         .then { a, b -> ASSET.compare(a?.`package`, b?.`package`) }
@@ -58,17 +58,17 @@ object ModelComparators {
     val ASSET = compareBy<Asset?> { it?.link }
         .thenBy { it?.name }
         .thenBy { it?.checksum }
-        .thenBy { it?.checksum_link }
-        .thenBy { it?.metadata_link }
-        .thenBy { it?.signature_link }
+        .thenBy { it?.checksumLink }
+        .thenBy { it?.metadataLink }
+        .thenBy { it?.signatureLink }
 
-    val RELEASE = compareBy<Release?> { it?.release_link }
-        .thenBy { it?.release_name }
+    val RELEASE = compareBy<Release?> { it?.releaseLink }
+        .thenBy { it?.releaseName }
         .thenBy { it?.timestamp }
         .thenBy { it?.vendor }
         .then { a, b -> SOURCE.compare(a?.source, b?.source) }
         .then { a, b -> collectionComparator(BINARY).compare(a?.binaries, b?.binaries) }
-        .then { a, b -> VERSION_DATA.compare(a?.version_data, b?.version_data) }
+        .then { a, b -> VERSION_DATA.compare(a?.versionData, b?.versionData) }
 
     val RELEASE_LIST = compareBy<ReleaseList?> { it?.releases?.size }
         .then { a, b -> collectionComparator(RELEASE).compare(a?.releases, b?.releases) }
