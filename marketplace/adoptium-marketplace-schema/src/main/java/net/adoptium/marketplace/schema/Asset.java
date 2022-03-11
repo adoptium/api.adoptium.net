@@ -8,7 +8,7 @@ public class Asset {
 
     public static final String SHA_256_SUM_LINK_NAME = "sha256sum_link";
     public static final String SIGNATURE_LINK_NAME = "signature_link";
-    public static final String SHA256SUM_NAME = "checksum";
+    public static final String SHA256SUM_NAME = "sha265sum";
     @Schema(example = "OpenJDK8U-jre_x86-32_windows_hotspot_8u212b04.msi", required = true)
     private final String name;
 
@@ -52,6 +52,7 @@ public class Asset {
         return link;
     }
 
+    @JsonProperty(SHA256SUM_NAME)
     public String getSha256sum() {
         return sha256sum;
     }
