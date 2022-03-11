@@ -13,16 +13,14 @@
           "package": {
             "name": "OpenJDK11U-jre_x86-32_windows_hotspot_11.0.12_7.zip",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.12%2B7.1/OpenJDK11U-jre_x86-32_windows_hotspot_11.0.12_7.zip",
-            "checksum": "793be6b00b3512d8d2453cdcd9620cf79155969c6dfd9f0d2fc3270c4f1c39a4",
-            "checksum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.12%2B7.1/OpenJDK11U-jre_x86-32_windows_hotspot_11.0.12_7.zip.sha256.txt",
-            "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.12%2B7.1/OpenJDK11U-jre_x86-32_windows_hotspot_11.0.12_7.zip.json"
+            "sha256sum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.12%2B7.1/OpenJDK11U-jre_x86-32_windows_hotspot_11.0.12_7.zip.sha256.txt",
+            "sha256sum": "793be6b00b3512d8d2453cdcd9620cf79155969c6dfd9f0d2fc3270c4f1c39a4"
           },
           "installer": {
             "name": "OpenJDK11U-jre_x86-32_windows_hotspot_11.0.12_7.msi",
             "link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.12%2B7.1/OpenJDK11U-jre_x86-32_windows_hotspot_11.0.12_7.msi",
-            "checksum": "b3a7aa87495de6aa32d61c9e96d60759e91a25d55d6a6dfbda7318054172692d",
-            "checksum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.12%2B7.1/OpenJDK11U-jre_x86-32_windows_hotspot_11.0.12_7.msi.sha256.txt",
-            "metadata_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.12%2B7.1/OpenJDK11U-jre_x86-32_windows_hotspot_11.0.12_7.msi.json"
+            "sha256sum_link": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.12%2B7.1/OpenJDK11U-jre_x86-32_windows_hotspot_11.0.12_7.msi.sha256.txt",
+            "sha256sum": "b3a7aa87495de6aa32d61c9e96d60759e91a25d55d6a6dfbda7318054172692d"
           },
           "timestamp": "2021-09-22T08:07:37Z",
           "scm_ref": "jdk-11.0.12+7_adopt",

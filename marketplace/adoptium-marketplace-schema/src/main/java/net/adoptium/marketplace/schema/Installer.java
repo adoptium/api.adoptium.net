@@ -9,11 +9,10 @@ public class Installer extends Asset {
     public Installer(
         @JsonProperty("name") String name,
         @JsonProperty("link") String link,
-        @JsonProperty("checksum") String checksum,
-        @JsonProperty(Asset.CHECKSUM_LINK_NAME) String checksumLink,
-        @JsonProperty(Asset.SIGNATURE_LINK_NAME) String signatureLink,
-        @JsonProperty(Asset.METADATA_LINK_NAME) String metadataLink
+        @JsonProperty(Asset.SHA256SUM_NAME) String sha256sum,
+        @JsonProperty(Asset.SHA_256_SUM_LINK_NAME) String sha256sumLink,
+        @JsonProperty(Asset.SIGNATURE_LINK_NAME) String signatureLink
     ) {
-        super(name, link, checksum, checksumLink, signatureLink, metadataLink);
+        super(name, link, sha256sum, sha256sumLink, signatureLink);
     }
 }

@@ -57,9 +57,8 @@ object ModelComparators {
 
     val ASSET = compareBy<Asset?> { it?.link }
         .thenBy { it?.name }
-        .thenBy { it?.checksum }
-        .thenBy { it?.checksumLink }
-        .thenBy { it?.metadataLink }
+        .thenBy { it?.sha256sum }
+        .thenBy { it?.sha256sumLink }
         .thenBy { it?.signatureLink }
 
     val RELEASE = compareBy<Release?> { it?.releaseLink }

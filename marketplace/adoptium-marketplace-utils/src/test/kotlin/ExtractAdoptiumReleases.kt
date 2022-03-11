@@ -28,7 +28,7 @@ import java.util.*
 
 class ExtractAdoptiumReleases {
 
-    @Disabled("For manual execution")
+    //@Disabled("For manual execution")
     @Test
     fun buildRepo() {
         val httpClient = HttpClient()
@@ -143,8 +143,7 @@ class ExtractAdoptiumReleases {
                     binary.`package`.link,
                     binary.`package`.checksum,
                     binary.`package`.checksum_link,
-                    binary.`package`.signature_link,
-                    binary.`package`.metadata_link
+                    binary.`package`.signature_link
                 ),
                 if (binary.installer != null) {
                     Installer(
@@ -152,8 +151,7 @@ class ExtractAdoptiumReleases {
                         binary.installer!!.link,
                         binary.installer!!.checksum,
                         binary.installer!!.checksum_link,
-                        binary.installer!!.signature_link,
-                        binary.installer!!.metadata_link
+                        binary.installer!!.signature_link
                     )
                 } else null,
                 Date.from(binary.updated_at.dateTime.toInstant()),
