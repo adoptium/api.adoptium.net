@@ -45,8 +45,7 @@ public class Rsa256SignatureVerify implements SignatureVerifier {
             Signature signatureSHA256 = Signature.getInstance("SHA256withRSA");
             signatureSHA256.initVerify(publicKey);
             signatureSHA256.update(data.getBytes());
-            signatureSHA256.verify(signature);
-            return true;
+            return signatureSHA256.verify(signature);
         } catch (GeneralSecurityException ex) {
             LOGGER.error("Signature verification failed.", ex);
             return false;

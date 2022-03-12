@@ -37,6 +37,7 @@
         <module>adoptium-marketplace-persistence</module>
         <module>adoptium-marketplace-updater-parent</module>
         <module>adoptium-marketplace-frontend-parent</module>
+        <module>adoptium-repo</module>
     </modules>
 
     <dependencyManagement>
@@ -119,22 +120,22 @@
             <dependency>
                 <groupId>net.adoptium.api</groupId>
                 <artifactId>adoptium-api-v3-models</artifactId>
-                <version>${project.version}</version>
+                <version>3.0.1-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>net.adoptium.api</groupId>
                 <artifactId>adoptium-api-v3-persistence</artifactId>
-                <version>${project.version}</version>
+                <version>3.0.1-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>net.adoptium.api</groupId>
                 <artifactId>adoptium-api-v3-telemetry</artifactId>
-                <version>${project.version}</version>
+                <version>3.0.1-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>net.adoptium.api</groupId>
                 <artifactId>adoptium-api-v3-updater</artifactId>
-                <version>${project.version}</version>
+                <version>3.0.1-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>
@@ -338,6 +339,11 @@
                 <groupId>net.adoptium.marketplace.server.frontend</groupId>
                 <artifactId>adoptium-marketplace-frontend-assets</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.adoptium.api</groupId>
+                <artifactId>adoptium-api-v3-adoptium-specific-models</artifactId>
+                <version>3.0.1-SNAPSHOT</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

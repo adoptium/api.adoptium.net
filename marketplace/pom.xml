@@ -46,11 +46,6 @@
                 <version>2.13.1</version>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.microprofile.openapi</groupId>
-                <artifactId>microprofile-openapi-api</artifactId>
-                <version>2.0</version>
-            </dependency>
-            <dependency>
                 <groupId>net.adoptium.marketplace</groupId>
                 <artifactId>adoptium-marketplace-schema</artifactId>
                 <version>${project.version}</version>
@@ -107,11 +102,6 @@
             <dependency>
                 <groupId>net.adoptium.marketplace</groupId>
                 <artifactId>adoptium-marketplace-client</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>net.adoptium.marketplace</groupId>
-                <artifactId>adoptium-marketplace-schema</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
