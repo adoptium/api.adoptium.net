@@ -25,23 +25,25 @@ object SignAssets {
             val keystore = getKeyStore()
             keystore.getKey(getKeyAlias(), getKeyPassword()) as PrivateKey
         } catch (e: Exception) {
+            System.out.println("Failed to load key");
+            e.printStackTrace();
             null
         }
     }
 
     private fun getKeystorePassword(): CharArray {
-        return System.getProperty("KEYSTORE_PASSWORD").toCharArray()
+        return System.getenv("KEYSTORE_PASSWORD").toCharArray()
     }
 
     private fun getKeyPassword(): CharArray {
-        return System.getProperty("SIGNING_KEY_PASSWORD").toCharArray()
+        return System.getenv("SIGNING_KEY_PASSWORD").toCharArray()
     }
 
     private fun getKeyAlias(): String {
-        return System.getProperty("SIGNING_KEY_ALIAS", "adopt-signing-key")
+        return System.getenv("SIGNING_KEY_ALIAS") ?: "adopt-signing-key"
     }
 
-    private fun getKeystoreLocation() = System.getProperty("KEY_STORE", "keystore.jks")
+    private fun getKeystoreLocation() = System.getenv("KEY_STORE") ?: "keystore.jks"
 
     fun getKeyStore(): KeyStore {
         val keystoreFile = Path.of(getKeystoreLocation()).toFile()
