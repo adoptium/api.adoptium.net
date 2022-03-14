@@ -13,7 +13,8 @@ public class Release {
 
     public static final String RELEASE_LINK_NAME = "release_link";
     public static final String RELEASE_NAME_NAME = "release_name";
-    public static final String VERSION_DATA_NAME = "version_data";
+    public static final String VERSION_DATA_NAME = "openjdk_version_data";
+    public static final String VENDOR_PUBLIC_KEY_LINK_NAME = "vendor_public_key_link";
     @Schema(
         example = "https://github.com/AdoptOpenJDK/openjdk8-openj9-releases/ga/tag/jdk8u162-b12_openj9-0.8.0",
         name = RELEASE_LINK_NAME
@@ -40,9 +41,17 @@ public class Release {
     private final Vendor vendor;
 
     @Schema(required = true, name = VERSION_DATA_NAME)
-    private final VersionData versionData;
+    private final OpenjdkVersionData openjdkVersionData;
 
     private final SourcePackage source;
+
+    @Schema(
+        required = false,
+        name = VENDOR_PUBLIC_KEY_LINK_NAME,
+        description = "Link to the public key which has been used to sign binaries within this release IF signature links are provided",
+        example = "https://adoptium.net/publickey.asc"
+    )
+    private final String vendorPublicKeyLink;
 
     @JsonCreator
     public Release(
@@ -51,16 +60,18 @@ public class Release {
         @JsonProperty("timestamp") Date timestamp,
         @JsonProperty("binaries") List<Binary> binaries,
         @JsonProperty("vendor") Vendor vendor,
-        @JsonProperty(VERSION_DATA_NAME) VersionData versionData,
-        @JsonProperty("source") SourcePackage source
+        @JsonProperty(VERSION_DATA_NAME) OpenjdkVersionData openjdkVersionData,
+        @JsonProperty("source") SourcePackage source,
+        @JsonProperty(VENDOR_PUBLIC_KEY_LINK_NAME) String vendorPublicKeyLink
     ) {
         this.releaseLink = releaseLink;
         this.releaseName = releaseName;
         this.timestamp = timestamp;
         this.binaries = binaries;
         this.vendor = vendor;
-        this.versionData = versionData;
+        this.openjdkVersionData = openjdkVersionData;
         this.source = source;
+        this.vendorPublicKeyLink = vendorPublicKeyLink;
     }
 
     public Release(
@@ -73,8 +84,9 @@ public class Release {
             release.timestamp,
             binaries,
             release.vendor,
-            release.versionData,
-            release.source
+            release.openjdkVersionData,
+            release.source,
+            release.vendorPublicKeyLink
         );
     }
 
@@ -102,11 +114,16 @@ public class Release {
     }
 
     @JsonProperty(VERSION_DATA_NAME)
-    public VersionData getVersionData() {
-        return versionData;
+    public OpenjdkVersionData getVersionData() {
+        return openjdkVersionData;
     }
 
     public SourcePackage getSource() {
         return source;
+    }
+
+    @JsonProperty(VENDOR_PUBLIC_KEY_LINK_NAME)
+    public String getVendorPublicKeyLink() {
+        return vendorPublicKeyLink;
     }
 }

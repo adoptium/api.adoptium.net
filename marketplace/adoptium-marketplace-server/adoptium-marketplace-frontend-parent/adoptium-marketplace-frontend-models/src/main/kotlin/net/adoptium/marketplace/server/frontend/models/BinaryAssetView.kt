@@ -2,7 +2,7 @@ package net.adoptium.marketplace.server.frontend.models
 
 import net.adoptium.marketplace.schema.Binary
 import net.adoptium.marketplace.schema.Vendor
-import net.adoptium.marketplace.schema.VersionData
+import net.adoptium.marketplace.schema.OpenjdkVersionData
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 
 @Schema
@@ -17,14 +17,14 @@ class BinaryAssetView {
     @Schema(implementation = Vendor::class)
     val vendor: Vendor
 
-    @Schema(implementation = VersionData::class)
-    val version: VersionData
+    @Schema(implementation = OpenjdkVersionData::class)
+    val version: OpenjdkVersionData
 
     constructor(
         release_name: String,
         vendor: Vendor,
         binary: Binary,
-        version: VersionData
+        version: OpenjdkVersionData
     ) {
         this.release_name = release_name
         this.vendor = vendor

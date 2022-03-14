@@ -2,23 +2,8 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import net.adoptium.api.v3.JsonMapper
 import net.adoptium.api.v3.models.Release
 import net.adoptium.marketplace.client.MarketplaceMapper
-import net.adoptium.marketplace.schema.Architecture
-import net.adoptium.marketplace.schema.Binary
-import net.adoptium.marketplace.schema.CLib
-import net.adoptium.marketplace.schema.Distribution
-import net.adoptium.marketplace.schema.ImageType
-import net.adoptium.marketplace.schema.IndexFile
-import net.adoptium.marketplace.schema.Installer
-import net.adoptium.marketplace.schema.JvmImpl
-import net.adoptium.marketplace.schema.OperatingSystem
-import net.adoptium.marketplace.schema.Package
-import net.adoptium.marketplace.schema.Project
-import net.adoptium.marketplace.schema.ReleaseList
-import net.adoptium.marketplace.schema.SourcePackage
-import net.adoptium.marketplace.schema.Vendor
-import net.adoptium.marketplace.schema.VersionData
+import net.adoptium.marketplace.schema.*
 import org.eclipse.jetty.client.HttpClient
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.FileWriter
 import java.nio.file.Files
@@ -38,6 +23,7 @@ class ExtractAdoptiumReleases {
         val dir = Files.createTempDirectory("repo");
 
         val indexFile = IndexFile(
+            IndexFile.LATEST_VERSION,
             listOf(8, 11, 17)
                 .map { "$it/index.json" },
             emptyList()
@@ -67,6 +53,7 @@ class ExtractAdoptiumReleases {
                     .toList()
 
                 val indexFile = IndexFile(
+                    IndexFile.LATEST_VERSION,
                     emptyList(),
                     marketplaceReleases
                         .map { toFileName(it.releases.first()) }
@@ -99,13 +86,13 @@ class ExtractAdoptiumReleases {
         .plus(".json")
 
     private fun toMarketplaceRelease(release: Release, binaries: List<Binary>): net.adoptium.marketplace.schema.Release {
-        return net.adoptium.marketplace.schema.Release(
+        return Release(
             release.release_link,
             release.release_name,
             Date.from(release.timestamp.dateTime.toInstant()),
             binaries,
             Vendor.adoptium,
-            VersionData(
+            OpenjdkVersionData(
                 release.version_data.major,
                 release.version_data.minor,
                 release.version_data.security,
@@ -120,7 +107,8 @@ class ExtractAdoptiumReleases {
                     release.source!!.name,
                     release.source!!.link
                 )
-            } else null
+            } else null,
+            null
         )
     }
 
@@ -146,18 +134,18 @@ class ExtractAdoptiumReleases {
                     binary.`package`.signature_link
                 ),
                 if (binary.installer != null) {
-                    Installer(
+                    listOf(Installer(
                         binary.installer!!.name,
                         binary.installer!!.link,
                         binary.installer!!.checksum,
                         binary.installer!!.checksum_link,
-                        binary.installer!!.signature_link
-                    )
+                        binary.installer!!.signature_link,
+                        null
+                    ))
                 } else null,
                 Date.from(binary.updated_at.dateTime.toInstant()),
                 binary.scm_ref,
                 "unknown",
-                Project.valueOf(binary.project.name),
                 Distribution.temurin,
                 "https://adoptium.net/aqavit/${binary.`package`.name}/aqavit_affidavit.html",
                 "https://adoptium.net/tck_affidavit.html"

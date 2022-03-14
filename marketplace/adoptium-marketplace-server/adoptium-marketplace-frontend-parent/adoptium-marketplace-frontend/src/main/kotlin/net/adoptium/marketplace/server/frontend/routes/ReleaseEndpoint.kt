@@ -8,7 +8,6 @@ import net.adoptium.marketplace.schema.CLib
 import net.adoptium.marketplace.schema.ImageType
 import net.adoptium.marketplace.schema.JvmImpl
 import net.adoptium.marketplace.schema.OperatingSystem
-import net.adoptium.marketplace.schema.Project
 import net.adoptium.marketplace.schema.Release
 import net.adoptium.marketplace.schema.Vendor
 import net.adoptium.marketplace.server.frontend.filters.BinaryFilter
@@ -37,7 +36,6 @@ constructor(private val apiDataStore: APIDataStore) {
         arch: Architecture?,
         image_type: ImageType?,
         jvm_impl: JvmImpl?,
-        project: Project?,
         cLib: CLib?
     ): Sequence<Release> {
         val order = sortOrder ?: SortOrder.DESC
@@ -52,7 +50,7 @@ constructor(private val apiDataStore: APIDataStore) {
         }
 
         val releaseFilter = ReleaseFilter(vendor = vendor, versionRange = range, lts = lts)
-        val binaryFilter = BinaryFilter(os = os, arch = arch, imageType = image_type, jvmImpl = jvm_impl, project = project, cLib = cLib)
+        val binaryFilter = BinaryFilter(os = os, arch = arch, imageType = image_type, jvmImpl = jvm_impl, cLib = cLib)
 
         return getReleases(vendor, releaseFilter, binaryFilter, order, releaseSortMethod)
     }

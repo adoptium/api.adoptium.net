@@ -2,10 +2,11 @@ package net.adoptium.marketplace.dataSources
 
 import net.adoptium.marketplace.schema.Asset
 import net.adoptium.marketplace.schema.Binary
+import net.adoptium.marketplace.schema.Installer
+import net.adoptium.marketplace.schema.OpenjdkVersionData
 import net.adoptium.marketplace.schema.Release
 import net.adoptium.marketplace.schema.ReleaseList
 import net.adoptium.marketplace.schema.SourcePackage
-import net.adoptium.marketplace.schema.VersionData
 
 object ModelComparators {
 
@@ -31,7 +32,7 @@ object ModelComparators {
         return Comparator { a, b -> compareCollection(a, b, comparator) }
     }
 
-    val VERSION_DATA = compareBy<VersionData?> { it?.openjdk_version }
+    val VERSION_DATA = compareBy<OpenjdkVersionData?> { it?.openjdk_version }
         .thenBy { it?.build?.orElse(null) }
         .thenBy { it?.major }
         .thenBy { it?.minor?.orElse(null) }
@@ -51,9 +52,13 @@ object ModelComparators {
         .thenBy { it?.jvmImpl }
         .thenBy { it?.scmRef }
         .thenBy { it?.timestamp }
-        .thenBy { it?.project }
+        .thenBy { it?.aqavitResultsLink }
+        .thenBy { it?.openjdkScmRef }
+        .thenBy { it?.tckAffidavitLink }
         .then { a, b -> ASSET.compare(a?.`package`, b?.`package`) }
-        .then { a, b -> ASSET.compare(a?.installer, b?.installer) }
+        .then { a, b -> collectionComparator(INSTALLER).compare(a?.installer, b?.installer) }
+
+
 
     val ASSET = compareBy<Asset?> { it?.link }
         .thenBy { it?.name }
@@ -61,10 +66,14 @@ object ModelComparators {
         .thenBy { it?.sha256sumLink }
         .thenBy { it?.signatureLink }
 
+    val INSTALLER = compareBy<Installer?> { it?.installerType }
+        .then(ASSET)
+
     val RELEASE = compareBy<Release?> { it?.releaseLink }
         .thenBy { it?.releaseName }
         .thenBy { it?.timestamp }
         .thenBy { it?.vendor }
+        .thenBy { it?.vendorPublicKeyLink }
         .then { a, b -> SOURCE.compare(a?.source, b?.source) }
         .then { a, b -> collectionComparator(BINARY).compare(a?.binaries, b?.binaries) }
         .then { a, b -> VERSION_DATA.compare(a?.versionData, b?.versionData) }

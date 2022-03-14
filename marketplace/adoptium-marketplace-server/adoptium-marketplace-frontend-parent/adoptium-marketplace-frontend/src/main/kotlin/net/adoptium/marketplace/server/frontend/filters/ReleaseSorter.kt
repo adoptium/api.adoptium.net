@@ -2,7 +2,7 @@ package net.adoptium.marketplace.server.frontend.filters
 
 /* ktlint-enable no-wildcard-imports */
 import net.adoptium.marketplace.schema.Release
-import net.adoptium.marketplace.schema.VersionData
+import net.adoptium.marketplace.schema.OpenjdkVersionData
 import net.adoptium.marketplace.server.frontend.models.SortMethod
 import net.adoptium.marketplace.server.frontend.models.SortOrder
 
@@ -23,7 +23,7 @@ class ReleaseSorter {
         }
 
         // Cant use the default sort as we want to ignore optional
-        val VERSION_COMPARATOR = compareBy<VersionData> { it.major }
+        val VERSION_COMPARATOR = compareBy<OpenjdkVersionData> { it.major }
             .thenBy { it.minor.orElse(null) }
             .thenBy { it.security.orElse(null) }
             .thenBy { it.patch.orElse(null) }
@@ -35,7 +35,7 @@ class ReleaseSorter {
 
         private val TIME_COMPARATOR = compareBy { release: Release -> release.timestamp }
 
-        val RELEASE_COMPARATOR = compareBy<Release, VersionData>(VERSION_COMPARATOR) { it.versionData }
+        val RELEASE_COMPARATOR = compareBy<Release, OpenjdkVersionData>(VERSION_COMPARATOR) { it.versionData }
 
         private val RELEASE_NAME_COMPARATOR = compareBy { release: Release -> release.releaseName }
 

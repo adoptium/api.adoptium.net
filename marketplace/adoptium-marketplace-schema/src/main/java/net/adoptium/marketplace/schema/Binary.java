@@ -3,9 +3,11 @@ package net.adoptium.marketplace.schema;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 import java.util.Date;
+import java.util.List;
 
 @Schema(description = "Details of a binary that can be downloaded including either or both a package and platform specific installer")
 public class Binary {
@@ -22,7 +24,6 @@ public class Binary {
     public static final String ARCHITECTURE_NAME = "architecture";
     public static final String INSTALLER_NAME = "installer";
     public static final String TIMESTAMP_NAME = "timestamp";
-    public static final String PROJECT_NAME = "project";
     public static final String DISTRIBUTION_NAME = "distribution";
 
     @Schema(implementation = OperatingSystem.class, required = true)
@@ -55,10 +56,11 @@ public class Binary {
         required = false)
     private final Package _package;
 
-    @Schema(implementation = Installer.class,
+    @Schema(type = SchemaType.ARRAY,
         description = "Describes details of the installer archive associated with this binary",
+        implementation = Installer.class,
         required = false)
-    private final Installer installer;
+    private final List<Installer> installer;
 
     @Schema(required = true, description = "Timestamp of the creation time of the binary")
     private final Date timestamp;
@@ -66,7 +68,7 @@ public class Binary {
     @Schema(description = "Scm reference to the commit inside the vendors own repository upon which this build is based",
         name = SCM_REF_NAME,
         example = "dd28d6d2cde2b931caf94ac2422a2ad082ea62f0beee3bf7057317c53093de93",
-        required = true)
+        required = false)
     private final String scmRef;
 
     @Schema(description = "Scm reference to the commit inside the OpenJDK project, upon which this build is based",
@@ -74,9 +76,6 @@ public class Binary {
         example = "dd28d6d2cde2b931caf94ac2422a2ad082ea62f0beee3bf7057317c53093de93",
         required = true)
     private final String openjdkScmRef;
-
-    @Schema(implementation = Project.class, required = true)
-    private final Project project;
 
     @Schema(implementation = Distribution.class, required = true)
     private final Distribution distribution;
@@ -101,11 +100,10 @@ public class Binary {
         @JsonProperty(C_LIB_NAME) CLib cLib,
         @JsonProperty(JVM_IMPL_NAME) JvmImpl jvmImpl,
         @JsonProperty(PACKAGE_NAME) Package aPackage,
-        @JsonProperty(INSTALLER_NAME) Installer installer,
+        @JsonProperty(INSTALLER_NAME) List<Installer> installer,
         @JsonProperty(TIMESTAMP_NAME) Date timestamp,
         @JsonProperty(SCM_REF_NAME) String scmRef,
         @JsonProperty(OPENJDK_SCM_REF_NAME) String openjdkScmRef,
-        @JsonProperty(PROJECT_NAME) Project project,
         @JsonProperty(DISTRIBUTION_NAME) Distribution distribution,
         @JsonProperty(AQAVIT_RESULTS_LINK_NAME) String aqavitResultsLink,
         @JsonProperty(TCK_AFFIDAVIT_LINK_NAME) String tckAffidavitLink
@@ -120,7 +118,6 @@ public class Binary {
         this.timestamp = timestamp;
         this.scmRef = scmRef;
         this.openjdkScmRef = openjdkScmRef;
-        this.project = project;
         this.distribution = distribution;
         this.aqavitResultsLink = aqavitResultsLink;
         this.tckAffidavitLink = tckAffidavitLink;
@@ -157,7 +154,7 @@ public class Binary {
     }
 
     @JsonProperty(INSTALLER_NAME)
-    public Installer getInstaller() {
+    public List<Installer> getInstaller() {
         return installer;
     }
 
@@ -170,11 +167,6 @@ public class Binary {
     @JsonProperty(SCM_REF_NAME)
     public String getScmRef() {
         return scmRef;
-    }
-
-    @JsonProperty(PROJECT_NAME)
-    public Project getProject() {
-        return project;
     }
 
     @JsonProperty(DISTRIBUTION_NAME)

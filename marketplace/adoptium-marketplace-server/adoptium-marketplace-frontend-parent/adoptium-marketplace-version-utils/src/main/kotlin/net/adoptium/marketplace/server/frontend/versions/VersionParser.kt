@@ -1,6 +1,6 @@
 package net.adoptium.marketplace.server.frontend.versions
 
-import net.adoptium.marketplace.schema.VersionData
+import net.adoptium.marketplace.schema.OpenjdkVersionData
 import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.regex.Matcher
@@ -55,7 +55,7 @@ object VersionParser {
         }
     }
 
-    fun parse(publishName: String?, sanityCheck: Boolean = true, exactMatch: Boolean = false): VersionData {
+    fun parse(publishName: String?, sanityCheck: Boolean = true, exactMatch: Boolean = false): OpenjdkVersionData {
         if (publishName == null) {
             throw FailedToParse("null name")
         }
@@ -79,7 +79,7 @@ object VersionParser {
         throw FailedToParse("Failed to parse $publishName")
     }
 
-    private fun parseWithJavaClass(publishName: String, sanityCheck: Boolean): VersionData? {
+    private fun parseWithJavaClass(publishName: String, sanityCheck: Boolean): OpenjdkVersionData? {
 
         try {
             val parsedVersion = Runtime.Version.parse(publishName.removePrefix("jdk"))
@@ -91,7 +91,7 @@ object VersionParser {
             val opt = parsedVersion.optional().orElse(null)
             val pre = parsedVersion.pre().orElse(null)
 
-            val parsed = VersionData(major, minor, security, patch, pre, build, null, opt)
+            val parsed = OpenjdkVersionData(major, minor, security, patch, pre, build, null, opt)
             if (!sanityCheck || sanityCheck(parsed)) {
                 return parsed
             }
@@ -117,7 +117,7 @@ object VersionParser {
         }
     }
 
-    private fun matchAltPre223(versionString: String, sanityCheck: Boolean): VersionData? {
+    private fun matchAltPre223(versionString: String, sanityCheck: Boolean): OpenjdkVersionData? {
         // 1.8.0_202-internal-201903130451-b08
         val matched = PRE_223_REGEX.matcher(versionString)
 
@@ -143,7 +143,7 @@ object VersionParser {
 
             val version = matched.group("version")
 
-            val parsed = VersionData(major, minor, security, null, null, build, version, opt)
+            val parsed = OpenjdkVersionData(major, minor, security, null, null, build, version, opt)
             if (!sanityCheck || sanityCheck(parsed)) {
                 return parsed
             }
@@ -152,7 +152,7 @@ object VersionParser {
         return null
     }
 
-    private fun sanityCheck(parsed: VersionData): Boolean {
+    private fun sanityCheck(parsed: OpenjdkVersionData): Boolean {
 
         if (!(parsed.major in 101 downTo 7)) {
             // Sanity check as javas parser can match a single number
@@ -169,7 +169,7 @@ object VersionParser {
         return false
     }
 
-    private fun matchVersion(versionString: String, sanityCheck: Boolean, exactMatch: Boolean): VersionData? {
+    private fun matchVersion(versionString: String, sanityCheck: Boolean, exactMatch: Boolean): OpenjdkVersionData? {
         (if (exactMatch) EXACT_REGEXES else REGEXES)
             .forEach { regex ->
                 val matched = regex.matcher(versionString)
@@ -195,7 +195,7 @@ object VersionParser {
                     }
                     val version = matched.group("version")
 
-                    val parsed = VersionData(major, minor, security, patch, pre, build, version, opt)
+                    val parsed = OpenjdkVersionData(major, minor, security, patch, pre, build, version, opt)
                     if (!sanityCheck || sanityCheck(parsed)) {
                         return parsed
                     }

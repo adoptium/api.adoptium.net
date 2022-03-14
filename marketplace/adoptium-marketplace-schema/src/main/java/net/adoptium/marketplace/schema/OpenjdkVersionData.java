@@ -9,7 +9,7 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
 
-public class VersionData implements Comparable<VersionData> {
+public class OpenjdkVersionData implements Comparable<OpenjdkVersionData> {
 
     private final Integer major;
     private final Optional<Integer> minor;
@@ -33,7 +33,7 @@ public class VersionData implements Comparable<VersionData> {
       }
      */
     @JsonCreator
-    public VersionData(
+    public OpenjdkVersionData(
         @JsonProperty("major") Integer major,
         @JsonProperty("minor") Integer minor,
         @JsonProperty("security") Integer security,
@@ -85,17 +85,17 @@ public class VersionData implements Comparable<VersionData> {
     }
 
     @Override
-    public int compareTo(VersionData versionData) {
-        if (!Objects.equals(this.major, versionData.major)) {
-            return Integer.compare(this.major, versionData.major);
+    public int compareTo(OpenjdkVersionData openjdkVersionData) {
+        if (!Objects.equals(this.major, openjdkVersionData.major)) {
+            return Integer.compare(this.major, openjdkVersionData.major);
         } else if (compare(minor, minor, Integer::compare) != 0) {
             return compare(minor, minor, Integer::compare);
         } else if (compare(security, security, Integer::compare) != 0) {
             return compare(security, security, Integer::compare);
         } else if (compare(patch, patch, Integer::compare) != 0) {
             return compare(patch, patch, Integer::compare);
-        } else if (compare(pre, pre, VersionData::comparePre) != 0) {
-            return compare(pre, pre, VersionData::comparePre);
+        } else if (compare(pre, pre, OpenjdkVersionData::comparePre) != 0) {
+            return compare(pre, pre, OpenjdkVersionData::comparePre);
         } else if (compare(build, build, Integer::compare) != 0) {
             return compare(build, build, Integer::compare);
         } else if (compare(optional, optional, String::compareTo) != 0) {

@@ -1,6 +1,6 @@
 package net.adoptium.api.marketplace.parser.maven
 
-import net.adoptium.marketplace.schema.VersionData
+import net.adoptium.marketplace.schema.OpenjdkVersionData
 import net.adoptium.marketplace.server.frontend.versions.VersionParser
 import java.util.*
 
@@ -33,11 +33,11 @@ import java.util.*
  * @author [Brett Porter](mailto:brett@apache.org)
  */
 class VersionRange private constructor(
-    val recommendedVersion: VersionData?,
-    val restrictions: List<Restriction>?
+        val recommendedVersion: OpenjdkVersionData?,
+        val restrictions: List<Restriction>?
 ) {
 
-    fun containsVersion(version: VersionData?): Boolean {
+    fun containsVersion(version: OpenjdkVersionData?): Boolean {
         for (restriction in restrictions!!) {
             if (restriction.containsVersion(version)) {
                 return true
@@ -95,9 +95,9 @@ class VersionRange private constructor(
             }
             val restrictions: MutableList<Restriction> = ArrayList()
             var process: String = spec
-            var version: VersionData? = null
-            var upperBound: VersionData? = null
-            var lowerBound: VersionData? = null
+            var version: OpenjdkVersionData? = null
+            var upperBound: OpenjdkVersionData? = null
+            var lowerBound: OpenjdkVersionData? = null
             while (process.startsWith("[") || process.startsWith("(")) {
                 val index1 = process.indexOf(')')
                 val index2 = process.indexOf(']')
@@ -152,7 +152,7 @@ class VersionRange private constructor(
                 if (!lowerBoundInclusive || !upperBoundInclusive) {
                     throw InvalidVersionSpecificationException("Single version must be surrounded by []: $spec")
                 }
-                val version: VersionData = VersionParser.parse(process, false, true)
+                val version: OpenjdkVersionData = VersionParser.parse(process, false, true)
                 restriction = Restriction(version, lowerBoundInclusive, version, upperBoundInclusive)
             } else {
                 val lowerBound = process.substring(0, index).trim { it <= ' ' }
@@ -160,11 +160,11 @@ class VersionRange private constructor(
                 if (lowerBound == upperBound) {
                     throw InvalidVersionSpecificationException("Range cannot have identical boundaries: $spec")
                 }
-                var lowerVersion: VersionData? = null
+                var lowerVersion: OpenjdkVersionData? = null
                 if (lowerBound.isNotEmpty()) {
                     lowerVersion = VersionParser.parse(lowerBound, false, true)
                 }
-                var upperVersion: VersionData? = null
+                var upperVersion: OpenjdkVersionData? = null
                 if (upperBound.isNotEmpty()) {
                     upperVersion = VersionParser.parse(upperBound, false, true)
                 }

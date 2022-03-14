@@ -5,7 +5,6 @@ import net.adoptium.marketplace.schema.CLib
 import net.adoptium.marketplace.schema.ImageType
 import net.adoptium.marketplace.schema.JvmImpl
 import net.adoptium.marketplace.schema.OperatingSystem
-import net.adoptium.marketplace.schema.Project
 import net.adoptium.marketplace.schema.Vendor
 import net.adoptium.marketplace.server.frontend.OpenApiDocs
 import net.adoptium.marketplace.server.frontend.Pagination
@@ -71,10 +70,6 @@ constructor(
         @QueryParam("jvm_impl")
         jvm_impl: JvmImpl?,
 
-        @Parameter(name = "project", description = "Project", required = false)
-        @QueryParam("project")
-        project: Project?,
-
         @Parameter(name = "lts", description = "Include only LTS releases", required = false)
         @QueryParam("lts")
         lts: Boolean?,
@@ -105,7 +100,6 @@ constructor(
             arch,
             image_type,
             jvm_impl,
-            project,
             cLib
         )
             .map { it.releaseName }
@@ -149,10 +143,6 @@ constructor(
         @QueryParam("jvm_impl")
         jvm_impl: JvmImpl?,
 
-        @Parameter(name = "project", description = "Project", required = false)
-        @QueryParam("project")
-        project: Project?,
-
         @Parameter(name = "lts", description = "Include only LTS releases", required = false)
         @QueryParam("lts")
         lts: Boolean?,
@@ -184,7 +174,6 @@ constructor(
             arch,
             image_type,
             jvm_impl,
-            project,
             cLib
         )
             .map { it.versionData }

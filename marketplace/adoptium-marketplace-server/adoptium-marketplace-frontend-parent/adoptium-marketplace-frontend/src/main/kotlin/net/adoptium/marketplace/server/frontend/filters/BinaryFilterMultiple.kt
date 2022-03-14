@@ -1,12 +1,6 @@
 package net.adoptium.marketplace.server.frontend.filters
 
-import net.adoptium.marketplace.schema.Architecture
-import net.adoptium.marketplace.schema.Binary
-import net.adoptium.marketplace.schema.CLib
-import net.adoptium.marketplace.schema.ImageType
-import net.adoptium.marketplace.schema.JvmImpl
-import net.adoptium.marketplace.schema.OperatingSystem
-import net.adoptium.marketplace.schema.Project
+import net.adoptium.marketplace.schema.*
 import net.adoptium.marketplace.server.frontend.models.APIDateTime
 import java.util.function.Predicate
 
@@ -17,7 +11,6 @@ class BinaryFilterMultiple : Predicate<Binary> {
     private val arch: List<Architecture>?
     private val imageType: List<ImageType>?
     private val jvmImpl: List<JvmImpl>?
-    private val project: List<Project>?
     private val before: APIDateTime?
 
     constructor(
@@ -25,7 +18,6 @@ class BinaryFilterMultiple : Predicate<Binary> {
             arch: List<Architecture>? = null,
             imageType: List<ImageType>? = null,
             jvmImpl: List<JvmImpl>? = null,
-            project: List<Project>? = null,
             before: APIDateTime? = null,
             cLib: List<CLib>? = null,
     ) {
@@ -33,7 +25,6 @@ class BinaryFilterMultiple : Predicate<Binary> {
         this.arch = arch
         this.imageType = imageType
         this.jvmImpl = jvmImpl
-        this.project = project
         this.before = before
         this.cLib = cLib
     }
@@ -43,7 +34,6 @@ class BinaryFilterMultiple : Predicate<Binary> {
             test(binary.architecture, arch) &&
             test(binary.imageType, imageType) &&
             test(binary.jvmImpl, jvmImpl) &&
-            test(binary.project, project) &&
             (before == null || binary.timestamp.toInstant().isBefore(before.dateTime.toInstant())) &&
             test(binary.cLib, cLib)
     }

@@ -1,4 +1,5 @@
 {
+    "schema_version": "1.0.0",
     "releases": [
         "1.8.0_312-b07.json",
         "1.8.0_302-b08.json"

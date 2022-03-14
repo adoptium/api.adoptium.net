@@ -1,6 +1,6 @@
 package net.adoptium.api.marketplace.parser.maven
 
-import net.adoptium.marketplace.schema.VersionData
+import net.adoptium.marketplace.schema.OpenjdkVersionData
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -31,12 +31,12 @@ import net.adoptium.marketplace.schema.VersionData
  * @author [Brett Porter](mailto:brett@apache.org)
  */
 class Restriction(
-    val lowerBound: VersionData?,
-    val isLowerBoundInclusive: Boolean,
-    val upperBound: VersionData?,
-    val isUpperBoundInclusive: Boolean
+        val lowerBound: OpenjdkVersionData?,
+        val isLowerBoundInclusive: Boolean,
+        val upperBound: OpenjdkVersionData?,
+        val isUpperBoundInclusive: Boolean
 ) {
-    fun containsVersion(version: VersionData?): Boolean {
+    fun containsVersion(version: OpenjdkVersionData?): Boolean {
         if (lowerBound != null) {
             val comparison = lowerBound.compareTo(version!!)
             if (comparison == 0 && !isLowerBoundInclusive) {

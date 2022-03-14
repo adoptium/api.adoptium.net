@@ -9,7 +9,7 @@ import net.adoptium.marketplace.schema.Release
 import net.adoptium.marketplace.schema.ReleaseList
 import net.adoptium.marketplace.schema.ReleaseUpdateInfo
 import net.adoptium.marketplace.schema.Vendor
-import net.adoptium.marketplace.schema.VersionData
+import net.adoptium.marketplace.schema.OpenjdkVersionData
 import org.bson.BsonBoolean
 import org.bson.BsonDateTime
 import org.bson.BsonDocument
@@ -166,29 +166,29 @@ open class MongoVendorPersistence constructor(
         )
     }
 
-    private fun versionMatcher(versionData: VersionData): List<BsonElement> {
+    private fun versionMatcher(openjdkVersionData: OpenjdkVersionData): List<BsonElement> {
         var matcher = listOf(
-            BsonElement("version_data.openjdk_version", BsonString(versionData.openjdk_version)),
-            BsonElement("version_data.major", BsonInt32(versionData.major))
+            BsonElement("version_data.openjdk_version", BsonString(openjdkVersionData.openjdk_version)),
+            BsonElement("version_data.major", BsonInt32(openjdkVersionData.major))
         )
 
-        if (versionData.build.isPresent) {
-            matcher = matcher.plus(BsonElement("version_data.build", BsonInt32(versionData.build.get())))
+        if (openjdkVersionData.build.isPresent) {
+            matcher = matcher.plus(BsonElement("version_data.build", BsonInt32(openjdkVersionData.build.get())))
         }
-        if (versionData.minor.isPresent) {
-            matcher = matcher.plus(BsonElement("version_data.minor", BsonInt32(versionData.minor.get())))
+        if (openjdkVersionData.minor.isPresent) {
+            matcher = matcher.plus(BsonElement("version_data.minor", BsonInt32(openjdkVersionData.minor.get())))
         }
-        if (versionData.pre.isPresent) {
-            matcher = matcher.plus(BsonElement("version_data.pre", BsonString(versionData.pre.get())))
+        if (openjdkVersionData.pre.isPresent) {
+            matcher = matcher.plus(BsonElement("version_data.pre", BsonString(openjdkVersionData.pre.get())))
         }
-        if (versionData.optional.isPresent) {
-            matcher = matcher.plus(BsonElement("version_data.optional", BsonString(versionData.optional.get())))
+        if (openjdkVersionData.optional.isPresent) {
+            matcher = matcher.plus(BsonElement("version_data.optional", BsonString(openjdkVersionData.optional.get())))
         }
-        if (versionData.patch.isPresent) {
-            matcher = matcher.plus(BsonElement("version_data.patch", BsonInt32(versionData.patch.get())))
+        if (openjdkVersionData.patch.isPresent) {
+            matcher = matcher.plus(BsonElement("version_data.patch", BsonInt32(openjdkVersionData.patch.get())))
         }
-        if (versionData.security.isPresent) {
-            matcher = matcher.plus(BsonElement("version_data.security", BsonInt32(versionData.security.get())))
+        if (openjdkVersionData.security.isPresent) {
+            matcher = matcher.plus(BsonElement("version_data.security", BsonInt32(openjdkVersionData.security.get())))
         }
 
         return matcher

@@ -35,14 +35,13 @@ public class RepoGenerator {
                             Date.from(Instant.now()),
                             "scmref",
                             "openjkd_scmref",
-                            Project.jdk,
                             Distribution.temurin,
                             "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz.aqavit.zip",
                             "https://adoptium.net/tck_affidavit.html"
                         )
                     ),
                     Vendor.adoptium,
-                    new VersionData(
+                    new OpenjdkVersionData(
                         8,
                         1,
                         2,
@@ -55,7 +54,8 @@ public class RepoGenerator {
                     new SourcePackage(
                         "OpenJDK17U-sources_17.0.1_12.tar.gz",
                         "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-sources_17.0.1_12.tar.gz"
-                    )
+                    ),
+                    null
                 )
             )
         );
