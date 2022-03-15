@@ -340,7 +340,7 @@ constructor(
                 binaryPermutation(it.first.vendor, it.second.architecture, it.second.imageType, it.second.os)
             }
             .values
-            .map { BinaryAssetView(it.first.releaseName, it.first.vendor, it.second, it.first.versionData) }
+            .map { BinaryAssetView(it.first.releaseName, it.first.vendor, it.second, it.first.openjdkVersionData) }
             .toList()
     }
 
@@ -394,7 +394,7 @@ constructor(
                 binaryPermutation(it.first.vendor, it.second.architecture, it.second.imageType, it.second.os)
             }
             .values
-            .map { BinaryAssetView(it.first.releaseName, it.first.vendor, it.second, it.first.versionData) }
+            .map { BinaryAssetView(it.first.releaseName, it.first.vendor, it.second, it.first.openjdkVersionData) }
             .toList()
     }
 }

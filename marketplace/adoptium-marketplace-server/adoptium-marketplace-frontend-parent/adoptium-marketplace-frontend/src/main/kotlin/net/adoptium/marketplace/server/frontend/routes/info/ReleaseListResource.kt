@@ -176,7 +176,7 @@ constructor(
             jvm_impl,
             cLib
         )
-            .map { it.versionData }
+            .map { it.openjdkVersionData }
             .distinct()
 
         val pagedReleases = getPage(pageSize, page, releases, maxPageSizeNum = Pagination.largerPageSizeNum)

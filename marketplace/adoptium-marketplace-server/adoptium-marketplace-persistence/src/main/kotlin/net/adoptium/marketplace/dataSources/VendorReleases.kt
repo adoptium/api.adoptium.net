@@ -69,7 +69,7 @@ class VendorReleases constructor(
 
         val availableReleases = releases
             .releases
-            .map { it.versionData.major }
+            .map { it.openjdkVersionData.major }
             .distinct()
             .sorted()
             .toList()
@@ -78,8 +78,8 @@ class VendorReleases constructor(
         val availableLtsReleases: Array<Int> = releases
             .releases
             .asSequence()
-            .filter { it.versionData.isLts }
-            .map { it.versionData.major }
+            .filter { it.openjdkVersionData.isLts }
+            .map { it.openjdkVersionData.major }
             .distinct()
             .sorted()
             .toList()
@@ -89,7 +89,7 @@ class VendorReleases constructor(
 
         val mostRecentFeatureVersion: Int = releases
             .releases
-            .map { it.versionData.major }
+            .map { it.openjdkVersionData.major }
             .distinct()
             .sorted()
             .lastOrNull() ?: 0

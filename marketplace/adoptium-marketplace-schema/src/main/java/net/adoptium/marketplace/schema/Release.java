@@ -56,11 +56,11 @@ public class Release {
     @JsonCreator
     public Release(
         @JsonProperty(RELEASE_LINK_NAME) String releaseLink,
-        @JsonProperty(RELEASE_NAME_NAME) String releaseName,
-        @JsonProperty("timestamp") Date timestamp,
+        @JsonProperty(value = RELEASE_NAME_NAME, required = true) String releaseName,
+        @JsonProperty(value = "timestamp", required = true) Date timestamp,
         @JsonProperty("binaries") List<Binary> binaries,
-        @JsonProperty("vendor") Vendor vendor,
-        @JsonProperty(VERSION_DATA_NAME) OpenjdkVersionData openjdkVersionData,
+        @JsonProperty(value = "vendor", required = true) Vendor vendor,
+        @JsonProperty(value = VERSION_DATA_NAME, required = true) OpenjdkVersionData openjdkVersionData,
         @JsonProperty("source") SourcePackage source,
         @JsonProperty(VENDOR_PUBLIC_KEY_LINK_NAME) String vendorPublicKeyLink
     ) {
@@ -114,7 +114,7 @@ public class Release {
     }
 
     @JsonProperty(VERSION_DATA_NAME)
-    public OpenjdkVersionData getVersionData() {
+    public OpenjdkVersionData getOpenjdkVersionData() {
         return openjdkVersionData;
     }
 

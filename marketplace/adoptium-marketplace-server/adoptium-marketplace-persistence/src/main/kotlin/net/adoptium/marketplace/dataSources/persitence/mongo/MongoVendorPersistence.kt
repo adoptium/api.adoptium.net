@@ -90,7 +90,7 @@ open class MongoVendorPersistence constructor(
                     it.vendor == currentRelease.vendor &&
                         it.releaseName == currentRelease.releaseName &&
                         it.releaseLink == currentRelease.releaseLink &&
-                        it.versionData.compareTo(currentRelease.versionData) == 0
+                        it.openjdkVersionData.compareTo(currentRelease.openjdkVersionData) == 0
                 }
             }
             .map { toRemove ->
@@ -162,7 +162,7 @@ open class MongoVendorPersistence constructor(
                 BsonElement("release_link", BsonString(release.releaseLink)),
                 BsonElement("vendor", BsonString(release.vendor.name))
             )
-                .plus(versionMatcher(release.versionData))
+                .plus(versionMatcher(release.openjdkVersionData))
         )
     }
 

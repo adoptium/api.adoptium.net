@@ -76,7 +76,7 @@ object ModelComparators {
         .thenBy { it?.vendorPublicKeyLink }
         .then { a, b -> SOURCE.compare(a?.source, b?.source) }
         .then { a, b -> collectionComparator(BINARY).compare(a?.binaries, b?.binaries) }
-        .then { a, b -> VERSION_DATA.compare(a?.versionData, b?.versionData) }
+        .then { a, b -> VERSION_DATA.compare(a?.openjdkVersionData, b?.openjdkVersionData) }
 
     val RELEASE_LIST = compareBy<ReleaseList?> { it?.releases?.size }
         .then { a, b -> collectionComparator(RELEASE).compare(a?.releases, b?.releases) }

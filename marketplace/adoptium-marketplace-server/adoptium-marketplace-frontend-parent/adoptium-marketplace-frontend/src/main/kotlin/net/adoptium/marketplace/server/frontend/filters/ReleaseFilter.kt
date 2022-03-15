@@ -12,10 +12,10 @@ class ReleaseFilter(
     private val lts: Boolean? = null,
 ) : Predicate<Release> {
     override fun test(release: Release): Boolean {
-        return (featureVersion == null || release.versionData.major == featureVersion) &&
+        return (featureVersion == null || release.openjdkVersionData.major == featureVersion) &&
             (releaseName == null || release.releaseName == releaseName) &&
             (vendor == null || vendor == release.vendor) &&
-            (versionRange == null || versionRange.test(release.versionData)) &&
-            (lts == null || release.versionData.isLts == lts)
+            (versionRange == null || versionRange.test(release.openjdkVersionData)) &&
+            (lts == null || release.openjdkVersionData.isLts == lts)
     }
 }
