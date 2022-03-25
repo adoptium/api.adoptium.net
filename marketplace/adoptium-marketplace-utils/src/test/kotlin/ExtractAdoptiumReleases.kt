@@ -120,6 +120,13 @@ class ExtractAdoptiumReleases {
             } else {
                 OperatingSystem.valueOf(binary.os.name)
             }
+
+            val upstreamScmRef = binary.scm_ref?.replace("_adopt", "")
+
+            val aqaLink = binary.`package`.link
+                .replace(".zip", ".tap.zip")
+                .replace(".tar.gz", ".tap.zip")
+
             Binary(
                 arch,
                 Architecture.valueOf(binary.architecture.name),
@@ -141,13 +148,14 @@ class ExtractAdoptiumReleases {
                         binary.installer!!.checksum_link,
                         binary.installer!!.signature_link,
                         null
-                    ))
+                    )
+                    )
                 } else null,
                 Date.from(binary.updated_at.dateTime.toInstant()),
                 binary.scm_ref,
-                "unknown",
+                upstreamScmRef,
                 Distribution.temurin,
-                "https://adoptium.net/aqavit/${binary.`package`.name}/aqavit_affidavit.html",
+                aqaLink,
                 "https://adoptium.net/tck_affidavit.html"
             )
         }
