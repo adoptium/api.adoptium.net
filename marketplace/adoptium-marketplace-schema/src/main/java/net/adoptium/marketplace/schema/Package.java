@@ -8,13 +8,12 @@ public class Package extends Asset {
 
     @JsonCreator
     public Package(
-            @JsonProperty("name") String name,
-            @JsonProperty("link") String link,
-            @JsonProperty("size") Long size,
-            @JsonProperty("checksum") String checksum,
-            @JsonProperty("checksum_link") String checksum_link,
-            @JsonProperty(value = "signature_link", required = false) String signature_link,
-            @JsonProperty("metadata_link") String metadata_link) {
-        super(name, link, size, checksum, checksum_link, signature_link, metadata_link);
+        @JsonProperty("name") String name,
+        @JsonProperty("link") String link,
+        @JsonProperty(Asset.SHA256SUM_NAME) String sha256sum,
+        @JsonProperty(Asset.SHA_256_SUM_LINK_NAME) String sha256sumLink,
+        @JsonProperty(Asset.SIGNATURE_LINK_NAME) String signatureLink
+    ) {
+        super(name, link, sha256sum, sha256sumLink, signatureLink);
     }
 }

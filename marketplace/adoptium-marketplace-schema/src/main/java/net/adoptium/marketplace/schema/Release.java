@@ -1,6 +1,7 @@
 package net.adoptium.marketplace.schema;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -10,71 +11,98 @@ import java.util.List;
 
 public class Release {
 
-    @Schema(example = "https://github.com/AdoptOpenJDK/openjdk8-openj9-releases/ga/tag/jdk8u162-b12_openj9-0.8.0")
-    private final String release_link;
+    public static final String RELEASE_LINK_NAME = "release_link";
+    public static final String RELEASE_NAME_NAME = "release_name";
+    public static final String VERSION_DATA_NAME = "openjdk_version_data";
+    public static final String VENDOR_PUBLIC_KEY_LINK_NAME = "vendor_public_key_link";
+    @Schema(
+        example = "https://github.com/AdoptOpenJDK/openjdk8-openj9-releases/ga/tag/jdk8u162-b12_openj9-0.8.0",
+        name = RELEASE_LINK_NAME
+    )
+    private final String releaseLink;
 
-    @Schema(example = "jdk8u162-b12_openj9-0.8.0")
-    private final String release_name;
+    @Schema(
+        example = "jdk8u162-b12_openj9-0.8.0",
+        required = true,
+        name = RELEASE_NAME_NAME
+    )
+    private final String releaseName;
 
+    @Schema(
+        description = "Timestamp of the release creation",
+        required = true
+    )
     private final Date timestamp;
 
-    private final Date updated_at;
-
-    @Schema(type = SchemaType.ARRAY, implementation = Binary.class)
+    @Schema(type = SchemaType.ARRAY, implementation = Binary.class, required = true)
     private final List<Binary> binaries;
 
+    @Schema(required = true)
     private final Vendor vendor;
 
-    private final VersionData version_data;
+    @Schema(required = true, name = VERSION_DATA_NAME)
+    private final OpenjdkVersionData openjdkVersionData;
 
     private final SourcePackage source;
 
-    @Schema(required = true, example = "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz.aqavit.zip")
-    private final String aqavit_results_link;
-    
-    @Schema(example = "https://adoptium.net/tck_affidavit.html")
-    private final String tck_affidavit_link;
+    @Schema(
+        required = false,
+        name = VENDOR_PUBLIC_KEY_LINK_NAME,
+        description = "Link to the public key which has been used to sign binaries within this release IF signature links are provided",
+        example = "https://adoptium.net/publickey.asc"
+    )
+    private final String vendorPublicKeyLink;
 
     @JsonCreator
     public Release(
-            @JsonProperty("release_link") String release_link,
-            @JsonProperty("release_name") String release_name,
-            @JsonProperty("timestamp") Date timestamp,
-            @JsonProperty("updated_at") Date updated_at,
-            @JsonProperty("binaries") List<Binary> binaries,
-            @JsonProperty("vendor") Vendor vendor,
-            @JsonProperty("version_data") VersionData version_data,
-            @JsonProperty("source") SourcePackage source,
-            @JsonProperty("aqavit_results_link") String aqavit_results_link,
-            @JsonProperty("tck_affidavit_link") String tck_affidavit_link
+        @JsonProperty(RELEASE_LINK_NAME) String releaseLink,
+        @JsonProperty(value = RELEASE_NAME_NAME, required = true) String releaseName,
+        @JsonProperty(value = "timestamp", required = true) Date timestamp,
+        @JsonProperty("binaries") List<Binary> binaries,
+        @JsonProperty(value = "vendor", required = true) Vendor vendor,
+        @JsonProperty(value = VERSION_DATA_NAME, required = true) OpenjdkVersionData openjdkVersionData,
+        @JsonProperty("source") SourcePackage source,
+        @JsonProperty(VENDOR_PUBLIC_KEY_LINK_NAME) String vendorPublicKeyLink
     ) {
-        this.release_link = release_link;
-        this.release_name = release_name;
+        this.releaseLink = releaseLink;
+        this.releaseName = releaseName;
         this.timestamp = timestamp;
-        this.updated_at = updated_at;
         this.binaries = binaries;
         this.vendor = vendor;
-        this.version_data = version_data;
+        this.openjdkVersionData = openjdkVersionData;
         this.source = source;
-        this.aqavit_results_link = aqavit_results_link;
-        this.tck_affidavit_link = tck_affidavit_link;
+        this.vendorPublicKeyLink = vendorPublicKeyLink;
     }
 
-
-    public String getRelease_link() {
-        return release_link;
+    public Release(
+        Release release,
+        List<Binary> binaries
+    ) {
+        this(
+            release.releaseLink,
+            release.releaseName,
+            release.timestamp,
+            binaries,
+            release.vendor,
+            release.openjdkVersionData,
+            release.source,
+            release.vendorPublicKeyLink
+        );
     }
 
-    public String getRelease_name() {
-        return release_name;
+    @JsonProperty(RELEASE_LINK_NAME)
+    public String getReleaseLink() {
+        return releaseLink;
     }
 
+    @JsonProperty(RELEASE_NAME_NAME)
+    public String getReleaseName() {
+        return releaseName;
+    }
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     public Date getTimestamp() {
         return timestamp;
-    }
-
-    public Date getUpdated_at() {
-        return updated_at;
     }
 
     public List<Binary> getBinaries() {
@@ -85,19 +113,17 @@ public class Release {
         return vendor;
     }
 
-    public VersionData getVersion_data() {
-        return version_data;
+    @JsonProperty(VERSION_DATA_NAME)
+    public OpenjdkVersionData getOpenjdkVersionData() {
+        return openjdkVersionData;
     }
 
     public SourcePackage getSource() {
         return source;
     }
 
-    public String getAqavit_results_link() {
-        return aqavit_results_link;
-    }
-
-    public String getTck_affidavit_link() {
-        return tck_affidavit_link;
+    @JsonProperty(VENDOR_PUBLIC_KEY_LINK_NAME)
+    public String getVendorPublicKeyLink() {
+        return vendorPublicKeyLink;
     }
 }

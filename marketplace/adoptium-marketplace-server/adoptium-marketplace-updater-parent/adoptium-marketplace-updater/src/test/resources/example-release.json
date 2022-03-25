@@ -1,0 +1,37 @@
+{
+  "id" : "MDc6UmVsZWFzZTIyNjk4Njc3",
+  "isPrerelease" : true,
+  "name" : "jdk8u-2020-01-09-03-36",
+  "publishedAt" : "2020-01-09T03:38:37Z",
+  "releaseAssets" : {
+    "nodes" : [
+      {
+        "downloadCount" : 5,
+        "downloadUrl" : "https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u-2020-01-09-03-36/OpenJDK8U-jre_x86-32_windows_openj9_2020-01-09-03-36.zip.json",
+        "name" : "OpenJDK8U-jre_x86-32_windows_openj9_2020-01-09-03-36.zip.json",
+        "size" : 582,
+        "updatedAt" : "2020-01-09T03:44:15Z"
+      },
+      {
+        "downloadCount" : 4,
+        "downloadUrl" : "https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u-2020-01-09-03-36/OpenJDK8U-jre_x86-32_windows_openj9_2020-01-09-03-36.zip.sha256.txt",
+        "name" : "OpenJDK8U-jre_x86-32_windows_openj9_2020-01-09-03-36.zip.sha256.txt",
+        "size" : 123,
+        "updatedAt" : "2020-01-09T03:44:16Z"
+      },
+      {
+        "downloadCount" : 4,
+        "downloadUrl" : "https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u-2020-01-09-03-36/OpenJDK8U-jre_x86-32_windows_openj9_2020-01-09-03-36.zip",
+        "name" : "OpenJDK8U-jre_x86-32_windows_openj9_2020-01-09-03-36.zip",
+        "size" : 123,
+        "updatedAt" : "2020-01-09T03:44:16Z"
+      }
+    ],
+    "pageInfo" : {
+      "hasNextPage" : false
+    }
+  },
+  "resourcePath" : "/AdoptOpenJDK/openjdk8-binaries/releases/tag/jdk8u-2020-01-09-03-36",
+  "updatedAt" : "2020-01-09T03:38:37Z",
+  "url" : "https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/tag/jdk8u-2020-01-09-03-36"
+}

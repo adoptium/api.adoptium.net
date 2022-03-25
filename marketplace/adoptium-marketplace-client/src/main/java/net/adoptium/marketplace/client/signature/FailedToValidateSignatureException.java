@@ -1,0 +1,4 @@
+package net.adoptium.marketplace.client.signature;
+
+public class FailedToValidateSignatureException extends Exception {
+}
