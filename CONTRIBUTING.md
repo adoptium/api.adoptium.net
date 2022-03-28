@@ -26,7 +26,7 @@ For more details related to deployment of the API, see [the deployment section](
 
 ### Pre-Requisites
 
-[Java 17](https://adoptium.net/releases.html?variant=openjdk17) is a requirement to build the project.
+[Java 11](https://adoptium.net/releases.html?variant=openjdk11) is a requirement to build the project.
 
 ### Optional Set-up
 
@@ -133,7 +133,7 @@ For Adoptium, this API deploys to Microsoft Azure.
 
 The `production` branch is synchronized with `main` (via a pull request that applies all outstanding commits from `main` to `production`) to perform a release of the latest API changes to the Production environment.  
 
-A build and deploy then happens as governed by the [Build Docker](./.github/workflows/build-docker.yml) and [Publish](./.github/workflows/publish.yml) files.
+A build and deploy then happens as governed by the [Build Docker](./github/workflows/build-docker.yml) and [Publish](./github/workflows/publish.yml) files.
 
 ### AdoptOpenJDK
 
@@ -141,7 +141,7 @@ For AdoptOpenJDK, this API deploys to Red Hat OpenShift and is front ended by [C
 
 The `production` branch is synchronized with `main` (via a pull request that applies all outstanding commits from `main` to `production`) to perform a release of the latest API changes to the Production OpenShift environment.  
 
-A build then happens in OpenShift as governed by the [Source To Image (s2i) Assembly file](./.s2i/bin/assemble) file.
+A build then happens in OpenShift as governed by the [Source To Image (s2i) Assembly file](./s2i/bin/assemble) file.
 
 ## Code Architecture and Code
 
@@ -164,7 +164,7 @@ In this section we list some common tasks and where to start.
 
 ### I want support a new version string
 
-If you need to add/edit/remove a supported version string then you need to update the [VersionParser](./adoptium-models-parent/adoptium-api-v3-models/src/main/kotlin/net/adoptium/api/v3/parser/VersionParser.kt) and its corresponding [VersionParserTest](./adoptium-models-parent/adoptium-api-v3-models/src/test/kotlin/api/VersionParserTest.kt).
+If you need to add/edit/remove a supported version string then you need to update the [VersionParser](adoptium-api-v3-models/src/main/kotlin/net/adoptium/api/v3/parser/VersionParser.kt) and its corresponding [VersionParserTest](adoptium-api-v3-models/src/test/kotlin/net/adoptium/api/VersionParserTest.kt).
 
 ### I want to add a new variant such as OpenJDK's project amber
 

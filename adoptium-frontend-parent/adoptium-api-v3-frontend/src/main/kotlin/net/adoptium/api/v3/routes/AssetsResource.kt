@@ -383,24 +383,12 @@ constructor(
 
         @Parameter(name = "vendor", description = OpenApiDocs.VENDOR, required = false)
         @QueryParam("vendor")
-        vendor: Vendor?,
+        vendor: Vendor?
 
-        @Parameter(name = "os", description = "Operating System", required = false)
-        @QueryParam("os")
-        os: OperatingSystem?,
-
-        @Parameter(name = "architecture", description = "Architecture", required = false)
-        @QueryParam("architecture")
-        arch: Architecture?,
-
-        @Parameter(name = "image_type", description = "Image Type", required = false)
-        @QueryParam("image_type")
-        image_type: ImageType?,
-
-        ): List<BinaryAssetView> {
+    ): List<BinaryAssetView> {
         val binaryVendor = vendor ?: Vendor.getDefault()
         val releaseFilter = ReleaseFilter(ReleaseType.ga, featureVersion = version, vendor = binaryVendor, jvm_impl = jvm_impl)
-        val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, null, null)
+        val binaryFilter = BinaryFilter(null, null, null, jvm_impl, null, null)
         val releases = apiDataStore
             .getAdoptRepos()
             .getFilteredReleases(version, releaseFilter, binaryFilter, SortOrder.ASC, SortMethod.DEFAULT)
