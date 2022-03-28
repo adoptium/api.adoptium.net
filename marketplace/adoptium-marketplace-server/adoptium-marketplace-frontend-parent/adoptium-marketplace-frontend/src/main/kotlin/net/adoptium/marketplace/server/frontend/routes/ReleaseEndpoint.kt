@@ -1,6 +1,6 @@
 package net.adoptium.marketplace.server.frontend.routes
 
-import net.adoptium.api.marketplace.parser.maven.InvalidVersionSpecificationException
+import net.adoptium.api.marketplace.parser.maven.VersionRange
 import net.adoptium.marketplace.dataSources.APIDataStore
 import net.adoptium.marketplace.schema.Architecture
 import net.adoptium.marketplace.schema.Binary
@@ -43,7 +43,7 @@ constructor(private val apiDataStore: APIDataStore) {
 
         val range = try {
             VersionRangeFilter(version)
-        } catch (e: InvalidVersionSpecificationException) {
+        } catch (e: VersionRange.InvalidVersionRange) {
             throw BadRequestException("Invalid version range", e)
         } catch (e: FailedToParse) {
             throw BadRequestException("Invalid version string", e)

@@ -2,178 +2,114 @@ package net.adoptium.api.marketplace.parser.maven
 
 import net.adoptium.marketplace.schema.OpenjdkVersionData
 import net.adoptium.marketplace.server.frontend.versions.VersionParser
-import java.util.*
-
-/*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-*
-*  http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
-
-/*
- * Based on work from the org.apache.maven:maven-artifact project
- */
+import java.util.function.Predicate
+import java.util.regex.Pattern
 
 /**
- * Construct a version range from a specification.
- *
- * @author [Brett Porter](mailto:brett@apache.org)
+ * Does not support multiple groups i.e (,1.1),(1.1,)
  */
-class VersionRange private constructor(
-        val recommendedVersion: OpenjdkVersionData?,
-        val restrictions: List<Restriction>?
-) {
-
-    fun containsVersion(version: OpenjdkVersionData?): Boolean {
-        for (restriction in restrictions!!) {
-            if (restriction.containsVersion(version)) {
-                return true
-            }
-        }
-        return false
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) {
-            return true
-        }
-        if (other !is VersionRange) {
-            return false
-        }
-        return (recommendedVersion == other.recommendedVersion && restrictions == other.restrictions)
-    }
-
-    override fun hashCode(): Int {
-        var hash = 7
-        hash = 31 * hash + (recommendedVersion?.hashCode() ?: 0)
-        hash = 31 * hash + (restrictions?.hashCode() ?: 0)
-        return hash
-    }
+class VersionRange {
 
     companion object {
-        private val CACHE_SPEC = Collections.synchronizedMap(WeakHashMap<String, VersionRange>())
+        private val MIN_VERSION = OpenjdkVersionData(
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            null,
+            null
+        )
 
-        /**
-         *
-         *
-         * Create a version range from a string representation
-         *
-         * Some spec examples are:
-         *
-         *  * `1.0` Version 1.0
-         *  * `[1.0,2.0)` Versions 1.0 (included) to 2.0 (not included)
-         *  * `[1.0,2.0]` Versions 1.0 to 2.0 (both included)
-         *  * `[1.5,)` Versions 1.5 and higher
-         *  * `(,1.0],[1.2,)` Versions up to 1.0 (included) and 1.2 or higher
-         *
-         *
-         * @param spec string representation of a version or version range
-         * @return a new [VersionRange] object that represents the spec
-         * @throws InvalidVersionSpecificationException
-         */
-        @Throws(InvalidVersionSpecificationException::class)
-        fun createFromVersionSpec(spec: String?): VersionRange? {
-            if (spec == null) {
-                return null
-            }
-            var cached = CACHE_SPEC[spec]
-            if (cached != null) {
-                return cached
-            }
-            val restrictions: MutableList<Restriction> = ArrayList()
-            var process: String = spec
-            var version: OpenjdkVersionData? = null
-            var upperBound: OpenjdkVersionData? = null
-            var lowerBound: OpenjdkVersionData? = null
-            while (process.startsWith("[") || process.startsWith("(")) {
-                val index1 = process.indexOf(')')
-                val index2 = process.indexOf(']')
-                var index = index2
-                if (index2 < 0 || index1 < index2) {
-                    if (index1 >= 0) {
-                        index = index1
+        private val MAX_VERSION = OpenjdkVersionData(
+            Int.MAX_VALUE,
+            Int.MAX_VALUE,
+            Int.MAX_VALUE,
+            Int.MAX_VALUE,
+            null,
+            null,
+            null,
+            null
+        )
+
+        private const val OPEN_TOKEN = """(?<open>[\(\[])?"""
+        private const val CLOSE_TOKEN = """(?<close>[\)\]])?"""
+        private const val SEPARATOR = """(?<separator>,)?"""
+        private fun versionMatcher(i: Int) = """(?<version${i}>[^,\]\)]*)?"""
+        private val VERSION_RANGE = Pattern.compile("^${OPEN_TOKEN}${versionMatcher(0)}${SEPARATOR}${versionMatcher(1)}${CLOSE_TOKEN}$")
+
+        @Throws(InvalidVersionRange::class)
+        fun parse(rangeMatcher: String): Predicate<OpenjdkVersionData> {
+
+            try {
+                if (!rangeMatcher.startsWith("[") && !rangeMatcher.startsWith("(")) {
+                    val version = VersionParser.parse(rangeMatcher, sanityCheck = false, exactMatch = true)
+                    return Predicate<OpenjdkVersionData> { version == it }
+                }
+
+                val match = VERSION_RANGE.matcher(rangeMatcher)
+
+                if (match.matches()) {
+                    val openPred = getOpenRestriction(match.group("open"))
+                    val closePred = getCloseRestriction(match.group("close"))
+
+                    val v0 = match.group("version0")
+                    val v1 = match.group("version1")
+
+                    if (
+                        (v0 == null || v0.isEmpty()) &&
+                        (v1 == null || v1.isEmpty())) {
+                        throw InvalidVersionRange(rangeMatcher)
+                    }
+
+                    if ((openPred == EXACT || closePred == EXACT) && closePred != openPred) {
+                        throw InvalidVersionRange(rangeMatcher)
+                    }
+
+                    val v0OpenjdkVersion = parseOpenjdkVersionData(v0, MIN_VERSION)
+
+                    val v1OpenjdkVersion = if (match.group("separator") == null) {
+                        v0OpenjdkVersion
+                    } else {
+                        parseOpenjdkVersionData(v1, MAX_VERSION)
+                    }
+
+                    return Predicate<OpenjdkVersionData> {
+                        openPred.test(it, v0OpenjdkVersion) && closePred.test(it, v1OpenjdkVersion)
                     }
                 }
-                if (index < 0) {
-                    throw InvalidVersionSpecificationException("Unbounded range: $spec")
-                }
-                val restriction = parseRestriction(process.substring(0, index + 1))
-                if (lowerBound == null) {
-                    lowerBound = restriction.lowerBound
-                }
-                if (upperBound != null) {
-                    if (restriction.lowerBound == null || restriction.lowerBound < upperBound) {
-                        throw InvalidVersionSpecificationException("Ranges overlap: $spec")
-                    }
-                }
-                restrictions.add(restriction)
-                upperBound = restriction.upperBound
-                process = process.substring(index + 1).trim { it <= ' ' }
-                if (process.isNotEmpty() && process.startsWith(",")) {
-                    process = process.substring(1).trim { it <= ' ' }
-                }
+            } catch (_: Exception) {
             }
-            if (process.isNotEmpty()) {
-                if (restrictions.size > 0) {
-                    throw InvalidVersionSpecificationException(
-                        "Only fully-qualified sets allowed in multiple set scenario: $spec"
-                    )
-                } else {
-                    version = VersionParser.parse(process, false, true)
-                    restrictions.add(Restriction.EVERYTHING)
-                }
-            }
-            cached = VersionRange(version, restrictions)
-            CACHE_SPEC[spec] = cached
-            return cached
+            throw InvalidVersionRange(rangeMatcher)
         }
 
-        @Throws(InvalidVersionSpecificationException::class)
-        private fun parseRestriction(spec: String): Restriction {
-            val lowerBoundInclusive = spec.startsWith("[")
-            val upperBoundInclusive = spec.endsWith("]")
-            val process = spec.substring(1, spec.length - 1).trim { it <= ' ' }
-            val restriction: Restriction
-            val index = process.indexOf(',')
-            if (index < 0) {
-                if (!lowerBoundInclusive || !upperBoundInclusive) {
-                    throw InvalidVersionSpecificationException("Single version must be surrounded by []: $spec")
-                }
-                val version: OpenjdkVersionData = VersionParser.parse(process, false, true)
-                restriction = Restriction(version, lowerBoundInclusive, version, upperBoundInclusive)
-            } else {
-                val lowerBound = process.substring(0, index).trim { it <= ' ' }
-                val upperBound = process.substring(index + 1).trim { it <= ' ' }
-                if (lowerBound == upperBound) {
-                    throw InvalidVersionSpecificationException("Range cannot have identical boundaries: $spec")
-                }
-                var lowerVersion: OpenjdkVersionData? = null
-                if (lowerBound.isNotEmpty()) {
-                    lowerVersion = VersionParser.parse(lowerBound, false, true)
-                }
-                var upperVersion: OpenjdkVersionData? = null
-                if (upperBound.isNotEmpty()) {
-                    upperVersion = VersionParser.parse(upperBound, false, true)
-                }
-                if (upperVersion != null && lowerVersion != null && upperVersion < lowerVersion) {
-                    throw InvalidVersionSpecificationException("Range defies version ordering: $spec")
-                }
-                restriction = Restriction(lowerVersion, lowerBoundInclusive, upperVersion, upperBoundInclusive)
+        private fun parseOpenjdkVersionData(version: String, default: OpenjdkVersionData) = if (version.isNotEmpty()) {
+            VersionParser.parse(version, sanityCheck = false, exactMatch = true)
+        } else {
+            default
+        }
+
+        @Throws(RuntimeException::class)
+        private fun getOpenRestriction(group: String?): OpenRestriction<OpenjdkVersionData> {
+            return when (group) {
+                null -> EXACT
+                "[" -> GTE
+                "(" -> GT
+                else -> throw RuntimeException("Unknown token $group")
             }
-            return restriction
+        }
+
+        @Throws(RuntimeException::class)
+        private fun getCloseRestriction(group: String?): CloseRestriction<OpenjdkVersionData> {
+            return when (group) {
+                null -> EXACT
+                "]" -> LTE
+                ")" -> LT
+                else -> throw RuntimeException("Unknown token $group")
+            }
         }
     }
+
+    class InvalidVersionRange(rangeMatcher: String) : Exception("Failed to form matcher for $rangeMatcher")
 }

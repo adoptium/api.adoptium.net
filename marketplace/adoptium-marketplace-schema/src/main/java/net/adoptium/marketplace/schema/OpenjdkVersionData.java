@@ -84,22 +84,36 @@ public class OpenjdkVersionData implements Comparable<OpenjdkVersionData> {
         return openjdk_version;
     }
 
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        OpenjdkVersionData that = (OpenjdkVersionData) o;
+        return Objects.equals(major, that.major) && Objects.equals(minor, that.minor) && Objects.equals(security, that.security) && Objects.equals(patch, that.patch) && Objects.equals(build, that.build) && Objects.equals(pre, that.pre) && Objects.equals(optional, that.optional) && Objects.equals(openjdk_version, that.openjdk_version);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(major, minor, security, patch, build, pre, optional, openjdk_version);
+    }
+
     @Override
     public int compareTo(OpenjdkVersionData openjdkVersionData) {
         if (!Objects.equals(this.major, openjdkVersionData.major)) {
             return Integer.compare(this.major, openjdkVersionData.major);
-        } else if (compare(minor, minor, Integer::compare) != 0) {
-            return compare(minor, minor, Integer::compare);
-        } else if (compare(security, security, Integer::compare) != 0) {
-            return compare(security, security, Integer::compare);
-        } else if (compare(patch, patch, Integer::compare) != 0) {
-            return compare(patch, patch, Integer::compare);
-        } else if (compare(pre, pre, OpenjdkVersionData::comparePre) != 0) {
-            return compare(pre, pre, OpenjdkVersionData::comparePre);
-        } else if (compare(build, build, Integer::compare) != 0) {
-            return compare(build, build, Integer::compare);
-        } else if (compare(optional, optional, String::compareTo) != 0) {
-            return compare(optional, optional, String::compareTo);
+        } else if (compare(minor, openjdkVersionData.minor, Integer::compare) != 0) {
+            return compare(minor, openjdkVersionData.minor, Integer::compare);
+        } else if (compare(security, openjdkVersionData.security, Integer::compare) != 0) {
+            return compare(security, openjdkVersionData.security, Integer::compare);
+        } else if (compare(patch, openjdkVersionData.patch, Integer::compare) != 0) {
+            return compare(patch, openjdkVersionData.patch, Integer::compare);
+        } else if (compare(pre, openjdkVersionData.pre, OpenjdkVersionData::comparePre) != 0) {
+            return compare(pre, openjdkVersionData.pre, OpenjdkVersionData::comparePre);
+        } else if (compare(build, openjdkVersionData.build, Integer::compare) != 0) {
+            return compare(build, openjdkVersionData.build, Integer::compare);
+        } else if (compare(optional, openjdkVersionData.optional, String::compareTo) != 0) {
+            return compare(optional, openjdkVersionData.optional, String::compareTo);
         }
 
         return 0;

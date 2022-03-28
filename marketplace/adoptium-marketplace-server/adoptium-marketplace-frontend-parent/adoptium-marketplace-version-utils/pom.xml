@@ -16,6 +16,11 @@
             <groupId>net.adoptium.marketplace</groupId>
             <artifactId>adoptium-marketplace-schema</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

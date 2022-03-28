@@ -2,7 +2,6 @@ package net.adoptium.marketplace.server.frontend.versions
 
 import net.adoptium.marketplace.schema.OpenjdkVersionData
 import org.slf4j.LoggerFactory
-import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -37,7 +36,7 @@ object VersionParser {
     }
 
     private fun jep223(): List<String> {
-        return Arrays.asList(
+        return listOf(
             "(?:jdk\\-)?(?<version>$VNUM_REGEX(\\-$PRE_REGEX)?\\+$BUILD_REGEX(\\-$OPT_REGEX)?)",
             "(?:jdk\\-)?(?<version>$VNUM_REGEX\\-$PRE_REGEX(\\-$OPT_REGEX)?)",
             "(?:jdk\\-)?(?<version>$VNUM_REGEX(\\+\\-$OPT_REGEX)?)"
@@ -74,7 +73,7 @@ object VersionParser {
             if (version != null) {
                 return version
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
         }
         throw FailedToParse("Failed to parse $publishName")
     }
@@ -95,7 +94,7 @@ object VersionParser {
             if (!sanityCheck || sanityCheck(parsed)) {
                 return parsed
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
         }
         return null
     }
@@ -154,7 +153,7 @@ object VersionParser {
 
     private fun sanityCheck(parsed: OpenjdkVersionData): Boolean {
 
-        if (!(parsed.major in 101 downTo 7)) {
+        if (parsed.major !in 101 downTo 7) {
             // Sanity check as javas parser can match a single number
             // sane range is 8 to 100
             // TODO update me before 2062 and java 100 is released
@@ -163,7 +162,7 @@ object VersionParser {
         if (parsed.security.orElse(0) != 0 || parsed.build.orElse(0) != 0) {
             return true
         }
-        if (parsed.optional.isPresent != null && parsed.optional.get().matches(DATE_TIME_MATCHER)) {
+        if (parsed.optional.get().matches(DATE_TIME_MATCHER)) {
             return true
         }
         return false

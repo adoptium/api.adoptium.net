@@ -2,37 +2,22 @@ package net.adoptium.marketplace.server.frontend.filters
 
 import net.adoptium.api.marketplace.parser.maven.VersionRange
 import net.adoptium.marketplace.schema.OpenjdkVersionData
-import net.adoptium.marketplace.server.frontend.versions.VersionParser
 import java.util.function.Predicate
 
 class VersionRangeFilter(range: String?) : Predicate<OpenjdkVersionData> {
 
-    private val rangeMatcher: VersionRange?
-    private val exactMatcher: OpenjdkVersionData?
+    private val rangeMatcher: Predicate<OpenjdkVersionData>?
 
     init {
-        if (range == null) {
-            rangeMatcher = null
-            exactMatcher = null
-        } else if (
-            !range.startsWith('(') &&
-            !range.startsWith('[') &&
-            !range.endsWith(')') &&
-            !range.endsWith(']')
-        ) {
-            rangeMatcher = null
-            exactMatcher = VersionParser.parse(range, sanityCheck = false, exactMatch = true)
+        rangeMatcher = if (range == null) {
+            null
         } else {
-            rangeMatcher = VersionRange.createFromVersionSpec(range)
-            exactMatcher = null
+            VersionRange.parse(range)
         }
     }
 
     override fun test(version: OpenjdkVersionData): Boolean {
         return when {
-            exactMatcher != null -> {
-                exactMatcher.compareTo(version) == 0
-            }
             rangeMatcher != null -> {
                 rangeContainsVersion(rangeMatcher, version)
             }
@@ -42,22 +27,22 @@ class VersionRangeFilter(range: String?) : Predicate<OpenjdkVersionData> {
         }
     }
 
-    private fun rangeContainsVersion(rangeMatcher: VersionRange, version: OpenjdkVersionData): Boolean {
+    private fun rangeContainsVersion(rangeMatcher: Predicate<OpenjdkVersionData>, version: OpenjdkVersionData): Boolean {
         val noPreVersion = if (version.pre != null) {
             OpenjdkVersionData(
-                    version.major,
-                    version.minor.orElse(null),
-                    version.security.orElse(null),
-                    version.patch.orElse(null),
-                    version.pre.orElse(null),
-                    version.build.orElse(null),
-                    version.optional.orElse(null),
-                    version.openjdk_version,
+                version.major,
+                version.minor.orElse(null),
+                version.security.orElse(null),
+                version.patch.orElse(null),
+                version.pre.orElse(null),
+                version.build.orElse(null),
+                version.optional.orElse(null),
+                version.openjdk_version,
             )
         } else {
             version
         }
 
-        return rangeMatcher.containsVersion(noPreVersion)
+        return rangeMatcher.test(noPreVersion)
     }
 }
