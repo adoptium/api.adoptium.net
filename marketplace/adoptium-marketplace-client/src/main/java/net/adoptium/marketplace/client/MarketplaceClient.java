@@ -1,6 +1,6 @@
 package net.adoptium.marketplace.client;
 
-import net.adoptium.marketplace.client.signature.Rsa256SignatureVerify;
+import net.adoptium.marketplace.client.signature.SignatureType;
 import net.adoptium.marketplace.client.signature.SignatureVerifier;
 import net.adoptium.marketplace.schema.IndexFile;
 import net.adoptium.marketplace.schema.Release;
@@ -27,7 +27,11 @@ public class MarketplaceClient {
     private final String repoAddress;
 
     public static MarketplaceClient build(String repoAddress, String publicKey) throws Exception {
-        SignatureVerifier sv = Rsa256SignatureVerify.build(publicKey);
+        return build(repoAddress, SignatureType.getDefault(), publicKey);
+    }
+
+    public static MarketplaceClient build(String repoAddress, SignatureType signatureType, String publicKey) throws Exception {
+        SignatureVerifier sv = SignatureVerifier.build(signatureType, publicKey);
         return new MarketplaceClient(repoAddress, MarketplaceHttpClient.build(sv));
     }
 
@@ -113,7 +117,7 @@ public class MarketplaceClient {
 
     private IndexFile pullIndex(String url) throws FailedToPullDataException {
         try {
-            String data = marketplaceHttpClient.pullAndVerify(url);
+            byte[] data = marketplaceHttpClient.pullAndVerify(url);
             return MarketplaceMapper.repositoryObjectMapper.readValue(data, IndexFile.class);
         } catch (Exception e) {
             throw new FailedToPullDataException(e);
@@ -122,7 +126,7 @@ public class MarketplaceClient {
 
     private List<Release> pullRelease(String url) throws FailedToPullDataException {
         try {
-            String data = marketplaceHttpClient.pullAndVerify(url);
+            byte[] data = marketplaceHttpClient.pullAndVerify(url);
             return MarketplaceMapper.repositoryObjectMapper
                 .readValue(data, ReleaseList.class)
                 .getReleases();

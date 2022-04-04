@@ -1,5 +1,6 @@
 package net.adoptium.marketplace.server.updater
 
+import net.adoptium.marketplace.client.signature.SignatureType
 import net.adoptium.marketplace.schema.Vendor
 import java.nio.file.Paths
 import kotlin.io.path.exists
@@ -8,7 +9,8 @@ import kotlin.io.path.readBytes
 class VendorInfo(
     private val vendor: Vendor,
     private val repoUrl: String? = null,
-    private val publicKey: String? = null
+    private val publicKey: String? = null,
+    private val signatureType: SignatureType? = null
 ) {
     companion object {
         private val KEY_DIR: String?
@@ -22,6 +24,24 @@ class VendorInfo(
 
     fun valid(): Boolean {
         return getUrl() != null && getKey() != null
+    }
+
+    fun getSignatureType(): SignatureType {
+        if (signatureType != null) {
+            return signatureType
+        }
+
+        val signatureTypeConfig = getConfigValue(vendor.name.uppercase() + "_SIGNATURE_TYPE")
+
+        return if (signatureTypeConfig == null) {
+            SignatureType.getDefault()
+        } else {
+            try {
+                SignatureType.valueOf(signatureTypeConfig)
+            } catch (e: java.lang.IllegalArgumentException) {
+                SignatureType.getDefault()
+            }
+        }
     }
 
     fun getUrl(): String? {

@@ -28,9 +28,9 @@ public class MarketplaceHttpClient {
         return new MarketplaceHttpClient(httpClient, signatureVerifier);
     }
 
-    public String pullAndVerify(String url) throws FailedToPullDataException, FailedToValidateSignatureException {
-        String body = getRequest(url);
-        String signature = getRequest(url + "." + signatureVerifier.signatureSuffix());
+    public byte[] pullAndVerify(String url) throws FailedToPullDataException, FailedToValidateSignatureException {
+        byte[] body = getRequest(url);
+        byte[] signature = getRequest(url + "." + signatureVerifier.signatureSuffix());
 
         if (!signatureVerifier.verifySignature(body, signature)) {
             throw new FailedToValidateSignatureException();
@@ -39,11 +39,11 @@ public class MarketplaceHttpClient {
         return body;
     }
 
-    private String getRequest(String url) throws FailedToPullDataException {
+    private byte[] getRequest(String url) throws FailedToPullDataException {
         try {
             ContentResponse response = httpClient.GET(URI.create(url));
             if (response.getStatus() == HttpStatus.OK_200) {
-                return response.getContentAsString();
+                return response.getContent();
             }
         } catch (Exception e) {
             LOGGER.error("Failed to get url", e);
