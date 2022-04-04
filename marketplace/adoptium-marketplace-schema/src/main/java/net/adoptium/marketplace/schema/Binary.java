@@ -26,10 +26,16 @@ public class Binary {
     public static final String TIMESTAMP_NAME = "timestamp";
     public static final String DISTRIBUTION_NAME = "distribution";
 
-    @Schema(implementation = OperatingSystem.class, required = true)
+    @Schema(
+        name = OS_NAME,
+        implementation = OperatingSystem.class,
+        required = true)
     private final OperatingSystem os;
 
-    @Schema(implementation = Architecture.class, required = true)
+    @Schema(
+        name = ARCHITECTURE_NAME,
+        implementation = Architecture.class,
+        required = true)
     private final Architecture architecture;
 
     @Schema(
@@ -86,7 +92,7 @@ public class Binary {
         example = "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz.aqavit.zip")
     private final String aqavitResultsLink;
 
-    @Schema(required = true,
+    @Schema(required = false,
         name = TCK_AFFIDAVIT_LINK_NAME,
         example = "https://adoptium.net/tck_affidavit.html",
         description = "Link to the tck affidavit for this binary")
@@ -94,18 +100,18 @@ public class Binary {
 
     @JsonCreator
     public Binary(
-        @JsonProperty(OS_NAME) OperatingSystem os,
-        @JsonProperty(ARCHITECTURE_NAME) Architecture architecture,
-        @JsonProperty(IMAGE_TYPE_NAME) ImageType imageType,
+        @JsonProperty(value = OS_NAME, required = true) OperatingSystem os,
+        @JsonProperty(value = ARCHITECTURE_NAME, required = true) Architecture architecture,
+        @JsonProperty(value = IMAGE_TYPE_NAME, required = true) ImageType imageType,
         @JsonProperty(C_LIB_NAME) CLib cLib,
-        @JsonProperty(JVM_IMPL_NAME) JvmImpl jvmImpl,
+        @JsonProperty(value = JVM_IMPL_NAME, required = true) JvmImpl jvmImpl,
         @JsonProperty(PACKAGE_NAME) Package aPackage,
         @JsonProperty(INSTALLER_NAME) List<Installer> installer,
-        @JsonProperty(TIMESTAMP_NAME) Date timestamp,
+        @JsonProperty(value = TIMESTAMP_NAME, required = true) Date timestamp,
         @JsonProperty(SCM_REF_NAME) String scmRef,
-        @JsonProperty(OPENJDK_SCM_REF_NAME) String openjdkScmRef,
-        @JsonProperty(DISTRIBUTION_NAME) Distribution distribution,
-        @JsonProperty(AQAVIT_RESULTS_LINK_NAME) String aqavitResultsLink,
+        @JsonProperty(value = OPENJDK_SCM_REF_NAME, required = true) String openjdkScmRef,
+        @JsonProperty(value = DISTRIBUTION_NAME, required = true) Distribution distribution,
+        @JsonProperty(value = AQAVIT_RESULTS_LINK_NAME, required = true) String aqavitResultsLink,
         @JsonProperty(TCK_AFFIDAVIT_LINK_NAME) String tckAffidavitLink
     ) {
         this.os = os;

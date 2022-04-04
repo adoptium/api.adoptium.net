@@ -3,7 +3,7 @@
         {
             "release_link": "https://github.com/adoptium/temurin17-binaries/releases/tag/jdk-17.0.2%2B8",
             "release_name": "jdk-17.0.2+8",
-            "timestamp": "2022-01-27T21:30:36Z",
+            "last_updated_timestamp": "2022-01-27T21:30:36Z",
             "binaries": [
                 {
                     "os": "mac",

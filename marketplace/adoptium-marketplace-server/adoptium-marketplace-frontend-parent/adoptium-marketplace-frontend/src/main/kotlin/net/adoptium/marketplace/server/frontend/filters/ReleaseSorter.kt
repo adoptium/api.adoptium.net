@@ -33,7 +33,7 @@ class ReleaseSorter {
             .thenBy { it.openjdk_version }
 
 
-        private val TIME_COMPARATOR = compareBy { release: Release -> release.timestamp }
+        private val TIME_COMPARATOR = compareBy { release: Release -> release.lastUpdatedTimestamp }
 
         val RELEASE_COMPARATOR = compareBy<Release, OpenjdkVersionData>(VERSION_COMPARATOR) { it.openjdkVersionData }
 

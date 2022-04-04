@@ -3,7 +3,7 @@
         {
             "release_link": "https://github.com/adoptium/temurin8-binaries/releases/tag/jdk8u302-b08.1",
             "release_name": "jdk8u302-b08.1",
-            "timestamp": "2021-08-04T19:09:54Z",
+            "last_updated_timestamp": "2021-08-04T19:09:54Z",
             "binaries": [
                 {
                     "os": "windows",

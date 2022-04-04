@@ -3,7 +3,7 @@
         {
             "release_link": "https://github.com/adoptium/temurin8-binaries/releases/tag/jdk8u322-b06",
             "release_name": "jdk8u322-b06",
-            "timestamp": "2022-01-25T15:24:46Z",
+            "last_updated_timestamp": "2022-01-25T15:24:46Z",
             "binaries": [
                 {
                     "os": "mac",

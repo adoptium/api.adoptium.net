@@ -3,7 +3,7 @@
         {
             "release_link": "https://github.com/adoptium/temurin11-binaries/releases/tag/jdk-11.0.12%2B7.1",
             "release_name": "jdk-11.0.12+7.1",
-            "timestamp": "2021-09-22T12:03:50Z",
+            "last_updated_timestamp": "2021-09-22T12:03:50Z",
             "binaries": [
                 {
                     "os": "windows",
