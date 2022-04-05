@@ -16,7 +16,7 @@
         <jacoco.version>0.8.7</jacoco.version>
         <jdk.version>17</jdk.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <kotlin.version>1.6.10</kotlin.version>
+        <kotlin.version>1.6.20</kotlin.version>
         <coroutine.version>1.6.0</coroutine.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
