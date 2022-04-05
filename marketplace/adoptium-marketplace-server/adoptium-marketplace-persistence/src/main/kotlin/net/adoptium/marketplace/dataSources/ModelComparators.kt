@@ -71,7 +71,7 @@ object ModelComparators {
 
     val RELEASE = compareBy<Release?> { it?.releaseLink }
         .thenBy { it?.releaseName }
-        .thenBy { it?.timestamp }
+        .thenBy { it?.lastUpdatedTimestamp }
         .thenBy { it?.vendor }
         .thenBy { it?.vendorPublicKeyLink }
         .then { a, b -> SOURCE.compare(a?.source, b?.source) }

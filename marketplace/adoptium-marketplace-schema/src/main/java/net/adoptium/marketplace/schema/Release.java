@@ -15,6 +15,8 @@ public class Release {
     public static final String RELEASE_NAME_NAME = "release_name";
     public static final String VERSION_DATA_NAME = "openjdk_version_data";
     public static final String VENDOR_PUBLIC_KEY_LINK_NAME = "vendor_public_key_link";
+    public static final String LAST_UPDATED_TIMESTAMP_NAME = "last_updated_timestamp";
+
     @Schema(
         example = "https://github.com/AdoptOpenJDK/openjdk8-openj9-releases/ga/tag/jdk8u162-b12_openj9-0.8.0",
         name = RELEASE_LINK_NAME
@@ -29,10 +31,11 @@ public class Release {
     private final String releaseName;
 
     @Schema(
+        name = LAST_UPDATED_TIMESTAMP_NAME,
         description = "Timestamp of the release creation",
         required = true
     )
-    private final Date timestamp;
+    private final Date lastUpdatedTimestamp;
 
     @Schema(type = SchemaType.ARRAY, implementation = Binary.class, required = true)
     private final List<Binary> binaries;
@@ -57,7 +60,7 @@ public class Release {
     public Release(
         @JsonProperty(RELEASE_LINK_NAME) String releaseLink,
         @JsonProperty(value = RELEASE_NAME_NAME, required = true) String releaseName,
-        @JsonProperty(value = "timestamp", required = true) Date timestamp,
+        @JsonProperty(value = LAST_UPDATED_TIMESTAMP_NAME, required = true) Date lastUpdatedTimestamp,
         @JsonProperty("binaries") List<Binary> binaries,
         @JsonProperty(value = "vendor", required = true) Vendor vendor,
         @JsonProperty(value = VERSION_DATA_NAME, required = true) OpenjdkVersionData openjdkVersionData,
@@ -66,7 +69,7 @@ public class Release {
     ) {
         this.releaseLink = releaseLink;
         this.releaseName = releaseName;
-        this.timestamp = timestamp;
+        this.lastUpdatedTimestamp = lastUpdatedTimestamp;
         this.binaries = binaries;
         this.vendor = vendor;
         this.openjdkVersionData = openjdkVersionData;
@@ -81,7 +84,7 @@ public class Release {
         this(
             release.releaseLink,
             release.releaseName,
-            release.timestamp,
+            release.lastUpdatedTimestamp,
             binaries,
             release.vendor,
             release.openjdkVersionData,
@@ -100,9 +103,10 @@ public class Release {
         return releaseName;
     }
 
+    @JsonProperty(LAST_UPDATED_TIMESTAMP_NAME)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
-    public Date getTimestamp() {
-        return timestamp;
+    public Date getLastUpdatedTimestamp() {
+        return lastUpdatedTimestamp;
     }
 
     public List<Binary> getBinaries() {
