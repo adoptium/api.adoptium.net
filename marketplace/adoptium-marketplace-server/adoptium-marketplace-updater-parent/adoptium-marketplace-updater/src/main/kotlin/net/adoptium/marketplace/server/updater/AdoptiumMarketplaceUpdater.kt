@@ -73,7 +73,7 @@ class AdoptiumMarketplaceUpdater @Inject constructor(
     private fun buildClientMap(): Map<Vendor, MarketplaceClient> {
         return vendorList.getVendorInfo()
             .map {
-                return@map it.key to MarketplaceClient.build(it.value.getUrl(), it.value.getKey())!!
+                return@map it.key to MarketplaceClient.build(it.value.getUrl(), it.value.getSignatureType(), it.value.getKey())!!
             }.toMap()
     }
 

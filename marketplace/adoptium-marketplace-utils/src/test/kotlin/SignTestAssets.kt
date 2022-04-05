@@ -1,4 +1,5 @@
 import net.adoptium.marketplace.client.signature.Rsa256SignatureVerify
+import net.adoptium.marketplace.client.signature.SignatureType
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.util.io.pem.PemReader
 import java.io.File
@@ -73,7 +74,7 @@ object SignTestAssets {
             .filter { file: Path -> isNotExcluded(file.toAbsolutePath().toString()) }
             .filter { fileName: Path -> fileName.toFile().name.endsWith(".json") }
             .forEach { file: Path ->
-                val outFile = file.toAbsolutePath().toString() + "." + Rsa256SignatureVerify.FILE_SUFFIX
+                val outFile = file.toAbsolutePath().toString() + "." + SignatureType.getDefault().fileExtension
                 try {
                     FileInputStream(file.toFile()).use { fis ->
                         FileOutputStream(outFile).use { fos ->
