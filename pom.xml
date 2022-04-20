@@ -182,7 +182,7 @@
             <dependency>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-test-junit5</artifactId>
-                <version>1.6.20</version>
+                <version>1.6.21</version>
             </dependency>
             <!-- Explicitly adding this because Maven can't see it via the kmongo dep -->
             <dependency>
