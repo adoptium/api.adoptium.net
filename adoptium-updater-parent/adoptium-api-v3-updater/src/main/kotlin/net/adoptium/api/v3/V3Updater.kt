@@ -18,7 +18,7 @@ import net.adoptium.api.v3.stats.StatsInterface
 import org.slf4j.LoggerFactory
 import java.io.OutputStream
 import java.security.MessageDigest
-import java.util.Base64
+import java.util.*
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -75,6 +75,13 @@ class V3Updater @Inject constructor(
 
             return String(Base64.getEncoder().encode(md.digest()))
         }
+
+        fun copyOldReleasesIntoNewRepo(currentRepo: AdoptRepos, newRepoData: AdoptRepos) = newRepoData
+            .addAll(currentRepo
+                .allReleases
+                .getReleases()
+                .filter { AdoptRepository.VENDORS_EXCLUDED_FROM_FULL_UPDATE.contains(it.vendor) }
+                .toList())
     }
 
     init {
@@ -225,7 +232,7 @@ class V3Updater @Inject constructor(
 
         executor.scheduleWithFixedDelay(
             timerTask {
-                repo = fullUpdate() ?: repo
+                repo = fullUpdate(repo) ?: repo
             },
             delay, 1, TimeUnit.DAYS
         )
@@ -238,13 +245,16 @@ class V3Updater @Inject constructor(
         )
     }
 
-    private fun fullUpdate(): AdoptRepos? {
+    fun fullUpdate(currentRepo: AdoptRepos): AdoptRepos? {
         // Must catch errors or may kill the scheduler
         try {
             return runBlocking {
                 LOGGER.info("Starting Full update")
 
-                val repo = adoptReposBuilder.build(Versions.versions)
+                val newRepoData = adoptReposBuilder.build(Versions.versions)
+
+                // AdoptOpenJdk are excluded from full update,
+                val repo = copyOldReleasesIntoNewRepo(currentRepo, newRepoData)
 
                 val checksum = calculateChecksum(repo)
 
@@ -268,4 +278,6 @@ class V3Updater @Inject constructor(
         }
         return null
     }
+
+
 }
