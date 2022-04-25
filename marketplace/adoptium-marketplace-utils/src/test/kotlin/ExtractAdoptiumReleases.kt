@@ -13,6 +13,10 @@ import java.util.*
 
 class ExtractAdoptiumReleases {
 
+    companion object {
+        val VERSIONS = listOf(8, 11, 17)
+    }
+
     //@Disabled("For manual execution")
     @Test
     fun buildRepo() {
@@ -20,53 +24,44 @@ class ExtractAdoptiumReleases {
         httpClient.isFollowRedirects = true
         httpClient.start()
 
-        val dir = Files.createTempDirectory("repo");
 
-        val indexFile = IndexFile(
-            IndexFile.LATEST_VERSION,
-            listOf(8, 11, 17)
-                .map { "$it/index.json" },
-            emptyList()
-        )
+        val dir = Files.createTempDirectory("repo")
 
-        val indexfw = FileWriter(Paths.get(dir.toFile().absolutePath, "index.json").toFile())
-        indexfw.use {
-            it.write(MarketplaceMapper.repositoryObjectMapper.writeValueAsString(indexFile))
-        }
+        // Write ./index.json file
+        createTopLevelIndexFile(dir)
 
-        listOf(8, 11, 17)
+        // Only doing LTS for now
+        VERSIONS
             .map { version ->
-
-                val versionDir = Path.of(dir.toFile().absolutePath, "$version").toFile();
-
+                // Get directory to write to, i.e `./8/`
+                val versionDir = Path.of(dir.toFile().absolutePath, "$version").toFile()
                 versionDir.mkdirs()
 
-                // Possibly might need to check next page...one day
-                val response = httpClient.GET("https://api.adoptium.net/v3/assets/feature_releases/${version}/ga?page_size=50&vendor=eclipse")
+                // Fetch releases in Adoptiums (NOT marketplace) schema
+                val releases = getAdoptiumReleases(httpClient, version)
 
-                val releases = JsonMapper.mapper.readValue<List<Release>>(response.content)
+                // Represent Adoptium releases in Marketplace schema
+                val marketplaceReleases = convertToMarketplaceSchema(releases)
 
-                val marketplaceReleases = releases
-                    .map { release ->
-                        ReleaseList(listOf(toMarketplaceRelease(release, toMarketplaceBinaries(release))))
-                    }
-                    .toList()
-
+                // Create index file i.e './8/index.json
                 val indexFile = IndexFile(
                     IndexFile.LATEST_VERSION,
                     emptyList(),
                     marketplaceReleases
                         .map { toFileName(it.releases.first()) }
                 )
-
                 val indexfw = FileWriter(Paths.get(versionDir.absolutePath, "index.json").toFile())
                 indexfw.use {
                     it.write(MarketplaceMapper.repositoryObjectMapper.writeValueAsString(indexFile))
                 }
 
+                // Write all releases to file
                 marketplaceReleases
                     .forEach { release ->
+                        // write to file, i.e ./8/jdk8u302_b08.json
                         val fos = FileWriter(Paths.get(versionDir.absolutePath, toFileName(release.releases.first())).toFile())
+
+                        // Serialize object to file
                         fos.use {
                             it.write(MarketplaceMapper.repositoryObjectMapper.writeValueAsString(release))
                         }
@@ -75,7 +70,49 @@ class ExtractAdoptiumReleases {
 
         httpClient.stop()
 
+        // Sign new files
         SignTestAssets.sign(dir.toFile().absolutePath)
+    }
+
+    private fun createTopLevelIndexFile(dir: Path) {
+        /* Write top level index file, produces:
+            {
+              "indexes": [
+                "8/index.json",
+                "11/index.json",
+                "17/index.json"
+              ],
+              "releases": []
+            }
+         */
+        val indexFile = IndexFile(
+            IndexFile.LATEST_VERSION,
+            VERSIONS
+                .map { "$it/index.json" },
+            emptyList()
+        )
+
+        val indexfw = FileWriter(Paths.get(dir.toFile().absolutePath, "index.json").toFile())
+        indexfw.use {
+            it.write(MarketplaceMapper.repositoryObjectMapper.writeValueAsString(indexFile))
+        }
+    }
+
+    private fun convertToMarketplaceSchema(releases: List<Release>): List<ReleaseList> {
+        val marketplaceReleases = releases
+            .map { release ->
+                ReleaseList(listOf(toMarketplaceRelease(release, toMarketplaceBinaries(release))))
+            }
+            .toList()
+        return marketplaceReleases
+    }
+
+    private fun getAdoptiumReleases(httpClient: HttpClient, version: Int): List<Release> {
+        // Possibly might need to check next page...one day
+        val response = httpClient.GET("https://api.adoptium.net/v3/assets/feature_releases/${version}/ga?page_size=50&vendor=eclipse")
+
+        val releases = JsonMapper.mapper.readValue<List<Release>>(response.content)
+        return releases
     }
 
     private fun toFileName(it: net.adoptium.marketplace.schema.Release) = it
