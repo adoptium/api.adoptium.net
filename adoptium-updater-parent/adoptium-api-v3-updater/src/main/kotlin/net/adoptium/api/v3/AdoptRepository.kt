@@ -3,6 +3,7 @@ package net.adoptium.api.v3
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.github.GitHubApi
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleasesSummary
@@ -83,12 +84,19 @@ class AdoptRepositoryImpl @Inject constructor(
         val repo = getDataForEachRepo(
             version,
             ::getRepository,
-            { vendor -> !AdoptRepository.VENDORS_EXCLUDED_FROM_FULL_UPDATE.contains(vendor) }
+            getFullUpdateFilter()
         )
             .await()
             .filterNotNull()
             .map { AdoptRepo(it) }
         return FeatureRelease(version, repo)
+    }
+
+    // If not explicitly updating AdoptOpenJDK exclude them
+    private fun getFullUpdateFilter(): (Vendor) -> Boolean = if (APIConfig.UPDATE_ADOPTOPENJDK) {
+        { true } // include all vendors
+    } else {
+        { vendor -> !AdoptRepository.VENDORS_EXCLUDED_FROM_FULL_UPDATE.contains(vendor) } // exclude AdoptOpenjdk
     }
 
     override suspend fun getSummary(version: Int): GHRepositorySummary {

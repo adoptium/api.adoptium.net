@@ -253,8 +253,7 @@ class V3Updater @Inject constructor(
 
                 val newRepoData = adoptReposBuilder.build(Versions.versions)
 
-                // AdoptOpenJdk are excluded from full update,
-                val repo = copyOldReleasesIntoNewRepo(currentRepo, newRepoData)
+                val repo = carryOverExcludedReleases(currentRepo, newRepoData)
 
                 val checksum = calculateChecksum(repo)
 
@@ -277,6 +276,14 @@ class V3Updater @Inject constructor(
             throw e
         }
         return null
+    }
+
+    // Releases that were excluded from the update due to being archived, copy them over from existing data
+    private fun carryOverExcludedReleases(currentRepo: AdoptRepos, newRepoData: AdoptRepos) = if (!APIConfig.UPDATE_ADOPTOPENJDK) {
+        // AdoptOpenJdk were excluded from full update so copy them from previous
+        copyOldReleasesIntoNewRepo(currentRepo, newRepoData)
+    } else {
+        newRepoData
     }
 
 
