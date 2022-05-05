@@ -77,8 +77,16 @@ class AdoptRepos {
             .filter { it.binaries.isNotEmpty() }
     }
 
+    fun addAll(releases: List<Release>): AdoptRepos {
+        if (releases.isEmpty()) {
+            return this
+        }
+        return releases
+            .fold(this) { repoAcc, oldRelease -> repoAcc.addRelease(oldRelease.version_data.major, oldRelease) }
+    }
+
     fun addRelease(i: Int, r: Release): AdoptRepos {
-        return AdoptRepos(repos.plus(Pair(i, repos.getValue(i).add(listOf(r)))))
+        return AdoptRepos(repos.plus(Pair(i, repos.getOrDefault(i, FeatureRelease(i, emptyList())).add(listOf(r)))))
     }
 
     fun removeRelease(i: Int, r: Release): AdoptRepos {

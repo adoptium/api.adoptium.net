@@ -198,6 +198,9 @@
     <profiles>
         <profile>
             <id>adoptopenjdk</id>
+            <properties>
+                <adoptopenjdktests>true</adoptopenjdktests>
+            </properties>
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>

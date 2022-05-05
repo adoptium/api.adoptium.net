@@ -3,6 +3,7 @@ package net.adoptium.api.v3
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.github.GitHubApi
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleasesSummary
@@ -23,6 +24,10 @@ interface AdoptRepository {
     suspend fun getRelease(version: Int): FeatureRelease?
     suspend fun getSummary(version: Int): GHRepositorySummary
     suspend fun getReleaseById(gitHubId: GitHubId): ReleaseResult?
+
+    companion object {
+        val VENDORS_EXCLUDED_FROM_FULL_UPDATE = setOf(Vendor.adoptopenjdk)
+    }
 }
 
 @Singleton
@@ -76,15 +81,30 @@ class AdoptRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getRelease(version: Int): FeatureRelease {
-        val repo = getDataForEachRepo(version, ::getRepository)
+        val repo = getDataForEachRepo(
+            version,
+            ::getRepository,
+            getFullUpdateFilter()
+        )
             .await()
             .filterNotNull()
             .map { AdoptRepo(it) }
         return FeatureRelease(version, repo)
     }
 
+    // If not explicitly updating AdoptOpenJDK exclude them
+    private fun getFullUpdateFilter(): (Vendor) -> Boolean = if (APIConfig.UPDATE_ADOPTOPENJDK) {
+        { true } // include all vendors
+    } else {
+        { vendor -> !AdoptRepository.VENDORS_EXCLUDED_FROM_FULL_UPDATE.contains(vendor) } // exclude AdoptOpenjdk
+    }
+
     override suspend fun getSummary(version: Int): GHRepositorySummary {
-        val releaseSummaries = getDataForEachRepo(version) { owner: String, repoName: String -> client.getRepositorySummary(owner, repoName) }
+        val releaseSummaries = getDataForEachRepo(
+            version,
+            { owner: String, repoName: String -> client.getRepositorySummary(owner, repoName) },
+            { true } // include all vendors in summary update
+        )
             .await()
             .filterNotNull()
             .flatMap { it.releases.releases }
@@ -110,31 +130,41 @@ class AdoptRepositoryImpl @Inject constructor(
             }
     }
 
-    private suspend fun <E> getDataForEachRepo(version: Int, getFun: suspend (String, String) -> E): Deferred<List<E?>> {
+    private suspend fun <E> getDataForEachRepo(
+        version: Int,
+        getFun: suspend (String, String) -> E,
+        filter: (Vendor) -> Boolean
+    ): Deferred<List<E?>> {
         LOGGER.info("getting $version")
         return GlobalScope.async {
 
             return@async listOf(
-                getRepoDataAsync(ADOPT_ORG, Vendor.adoptopenjdk, "openjdk$version-openj9-releases", getFun),
-                getRepoDataAsync(ADOPT_ORG, Vendor.adoptopenjdk, "openjdk$version-openj9-nightly", getFun),
-                getRepoDataAsync(ADOPT_ORG, Vendor.adoptopenjdk, "openjdk$version-nightly", getFun),
-                getRepoDataAsync(ADOPT_ORG, Vendor.adoptopenjdk, "openjdk$version-binaries", getFun),
+                getRepoDataAsync(ADOPT_ORG, Vendor.adoptopenjdk, "openjdk$version-openj9-releases", getFun, filter),
+                getRepoDataAsync(ADOPT_ORG, Vendor.adoptopenjdk, "openjdk$version-openj9-nightly", getFun, filter),
+                getRepoDataAsync(ADOPT_ORG, Vendor.adoptopenjdk, "openjdk$version-nightly", getFun, filter),
+                getRepoDataAsync(ADOPT_ORG, Vendor.adoptopenjdk, "openjdk$version-binaries", getFun, filter),
 
-                getRepoDataAsync(ADOPT_ORG, Vendor.openjdk, "openjdk$version-upstream-binaries", getFun),
+                getRepoDataAsync(ADOPT_ORG, Vendor.openjdk, "openjdk$version-upstream-binaries", getFun, filter),
 
-                getRepoDataAsync(ADOPT_ORG, Vendor.alibaba, "openjdk$version-dragonwell-binaries", getFun),
+                getRepoDataAsync(ADOPT_ORG, Vendor.alibaba, "openjdk$version-dragonwell-binaries", getFun, filter),
 
-                getRepoDataAsync(ADOPTIUM_ORG, Vendor.eclipse, "temurin$version-binaries", getFun),
+                getRepoDataAsync(ADOPTIUM_ORG, Vendor.eclipse, "temurin$version-binaries", getFun, filter),
 
-                getRepoDataAsync(ADOPT_ORG, Vendor.ibm, "semeru$version-binaries", getFun)
+                getRepoDataAsync(ADOPT_ORG, Vendor.ibm, "semeru$version-binaries", getFun, filter)
             )
                 .map { repo -> repo.await() }
         }
     }
 
-    private fun <E> getRepoDataAsync(owner: String, vendor: Vendor, repoName: String, getFun: suspend (String, String) -> E): Deferred<E?> {
+    private fun <E> getRepoDataAsync(
+        owner: String,
+        vendor: Vendor,
+        repoName: String,
+        getFun: suspend (String, String) -> E,
+        filter: (Vendor) -> Boolean
+    ): Deferred<E?> {
         return GlobalScope.async {
-            if (!Vendor.validVendor(vendor)) {
+            if (!Vendor.validVendor(vendor) || !filter.invoke(vendor)) {
                 return@async null
             }
             LOGGER.info("getting $owner $repoName")
