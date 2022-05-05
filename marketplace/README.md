@@ -48,3 +48,16 @@ A repository can be validated using the `MarketplaceClient`. The client pulls a 
         e.printStackTrace();
     }
 ```
+
+Note that in this example we have used the default `SignatureType.BASE64_ENCODED` which specifies that the signature files are
+base64 encoded. If you require non-base64 encoded use `SignatureType.SIG`.
+
+An example of running this can be seen in RepoTest class in the `adoptium-marketplace-client` module. To validate your repo using this test,
+edit it to add your public key and repo location, then run with:
+
+```
+VALIDATE_REPO=true ../../mvnw test -Dtest=RepoTest#validateRepo
+```
+
+from inside the `adoptium-marketplace-client` directory.
+
