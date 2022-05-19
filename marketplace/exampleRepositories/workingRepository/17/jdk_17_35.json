@@ -463,7 +463,7 @@
                 },
                 {
                     "os": "windows",
-                    "architecture": "x32",
+                    "architecture": "x86",
                     "image_type": "debugimage",
                     "jvm_impl": "hotspot",
                     "package": {
@@ -481,7 +481,7 @@
                 },
                 {
                     "os": "windows",
-                    "architecture": "x32",
+                    "architecture": "x86",
                     "image_type": "jdk",
                     "jvm_impl": "hotspot",
                     "package": {
@@ -507,7 +507,7 @@
                 },
                 {
                     "os": "windows",
-                    "architecture": "x32",
+                    "architecture": "x86",
                     "image_type": "testimage",
                     "jvm_impl": "hotspot",
                     "package": {

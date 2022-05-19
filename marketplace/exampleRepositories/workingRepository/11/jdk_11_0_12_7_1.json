@@ -7,7 +7,7 @@
             "binaries": [
                 {
                     "os": "windows",
-                    "architecture": "x32",
+                    "architecture": "x86",
                     "image_type": "jre",
                     "jvm_impl": "hotspot",
                     "package": {
