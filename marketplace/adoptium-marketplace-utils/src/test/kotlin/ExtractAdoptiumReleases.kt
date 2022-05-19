@@ -200,7 +200,7 @@ class ExtractAdoptiumReleases {
                 upstreamScmRef,
                 Distribution.temurin,
                 aqaLink,
-                null
+                "https://adoptium.net/temurin/tck-affidavit/"
             )
         }
         .toList()
