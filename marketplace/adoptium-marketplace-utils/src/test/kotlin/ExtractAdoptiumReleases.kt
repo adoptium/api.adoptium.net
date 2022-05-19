@@ -6,6 +6,7 @@ import net.adoptium.marketplace.schema.*
 import org.eclipse.jetty.client.HttpClient
 import org.junit.jupiter.api.Test
 import java.io.FileWriter
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -24,8 +25,8 @@ class ExtractAdoptiumReleases {
         httpClient.isFollowRedirects = true
         httpClient.start()
 
-
-        val dir = Files.createTempDirectory("repo")
+        val dir = File("/tmp/adoptiumRepo").toPath()
+        dir.toFile().mkdirs()
 
         // Write ./index.json file
         createTopLevelIndexFile(dir)
@@ -50,7 +51,11 @@ class ExtractAdoptiumReleases {
                     marketplaceReleases
                         .map { toFileName(it.releases.first()) }
                 )
-                val indexfw = FileWriter(Paths.get(versionDir.absolutePath, "index.json").toFile())
+                val file = Paths.get(versionDir.absolutePath, "index.json").toFile();
+                if (file.exists()) {
+                    throw RuntimeException("File Name Clash " + file.absolutePath)
+                }
+                val indexfw = FileWriter(file)
                 indexfw.use {
                     it.write(MarketplaceMapper.repositoryObjectMapper.writeValueAsString(indexFile))
                 }
@@ -69,6 +74,8 @@ class ExtractAdoptiumReleases {
             }
 
         httpClient.stop()
+
+        print("Created repo $dir")
 
         // Sign new files
         SignTestAssets.sign(dir.toFile().absolutePath)
@@ -193,7 +200,7 @@ class ExtractAdoptiumReleases {
                 upstreamScmRef,
                 Distribution.temurin,
                 aqaLink,
-                "https://adoptium.net/tck_affidavit.html"
+                null
             )
         }
         .toList()
