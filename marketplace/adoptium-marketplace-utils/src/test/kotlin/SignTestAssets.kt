@@ -1,4 +1,3 @@
-import net.adoptium.marketplace.client.signature.Rsa256SignatureVerify
 import net.adoptium.marketplace.client.signature.SignatureType
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.util.io.pem.PemReader
@@ -7,6 +6,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.FileReader
 import java.io.IOException
+import java.io.StringReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -33,17 +33,32 @@ object SignTestAssets {
     private val TEST_KEY: PrivateKey?
 
     init {
-        TEST_KEY = try {
-            Security.addProvider(BouncyCastleProvider())
-            val testKey = getPkcs8EncodedKeySpec(File("./marketplace/exampleRepositories/keys/private.pem"))
-            val factory = KeyFactory.getInstance("RSA")
-            factory.generatePrivate(testKey)
-        } catch (e: IOException) {
-            null
-        } catch (e: NoSuchAlgorithmException) {
-            null
-        } catch (e: InvalidKeySpecException) {
-            null
+        if(System.getenv().containsKey("KEY")) {
+            TEST_KEY = try {
+                Security.addProvider(BouncyCastleProvider())
+                val testKey = getPkcs8EncodedKeySpec(System.getenv("KEY"))
+                val factory = KeyFactory.getInstance("RSA")
+                factory.generatePrivate(testKey)
+            } catch (e: IOException) {
+                null
+            } catch (e: NoSuchAlgorithmException) {
+                null
+            } catch (e: InvalidKeySpecException) {
+                null
+            }
+        } else {
+            TEST_KEY = try {
+                Security.addProvider(BouncyCastleProvider())
+                val testKey = getPkcs8EncodedKeySpec(File("/tmp/private.pem"))
+                val factory = KeyFactory.getInstance("RSA")
+                factory.generatePrivate(testKey)
+            } catch (e: IOException) {
+                null
+            } catch (e: NoSuchAlgorithmException) {
+                null
+            } catch (e: InvalidKeySpecException) {
+                null
+            }
         }
     }
 
@@ -63,6 +78,14 @@ object SignTestAssets {
     private fun getPkcs8EncodedKeySpec(file: File): PKCS8EncodedKeySpec {
         var key: PKCS8EncodedKeySpec
         FileReader(file).use { keyReader -> PemReader(keyReader).use { pemReader -> key = PKCS8EncodedKeySpec(pemReader.readPemObject().content) } }
+        return key
+    }
+
+
+    @Throws(IOException::class)
+    private fun getPkcs8EncodedKeySpec(signingKey: String): PKCS8EncodedKeySpec {
+        var key: PKCS8EncodedKeySpec
+        PemReader(StringReader(signingKey)).use { pemReader -> key = PKCS8EncodedKeySpec(pemReader.readPemObject().content) }
         return key
     }
 
