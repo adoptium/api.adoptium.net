@@ -5,9 +5,8 @@ import net.adoptium.marketplace.client.MarketplaceMapper
 import net.adoptium.marketplace.schema.*
 import org.eclipse.jetty.client.HttpClient
 import org.junit.jupiter.api.Test
-import java.io.FileWriter
 import java.io.File
-import java.nio.file.Files
+import java.io.FileWriter
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
@@ -119,6 +118,17 @@ class ExtractAdoptiumReleases {
         val response = httpClient.GET("https://api.adoptium.net/v3/assets/feature_releases/${version}/ga?page_size=50&vendor=eclipse")
 
         val releases = JsonMapper.mapper.readValue<List<Release>>(response.content)
+
+        releases
+            .map { release ->
+                val filteredBinaries = release.binaries.filter {
+                    it.image_type == net.adoptium.api.v3.models.ImageType.jdk ||
+                        it.image_type == net.adoptium.api.v3.models.ImageType.jre
+                }
+
+                Release(release, filteredBinaries.toTypedArray())
+            }
+
         return releases
     }
 
