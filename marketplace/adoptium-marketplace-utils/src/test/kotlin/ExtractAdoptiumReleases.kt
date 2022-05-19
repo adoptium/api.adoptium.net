@@ -119,7 +119,7 @@ class ExtractAdoptiumReleases {
 
         val releases = JsonMapper.mapper.readValue<List<Release>>(response.content)
 
-        releases
+        return releases
             .map { release ->
                 val filteredBinaries = release.binaries.filter {
                     it.image_type == net.adoptium.api.v3.models.ImageType.jdk ||
@@ -128,8 +128,6 @@ class ExtractAdoptiumReleases {
 
                 Release(release, filteredBinaries.toTypedArray())
             }
-
-        return releases
     }
 
     private fun toFileName(it: net.adoptium.marketplace.schema.Release) = it
