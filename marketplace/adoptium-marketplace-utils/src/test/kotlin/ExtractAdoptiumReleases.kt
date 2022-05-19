@@ -57,7 +57,7 @@ class ExtractAdoptiumReleases {
                 }
                 val indexfw = FileWriter(file)
                 indexfw.use {
-                    it.write(MarketplaceMapper.repositoryObjectMapper.writeValueAsString(indexFile))
+                    it.write(MarketplaceMapper.repositoryObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(indexFile))
                 }
 
                 // Write all releases to file
@@ -68,7 +68,7 @@ class ExtractAdoptiumReleases {
 
                         // Serialize object to file
                         fos.use {
-                            it.write(MarketplaceMapper.repositoryObjectMapper.writeValueAsString(release))
+                            it.write(MarketplaceMapper.repositoryObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(release))
                         }
                     }
             }
@@ -101,7 +101,7 @@ class ExtractAdoptiumReleases {
 
         val indexfw = FileWriter(Paths.get(dir.toFile().absolutePath, "index.json").toFile())
         indexfw.use {
-            it.write(MarketplaceMapper.repositoryObjectMapper.writeValueAsString(indexFile))
+            it.write(MarketplaceMapper.repositoryObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(indexFile))
         }
     }
 
