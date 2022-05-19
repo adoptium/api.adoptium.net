@@ -167,10 +167,16 @@ class ExtractAdoptiumReleases {
     private fun toMarketplaceBinaries(release: Release) = release
         .binaries
         .map { binary ->
-            val arch = if (binary.os == net.adoptium.api.v3.models.OperatingSystem.`alpine-linux`) {
+            val os = if (binary.os == net.adoptium.api.v3.models.OperatingSystem.`alpine-linux`) {
                 OperatingSystem.alpine_linux
             } else {
                 OperatingSystem.valueOf(binary.os.name)
+            }
+
+            val arch = if (binary.architecture == net.adoptium.api.v3.models.Architecture.x32) {
+                Architecture.x86
+            } else {
+                Architecture.valueOf(binary.architecture.name)
             }
 
             val upstreamScmRef = binary.scm_ref?.replace("_adopt", "")
@@ -180,8 +186,8 @@ class ExtractAdoptiumReleases {
                 .replace(".tar.gz", ".tap.zip")
 
             Binary(
+                os,
                 arch,
-                Architecture.valueOf(binary.architecture.name),
                 ImageType.valueOf(binary.image_type.name),
                 if (binary.c_lib != null) CLib.valueOf(binary.c_lib!!.name) else null,
                 JvmImpl.valueOf(binary.jvm_impl.name),
