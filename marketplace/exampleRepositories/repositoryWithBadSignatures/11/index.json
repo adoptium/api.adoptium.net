@@ -1,6 +1,7 @@
 {
-    "schema_version": "1.0.0",
-    "releases": [
-        "11.0.14+10.json"
-    ]
+  "schema_version": "1.0.0",
+  "indexes": [],
+  "releases": [
+    "jdk_11_0_14_9.json"
+  ]
 }

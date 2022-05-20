@@ -1,594 +1,234 @@
 {
-    "releases": [
+  "releases": [
+    {
+      "release_link": "https://github.com/adoptium/temurin17-binaries/releases/tag/jdk-17%2B35",
+      "release_name": "jdk-17+35",
+      "last_updated_timestamp": "2021-09-22T07:47:20Z",
+      "binaries": [
         {
-            "release_link": "https://github.com/adoptium/temurin17-binaries/releases/tag/jdk-17%2B35",
-            "release_name": "jdk-17+35",
-            "last_updated_timestamp": "2021-09-22T07:47:20Z",
-            "binaries": [
-                {
-                    "os": "linux",
-                    "architecture": "x64",
-                    "image_type": "debugimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-debugimage_x64_linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_x64_linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "3ab5b4f5c121ff3098bad1939cddb12e746eed4a90043e72d9b1459e4518ef96",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_x64_linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-22T07:47:36Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-debugimage_x64_linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "mac",
-                    "architecture": "x64",
-                    "image_type": "debugimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-debugimage_x64_mac_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_x64_mac_hotspot_17_35.tar.gz",
-                        "sha265sum": "1c3ebf45e62f0e031ae3177296bc6c49c8e9cc7f75defd9587cb2e4a54b2e3c8",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_x64_mac_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-22T07:47:44Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-debugimage_x64_mac_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "windows",
-                    "architecture": "x64",
-                    "image_type": "debugimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-debugimage_x64_windows_hotspot_17_35.zip",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_x64_windows_hotspot_17_35.zip",
-                        "sha265sum": "162001b5e91d81e9605b888c1b99326af170241ed6d78e60119f9dab176abf01",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_x64_windows_hotspot_17_35.zip.sha256.txt"
-                    },
-                    "timestamp": "2021-09-22T07:47:48Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-debugimage_x64_windows_hotspot_17_35.zip/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "linux",
-                    "architecture": "x64",
-                    "image_type": "jdk",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "6f1335d9a7855159f982dac557420397be9aa85f3f7bc84e111d25871c02c0c7",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-22T07:48:03Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "mac",
-                    "architecture": "x64",
-                    "image_type": "jdk",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-jdk_x64_mac_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_mac_hotspot_17_35.tar.gz",
-                        "sha265sum": "e9de8b1b62780fe99270a5b30f0645d7a91eded60438bcf836a05fa7b93c182f",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_mac_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "installer": [
-                        {
-                            "name": "OpenJDK17-jdk_x64_mac_hotspot_17_35.pkg",
-                            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_mac_hotspot_17_35.pkg",
-                            "sha265sum": "a45c33691f0508a95ff291c88713088e060376e7b4e9cac03d083225b68d8f78",
-                            "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_mac_hotspot_17_35.pkg.sha256.txt"
-                        }
-                    ],
-                    "timestamp": "2021-09-22T07:48:28Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-jdk_x64_mac_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "windows",
-                    "architecture": "x64",
-                    "image_type": "jdk",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-jdk_x64_windows_hotspot_17_35.zip",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_windows_hotspot_17_35.zip",
-                        "sha265sum": "79e1c949f8301eb0a5979bc245829a4419507d7f6ac567c870e5986daf48c1db",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_windows_hotspot_17_35.zip.sha256.txt"
-                    },
-                    "installer": [
-                        {
-                            "name": "OpenJDK17-jdk_x64_windows_hotspot_17_35.msi",
-                            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_windows_hotspot_17_35.msi",
-                            "sha265sum": "4a0350a9e3e0cf3bba9a57890bb0b223b7c47883169730f122100fc31d61d486",
-                            "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_windows_hotspot_17_35.msi.sha256.txt"
-                        }
-                    ],
-                    "timestamp": "2021-09-22T07:48:49Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-jdk_x64_windows_hotspot_17_35.zip/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "linux",
-                    "architecture": "x64",
-                    "image_type": "testimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-testimage_x64_linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_x64_linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "44cb65e610379849bcc180c85d26e9c31e17bb24423c8e5213b2d896b44d0631",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_x64_linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-22T07:48:56Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-testimage_x64_linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "mac",
-                    "architecture": "x64",
-                    "image_type": "testimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-testimage_x64_mac_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_x64_mac_hotspot_17_35.tar.gz",
-                        "sha265sum": "f1c4c439af0874350b82117d03d2332387929728afab9c46d996598271bf373e",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_x64_mac_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-22T07:48:59Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-testimage_x64_mac_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "windows",
-                    "architecture": "x64",
-                    "image_type": "testimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-testimage_x64_windows_hotspot_17_35.zip",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_x64_windows_hotspot_17_35.zip",
-                        "sha265sum": "39c5fdb48fb265d652648324b2be9a6e993fdf3ee11a5ccc162afd3064e53425",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_x64_windows_hotspot_17_35.zip.sha256.txt"
-                    },
-                    "timestamp": "2021-09-22T07:49:01Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-testimage_x64_windows_hotspot_17_35.zip/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "linux",
-                    "architecture": "aarch64",
-                    "image_type": "debugimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-debugimage_aarch64_linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_aarch64_linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "4b029d4fef4621ae0d9ac5a8d85456b66ddb1f1144c2f90b3dc51c4f54908c81",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_aarch64_linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-22T13:23:50Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-debugimage_aarch64_linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "linux",
-                    "architecture": "aarch64",
-                    "image_type": "jdk",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-jdk_aarch64_linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_aarch64_linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "e08e6d8c84da28a2c49ccd511f8835c329fbdd8e4faff662c58fa24cca74021d",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_aarch64_linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-22T13:24:02Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-jdk_aarch64_linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "linux",
-                    "architecture": "aarch64",
-                    "image_type": "testimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-testimage_aarch64_linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_aarch64_linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "edaa090755789ef849963e6fa8b420a877df64f2d33af45d2da650e95f6766a7",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_aarch64_linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-22T13:24:08Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-testimage_aarch64_linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "linux",
-                    "architecture": "s390x",
-                    "image_type": "debugimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-debugimage_s390x_linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_s390x_linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "bad29562778817794e5c021f7d1992fe2047fc073c27438c06937773dacf9c71",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_s390x_linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-23T09:29:24Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-debugimage_s390x_linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "linux",
-                    "architecture": "s390x",
-                    "image_type": "jdk",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-jdk_s390x_linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_s390x_linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "7a48159fca62b7f6afd58fb2e9712a3ef1494950212d4631e25598b45d9599b1",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_s390x_linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-23T09:29:39Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-jdk_s390x_linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "linux",
-                    "architecture": "s390x",
-                    "image_type": "testimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-testimage_s390x_linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_s390x_linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "84c4a8c99d46ee45438c6f553a579e1dd623dc03bebadf4962e4bae0cd187c91",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_s390x_linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-23T09:29:47Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-testimage_s390x_linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "mac",
-                    "architecture": "aarch64",
-                    "image_type": "debugimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-debugimage_aarch64_mac_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_aarch64_mac_hotspot_17_35.tar.gz",
-                        "sha265sum": "ac056fd4937293da8db50f50b704f82bcd806ff7b43595c12fcc3bf2119d647d",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_aarch64_mac_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-23T14:31:13Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-debugimage_aarch64_mac_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "mac",
-                    "architecture": "aarch64",
-                    "image_type": "jdk",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-jdk_aarch64_mac_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_aarch64_mac_hotspot_17_35.tar.gz",
-                        "sha265sum": "910bb88543211c63298e5b49f7144ac4463f1d903926e94a89bfbf10163bbba1",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_aarch64_mac_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "installer": [
-                        {
-                            "name": "OpenJDK17-jdk_aarch64_mac_hotspot_17_35.pkg",
-                            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_aarch64_mac_hotspot_17_35.pkg",
-                            "sha265sum": "b0f779a7acf252a0838d9b4a423726d80cd6930713cfc517d2296fa36e4c95d4",
-                            "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_aarch64_mac_hotspot_17_35.pkg.sha256.txt"
-                        }
-                    ],
-                    "timestamp": "2021-09-23T14:31:33Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-jdk_aarch64_mac_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "mac",
-                    "architecture": "aarch64",
-                    "image_type": "testimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-testimage_aarch64_mac_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_aarch64_mac_hotspot_17_35.tar.gz",
-                        "sha265sum": "4e8682a1128292697421e73ab56311ddcdf47c65485e3a16bd0261d05fb6324a",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_aarch64_mac_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-23T14:31:36Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-testimage_aarch64_mac_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "linux",
-                    "architecture": "ppc64le",
-                    "image_type": "debugimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-debugimage_ppc64le_linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_ppc64le_linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "c5881a8ba8be62dd4a5c86642229699b6e5da609fc7d3757abea8b6fd937d55b",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_ppc64le_linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-23T15:06:50Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-debugimage_ppc64le_linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "linux",
-                    "architecture": "ppc64le",
-                    "image_type": "jdk",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-jdk_ppc64le_linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_ppc64le_linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "2e58f76fd332b73f323e47c73d0a81b76739debab067e7a32ed6abd73fd64c57",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_ppc64le_linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-23T15:07:01Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-jdk_ppc64le_linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "linux",
-                    "architecture": "ppc64le",
-                    "image_type": "testimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-testimage_ppc64le_linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_ppc64le_linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "efa885702b0b1921c35856d7c1175ca6205cd60249c8bcd60e7d73ca3741f2fa",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_ppc64le_linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-23T15:07:06Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-testimage_ppc64le_linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "linux",
-                    "architecture": "arm",
-                    "image_type": "debugimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-debugimage_arm_linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_arm_linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "b698cc92b5b80cfeda6e3ef8e1eb99de9316b730afd2dbe24ae365136166225a",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_arm_linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-24T12:49:54Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-debugimage_arm_linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "linux",
-                    "architecture": "arm",
-                    "image_type": "jdk",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-jdk_arm_linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_arm_linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "77ef6aa6f665373e212097b937c22d0cad2add90e439ec0e90534a7ff0e8a6e9",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_arm_linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-24T12:50:07Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-jdk_arm_linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "linux",
-                    "architecture": "arm",
-                    "image_type": "testimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-testimage_arm_linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_arm_linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "a93c1d01d8d0919236f801215e1e62a666c14cb73eaf7112e43bf8baaec28cbe",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_arm_linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-24T12:50:13Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-testimage_arm_linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "windows",
-                    "architecture": "x86",
-                    "image_type": "debugimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-debugimage_x86-32_windows_hotspot_17_35.zip",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_x86-32_windows_hotspot_17_35.zip",
-                        "sha265sum": "50f4069860399c5a9b33e35c5e69679457a3329f4b3531da683400d33307fe96",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_x86-32_windows_hotspot_17_35.zip.sha256.txt"
-                    },
-                    "timestamp": "2021-09-24T13:30:33Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-debugimage_x86-32_windows_hotspot_17_35.zip/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "windows",
-                    "architecture": "x86",
-                    "image_type": "jdk",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-jdk_x86-32_windows_hotspot_17_35.zip",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x86-32_windows_hotspot_17_35.zip",
-                        "sha265sum": "fa867167917a4696be611e63b77a334ad6aad38fc43d22285cbce1baaf77906e",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x86-32_windows_hotspot_17_35.zip.sha256.txt"
-                    },
-                    "installer": [
-                        {
-                            "name": "OpenJDK17-jdk_x86-32_windows_hotspot_17_35.msi",
-                            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x86-32_windows_hotspot_17_35.msi",
-                            "sha265sum": "3a88572a0f0f48b754890383f500ba6e932215d973ac3fe2610e68edd09722a2",
-                            "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x86-32_windows_hotspot_17_35.msi.sha256.txt"
-                        }
-                    ],
-                    "timestamp": "2021-09-24T13:30:51Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-jdk_x86-32_windows_hotspot_17_35.zip/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "windows",
-                    "architecture": "x86",
-                    "image_type": "testimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-testimage_x86-32_windows_hotspot_17_35.zip",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_x86-32_windows_hotspot_17_35.zip",
-                        "sha265sum": "d31a973cc9b54595e946c41a1a268969adfad4289624185a188b1e3f66653f94",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_x86-32_windows_hotspot_17_35.zip.sha256.txt"
-                    },
-                    "timestamp": "2021-09-24T13:30:54Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-testimage_x86-32_windows_hotspot_17_35.zip/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "alpine_linux",
-                    "architecture": "x64",
-                    "image_type": "debugimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-debugimage_x64_alpine-linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_x64_alpine-linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "43addb8b3d93da2cfba452a8d9defa7f0e75379fcf3c2ddba96c600b1b90f9b2",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-debugimage_x64_alpine-linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-24T13:34:15Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-debugimage_x64_alpine-linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "alpine_linux",
-                    "architecture": "x64",
-                    "image_type": "jdk",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-jdk_x64_alpine-linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_alpine-linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "03321e009cc5955d7dbabc9219434d63a5b390c223c8ecc303eb1741eb9036ef",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_alpine-linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-24T13:34:29Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-jdk_x64_alpine-linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                },
-                {
-                    "os": "alpine_linux",
-                    "architecture": "x64",
-                    "image_type": "testimage",
-                    "jvm_impl": "hotspot",
-                    "package": {
-                        "name": "OpenJDK17-testimage_x64_alpine-linux_hotspot_17_35.tar.gz",
-                        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_x64_alpine-linux_hotspot_17_35.tar.gz",
-                        "sha265sum": "10426aaf2b3971c25b54696a8e530a7d064ed6a0be8410c48e7bf78dfa3b2fc3",
-                        "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-testimage_x64_alpine-linux_hotspot_17_35.tar.gz.sha256.txt"
-                    },
-                    "timestamp": "2021-09-24T13:34:37Z",
-                    "scm_ref": "jdk-17+35_adopt",
-                    "openjdk_scm_ref": "unknown",
-                    "distribution": "temurin",
-                    "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17-testimage_x64_alpine-linux_hotspot_17_35.tar.gz/aqavit_affidavit.html",
-                    "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-                }
-            ],
-            "vendor": "adoptium",
-            "openjdk_version_data": {
-                "major": 17,
-                "minor": 0,
-                "security": 0,
-                "patch": null,
-                "pre": null,
-                "build": 35,
-                "optional": null,
-                "openjdk_version": "17+35"
+          "os": "linux",
+          "architecture": "x64",
+          "image_type": "jdk",
+          "jvm_impl": "hotspot",
+          "package": {
+            "name": "OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz",
+            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz",
+            "sha265sum": "6f1335d9a7855159f982dac557420397be9aa85f3f7bc84e111d25871c02c0c7",
+            "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz.sha256.txt"
+          },
+          "timestamp": "2021-09-22T07:48:03Z",
+          "scm_ref": "jdk-17+35_adopt",
+          "openjdk_scm_ref": "jdk-17+35",
+          "distribution": "temurin",
+          "aqavit_results_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_linux_hotspot_17_35.tap.zip",
+          "tck_affidavit_link": "https://adoptium.net/temurin/tck-affidavit/"
+        },
+        {
+          "os": "mac",
+          "architecture": "x64",
+          "image_type": "jdk",
+          "jvm_impl": "hotspot",
+          "package": {
+            "name": "OpenJDK17-jdk_x64_mac_hotspot_17_35.tar.gz",
+            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_mac_hotspot_17_35.tar.gz",
+            "sha265sum": "e9de8b1b62780fe99270a5b30f0645d7a91eded60438bcf836a05fa7b93c182f",
+            "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_mac_hotspot_17_35.tar.gz.sha256.txt"
+          },
+          "installer": [
+            {
+              "name": "OpenJDK17-jdk_x64_mac_hotspot_17_35.pkg",
+              "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_mac_hotspot_17_35.pkg",
+              "sha265sum": "a45c33691f0508a95ff291c88713088e060376e7b4e9cac03d083225b68d8f78",
+              "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_mac_hotspot_17_35.pkg.sha256.txt"
             }
+          ],
+          "timestamp": "2021-09-22T07:48:28Z",
+          "scm_ref": "jdk-17+35_adopt",
+          "openjdk_scm_ref": "jdk-17+35",
+          "distribution": "temurin",
+          "aqavit_results_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_mac_hotspot_17_35.tap.zip",
+          "tck_affidavit_link": "https://adoptium.net/temurin/tck-affidavit/"
+        },
+        {
+          "os": "windows",
+          "architecture": "x64",
+          "image_type": "jdk",
+          "jvm_impl": "hotspot",
+          "package": {
+            "name": "OpenJDK17-jdk_x64_windows_hotspot_17_35.zip",
+            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_windows_hotspot_17_35.zip",
+            "sha265sum": "79e1c949f8301eb0a5979bc245829a4419507d7f6ac567c870e5986daf48c1db",
+            "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_windows_hotspot_17_35.zip.sha256.txt"
+          },
+          "installer": [
+            {
+              "name": "OpenJDK17-jdk_x64_windows_hotspot_17_35.msi",
+              "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_windows_hotspot_17_35.msi",
+              "sha265sum": "4a0350a9e3e0cf3bba9a57890bb0b223b7c47883169730f122100fc31d61d486",
+              "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_windows_hotspot_17_35.msi.sha256.txt"
+            }
+          ],
+          "timestamp": "2021-09-22T07:48:49Z",
+          "scm_ref": "jdk-17+35_adopt",
+          "openjdk_scm_ref": "jdk-17+35",
+          "distribution": "temurin",
+          "aqavit_results_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_windows_hotspot_17_35.tap.zip",
+          "tck_affidavit_link": "https://adoptium.net/temurin/tck-affidavit/"
+        },
+        {
+          "os": "linux",
+          "architecture": "aarch64",
+          "image_type": "jdk",
+          "jvm_impl": "hotspot",
+          "package": {
+            "name": "OpenJDK17-jdk_aarch64_linux_hotspot_17_35.tar.gz",
+            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_aarch64_linux_hotspot_17_35.tar.gz",
+            "sha265sum": "e08e6d8c84da28a2c49ccd511f8835c329fbdd8e4faff662c58fa24cca74021d",
+            "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_aarch64_linux_hotspot_17_35.tar.gz.sha256.txt"
+          },
+          "timestamp": "2021-09-22T13:24:02Z",
+          "scm_ref": "jdk-17+35_adopt",
+          "openjdk_scm_ref": "jdk-17+35",
+          "distribution": "temurin",
+          "aqavit_results_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_aarch64_linux_hotspot_17_35.tap.zip",
+          "tck_affidavit_link": "https://adoptium.net/temurin/tck-affidavit/"
+        },
+        {
+          "os": "linux",
+          "architecture": "s390x",
+          "image_type": "jdk",
+          "jvm_impl": "hotspot",
+          "package": {
+            "name": "OpenJDK17-jdk_s390x_linux_hotspot_17_35.tar.gz",
+            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_s390x_linux_hotspot_17_35.tar.gz",
+            "sha265sum": "7a48159fca62b7f6afd58fb2e9712a3ef1494950212d4631e25598b45d9599b1",
+            "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_s390x_linux_hotspot_17_35.tar.gz.sha256.txt"
+          },
+          "timestamp": "2021-09-23T09:29:39Z",
+          "scm_ref": "jdk-17+35_adopt",
+          "openjdk_scm_ref": "jdk-17+35",
+          "distribution": "temurin",
+          "aqavit_results_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_s390x_linux_hotspot_17_35.tap.zip",
+          "tck_affidavit_link": "https://adoptium.net/temurin/tck-affidavit/"
+        },
+        {
+          "os": "mac",
+          "architecture": "aarch64",
+          "image_type": "jdk",
+          "jvm_impl": "hotspot",
+          "package": {
+            "name": "OpenJDK17-jdk_aarch64_mac_hotspot_17_35.tar.gz",
+            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_aarch64_mac_hotspot_17_35.tar.gz",
+            "sha265sum": "910bb88543211c63298e5b49f7144ac4463f1d903926e94a89bfbf10163bbba1",
+            "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_aarch64_mac_hotspot_17_35.tar.gz.sha256.txt"
+          },
+          "installer": [
+            {
+              "name": "OpenJDK17-jdk_aarch64_mac_hotspot_17_35.pkg",
+              "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_aarch64_mac_hotspot_17_35.pkg",
+              "sha265sum": "b0f779a7acf252a0838d9b4a423726d80cd6930713cfc517d2296fa36e4c95d4",
+              "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_aarch64_mac_hotspot_17_35.pkg.sha256.txt"
+            }
+          ],
+          "timestamp": "2021-09-23T14:31:33Z",
+          "scm_ref": "jdk-17+35_adopt",
+          "openjdk_scm_ref": "jdk-17+35",
+          "distribution": "temurin",
+          "aqavit_results_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_aarch64_mac_hotspot_17_35.tap.zip",
+          "tck_affidavit_link": "https://adoptium.net/temurin/tck-affidavit/"
+        },
+        {
+          "os": "linux",
+          "architecture": "ppc64le",
+          "image_type": "jdk",
+          "jvm_impl": "hotspot",
+          "package": {
+            "name": "OpenJDK17-jdk_ppc64le_linux_hotspot_17_35.tar.gz",
+            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_ppc64le_linux_hotspot_17_35.tar.gz",
+            "sha265sum": "2e58f76fd332b73f323e47c73d0a81b76739debab067e7a32ed6abd73fd64c57",
+            "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_ppc64le_linux_hotspot_17_35.tar.gz.sha256.txt"
+          },
+          "timestamp": "2021-09-23T15:07:01Z",
+          "scm_ref": "jdk-17+35_adopt",
+          "openjdk_scm_ref": "jdk-17+35",
+          "distribution": "temurin",
+          "aqavit_results_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_ppc64le_linux_hotspot_17_35.tap.zip",
+          "tck_affidavit_link": "https://adoptium.net/temurin/tck-affidavit/"
+        },
+        {
+          "os": "linux",
+          "architecture": "arm",
+          "image_type": "jdk",
+          "jvm_impl": "hotspot",
+          "package": {
+            "name": "OpenJDK17-jdk_arm_linux_hotspot_17_35.tar.gz",
+            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_arm_linux_hotspot_17_35.tar.gz",
+            "sha265sum": "77ef6aa6f665373e212097b937c22d0cad2add90e439ec0e90534a7ff0e8a6e9",
+            "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_arm_linux_hotspot_17_35.tar.gz.sha256.txt"
+          },
+          "timestamp": "2021-09-24T12:50:07Z",
+          "scm_ref": "jdk-17+35_adopt",
+          "openjdk_scm_ref": "jdk-17+35",
+          "distribution": "temurin",
+          "aqavit_results_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_arm_linux_hotspot_17_35.tap.zip",
+          "tck_affidavit_link": "https://adoptium.net/temurin/tck-affidavit/"
+        },
+        {
+          "os": "windows",
+          "architecture": "x86",
+          "image_type": "jdk",
+          "jvm_impl": "hotspot",
+          "package": {
+            "name": "OpenJDK17-jdk_x86-32_windows_hotspot_17_35.zip",
+            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x86-32_windows_hotspot_17_35.zip",
+            "sha265sum": "fa867167917a4696be611e63b77a334ad6aad38fc43d22285cbce1baaf77906e",
+            "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x86-32_windows_hotspot_17_35.zip.sha256.txt"
+          },
+          "installer": [
+            {
+              "name": "OpenJDK17-jdk_x86-32_windows_hotspot_17_35.msi",
+              "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x86-32_windows_hotspot_17_35.msi",
+              "sha265sum": "3a88572a0f0f48b754890383f500ba6e932215d973ac3fe2610e68edd09722a2",
+              "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x86-32_windows_hotspot_17_35.msi.sha256.txt"
+            }
+          ],
+          "timestamp": "2021-09-24T13:30:51Z",
+          "scm_ref": "jdk-17+35_adopt",
+          "openjdk_scm_ref": "jdk-17+35",
+          "distribution": "temurin",
+          "aqavit_results_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x86-32_windows_hotspot_17_35.tap.zip",
+          "tck_affidavit_link": "https://adoptium.net/temurin/tck-affidavit/"
+        },
+        {
+          "os": "alpine_linux",
+          "architecture": "x64",
+          "image_type": "jdk",
+          "jvm_impl": "hotspot",
+          "package": {
+            "name": "OpenJDK17-jdk_x64_alpine-linux_hotspot_17_35.tar.gz",
+            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_alpine-linux_hotspot_17_35.tar.gz",
+            "sha265sum": "03321e009cc5955d7dbabc9219434d63a5b390c223c8ecc303eb1741eb9036ef",
+            "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_alpine-linux_hotspot_17_35.tar.gz.sha256.txt"
+          },
+          "timestamp": "2021-09-24T13:34:29Z",
+          "scm_ref": "jdk-17+35_adopt",
+          "openjdk_scm_ref": "jdk-17+35",
+          "distribution": "temurin",
+          "aqavit_results_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/OpenJDK17-jdk_x64_alpine-linux_hotspot_17_35.tap.zip",
+          "tck_affidavit_link": "https://adoptium.net/temurin/tck-affidavit/"
         }
-    ]
+      ],
+      "vendor": "adoptium",
+      "openjdk_version_data": {
+        "major": 17,
+        "minor": 0,
+        "security": 0,
+        "patch": null,
+        "pre": null,
+        "build": 35,
+        "optional": null,
+        "openjdk_version": "17+35"
+      }
+    }
+  ]
 }
