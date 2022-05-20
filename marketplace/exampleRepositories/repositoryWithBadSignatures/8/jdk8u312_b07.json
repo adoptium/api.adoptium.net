@@ -1,5 +1,5 @@
 {
-  "releases": [
+  "releases": [ 
     {
       "release_link": "https://github.com/adoptium/temurin8-binaries/releases/tag/jdk8u312-b07",
       "release_name": "jdk8u312-b07",

@@ -28,7 +28,7 @@ object SignTestAssets {
     //Files with intentionally bad signatures...dont sign them
     val BAD_SIGNATURES_TO_IGNORE = listOf(
         "repositoryWithBadSignatures/11/index.json",
-        "repositoryWithBadSignatures/8/1.8.0_312-b07.json"
+        "repositoryWithBadSignatures/8/jdk8u312_b07.json"
     )
     private val TEST_KEY: PrivateKey?
 

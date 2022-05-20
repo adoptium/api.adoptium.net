@@ -1,61 +1,39 @@
 {
   "releases": [
     {
-      "release_link": "https://github.com/adoptium/temurin17-binaries/releases/tag/jdk-17.0.1%2B12",
-      "release_name": "jdk-17.0.1+12",
-      "last_updated_timestamp": "2021-10-27T13:36:51Z",
+      "release_link": "https://github.com/adoptium/temurin8-binaries/releases/tag/jdk8u302-b08",
+      "release_name": "jdk8u302-b08",
+      "last_updated_timestamp": "2021-07-29T19:22:38Z",
       "binaries": [
         {
           "os": "linux",
-          "architecture": "aarch64",
-          "image_type": "debugimage",
-          "jvm_impl": "hotspot",
-          "package": {
-            "name": "OpenJDK17U-debugimage_aarch64_linux_hotspot_17.0.1_12.tar.gz",
-            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-debugimage_aarch64_linux_hotspot_17.0.1_12.tar.gz",
-            "sha265sum": "635aafa8b18ef6540a42ef7398a22a49ca4e068fa7b19598b0cf85899a74d717",
-            "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-debugimage_aarch64_linux_hotspot_17.0.1_12.tar.gz.sha256.txt"
-          },
-          "timestamp": "2021-10-27T13:37:00Z",
-          "scm_ref": "jdk-17.0.1+12_adopt",
-          "openjdk_scm_ref": "unknown",
-          "distribution": "temurin",
-          "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17U-debugimage_aarch64_linux_hotspot_17.0.1_12.tar.gz/aqavit_affidavit.html",
-          "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
-        },
-        {
-          "os": "linux",
           "architecture": "x64",
-          "image_type": "debugimage",
+          "image_type": "jdk",
           "jvm_impl": "hotspot",
           "package": {
-            "name": "OpenJDK17U-debugimage_x64_linux_hotspot_17.0.1_12.tar.gz",
-            "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-debugimage_x64_linux_hotspot_17.0.1_12.tar.gz",
-            "sha265sum": "b2828e96e4cec96b7d51a21c673dfa0bf76f10704148f27e5872681b79720ee4",
-            "sha256sum_link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-debugimage_x64_linux_hotspot_17.0.1_12.tar.gz.sha256.txt"
+            "name": "OpenJDK8U-jdk_x64_linux_hotspot_8u302b08.tar.gz",
+            "link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u302-b08/OpenJDK8U-jdk_x64_linux_hotspot_8u302b08.tar.gz",
+            "sha265sum": "cc13f274becf9dd5517b6be583632819dfd4dd81e524b5c1b4f406bdaf0e063a",
+            "sha256sum_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u302-b08/OpenJDK8U-jdk_x64_linux_hotspot_8u302b08.tar.gz.sha256.txt"
           },
-          "timestamp": "2021-10-27T13:37:12Z",
-          "scm_ref": "jdk-17.0.1+12_adopt",
-          "openjdk_scm_ref": "unknown",
+          "timestamp": "2021-07-29T19:22:53Z",
+          "scm_ref": "jdk8u302-b08",
+          "openjdk_scm_ref": "jdk8u302-b08",
           "distribution": "temurin",
-          "aqavit_results_link": "https://adoptium.net/aqavit/OpenJDK17U-debugimage_x64_linux_hotspot_17.0.1_12.tar.gz/aqavit_affidavit.html",
-          "tck_affidavit_link": "https://adoptium.net/tck_affidavit.html"
+          "aqavit_results_link": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u302-b08/OpenJDK8U-jdk_x64_linux_hotspot_8u302b08.tap.zip",
+          "tck_affidavit_link": "https://adoptium.net/temurin/tck-affidavit/"
         }
       ],
       "vendor": "adoptium",
       "openjdk_version_data": {
-        "major": 17,
+        "major": 8,
         "minor": 0,
-        "security": 1,
+        "security": 302,
         "patch": null,
         "pre": null,
-        "build": 12,
+        "build": 8,
         "optional": null,
-        "openjdk_version": "17.0.1+12"
-      },
-      "source": {
-        "name": "OpenJDK17U-sources_17.0.1_12.tar.gz",
-        "link": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.1%2B12/OpenJDK17U-sources_17.0.1_12.tar.gz"
+        "openjdk_version": "1.8.0_302-b08"
       }
     }
   ]
