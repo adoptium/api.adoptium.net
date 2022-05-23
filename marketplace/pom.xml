@@ -21,6 +21,7 @@
         <module>adoptium-marketplace-client</module>
         <module>adoptium-marketplace-utils</module>
         <module>adoptium-marketplace-server</module>
+        <module>adoptium-marketplace-vendor-validation</module>
     </modules>
 
     <dependencyManagement>
