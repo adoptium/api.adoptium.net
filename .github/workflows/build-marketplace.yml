@@ -20,7 +20,7 @@ jobs:
         java-version: '17'
         java-package: jdk
         architecture: x64
-        distribution: 'adopt'
+        distribution: 'temurin'
 
     - uses: actions/checkout@v3
 
