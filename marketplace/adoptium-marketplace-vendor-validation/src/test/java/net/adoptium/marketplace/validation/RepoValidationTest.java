@@ -10,6 +10,10 @@ public class RepoValidationTest {
         try {
             ReleaseList releaseList = client.readRepositoryData();
 
+            if (releaseList == null || releaseList.getReleases().size() == 0) {
+                System.err.println("Validation failed, no releases found");
+                return false;
+            }
             System.out.println("Found: " + releaseList.getReleases().size() + " releases");
             System.out.println("REPO VALID");
 
