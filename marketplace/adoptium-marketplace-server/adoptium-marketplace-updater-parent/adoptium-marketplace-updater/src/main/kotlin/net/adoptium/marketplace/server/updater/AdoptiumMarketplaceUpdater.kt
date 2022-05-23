@@ -67,7 +67,7 @@ class AdoptiumMarketplaceUpdater @Inject constructor(
 
     init {
         clients = buildClientMap()
-        UPDATE_PERIOD_IN_MIN = Integer.parseInt(System.getProperty("UPDATE_PERIOD_IN_MIN", "60")).toLong()
+        UPDATE_PERIOD_IN_MIN = Integer.parseInt(System.getProperty("UPDATE_PERIOD_IN_MIN", "5")).toLong()
     }
 
     private fun buildClientMap(): Map<Vendor, MarketplaceClient> {
