@@ -8,13 +8,17 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.URI;
+import java.nio.file.Files;
 
 public class MarketplaceHttpClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(MarketplaceHttpClient.class.getName());
 
     private final HttpClient httpClient;
     private final SignatureVerifier signatureVerifier;
+
+    private final boolean ALLOW_FILE_BASED_URL = System.getenv().containsKey("ALLOW_FILE_BASED_URL");
 
     public MarketplaceHttpClient(HttpClient httpClient, SignatureVerifier signatureVerifier) {
         this.httpClient = httpClient;
@@ -41,9 +45,14 @@ public class MarketplaceHttpClient {
 
     private byte[] getRequest(String url) throws FailedToPullDataException {
         try {
-            ContentResponse response = httpClient.GET(URI.create(url));
-            if (response.getStatus() == HttpStatus.OK_200) {
-                return response.getContent();
+            if (ALLOW_FILE_BASED_URL && url.startsWith("file:")) {
+                File file = new File(URI.create(url));
+                return Files.readAllBytes(file.toPath());
+            } else {
+                ContentResponse response = httpClient.GET(URI.create(url));
+                if (response.getStatus() == HttpStatus.OK_200) {
+                    return response.getContent();
+                }
             }
         } catch (Exception e) {
             LOGGER.error("Failed to get url", e);

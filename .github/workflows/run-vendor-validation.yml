@@ -1,0 +1,35 @@
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Marketplace build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          java-package: jdk
+          architecture: x64
+          distribution: 'temurin'
+
+      - uses: actions/checkout@v3
+
+      - name: Build api
+        run: ./mvnw --batch-mode clean install -Padoptium -DskipTests
+
+      - name: Build app
+        run: |
+          cd marketplace/
+          ../mvnw --batch-mode clean install  -DskipTests
+
+      - name: Validate vendors
+        run: |
+          cd marketplace/adoptium-marketplace-vendor-validation
+          VALIDATE_REPO=true ../../mvnw --batch-mode clean test
