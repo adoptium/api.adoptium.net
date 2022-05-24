@@ -3,7 +3,6 @@ package net.adoptium.marketplace.client;
 import net.adoptium.marketplace.client.signature.SignatureType;
 import net.adoptium.marketplace.schema.ReleaseList;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
