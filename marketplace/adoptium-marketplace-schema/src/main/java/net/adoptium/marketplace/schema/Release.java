@@ -130,4 +130,17 @@ public class Release {
     public String getVendorPublicKeyLink() {
         return vendorPublicKeyLink;
     }
+
+    @Override
+    public String toString() {
+        return "Release{" +
+            "releaseLink='" + releaseLink + '\'' +
+            ", releaseName='" + releaseName + '\'' +
+            ", lastUpdatedTimestamp=" + lastUpdatedTimestamp +
+            ", vendor=" + vendor +
+            ", openjdkVersionData=" + openjdkVersionData +
+            ", source=" + source +
+            ", vendorPublicKeyLink='" + vendorPublicKeyLink + '\'' +
+            '}';
+    }
 }

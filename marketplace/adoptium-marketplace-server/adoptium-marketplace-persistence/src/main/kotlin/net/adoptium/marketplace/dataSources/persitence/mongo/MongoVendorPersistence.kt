@@ -1,15 +1,16 @@
 package net.adoptium.marketplace.dataSources.persitence.mongo
 
+import com.mongodb.client.model.CountOptions
 import com.mongodb.client.model.UpdateOptions
 import kotlinx.coroutines.runBlocking
 import net.adoptium.marketplace.dataSources.ReleaseInfo
 import net.adoptium.marketplace.dataSources.TimeSource
 import net.adoptium.marketplace.dataSources.persitence.VendorPersistence
+import net.adoptium.marketplace.schema.OpenjdkVersionData
 import net.adoptium.marketplace.schema.Release
 import net.adoptium.marketplace.schema.ReleaseList
 import net.adoptium.marketplace.schema.ReleaseUpdateInfo
 import net.adoptium.marketplace.schema.Vendor
-import net.adoptium.marketplace.schema.OpenjdkVersionData
 import org.bson.BsonBoolean
 import org.bson.BsonDateTime
 import org.bson.BsonDocument
@@ -68,6 +69,13 @@ open class MongoVendorPersistence constructor(
             .forEach { release ->
 
                 val matcher = releaseMatcher(release)
+
+                val docCount = releasesCollection
+                    .countDocuments(matcher, CountOptions())
+
+                if (docCount > 1) {
+                    LOGGER.warn("MULTIPLE DOCUMENTS MATCH $vendor ${release.releaseName} ${release.releaseLink} ${release.openjdkVersionData}. This might cause issues.")
+                }
 
                 val result = releasesCollection
                     .updateOne(matcher, release, UpdateOptions().upsert(true))
@@ -156,13 +164,18 @@ open class MongoVendorPersistence constructor(
     private fun releaseVersionDbEntryMatcher() = Document("tip_version", BsonDocument("\$exists", BsonBoolean(true)))
 
     private fun releaseMatcher(release: Release): BsonDocument {
-        return BsonDocument(
-            listOf(
-                BsonElement("release_name", BsonString(release.releaseName)),
-                BsonElement("release_link", BsonString(release.releaseLink)),
-                BsonElement("vendor", BsonString(release.vendor.name))
-            )
-                .plus(versionMatcher(release.openjdkVersionData))
+
+        var matcher = listOf(
+            BsonElement("release_name", BsonString(release.releaseName)),
+            BsonElement("vendor", BsonString(release.vendor.name))
+        )
+
+        if (release.releaseLink != null) {
+            matcher = matcher.plus(BsonElement("release_link", BsonString(release.releaseLink)));
+        }
+
+        return BsonDocument(matcher
+            .plus(versionMatcher(release.openjdkVersionData))
         )
     }
 

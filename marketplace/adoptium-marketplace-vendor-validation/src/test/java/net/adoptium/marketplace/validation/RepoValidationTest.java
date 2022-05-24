@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 public class RepoValidationTest {
 
@@ -38,6 +40,8 @@ public class RepoValidationTest {
             System.out.println("Found: " + releaseList.getReleases().size() + " releases");
             System.out.println("REPO VALID");
 
+            assertCompositeKeysAreUniq(releaseList);
+
             return true;
         } catch (Exception e) {
             System.err.println("Validation failed");
@@ -45,5 +49,20 @@ public class RepoValidationTest {
         }
 
         return false;
+    }
+
+    private static void assertCompositeKeysAreUniq(ReleaseList releaseList) {
+        Set<String> keys = new HashSet<>();
+        releaseList
+            .getReleases()
+            .stream()
+            .map(it -> it.getReleaseName() + ":" + it.getReleaseLink() + ":" + it.getOpenjdkVersionData())
+            .forEach(key -> {
+                if (keys.contains(key)) {
+                    Assertions.fail("Multiple releases share the same name, link and version");
+                }
+                keys.add(key);
+            });
+
     }
 }
