@@ -61,6 +61,9 @@ public class Rsa256SignatureVerify implements SignatureVerifier {
     }
 
     protected byte[] extractSignature(byte[] signature) {
+        // remove newlines
+        signature = new String(signature).replace("\n", "").getBytes();
+
         return Base64.getDecoder().decode(signature);
     }
 
