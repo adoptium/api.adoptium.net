@@ -152,4 +152,18 @@ public class OpenjdkVersionData implements Comparable<OpenjdkVersionData> {
     public boolean isLts() {
         return major == 8 || ((major - 11) % 6) == 0;
     }
+
+    @Override
+    public String toString() {
+        return "OpenjdkVersionData{" +
+            "major=" + major +
+            ", minor=" + minor +
+            ", security=" + security +
+            ", patch=" + patch +
+            ", build=" + build +
+            ", pre=" + pre +
+            ", optional=" + optional +
+            ", openjdk_version='" + openjdk_version + '\'' +
+            '}';
+    }
 }
