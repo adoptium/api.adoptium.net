@@ -34,10 +34,11 @@ public class MarketplaceHttpClient {
 
     public byte[] pullAndVerify(String url) throws FailedToPullDataException, FailedToValidateSignatureException {
         byte[] body = getRequest(url);
-        byte[] signature = getRequest(url + "." + signatureVerifier.signatureSuffix());
+        String signatureUrl = url + "." + signatureVerifier.signatureSuffix();
+        byte[] signature = getRequest(signatureUrl);
 
         if (!signatureVerifier.verifySignature(body, signature)) {
-            throw new FailedToValidateSignatureException();
+            throw new FailedToValidateSignatureException("Failed to verify signature for " + url + " " + signatureUrl);
         }
 
         return body;
