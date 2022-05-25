@@ -1,21 +1,25 @@
 import com.fasterxml.jackson.module.kotlin.readValue
-import net.adoptium.api.v3.JsonMapper
 import net.adoptium.api.v3.models.Release
-import net.adoptium.api.v3.parser.VersionParser
-import net.adoptium.marketplace.client.MarketplaceMapper
-import net.adoptium.marketplace.schema.*
-import org.eclipse.jetty.client.HttpClient
+import net.adoptium.marketplace.schema.Architecture
+import net.adoptium.marketplace.schema.Binary
+import net.adoptium.marketplace.schema.CLib
+import net.adoptium.marketplace.schema.Distribution
+import net.adoptium.marketplace.schema.ImageType
+import net.adoptium.marketplace.schema.Installer
+import net.adoptium.marketplace.schema.JvmImpl
+import net.adoptium.marketplace.schema.OpenjdkVersionData
+import net.adoptium.marketplace.schema.OperatingSystem
+import net.adoptium.marketplace.schema.Package
+import net.adoptium.marketplace.schema.ReleaseList
+import net.adoptium.marketplace.schema.SourcePackage
+import net.adoptium.marketplace.schema.Vendor
 import org.junit.jupiter.api.Test
-import java.io.File
-import java.io.FileWriter
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.*
 
-class ExtractAdoptiumReleases {
+class ExtractIbmReleases {
 
     companion object {
-        val VERSIONS = listOf(8, 11, 17)
+        val VERSIONS = listOf(11, 17)
     }
 
     //@Disabled("For manual execution")
@@ -23,20 +27,20 @@ class ExtractAdoptiumReleases {
     fun buildRepo() {
         ExtractReleases().buildRepo(
             VERSIONS,
-            { version -> "https://api.adoptium.net/v3/assets/feature_releases/${version}/ga?page_size=50&vendor=eclipse" },
+            { version -> "https://ibm.com/semeru-runtimes/api/v3/assets/feature_releases/${version}/ga?vendor=ibm&page_size=100" },
             { release -> toMarketplaceRelease(release, toMarketplaceBinaries(release)) },
-            "/tmp/adoptiumRepo",
-            true
+            "/tmp/ibmRepo",
+            false
         )
     }
 
     private fun toMarketplaceRelease(release: Release, binaries: List<Binary>): net.adoptium.marketplace.schema.Release {
-        return Release(
+        return net.adoptium.marketplace.schema.Release(
             release.release_link,
             release.release_name,
             Date.from(release.timestamp.dateTime.toInstant()),
             binaries,
-            Vendor.adoptium,
+            Vendor.ibm, // ENSURE YOU DO NOT RELY ON release.vendor IT IS WRONG
             OpenjdkVersionData(
                 release.version_data.major,
                 release.version_data.minor,
@@ -60,27 +64,17 @@ class ExtractAdoptiumReleases {
     private fun toMarketplaceBinaries(release: Release) = release
         .binaries
         .map { binary ->
-            val os = if (binary.os == net.adoptium.api.v3.models.OperatingSystem.`alpine-linux`) {
+            val arch = if (binary.os == net.adoptium.api.v3.models.OperatingSystem.`alpine-linux`) {
                 OperatingSystem.alpine_linux
             } else {
                 OperatingSystem.valueOf(binary.os.name)
             }
 
-            val arch = if (binary.architecture == net.adoptium.api.v3.models.Architecture.x32) {
-                Architecture.x86
-            } else {
-                Architecture.valueOf(binary.architecture.name)
-            }
-
-            val upstreamScmRef = binary.scm_ref?.replace("_adopt", "")
-
-            val aqaLink = binary.`package`.link
-                .replace(".zip", ".tap.zip")
-                .replace(".tar.gz", ".tap.zip")
+            val aqaLink = "<Insert AQA link here>"
 
             Binary(
-                os,
                 arch,
+                Architecture.valueOf(binary.architecture.name),
                 ImageType.valueOf(binary.image_type.name),
                 if (binary.c_lib != null) CLib.valueOf(binary.c_lib!!.name) else null,
                 JvmImpl.valueOf(binary.jvm_impl.name),
@@ -104,11 +98,12 @@ class ExtractAdoptiumReleases {
                 } else null,
                 Date.from(binary.updated_at.dateTime.toInstant()),
                 binary.scm_ref,
-                upstreamScmRef,
-                Distribution.temurin,
+                binary.scm_ref,
+                Distribution.semeru,
                 aqaLink,
-                "https://adoptium.net/temurin/tck-affidavit/"
+                "<Insert TCK Affidavit Here>"
             )
         }
         .toList()
+
 }
