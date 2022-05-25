@@ -1,6 +1,8 @@
 import com.fasterxml.jackson.module.kotlin.readValue
 import net.adoptium.api.v3.JsonMapper
 import net.adoptium.api.v3.models.Release
+import net.adoptium.api.v3.models.VersionData
+import net.adoptium.api.v3.parser.VersionParser
 import net.adoptium.marketplace.client.MarketplaceMapper
 import net.adoptium.marketplace.schema.*
 import org.eclipse.jetty.client.HttpClient
@@ -113,6 +115,22 @@ class ExtractAdoptiumReleases {
         return marketplaceReleases
     }
 
+    private fun filterValidVersions(release: Release): Boolean {
+        val validVersion = when (release.version_data.major) {
+            11 -> {
+                VersionParser.parse("11.0.14.1+1")
+            }
+            17 -> {
+                VersionParser.parse("17.0.2+8")
+            }
+            else -> {
+                VersionParser.parse("jdk8u322-b06")
+            }
+        }
+
+        return release.version_data >= validVersion
+    }
+
     private fun getAdoptiumReleases(httpClient: HttpClient, version: Int): List<Release> {
         // Possibly might need to check next page...one day
         val response = httpClient.GET("https://api.adoptium.net/v3/assets/feature_releases/${version}/ga?page_size=50&vendor=eclipse")
@@ -128,6 +146,7 @@ class ExtractAdoptiumReleases {
 
                 Release(release, filteredBinaries.toTypedArray())
             }
+            .filter { filterValidVersions(it) }
     }
 
     private fun toFileName(it: net.adoptium.marketplace.schema.Release) = it
