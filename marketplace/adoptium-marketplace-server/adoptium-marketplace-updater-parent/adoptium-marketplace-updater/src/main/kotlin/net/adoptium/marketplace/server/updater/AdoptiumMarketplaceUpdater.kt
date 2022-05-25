@@ -5,12 +5,14 @@ import io.quarkus.runtime.Startup
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import net.adoptium.marketplace.client.FailedToPullDataException
 import net.adoptium.marketplace.client.MarketplaceClient
 import net.adoptium.marketplace.dataSources.APIDataStore
 import net.adoptium.marketplace.dataSources.ModelComparators
 import net.adoptium.marketplace.schema.ReleaseList
 import net.adoptium.marketplace.schema.ReleaseUpdateInfo
 import net.adoptium.marketplace.schema.Vendor
+import net.adoptium.marketplace.server.updater.routes.UpdateTrigger
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -97,7 +99,6 @@ class AdoptiumMarketplaceUpdater @Inject constructor(
                 .keys
                 .forEach { vendor ->
                     val newReleases = update(vendor)
-
                     logInfoAboutUpdate(vendor, newReleases)
                 }
         }
@@ -105,19 +106,26 @@ class AdoptiumMarketplaceUpdater @Inject constructor(
 
     override suspend fun update(vendor: Vendor): ReleaseUpdateInfo {
         mutex.withLock {
-            val releasesBefore = apiDataStore.getReleases(vendor).getAllReleases()
+            return try {
+                val releasesBefore = apiDataStore.getReleases(vendor).getAllReleases()
+                val releases = clients[vendor]?.readRepositoryData() ?: ReleaseList(emptyList())
 
-            val releases = clients[vendor]?.readRepositoryData() ?: ReleaseList(emptyList())
-
-            val newReleases = apiDataStore.getReleases(vendor).writeReleases(releases)
-
-            logInfoAboutUpdate(vendor, newReleases, releasesBefore)
-
-            return newReleases
+                val newReleases = apiDataStore.getReleases(vendor).writeReleases(releases)
+                logInfoAboutUpdate(vendor, newReleases, releasesBefore)
+                newReleases
+            } catch (e: FailedToPullDataException) {
+                LOGGER.error("Failed to update repo for $vendor. ", e)
+                ReleaseUpdateInfo("Failed to update repo for $vendor. " + e.message)
+            }
         }
     }
 
     private suspend fun logInfoAboutUpdate(vendor: Vendor, newReleases: ReleaseUpdateInfo, releasesBeforeUpdate: ReleaseList? = null) {
+        if (newReleases.errorMessage != null) {
+            LOGGER.error(newReleases.errorMessage);
+            return
+        }
+
         val releasesAfter = apiDataStore.getReleases(vendor).getAllReleases()
 
         LOGGER.info("Updated $vendor, found ${releasesAfter.releases.size} releases, ${newReleases.updated.releases.size} updated, ${newReleases.added.releases.size} added, ${newReleases.removed.releases.size} removed")

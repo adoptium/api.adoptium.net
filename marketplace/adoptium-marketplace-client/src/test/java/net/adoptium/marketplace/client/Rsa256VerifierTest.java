@@ -6,6 +6,7 @@ import net.adoptium.marketplace.schema.ReleaseList;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,14 +42,11 @@ public class Rsa256VerifierTest {
     }
 
     @Test
-    public void pullFullRepositoryWithBadSignatures() throws Exception, FailedToPullDataException {
-        MarketplaceClient client = getMarketplaceClient("http://localhost:8090/repositoryWithBadSignatures");
-
-        ReleaseList releases = client.readRepositoryData();
-
-        // jdk8u302-b08 is the only release with a valid signature
-        Assertions.assertEquals(1, releases.getReleases().size());
-        Assertions.assertEquals("jdk8u302-b08", releases.getReleases().get(0).getReleaseName());
+    public void pullFullRepositoryWithBadSignatures() {
+        Assertions.assertThrows(FailedToPullDataException.class, () -> {
+            MarketplaceClient client = getMarketplaceClient("http://localhost:8090/repositoryWithBadSignatures");
+            client.readRepositoryData();
+        });
     }
 
     public MarketplaceClient getMarketplaceClient(String url) throws Exception {
