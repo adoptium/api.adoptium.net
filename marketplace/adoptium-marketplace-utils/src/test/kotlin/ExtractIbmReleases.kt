@@ -27,7 +27,7 @@ class ExtractIbmReleases {
     fun buildRepo() {
         ExtractReleases().buildRepo(
             VERSIONS,
-            { version -> "https://ibm.com/semeru-runtimes/api/v3/assets/feature_releases/${version}/ga?vendor=ibm&page_size=100" },
+            { version -> "https://ibm.com/semeru-runtimes/api/v3/assets/feature_releases/${version}/ga?vendor=ibm_ce&page_size=100" },
             { release -> toMarketplaceRelease(release, toMarketplaceBinaries(release)) },
             "/tmp/ibmRepo",
             false
