@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Build and read a repository by:
@@ -66,35 +65,51 @@ public class MarketplaceClient {
         return releases;
     }
 
-    private List<Release> recursivelyPullReleases(String finalBaseUrl, IndexFile index) {
-        return index
-            .getIndexes()
-            .stream()
-            .flatMap(indexLink -> {
-                String url = appendUrl(finalBaseUrl, indexLink);
-                try {
-                    return readRepositoryDataForUrl(url).stream();
-                } catch (FailedToPullDataException e) {
-                    LOGGER.error("Failed to pull file", e);
-                }
-                return Stream.empty();
-            })
-            .collect(Collectors.toList());
+    private List<Release> recursivelyPullReleases(String finalBaseUrl, IndexFile index) throws FailedToPullDataException {
+        try {
+            return index
+                .getIndexes()
+                .stream()
+                .flatMap(indexLink -> {
+                    String url = appendUrl(finalBaseUrl, indexLink);
+                    try {
+                        return readRepositoryDataForUrl(url).stream();
+                    } catch (FailedToPullDataException e) {
+                        LOGGER.error("Failed to pull file", e);
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof FailedToPullDataException) {
+                throw (FailedToPullDataException) e.getCause();
+            } else {
+                throw e;
+            }
+        }
     }
 
-    private List<Release> pullReleases(String finalBaseUrl, List<String> paths) {
-        return paths
-            .stream()
-            .flatMap(releaseLink -> {
-                String url = appendUrl(finalBaseUrl, releaseLink);
-                try {
-                    return pullRelease(url).stream();
-                } catch (FailedToPullDataException e) {
-                    LOGGER.warn("Failed to pull data " + url, e);
-                }
-                return Stream.empty();
-            })
-            .collect(Collectors.toList());
+    private List<Release> pullReleases(String finalBaseUrl, List<String> paths) throws FailedToPullDataException {
+        try {
+            return paths
+                .stream()
+                .flatMap(releaseLink -> {
+                    String url = appendUrl(finalBaseUrl, releaseLink);
+                    try {
+                        return pullRelease(url).stream();
+                    } catch (FailedToPullDataException e) {
+                        LOGGER.warn("Failed to pull data " + url, e);
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof FailedToPullDataException) {
+                throw (FailedToPullDataException) e.getCause();
+            } else {
+                throw e;
+            }
+        }
     }
 
     private String removeIndexFileFromPath(String baseUrl) {

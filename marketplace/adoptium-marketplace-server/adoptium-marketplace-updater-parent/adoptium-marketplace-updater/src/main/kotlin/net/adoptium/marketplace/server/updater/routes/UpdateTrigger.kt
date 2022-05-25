@@ -49,9 +49,15 @@ class UpdateTrigger @Inject constructor(private var updater: Updater) {
 
                     val response = runUpdate(vendor)
 
-                    Response.status(200)
-                        .entity(response)
-                        .build()
+                    if (response.errorMessage != null) {
+                        Response.status(500)
+                            .entity(response)
+                            .build()
+                    } else {
+                        Response.status(200)
+                            .entity(response)
+                            .build()
+                    }
                 }
             } catch (e: Exception) {
                 LOGGER.warn("Update failed for vendor ${vendor.name}", e)
