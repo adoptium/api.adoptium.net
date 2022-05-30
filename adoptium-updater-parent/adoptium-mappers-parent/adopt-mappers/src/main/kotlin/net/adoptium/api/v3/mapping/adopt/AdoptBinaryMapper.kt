@@ -31,18 +31,15 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
         private const val HOTSPOT_JFR = "hotspot-jfr"
         private const val TEMURIN = "temurin"
-        private val EXCLUDED = listOf(
-            "corretto",
-            "-sbom_"
-        )
     }
 
+    private val EXCLUDED = listOf<String>("corretto")
 
     suspend fun toBinaryList(ghBinaryAssets: List<GHAsset>, allGhAssets: List<GHAsset>, ghAssetsWithMetadata: Map<GHAsset, GHMetaData>): List<Binary> {
         // probably whitelist rather than black list
         return ghBinaryAssets
             .filter(this::isArchive)
-            .filter { asset -> !EXCLUDED.any { excluded -> asset.name.contains(excluded) } }
+            .filter { asset -> EXCLUDED.all { excluded -> !asset.name.contains(excluded) } }
             .map { asset -> assetToBinaryAsync(asset, ghAssetsWithMetadata, allGhAssets) }
             .mapNotNull { it.await() }
     }
@@ -92,8 +89,9 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         val binaryLink = binaryAsset.downloadUrl
         val binarySize = binaryAsset.size
         val binaryChecksumLink = getCheckSumLink(fullAssetList, binaryName)
+        val binaryChecksum: String?
 
-        val binaryChecksum: String? = if (binaryMetadata != null && binaryMetadata.sha256.isNotEmpty()) {
+        binaryChecksum = if (binaryMetadata != null && binaryMetadata.sha256.isNotEmpty()) {
             binaryMetadata.sha256
         } else {
             getChecksum(binaryChecksumLink)
