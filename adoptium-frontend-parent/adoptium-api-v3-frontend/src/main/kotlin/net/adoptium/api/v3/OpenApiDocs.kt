@@ -17,7 +17,7 @@ object OpenApiDocs {
     const val FEATURE_RELEASE =
         """
 <p>
-    Feature release version you wish to download. Feature versions are whole numbers e.g. <code>8,9,10,11,12,13</code>.
+    Feature release version you wish to download. Feature versions are whole numbers e.g. <code>8,11,16,17,18</code>.
 </p>
 <p>
     Available Feature versions can be obtained from 
