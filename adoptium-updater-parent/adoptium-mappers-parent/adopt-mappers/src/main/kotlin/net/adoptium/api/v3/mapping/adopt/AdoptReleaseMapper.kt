@@ -24,15 +24,15 @@ import net.adoptium.api.v3.parser.VersionParser
 import org.slf4j.LoggerFactory
 import java.security.MessageDigest
 import java.time.ZonedDateTime
-import java.util.*
+import java.util.Base64
 import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AdoptReleaseMapperFactory @Inject constructor(
-    private val adoptBinaryMapper: AdoptBinaryMapper,
-    private val htmlClient: GitHubHtmlClient
+    val adoptBinaryMapper: AdoptBinaryMapper,
+    val htmlClient: GitHubHtmlClient
 ) {
     private val mappers: MutableMap<Vendor, AdoptReleaseMapper> = HashMap()
 
@@ -82,10 +82,9 @@ private class AdoptReleaseMapper constructor(
             val releases = ghAssetsGroupedByVersion
                 .entries
                 .map { ghAssetsForVersion: Map.Entry<String, List<Map.Entry<GHAsset, GHMetaData>>> ->
-                    val version = ghAssetsForVersion
-                        .value
-                        .maxByOrNull { ghAssetWithMetadata -> ghAssetWithMetadata.value.version.toApiVersion() }!!
-                        .value.version.toApiVersion()
+                    val version = ghAssetsForVersion.value
+                        .sortedBy { ghAssetWithMetadata -> ghAssetWithMetadata.value.version.toApiVersion() }
+                        .last().value.version.toApiVersion()
 
                     val ghAssets: List<GHAsset> = ghAssetsForVersion.value.map { ghAssetWithMetadata -> ghAssetWithMetadata.key }
                     val id = generateIdForSplitRelease(version, ghRelease)
