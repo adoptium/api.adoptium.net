@@ -126,7 +126,8 @@ private class AdoptReleaseMapper constructor(
             // also ignore jdk-2021-01-13-07-01
             if (release.version_data.semver.startsWith("14.0.1+7.1.") ||
                 release.version_data.semver.startsWith("15.0.0+24.1.") ||
-                release.release_name == "jdk-2021-01-13-07-01"
+                release.release_name == "jdk-2021-01-13-07-01" ||
+                release.release_name == "jdk17u-2022-05-27-19-32-beta"
             ) {
                 // Found an excluded release, mark it for future reference
                 excludedReleases.add(ghRelease.id)
