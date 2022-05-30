@@ -15,6 +15,7 @@ import net.adoptium.api.v3.mapping.ReleaseMapper
 import net.adoptium.api.v3.mapping.adopt.AdoptReleaseMapperFactory
 import net.adoptium.api.v3.mapping.upstream.UpstreamReleaseMapper
 import net.adoptium.api.v3.models.Release
+import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
 import org.slf4j.LoggerFactory
 import javax.inject.Inject
@@ -42,6 +43,8 @@ class AdoptRepositoryImpl @Inject constructor(
 
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
+
+        private val EXCLUDED = listOf("jdk17u-2022-05-27-19-32-beta")
     }
 
     private val mappers = mapOf(
@@ -128,6 +131,16 @@ class AdoptRepositoryImpl @Inject constructor(
                     return@flatMap emptyList<Release>()
                 }
             }
+            .filter { excludeReleases(it) }
+    }
+
+    private fun excludeReleases(release: Release): Boolean {
+        return if (release.release_type == ReleaseType.ea) {
+            val isExcluded = EXCLUDED.any { release.release_name == it }
+            return !isExcluded
+        } else {
+            true
+        }
     }
 
     private suspend fun <E> getDataForEachRepo(
