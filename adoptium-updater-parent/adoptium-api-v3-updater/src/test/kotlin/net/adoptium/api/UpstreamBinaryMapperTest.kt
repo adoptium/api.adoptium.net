@@ -80,7 +80,7 @@ class UpstreamBinaryMapperTest : BaseTest() {
             assertEquals(ImageType.jre, binaryList[7].image_type)
             assertEquals(ImageType.jdk, binaryList[8].image_type)
             assertEquals(ImageType.testimage, binaryList[9].image_type)
-            assertEquals(ImageType.sbom, toBinaryList[10].image_type)
+            assertEquals(ImageType.sbom, binaryList[10].image_type)
         }
     }
 
