@@ -114,6 +114,42 @@ class AdoptReleaseMapperTest : BaseTest() {
     }
 
     @Test
+    fun `mapper ignores sbom`() {
+        runBlocking {
+
+            val source = GHAssets(
+                listOf(
+                    GHAsset(
+                        "OpenJDK8U-sbom_x64_linux_hotspot-123244354325.tar.gz",
+                        size = 1L,
+                        downloadUrl = "",
+                        downloadCount = 1L,
+                        updatedAt = "2013-02-27T19:35:32Z"
+                    )
+                ),
+                PageInfo(false, ""),
+                2
+            )
+
+            val ghRelease = GHRelease(
+                id = GitHubId("1"),
+                name = "jdk9u-2018-09-27-08-50",
+                isPrerelease = true,
+                publishedAt = "2013-02-27T19:35:32Z",
+                updatedAt = "2013-02-27T19:35:32Z",
+                releaseAssets = source,
+                resourcePath = "8",
+                url = "https://github.com/AdoptOpenJDK/openjdk9-binaries/releases/download/jdk9u-2018-09-27-08-50/OpenJDK9U-jre_aarch64_linux_hotspot_2018-09-27-08-50.tar.gz"
+            )
+
+            val release = createAdoptReleaseMapper().toAdoptRelease(ghRelease)
+
+            assertEquals(0, release.result!!.first().binaries.size)
+        }
+    }
+
+
+    @Test
     fun copesWithMultipleVersionsInSingleRelease() {
         runBlocking {
 
