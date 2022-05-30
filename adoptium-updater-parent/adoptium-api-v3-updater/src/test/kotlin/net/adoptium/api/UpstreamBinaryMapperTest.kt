@@ -59,6 +59,7 @@ class UpstreamBinaryMapperTest : BaseTest() {
                 "OpenJDK11U-jre_aarch64_linux_11.0.5_10.tar.gz",
                 "OpenJDK11U-jdk_aarch64_linux_11.0.5_10-debuginfo.tar.gz",
                 "OpenJDK11U-sources_11.0.5_10.tar.gz",
+                "OpenJDK11U-jdk_x64_linux_11.0.10_3_ea.tar.gz",
                 "OpenJDK11U-jre-shenandoah_x64_linux_11.0.10_3_ea.tar.gz",
                 "OpenJDK11U-jdk-shenandoah_x64_linux_11.0.10_3_ea.tar.gz",
                 "OpenJDK11U-testimage-shenandoah_x64_linux_11.0.10_3_ea.tar.gz",
@@ -69,18 +70,17 @@ class UpstreamBinaryMapperTest : BaseTest() {
         runBlocking {
             val binaryList = UpstreamBinaryMapper.toBinaryList(assets)
 
-            assertEquals(11, binaryList.size)
+            assertEquals(10, binaryList.size)
             assertEquals(ImageType.jdk, binaryList[0].image_type)
             assertEquals(ImageType.jdk, binaryList[1].image_type)
             assertEquals(ImageType.testimage, binaryList[2].image_type)
             assertEquals(ImageType.staticlibs, binaryList[3].image_type)
             assertEquals(ImageType.jre, binaryList[4].image_type)
             assertEquals(ImageType.jdk, binaryList[5].image_type)
-            assertEquals(ImageType.sources, binaryList[6].image_type)
-            assertEquals(ImageType.jre, binaryList[7].image_type)
-            assertEquals(ImageType.jdk, binaryList[8].image_type)
-            assertEquals(ImageType.testimage, binaryList[9].image_type)
-            assertEquals(ImageType.sbom, binaryList[10].image_type)
+            assertEquals(ImageType.jre, binaryList[6].image_type)
+            assertEquals(ImageType.jdk, binaryList[7].image_type)
+            assertEquals(ImageType.testimage, binaryList[8].image_type)
+            assertEquals(ImageType.sbom, binaryList[9].image_type)
         }
     }
 
