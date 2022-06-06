@@ -31,9 +31,8 @@ jobs:
     - uses: actions/setup-java@v3
       with:
         java-version: '17'
-        java-package: jdk
-        architecture: x64
         distribution: 'temurin'
+        cache: 'maven'
 
     - uses: actions/checkout@v3
 
