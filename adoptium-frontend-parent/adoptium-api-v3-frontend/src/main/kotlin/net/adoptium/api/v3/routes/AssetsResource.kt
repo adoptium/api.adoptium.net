@@ -358,7 +358,7 @@ constructor(
         return getPage(pageSize, page, releases)
     }
 
-    data class binaryPermutation(
+    data class BinaryPermutation(
         val arch: Architecture,
         val heapSize: HeapSize,
         val imageType: ImageType,
@@ -383,12 +383,24 @@ constructor(
 
         @Parameter(name = "vendor", description = OpenApiDocs.VENDOR, required = false)
         @QueryParam("vendor")
-        vendor: Vendor?
+        vendor: Vendor?,
 
-    ): List<BinaryAssetView> {
+        @Parameter(name = "os", description = "Operating System", required = false)
+        @QueryParam("os")
+        os: OperatingSystem?,
+
+        @Parameter(name = "architecture", description = "Architecture", required = false)
+        @QueryParam("architecture")
+        arch: Architecture?,
+
+        @Parameter(name = "image_type", description = "Image Type", required = false)
+        @QueryParam("image_type")
+        image_type: ImageType?,
+
+        ): List<BinaryAssetView> {
         val binaryVendor = vendor ?: Vendor.getDefault()
         val releaseFilter = ReleaseFilter(ReleaseType.ga, featureVersion = version, vendor = binaryVendor, jvm_impl = jvm_impl)
-        val binaryFilter = BinaryFilter(null, null, null, jvm_impl, null, null)
+        val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, null, null)
         val releases = apiDataStore
             .getAdoptRepos()
             .getFilteredReleases(version, releaseFilter, binaryFilter, SortOrder.ASC, SortMethod.DEFAULT)
@@ -400,10 +412,10 @@ constructor(
                     .map { Pair(release, it) }
             }
             .associateBy {
-                binaryPermutation(it.second.architecture, it.second.heap_size, it.second.image_type, it.second.os)
+                BinaryPermutation(it.second.architecture, it.second.heap_size, it.second.image_type, it.second.os)
             }
             .values
-            .map { BinaryAssetView(it.first.release_name, it.first.vendor, it.second, it.first.version_data) }
+            .map { BinaryAssetView(it.first.release_name, it.first.vendor, it.second, it.first.version_data, it.first.release_link) }
             .toList()
     }
 }
