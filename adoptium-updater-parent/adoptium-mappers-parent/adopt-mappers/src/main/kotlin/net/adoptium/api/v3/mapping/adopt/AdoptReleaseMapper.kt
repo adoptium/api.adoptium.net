@@ -219,7 +219,7 @@ private class AdoptReleaseMapper constructor(
     private suspend fun associateMetadataWithBinaries(releaseAssets: GHAssets): Map<GHAsset, GHMetaData> {
         return releaseAssets
             .assets
-            .filter { it.name.endsWith(".json") || ( it.name.contains("sbom") && it.name.endsWith("-metadata.json")) }
+            .filter { ( it.name.endsWith(".json") && !it.name.contains("sbom") ) || ( it.name.contains("sbom") && it.name.endsWith("-metadata.json") ) }
             .mapNotNull { metadataAsset ->
                 pairUpBinaryAndMetadata(releaseAssets, metadataAsset)
             }
