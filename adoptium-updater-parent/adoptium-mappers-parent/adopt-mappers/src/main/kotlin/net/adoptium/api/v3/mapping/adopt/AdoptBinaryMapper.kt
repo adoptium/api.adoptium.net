@@ -172,7 +172,7 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         return BINARY_ASSET_WHITELIST.foldRight(binary_name, { extension, name -> name.removeSuffix(extension) })
     }
 
-    private fun isBinaryAsset(asset: GHAsset) = ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } || Regex(".*\\-sbom_.*\\.json$").findAll(asset.name.).map{it.value}.toList() 
+    private fun isBinaryAsset(asset: GHAsset) = ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } || ( asset.name.endsWith(".json") && asset.name.contains("-sbom_") )
 
     private fun binaryFromName(
         asset: GHAsset,

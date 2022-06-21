@@ -66,7 +66,7 @@ object UpstreamBinaryMapper : BinaryMapper() {
         }
     }
 
-    private fun isBinaryAsset(asset: GHAsset) = ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } || Regex(".*\\-sbom_.*\\.json$").findAll(asset.name.).map{it.value}.toList() 
+    private fun isBinaryAsset(asset: GHAsset) = ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } || ( asset.name.endsWith(".json") && asset.name.contains("-sbom_") )
 
     private fun getSignatureLink(assets: List<GHAsset>, binary_name: String): String? {
         return assets
