@@ -63,7 +63,7 @@ class UpstreamBinaryMapperTest : BaseTest() {
                 "OpenJDK11U-jre-shenandoah_x64_linux_11.0.10_3_ea.tar.gz",
                 "OpenJDK11U-jdk-shenandoah_x64_linux_11.0.10_3_ea.tar.gz",
                 "OpenJDK11U-testimage-shenandoah_x64_linux_11.0.10_3_ea.tar.gz",
-                "OpenJDK18U-sbom_aarch64_alpine-linux_hotspot_2022-05-27-23-30.tar.gz"
+                "OpenJDK18U-sbom_x64_linux_hotspot_2022-06-20-23-30.json"
             )
         )
 
