@@ -230,8 +230,8 @@ private class AdoptReleaseMapper constructor(
         val binaryAsset = releaseAssets
             .assets
             .filter { asset -> !asset.name.endsWith(".json") || ( asset.name.contains("sbom") && !asset.name.endsWith("-metadata.json"))}
-            .firstOrNull {
-                metadataAsset.name.startsWith(it.name)
+            .firstOrNull { // remove .json for matching, case: sbom.json with sbom-metadata.json 
+                metadataAsset.name.startsWith(it.name.removeSuffix(".json"))
             }
 
         val metadataString = htmlClient.getUrl(metadataAsset.downloadUrl)
