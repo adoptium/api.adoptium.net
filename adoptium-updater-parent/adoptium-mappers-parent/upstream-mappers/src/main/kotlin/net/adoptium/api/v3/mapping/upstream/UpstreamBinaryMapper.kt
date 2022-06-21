@@ -25,7 +25,7 @@ object UpstreamBinaryMapper : BinaryMapper() {
 
     suspend fun toBinaryList(assets: List<GHAsset>): List<Binary> {
         return assets
-            .filter(this::isBinaryAsset)
+            .filter(this::isArchive)
             .filter { !assetIsExcluded(it) }
             .map { asset -> assetToBinaryAsync(asset, assets) }
             .mapNotNull { it.await() }
@@ -66,7 +66,7 @@ object UpstreamBinaryMapper : BinaryMapper() {
         }
     }
 
-    private fun isBinaryAsset(asset: GHAsset) = ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } || ( asset.name.endsWith(".json") && asset.name.contains("-sbom_") )
+    private fun isArchive(asset: GHAsset) = ARCHIVE_WHITELIST.any { asset.name.endsWith(it) }
 
     private fun getSignatureLink(assets: List<GHAsset>, binary_name: String): String? {
         return assets
