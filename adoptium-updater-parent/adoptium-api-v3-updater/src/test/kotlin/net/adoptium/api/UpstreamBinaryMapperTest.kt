@@ -69,7 +69,7 @@ class UpstreamBinaryMapperTest : BaseTest() {
         runBlocking {
             val binaryList = UpstreamBinaryMapper.toBinaryList(assets)
 
-            assertEquals(10, binaryList.size)
+            assertEquals(9, binaryList.size)
             assertEquals(ImageType.jdk, binaryList[0].image_type)
             assertEquals(ImageType.jdk, binaryList[1].image_type)
             assertEquals(ImageType.testimage, binaryList[2].image_type)
