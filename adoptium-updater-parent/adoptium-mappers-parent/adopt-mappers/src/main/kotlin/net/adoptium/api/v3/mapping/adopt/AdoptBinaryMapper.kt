@@ -133,6 +133,7 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
             }
 
             val metadataLink = getMetadataLink(fullAssetList, installer.name)
+            val signatureLink = getSignatureLink(fullAssetList, installer.name)
 
             Installer(
                 installer.name,
@@ -141,7 +142,7 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
                 checksum,
                 checkSumLink,
                 installer.downloadCount,
-                signature_link = null,
+                signature_link = signatureLink,
                 metadata_link = metadataLink
             )
         }
