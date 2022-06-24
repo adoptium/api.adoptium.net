@@ -61,6 +61,48 @@ class AdoptBinaryMapperTest {
     )
 
     @Test
+    fun `detects signature link`() {
+        runBlocking {
+            val asset = GHAsset(
+                "OpenJDK9-OPENJ9_ppc64le_Linux_jdk-9.0.4.12_openj9-0.9.0.tar.gz",
+                1L,
+                "",
+                1L,
+                "2013-02-27T19:35:32Z"
+            )
+
+            val signature = GHAsset(
+                "OpenJDK9-OPENJ9_ppc64le_Linux_jdk-9.0.4.12_openj9-0.9.0.tar.gz.sig",
+                1L,
+                "a-download-link",
+                1L,
+                "2013-02-27T19:35:32Z"
+            )
+
+            val installerAsset = GHAsset(
+                name = "OpenJDK9-OPENJ9_ppc64le_Linux_jdk-9.0.4.12_openj9-0.9.0.msi",
+                size = 1,
+                downloadUrl = "http://installer-link",
+                downloadCount = 1,
+                "2013-02-27T19:35:32Z"
+            )
+
+            val installerAssetSig = GHAsset(
+                name = "OpenJDK9-OPENJ9_ppc64le_Linux_jdk-9.0.4.12_openj9-0.9.0.msi.sig",
+                size = 1,
+                downloadUrl = "http://signature-link",
+                downloadCount = 1,
+                "2013-02-27T19:35:32Z"
+            )
+
+            val binaryList = adoptBinaryMapper.toBinaryList(listOf(asset), listOf(asset, signature, installerAsset, installerAssetSig), emptyMap())
+
+            assertEquals("a-download-link", binaryList[0].`package`.signature_link)
+            assertEquals("http://signature-link", binaryList[0].installer?.signature_link)
+        }
+    }
+
+    @Test
     fun `should map GitHub assets and metadata to Adopt binary`() {
         runBlocking {
             val updatedAt = Instant.from(DateTimeFormatter.ISO_INSTANT.parse("2013-02-27T19:35:32Z"))
