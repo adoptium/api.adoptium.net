@@ -219,7 +219,7 @@ private class AdoptReleaseMapper constructor(
     private suspend fun associateMetadataWithBinaries(releaseAssets: GHAssets): Map<GHAsset, GHMetaData> {
         return releaseAssets
             .assets
-            .filter { it.name.endsWith(".json") }
+            .filter { ( it.name.endsWith(".json") && !it.name.contains("sbom") ) || ( it.name.contains("sbom") && it.name.endsWith("-metadata.json") ) }
             .mapNotNull { metadataAsset ->
                 pairUpBinaryAndMetadata(releaseAssets, metadataAsset)
             }
@@ -229,9 +229,9 @@ private class AdoptReleaseMapper constructor(
     private suspend fun pairUpBinaryAndMetadata(releaseAssets: GHAssets, metadataAsset: GHAsset): Pair<GHAsset, GHMetaData>? {
         val binaryAsset = releaseAssets
             .assets
-            .filter { asset -> !asset.name.endsWith(".json") }
-            .firstOrNull {
-                metadataAsset.name.startsWith(it.name)
+            .filter { asset -> !asset.name.endsWith(".json") || ( asset.name.contains("sbom") && !asset.name.endsWith("-metadata.json"))}
+            .firstOrNull { // remove .json for matching, case: sbom.json with sbom-metadata.json 
+                metadataAsset.name.startsWith(it.name.removeSuffix(".json"))
             }
 
         val metadataString = htmlClient.getUrl(metadataAsset.downloadUrl)

@@ -459,6 +459,24 @@ class AdoptBinaryMapperTest {
         }
     }
 
+    @Test
+    fun `identifies sbom`() {
+        runBlocking {
+            val assets = listOf(
+                GHAsset(
+                    "OpenJDK18U-sbom_x64_linux_hotspot_2022-06-20-23-30.json",
+                    1L,
+                    "",
+                    1L,
+                    "2022-03-29T18:34:31Z"
+                )
+            )
+            val binaryList = adoptBinaryMapper.toBinaryList(assets, assets, emptyMap())
+
+            assertEquals(ImageType.sbom, binaryList[0].image_type)
+        }
+    }
+
     private fun assertParsedHotspotJfr(binaryList: List<Binary>) {
         assertEquals(JvmImpl.hotspot, binaryList[0].jvm_impl)
         assertEquals(Project.jfr, binaryList[0].project)
