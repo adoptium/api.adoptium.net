@@ -16,19 +16,19 @@
         <jacoco.version>0.8.8</jacoco.version>
         <jdk.version>17</jdk.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <kotlin.version>1.6.21</kotlin.version>
-        <coroutine.version>1.6.1</coroutine.version>
+        <kotlin.version>1.7.0</kotlin.version>
+        <coroutine.version>1.6.2</coroutine.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.testSource>17</maven.compiler.testSource>
         <maven.compiler.testTarget>17</maven.compiler.testTarget>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>2.9.0.Final</quarkus.version>
+        <quarkus.version>2.9.2.Final</quarkus.version>
         <rest-assured.version>4.5.1</rest-assured.version>
-        <surefire-plugin.version>3.0.0-M6</surefire-plugin.version>
-        <jackson.version>2.13.2</jackson.version>
-        <kmongo.version>4.5.1</kmongo.version>
+        <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
+        <jackson.version>2.13.3</jackson.version>
+        <kmongo.version>4.6.0</kmongo.version>
     </properties>
 
     <modules>
@@ -82,14 +82,9 @@
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.aexp.nodes.graphql</groupId>
-                <artifactId>nodes</artifactId>
-                <version>0.5.0</version>
-            </dependency>
-            <dependency>
                 <groupId>io.mockk</groupId>
                 <artifactId>mockk</artifactId>
-                <version>1.12.3</version>
+                <version>1.12.4</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -182,7 +177,7 @@
             <dependency>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-test-junit5</artifactId>
-                <version>1.6.21</version>
+                <version>1.7.0</version>
             </dependency>
             <!-- Explicitly adding this because Maven can't see it via the kmongo dep -->
             <dependency>
@@ -204,7 +199,7 @@
             <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
-                <version>3.22.0</version>
+                <version>3.23.1</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -216,7 +211,7 @@
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-xml</artifactId>
-                <version>3.0.10</version>
+                <version>3.0.11</version>
             </dependency>
             <dependency>
                 <groupId>org.jooq</groupId>
@@ -283,7 +278,7 @@
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy</artifactId>
-                <version>3.0.10</version>
+                <version>3.0.11</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkiverse.logging.logback</groupId>
@@ -333,7 +328,7 @@
                 <plugin>
                     <groupId>com.github.spotbugs</groupId>
                     <artifactId>spotbugs-maven-plugin</artifactId>
-                    <version>4.6.0.0</version>
+                    <version>4.7.0.0</version>
                 </plugin>
                 <plugin>
                     <groupId>com.ning.maven.plugins</groupId>
@@ -469,7 +464,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-scm-plugin</artifactId>
-                    <version>1.12.2</version>
+                    <version>1.13.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -571,7 +566,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
-                    <version>2.10.0</version>
+                    <version>2.11.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>
@@ -586,7 +581,7 @@
                 <plugin>
                     <groupId>org.pitest</groupId>
                     <artifactId>pitest-maven</artifactId>
-                    <version>1.7.6</version>
+                    <version>1.8.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -757,7 +752,7 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.6.0.0</version>
+                <version>4.7.0.0</version>
                 <configuration>
                     <plugins>
                         <plugin>
@@ -824,7 +819,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
-                <version>2.10.0</version>
+                <version>2.11.0</version>
                 <reportSets>
                     <reportSet>
                         <reports>

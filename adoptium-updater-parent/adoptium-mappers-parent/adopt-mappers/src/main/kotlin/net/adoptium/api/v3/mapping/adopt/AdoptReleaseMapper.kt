@@ -126,7 +126,8 @@ private class AdoptReleaseMapper constructor(
             // also ignore jdk-2021-01-13-07-01
             if (release.version_data.semver.startsWith("14.0.1+7.1.") ||
                 release.version_data.semver.startsWith("15.0.0+24.1.") ||
-                release.release_name == "jdk-2021-01-13-07-01"
+                release.release_name == "jdk-2021-01-13-07-01" ||
+                release.release_name == "jdk17u-2022-05-27-19-32-beta"
             ) {
                 // Found an excluded release, mark it for future reference
                 excludedReleases.add(ghRelease.id)
@@ -218,7 +219,7 @@ private class AdoptReleaseMapper constructor(
     private suspend fun associateMetadataWithBinaries(releaseAssets: GHAssets): Map<GHAsset, GHMetaData> {
         return releaseAssets
             .assets
-            .filter { it.name.endsWith(".json") }
+            .filter { (it.name.endsWith(".json") && !it.name.contains("sbom")) || (it.name.contains("sbom") && it.name.endsWith("-metadata.json")) }
             .mapNotNull { metadataAsset ->
                 pairUpBinaryAndMetadata(releaseAssets, metadataAsset)
             }
@@ -228,9 +229,9 @@ private class AdoptReleaseMapper constructor(
     private suspend fun pairUpBinaryAndMetadata(releaseAssets: GHAssets, metadataAsset: GHAsset): Pair<GHAsset, GHMetaData>? {
         val binaryAsset = releaseAssets
             .assets
-            .filter { asset -> !asset.name.endsWith(".json") }
-            .firstOrNull {
-                metadataAsset.name.startsWith(it.name)
+            .filter { asset -> !asset.name.endsWith(".json") || ( asset.name.contains("sbom") && !asset.name.endsWith("-metadata.json"))}
+            .firstOrNull { // remove .json for matching, case: sbom.json with sbom-metadata.json 
+                metadataAsset.name.startsWith(it.name.removeSuffix(".json"))
             }
 
         val metadataString = htmlClient.getUrl(metadataAsset.downloadUrl)
