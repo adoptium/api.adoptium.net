@@ -9,7 +9,7 @@ interface FileNameMatcher {
     var priority: Int
 
     fun matchesFile(fileName: String): Boolean {
-        val lowerCaseFileName = fileName.toLowerCase()
+        val lowerCaseFileName = fileName.lowercase(Locale.getDefault())
         return names
             .firstOrNull {
                 lowerCaseFileName.contains(fileNameMatcher(it))
