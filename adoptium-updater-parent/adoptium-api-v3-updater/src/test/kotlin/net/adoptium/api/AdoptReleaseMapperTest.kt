@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.UUID
 
 @AddPackages(value = [DefaultUpdaterHtmlClient::class, HttpClientFactory::class])
 class AdoptReleaseMapperTest : BaseTest() {
