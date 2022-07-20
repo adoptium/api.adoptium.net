@@ -1,17 +1,46 @@
 package net.adoptium.api.v3.dataSources.github.graphql.clients
 
-import io.aexp.nodes.graphql.GraphQLRequestEntity
-import io.aexp.nodes.graphql.GraphQLResponseEntity
-import io.aexp.nodes.graphql.GraphQLTemplate
+import com.expediagroup.graphql.client.jackson.GraphQLClientJacksonSerializer
+import com.expediagroup.graphql.client.ktor.GraphQLKtorClient
+import com.expediagroup.graphql.client.types.GraphQLClientRequest
+import com.expediagroup.graphql.client.types.GraphQLClientResponse
+import io.ktor.client.HttpClient
+import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
+import net.adoptium.api.v3.dataSources.github.GitHubAuth
+import java.net.URL
 import javax.inject.Singleton
 
 interface GraphQLRequest {
-    fun <F> query(query: GraphQLRequestEntity, clazz: Class<F>): GraphQLResponseEntity<F>
+    suspend fun <T : Any> request(query: GraphQLClientRequest<T>): GraphQLClientResponse<T>
 }
 
 @Singleton
 class GraphQLRequestImpl : GraphQLRequest {
-    override fun <F> query(query: GraphQLRequestEntity, clazz: Class<F>): GraphQLResponseEntity<F> {
-        return GraphQLTemplate(Int.MAX_VALUE, Int.MAX_VALUE).query(query, clazz)
+
+    private val client: GraphQLKtorClient
+    private val httpClient: HttpClient
+    val BASE_URL = "https://api.github.com/graphql"
+    private val TOKEN: String
+
+    constructor() {
+        val token = GitHubAuth.readToken()
+        if (token == null) {
+            throw IllegalStateException("No token provided")
+        } else {
+            TOKEN = token
+        }
+        httpClient = HttpClient()
+        client = GraphQLKtorClient(
+            url = URL(BASE_URL),
+            httpClient = httpClient,
+            serializer = GraphQLClientJacksonSerializer(UpdaterJsonMapper.mapper)
+        )
+    }
+
+    override suspend fun <T : Any> request(query: GraphQLClientRequest<T>): GraphQLClientResponse<T> {
+        return client.execute(query) {
+            headers.append("Authorization", "Bearer $TOKEN")
+        }
     }
 }
+

@@ -1,6 +1,6 @@
 package net.adoptium.api.v3.dataSources.github.graphql.clients
 
-import io.aexp.nodes.graphql.GraphQLRequestEntity
+import com.expediagroup.graphql.client.types.GraphQLClientRequest
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHReleaseResult
@@ -8,6 +8,7 @@ import net.adoptium.api.v3.dataSources.models.GitHubId
 import org.slf4j.LoggerFactory
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.reflect.KClass
 
 @Singleton
 class GraphQLGitHubReleaseClient @Inject constructor(
@@ -20,25 +21,34 @@ class GraphQLGitHubReleaseClient @Inject constructor(
     }
 
     suspend fun getReleaseById(id: GitHubId): GHRelease {
-        val requestEntityBuilder = getReleaseByIdQuery(id)
 
         LOGGER.info("Getting id $id")
 
-        val result = queryApi(requestEntityBuilder, null, GHReleaseResult::class.java)
+        val query = RequestReleaseById(id)
 
-        val release: GHRelease
-        if (result.response.release.releaseAssets.pageInfo.hasNextPage) {
-            release = getNextPage(result.response.release)
+        val result = queryApi(query::withCursor, null)
+
+        val release: GHRelease = if (result.data?.release?.releaseAssets?.pageInfo?.hasNextPage == true) {
+            getAllReleaseAssets(result.data!!.release)
         } else {
-            release = result.response.release
+            if (result.data == null) {
+                throw Exception("No data returned")
+            }
+            result.data!!.release
         }
 
         return release
     }
 
-    private fun getReleaseByIdQuery(releaseId: GitHubId): GraphQLRequestEntity.RequestBuilder {
-        return request(
-            """query { 
+    class RequestReleaseById(private val releaseId: GitHubId, override val variables: Any = mapOf<String, String>()) : GraphQLClientRequest<GHReleaseResult> {
+        fun withCursor(cursor: String?): RequestReleaseById {
+            return if (cursor != null) RequestReleaseById(releaseId, mapOf("cursorPointer" to cursor))
+            else this
+        }
+
+        override val query: String
+            get() =
+                """query {
                               node(id:"${releaseId.id}") {
                                 ... on Release {
                                         id,
@@ -69,6 +79,9 @@ class GraphQLGitHubReleaseClient @Inject constructor(
                             }
                         }
                     """
-        )
+
+        override fun responseType(): KClass<GHReleaseResult> {
+            return GHReleaseResult::class
+        }
     }
 }

@@ -82,11 +82,6 @@
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.aexp.nodes.graphql</groupId>
-                <artifactId>nodes</artifactId>
-                <version>0.5.0</version>
-            </dependency>
-            <dependency>
                 <groupId>io.mockk</groupId>
                 <artifactId>mockk</artifactId>
                 <version>1.12.4</version>

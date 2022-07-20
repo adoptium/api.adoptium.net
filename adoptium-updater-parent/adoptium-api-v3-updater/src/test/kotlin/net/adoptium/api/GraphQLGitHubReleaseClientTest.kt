@@ -1,7 +1,7 @@
 package net.adoptium.api
 
-import io.aexp.nodes.graphql.GraphQLRequestEntity
-import io.aexp.nodes.graphql.GraphQLResponseEntity
+import com.expediagroup.graphql.client.types.GraphQLClientRequest
+import com.expediagroup.graphql.client.types.GraphQLClientResponse
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
@@ -25,8 +25,8 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleaseSu
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleasesSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.GitHubId
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 class GraphQLGitHubReleaseClientTest : BaseTest() {
     companion object {
@@ -69,11 +69,12 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
         runBlocking {
             val client = GraphQLGitHubReleaseClient(
                 object : GraphQLRequest {
-                    override fun <F> query(query: GraphQLRequestEntity, clazz: Class<F>): GraphQLResponseEntity<F> {
-                        val builder = mockk<GraphQLResponseEntity<F>>()
+                    override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
+                        val builder = mockk<GraphQLClientResponse<F>>()
 
-                        assert(query.toString().contains("a-github-id"))
-                        every { builder.response } returns GHReleaseResult(response, RateLimit(0, 5000)) as F
+                        assert(query.query.contains("a-github-id"))
+                        every { builder.data } returns GHReleaseResult(response, RateLimit(0, 5000)) as F
+                        every { builder.errors } returns null
                         return builder
                     }
                 },
@@ -91,12 +92,12 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
         runBlocking {
             val client = GraphQLGitHubRepositoryClient(
                 object : GraphQLRequest {
-                    override fun <F> query(query: GraphQLRequestEntity, clazz: Class<F>): GraphQLResponseEntity<F> {
-                        val builder = mockk<GraphQLResponseEntity<F>>()
+                    override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
+                        val builder = mockk<GraphQLClientResponse<F>>()
 
-                        assert(query.toString().contains("a-repo-name"))
+                        assert(query.query.contains("a-repo-name"))
 
-                        every { builder.response } returns QueryData(repo, RateLimit(0, 5000)) as F
+                        every { builder.data } returns QueryData(repo, RateLimit(0, 5000)) as F
                         every { builder.errors } returns null
                         return builder
                     }
@@ -133,12 +134,12 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
 
             val client = GraphQLGitHubSummaryClient(
                 object : GraphQLRequest {
-                    override fun <F> query(query: GraphQLRequestEntity, clazz: Class<F>): GraphQLResponseEntity<F> {
-                        val builder = mockk<GraphQLResponseEntity<F>>()
+                    override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
+                        val builder = mockk<GraphQLClientResponse<F>>()
 
-                        assert(query.toString().contains("a-repo-name"))
+                        assert(query.query.contains("a-repo-name"))
 
-                        every { builder.response } returns summary as F
+                        every { builder.data } returns summary as F
                         every { builder.errors } returns null
                         return builder
                     }
@@ -157,12 +158,12 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
         runBlocking {
             val client = GraphQLGitHubRepositoryClient(
                 object : GraphQLRequest {
-                    override fun <F> query(query: GraphQLRequestEntity, clazz: Class<F>): GraphQLResponseEntity<F> {
-                        val builder = mockk<GraphQLResponseEntity<F>>()
+                    override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
+                        val builder = mockk<GraphQLClientResponse<F>>()
 
-                        assert(query.toString().contains("a-repo-name"))
+                        assert(query.query.contains("a-repo-name"))
 
-                        val pageInfo = if (query.variables["cursorPointer"] != null) {
+                        val pageInfo = if ((query.variables as Map<String, String>)["cursorPointer"] != null) {
                             PageInfo(false, null)
                         } else {
                             PageInfo(true, "next-page-id")
@@ -170,7 +171,7 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
 
                         val repo = GHRepository(GHReleases(listOf(response), pageInfo))
 
-                        every { builder.response } returns QueryData(repo, RateLimit(0, 5000)) as F
+                        every { builder.data } returns QueryData(repo, RateLimit(0, 5000)) as F
                         every { builder.errors } returns null
                         return builder
                     }

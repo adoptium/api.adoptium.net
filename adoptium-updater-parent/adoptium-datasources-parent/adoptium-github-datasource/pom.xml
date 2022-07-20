@@ -19,8 +19,20 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>io.aexp.nodes.graphql</groupId>
-            <artifactId>nodes</artifactId>
+            <groupId>com.expediagroup</groupId>
+            <artifactId>graphql-kotlin-ktor-client</artifactId>
+            <version>5.5.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jetbrains.kotlinx</groupId>
+                    <artifactId>kotlinx-serialization-json-jvm</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.expediagroup</groupId>
+            <artifactId>graphql-kotlin-client-jackson</artifactId>
+            <version>5.5.0</version>
         </dependency>
         <dependency>
             <groupId>net.adoptium.api</groupId>
