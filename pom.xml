@@ -845,27 +845,4 @@
             </plugin>
         </plugins>
     </reporting>
-
-    <!--
-        Publishes artifacts to a local directory so that we can check them in and publish them
-    -->
-    <distributionManagement>
-        <repository>
-            <id>internal</id>
-            <url>file://${project.build.directory}/mvn-repo</url>
-        </repository>
-    </distributionManagement>
-
-    <repositories>
-        <repository>
-            <id>adopt-api-assets</id>
-            <url>https://raw.githubusercontent.com/AdoptOpenJDK/openjdk-api-v3/maven/mvn-repo</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
 </project>
