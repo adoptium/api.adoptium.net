@@ -9,26 +9,26 @@
 
     <!-- This throws a warning, but the versions plugin does actually require it if you're checking plugin versions -->
     <prerequisites>
-        <maven>3.8.4</maven>
+        <maven>3.8.6</maven>
     </prerequisites>
 
     <properties>
         <jacoco.version>0.8.8</jacoco.version>
         <jdk.version>17</jdk.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <kotlin.version>1.7.0</kotlin.version>
-        <coroutine.version>1.6.2</coroutine.version>
+        <kotlin.version>1.7.10</kotlin.version>
+        <coroutine.version>1.6.4</coroutine.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.testSource>17</maven.compiler.testSource>
         <maven.compiler.testTarget>17</maven.compiler.testTarget>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>2.9.2.Final</quarkus.version>
-        <rest-assured.version>4.5.1</rest-assured.version>
+        <quarkus.version>2.11.0.Final</quarkus.version>
+        <rest-assured.version>5.1.1</rest-assured.version>
         <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
         <jackson.version>2.13.3</jackson.version>
-        <kmongo.version>4.6.0</kmongo.version>
+        <kmongo.version>4.6.1</kmongo.version>
     </properties>
 
     <modules>
@@ -134,13 +134,14 @@
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-artifact</artifactId>
-                <version>3.8.4</version>
+                <version>3.8.6</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.microprofile.openapi</groupId>
                 <artifactId>microprofile-openapi-api</artifactId>
                 <version>3.0</version>
             </dependency>
+            <!-- TODO 2.0.1 is the latest but moves to jakarta.ee for internal packages -->
             <dependency>
                 <groupId>org.glassfish</groupId>
                 <artifactId>jakarta.json</artifactId>
@@ -179,7 +180,9 @@
                 <artifactId>kotlin-test-junit5</artifactId>
                 <version>1.7.0</version>
             </dependency>
-            <!-- Explicitly adding this because Maven can't see it via the kmongo dep -->
+            <!-- Explicitly adding this because Maven can't see it via the kmongo dep in
+             adoptium-api-v3-updater pom file. Why? Nobody knows -->
+            <!-- Latest version at 3.4.6 but this changes how config of mongo works -->
             <dependency>
                 <groupId>de.flapdoodle.embed</groupId>
                 <artifactId>de.flapdoodle.embed.mongo</artifactId>
@@ -211,13 +214,14 @@
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-xml</artifactId>
-                <version>3.0.11</version>
+                <version>3.0.12</version>
             </dependency>
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq</artifactId>
-                <version>3.16.6</version>
+                <version>3.17.2</version>
             </dependency>
+            <!-- 2.0.0-alpha releases are out -->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
@@ -226,7 +230,7 @@
             <dependency>
                 <groupId>org.skyscreamer</groupId>
                 <artifactId>jsonassert</artifactId>
-                <version>1.5.0</version>
+                <version>1.5.1</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -249,6 +253,7 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <!-- TODO Update to 4.0.0 Final now -->
             <dependency>
                 <groupId>org.jboss.weld</groupId>
                 <artifactId>weld-junit5</artifactId>
@@ -278,17 +283,17 @@
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy</artifactId>
-                <version>3.0.11</version>
+                <version>3.0.12</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkiverse.logging.logback</groupId>
                 <artifactId>quarkus-logging-logback</artifactId>
-                <version>0.11.0</version>
+                <version>0.13.0</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkiverse.logging.logback</groupId>
                 <artifactId>quarkus-logging-logback-impl</artifactId>
-                <version>0.11.0</version>
+                <version>0.13.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -417,7 +422,7 @@
                     <artifactId>maven-filtering</artifactId>
                     <version>3.2.0</version>
                 </plugin>
-                <!-- Moving to 3.0.0-M1 created a multi-module packaging issue -->
+                <!-- TODO Moving to 3.0.1 created a multi-module packaging issue -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
@@ -583,6 +588,7 @@
                     <artifactId>pitest-maven</artifactId>
                     <version>1.8.0</version>
                 </plugin>
+                <!-- TODO Moving to 3.0.0 invokes a stricter parser that causes some build blockers due to Quarkus dependencies -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
@@ -603,7 +609,7 @@
                                     <uniqueVersions>true</uniqueVersions>
                                 </dependencyConvergence>
                                 <requireMavenVersion>
-                                    <version>3.8.4</version>
+                                    <version>3.8.6</version>
                                 </requireMavenVersion>
                             </rules>
                         </configuration>
@@ -696,12 +702,12 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- ktlint needs to fix bug 1195, then we can have nice things again with Java 17 supprot -->
+            <!-- TODO Switch this back on when you're ready to obey the ktlint rules -->
+            <!-- TODO thanks to terrible XCML parsing, please fix the `- -add-opens` -->
             <!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.8</version>
                 <executions>
                     <execution>
                         <id>ktlint-format</id>
@@ -710,6 +716,8 @@
                             <target name="ktlint">
                                 <java taskname="ktlint" dir="${basedir}" fork="true" failonerror="true"
                                       classpathref="maven.plugin.classpath" classname="com.pinterest.ktlint.Main">
+                                    <jvmarg value="- -add-opens"/>
+                                    <jvmarg value="java.base/java.lang=ALL-UNNAMED"/>
                                     <arg value="-F"/>
                                     <arg value="src/**/*.kt"/>
                                 </java>
@@ -727,6 +735,8 @@
                                 <java taskname="ktlint" dir="${basedir}" fork="true" failonerror="true"
                                       classpathref="maven.plugin.classpath" classname="com.pinterest.ktlint.Main">
                                     <arg value="src/**/*.kt"/>
+                                    <jvmarg value="- -add-opens"/>
+                                    <jvmarg value="java.base/java.lang=ALL-UNNAMED"/>
                                 </java>
                             </target>
                         </configuration>
@@ -739,7 +749,7 @@
                     <dependency>
                         <groupId>com.pinterest</groupId>
                         <artifactId>ktlint</artifactId>
-                        <version>0.43.2</version>
+                        <version>0.46.1</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -752,7 +762,7 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.7.0.0</version>
+                <version>4.7.1.0</version>
                 <configuration>
                     <plugins>
                         <plugin>
@@ -796,7 +806,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.16.0</version>
+                <version>3.17.0</version>
                 <configuration>
                     <targetJdk>${jdk.version}</targetJdk>
                 </configuration>
@@ -804,12 +814,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.4.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.rat</groupId>
                 <artifactId>apache-rat-plugin</artifactId>
-                <version>0.13</version>
+                <version>0.14</version>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
