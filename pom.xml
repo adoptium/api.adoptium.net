@@ -24,7 +24,7 @@
         <maven.compiler.testTarget>17</maven.compiler.testTarget>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>2.10.3.Final</quarkus.version>
+        <quarkus.version>2.11.0.Final</quarkus.version>
         <rest-assured.version>5.1.1</rest-assured.version>
         <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
         <jackson.version>2.13.3</jackson.version>
@@ -214,7 +214,7 @@
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-xml</artifactId>
-                <version>3.0.11</version>
+                <version>3.0.12</version>
             </dependency>
             <dependency>
                 <groupId>org.jooq</groupId>
@@ -283,7 +283,7 @@
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy</artifactId>
-                <version>3.0.11</version>
+                <version>3.0.12</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkiverse.logging.logback</groupId>
@@ -422,11 +422,11 @@
                     <artifactId>maven-filtering</artifactId>
                     <version>3.2.0</version>
                 </plugin>
-                <!-- Moving to 3.0.0-M1 TODO change this comment if 3.0.0 works created a multi-module packaging issue -->
+                <!-- TODO Moving to 3.0.1 created a multi-module packaging issue -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>2.5.2</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
