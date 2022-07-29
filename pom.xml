@@ -235,23 +235,13 @@
             </dependency>
             <dependency>
                 <groupId>com.microsoft.azure</groupId>
-                <artifactId>applicationinsights-core</artifactId>
-                <version>2.6.4</version>
+                <artifactId>applicationinsights-runtime-attach</artifactId>
+                <version>3.3.1</version>
             </dependency>
             <dependency>
-                <groupId>com.microsoft.azure</groupId>
-                <artifactId>applicationinsights-logging-logback</artifactId>
-                <version>2.6.4</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>ch.qos.logback</groupId>
-                        <artifactId>logback-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>ch.qos.logback</groupId>
-                        <artifactId>logback-classic</artifactId>
-                    </exclusion>
-                </exclusions>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-api</artifactId>
+                <version>1.16.0</version>
             </dependency>
             <!-- TODO Update to 4.0.0 Final now -->
             <dependency>

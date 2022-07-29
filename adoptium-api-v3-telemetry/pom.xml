@@ -14,11 +14,7 @@
     <dependencies>
         <dependency>
             <groupId>com.microsoft.azure</groupId>
-            <artifactId>applicationinsights-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>applicationinsights-logging-logback</artifactId>
+            <artifactId>applicationinsights-runtime-attach</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
