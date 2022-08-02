@@ -11,7 +11,7 @@ enum class ImageType : FileNameMatcher {
     debugimage(1),
     staticlibs(1, "static-libs"),
     sources(1, "sources"),
-    sbom(1, "sbom");
+    sbom(1);
 
     override lateinit var names: List<String>
     override var priority: Int = 0

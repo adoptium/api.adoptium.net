@@ -1,6 +1,6 @@
 package net.adoptium.api.v3.dataSources.github.graphql.clients
 
-import io.aexp.nodes.graphql.GraphQLRequestEntity
+import com.expediagroup.graphql.client.types.GraphQLClientRequest
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.QuerySummaryData
@@ -10,6 +10,7 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositor
 import org.slf4j.LoggerFactory
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.reflect.KClass
 
 @Singleton
 class GraphQLGitHubSummaryClient @Inject constructor(
@@ -23,16 +24,15 @@ class GraphQLGitHubSummaryClient @Inject constructor(
     }
 
     suspend fun getRepositorySummary(owner: String, repoName: String): GHRepositorySummary {
-        val requestEntityBuilder = getReleaseSummary(owner, repoName)
+        val query = GetReleaseSummary(owner, repoName)
 
         LOGGER.info("Getting repo summary $repoName")
 
         val releases = getAll(
-            requestEntityBuilder,
+            query::withCursor,
             { request -> getSummary(request) },
             { it.repository!!.releases.pageInfo.hasNextPage },
-            { it.repository!!.releases.pageInfo.endCursor },
-            clazz = QuerySummaryData::class.java
+            { it.repository!!.releases.pageInfo.endCursor }
         )
 
         LOGGER.info("Done getting summary $repoName")
@@ -47,11 +47,19 @@ class GraphQLGitHubSummaryClient @Inject constructor(
         return request.repository.releases.releases
     }
 
-    private fun getReleaseSummary(owner: String, repoName: String): GraphQLRequestEntity.RequestBuilder {
-        return request(
-            """
-                        query(${'$'}cursorPointer:String) { 
-                            repository(owner:"$owner", name:"$repoName") { 
+    class GetReleaseSummary(private val owner: String, private val repoName: String, override val variables: Any = mapOf<String, String>()) :
+        GraphQLClientRequest<QuerySummaryData> {
+
+        fun withCursor(cursor: String?): GetReleaseSummary {
+            return if (cursor != null) GetReleaseSummary(owner, repoName, mapOf("cursorPointer" to cursor))
+            else this
+        }
+
+        override val query: String
+            get() =
+                """
+                        query(${'$'}cursorPointer:String) {
+                            repository(owner:"$owner", name:"$repoName") {
                                 releases(first:50, after:${'$'}cursorPointer, orderBy: {field: CREATED_AT, direction: DESC}) {
                                     nodes {
                                         id,
@@ -74,6 +82,11 @@ class GraphQLGitHubSummaryClient @Inject constructor(
                             }
                         }
                     """
-        )
+                    .trimIndent()
+                    .replace("\n", "")
+
+        override fun responseType(): KClass<QuerySummaryData> {
+            return QuerySummaryData::class
+        }
     }
 }

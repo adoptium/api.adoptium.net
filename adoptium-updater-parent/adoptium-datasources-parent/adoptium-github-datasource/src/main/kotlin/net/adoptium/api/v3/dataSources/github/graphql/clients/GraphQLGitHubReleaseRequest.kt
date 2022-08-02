@@ -1,6 +1,6 @@
 package net.adoptium.api.v3.dataSources.github.graphql.clients
 
-import io.aexp.nodes.graphql.GraphQLRequestEntity
+import com.expediagroup.graphql.client.types.GraphQLClientRequest
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
@@ -8,6 +8,7 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.ReleaseQueryData
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import org.slf4j.LoggerFactory
+import kotlin.reflect.KClass
 
 abstract class GraphQLGitHubReleaseRequest(
     graphQLRequest: GraphQLRequest,
@@ -18,11 +19,12 @@ abstract class GraphQLGitHubReleaseRequest(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    protected suspend fun getNextPage(release: GHRelease): GHRelease {
-        val getMore = getMoreReleasesQuery(release.id)
+    protected suspend fun getAllReleaseAssets(release: GHRelease): GHRelease {
+        val query = GetMoreReleaseAssetsQuery(release.id)
+
         LOGGER.debug("Getting release assets ${release.id.id}")
         val moreAssets = getAll(
-            getMore,
+            query::withCursor,
             { asset ->
                 if (asset.assetNode == null) listOf()
                 else asset.assetNode.releaseAssets.assets
@@ -30,7 +32,7 @@ abstract class GraphQLGitHubReleaseRequest(
             { it.assetNode!!.releaseAssets.pageInfo.hasNextPage },
             { it.assetNode!!.releaseAssets.pageInfo.endCursor },
             release.releaseAssets.pageInfo.endCursor,
-            null, ReleaseQueryData::class.java
+            null
         )
 
         val assets = release.releaseAssets.assets.union(moreAssets)
@@ -51,9 +53,16 @@ abstract class GraphQLGitHubReleaseRequest(
         )
     }
 
-    private fun getMoreReleasesQuery(releaseId: GitHubId): GraphQLRequestEntity.RequestBuilder {
-        return request(
-            """query(${'$'}cursorPointer:String) { 
+    class GetMoreReleaseAssetsQuery(private val releaseId: GitHubId, override val variables: Any = mapOf<String, String>()) : GraphQLClientRequest<ReleaseQueryData> {
+
+        fun withCursor(cursor: String?): GetMoreReleaseAssetsQuery {
+            return if (cursor != null) GetMoreReleaseAssetsQuery(releaseId, mapOf("cursorPointer" to cursor))
+            else this
+        }
+
+        override val query: String
+            get() =
+                """query(${'$'}cursorPointer:String) {
                               node(id:"${releaseId.id}") {
                                 ... on Release {
                                     releaseAssets(first:50, after:${'$'}cursorPointer) {
@@ -77,6 +86,12 @@ abstract class GraphQLGitHubReleaseRequest(
                               }
                             }
                     """
-        )
+                    .trimIndent()
+                    .replace("\n", "")
+
+        override fun responseType(): KClass<ReleaseQueryData> {
+            return ReleaseQueryData::class
+        }
+
     }
 }
