@@ -86,7 +86,6 @@ DateTime {
     companion object {
         @Throws(UnableToParseDateException::class)
         fun parseDate(rawDate: String): ZonedDateTime {
-
             val zoneOffset = ZoneOffset.of("Z")
             try {
                 return LocalDate.parse(rawDate, DateTimeFormatter.ISO_DATE)
