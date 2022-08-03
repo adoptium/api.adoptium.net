@@ -2,7 +2,7 @@ package net.adoptium.api.v3.routes
 
 import net.adoptium.api.v3.OpenApiDocs
 import net.adoptium.api.v3.Pagination.defaultPageSize
-import net.adoptium.api.v3.Pagination.getPage
+import net.adoptium.api.v3.Pagination.getResponseForPage
 import net.adoptium.api.v3.Pagination.maxPageSize
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.SortMethod
@@ -29,7 +29,6 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
-import org.slf4j.LoggerFactory
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
 import javax.ws.rs.BadRequestException
@@ -40,8 +39,10 @@ import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
 import javax.ws.rs.QueryParam
 import javax.ws.rs.ServerErrorException
+import javax.ws.rs.core.Context
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
+import javax.ws.rs.core.UriInfo
 
 @Tag(name = "Assets")
 @Path("/v3/assets/")
@@ -53,11 +54,6 @@ constructor(
     private val apiDataStore: APIDataStore,
     private val releaseEndpoint: ReleaseEndpoint
 ) {
-
-    companion object {
-        @JvmStatic
-        private val LOGGER = LoggerFactory.getLogger(this::class.java)
-    }
 
     @GET
     @Path("/feature_releases/{feature_version}/{release_type}")
@@ -147,9 +143,11 @@ constructor(
 
         @Parameter(name = "sort_method", description = "Result sort method", required = false)
         @QueryParam("sort_method")
-        sortMethod: SortMethod?
+        sortMethod: SortMethod?,
 
-    ): List<Release> {
+        @Context
+        uriInfo: UriInfo,
+    ): Response {
         val order = sortOrder ?: SortOrder.DESC
         val releaseSortMethod = sortMethod ?: SortMethod.DEFAULT
         val vendorNonNull = vendor ?: Vendor.getDefault()
@@ -166,7 +164,7 @@ constructor(
             .getAdoptRepos()
             .getFilteredReleases(version, releaseFilter, binaryFilter, order, releaseSortMethod)
 
-        return getPage(pageSize, page, releases)
+        return getResponseForPage(uriInfo, pageSize, page, releases)
     }
 
     @GET
@@ -338,8 +336,11 @@ constructor(
 
         @Parameter(name = "sort_method", description = "Result sort method", required = false)
         @QueryParam("sort_method")
-        sortMethod: SortMethod?
-    ): List<Release> {
+        sortMethod: SortMethod?,
+
+        @Context
+        uriInfo: UriInfo,
+    ): Response {
         val releases = releaseEndpoint.getReleases(
             sortOrder,
             sortMethod,
@@ -355,7 +356,7 @@ constructor(
             project,
             cLib
         )
-        return getPage(pageSize, page, releases)
+        return getResponseForPage(uriInfo, pageSize, page, releases)
     }
 
     data class BinaryPermutation(
