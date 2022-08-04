@@ -1,0 +1,43 @@
+{
+  "sampling" : {
+    "percentage" : 100
+  },
+  "instrumentation" : {
+    "logging" : {
+      "level" : "WARN"
+    },
+    "azureSdk" : {
+      "enabled" : false
+    },
+    "cassandra" : {
+      "enabled" : false
+    },
+    "jdbc" : {
+      "enabled" : false
+    },
+    "jms" : {
+      "enabled" : false
+    },
+    "kafka" : {
+      "enabled" : false
+    },
+    "micrometer" : {
+      "enabled" : false
+    },
+    "mongo" : {
+      "enabled" : false
+    },
+    "quartz" : {
+      "enabled" : false
+    },
+    "rabbitmq" : {
+      "enabled" : false
+    },
+    "redis" : {
+      "enabled" : false
+    },
+    "springScheduling" : {
+      "enabled" : false
+    }
+  }
+}
