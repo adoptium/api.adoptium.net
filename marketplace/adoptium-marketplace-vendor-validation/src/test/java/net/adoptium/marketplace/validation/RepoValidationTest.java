@@ -59,7 +59,7 @@ public class RepoValidationTest {
             .map(it -> it.getReleaseName() + ":" + it.getReleaseLink() + ":" + it.getOpenjdkVersionData())
             .forEach(key -> {
                 if (keys.contains(key)) {
-                    Assertions.fail("Multiple releases share the same name, link and version (" + key + ")";
+                    Assertions.fail("Multiple releases share the same name, link and version ($key)");
                 }
                 keys.add(key);
             });
