@@ -14,10 +14,6 @@ p {
     margin: 15px 0;
 }
 
-/*li {*/
-/*    margin: 10px 0;*/
-/*}*/
-
 pre {
     border: none;
     border-bottom: 3px solid #ccc;
@@ -42,6 +38,10 @@ table th {
     font-weight: 600;
 }
 
+span {
+    font-weight: 400;
+    font-size: medium;
+}
 table th, table td {
     padding: 6px 13px;
     border: 1px solid #cecece;
