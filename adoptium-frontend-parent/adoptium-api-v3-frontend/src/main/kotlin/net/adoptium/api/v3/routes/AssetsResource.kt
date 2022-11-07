@@ -250,9 +250,11 @@ constructor(
             releases.isEmpty() -> {
                 throw NotFoundException("No releases found")
             }
+
             releases.size > 1 -> {
                 throw ServerErrorException("Multiple releases match request", Response.Status.INTERNAL_SERVER_ERROR)
             }
+
             else -> {
                 releases[0]
             }
@@ -346,6 +348,14 @@ constructor(
         @QueryParam("show_page_count")
         showPageCount: Boolean?,
 
+        @Parameter(name = "semver",
+            description = "Indicates that any version arguments provided in this request were Adoptium semantic versions",
+            required = false,
+            schema = Schema(defaultValue = "false", type = SchemaType.BOOLEAN)
+        )
+        @QueryParam("semver")
+        semver: Boolean?,
+
         @Context
         uriInfo: UriInfo,
     ): Response {
@@ -362,7 +372,8 @@ constructor(
             jvm_impl,
             heap_size,
             project,
-            cLib
+            cLib,
+            semver
         )
         return getResponseForPage(uriInfo, pageSize, page, releases, showPageCount ?: false)
     }

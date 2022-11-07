@@ -12,8 +12,8 @@ class VersionRangeFilterTest {
 
     @Test
     fun versionRangeFilter() {
-        val filter16 = VersionRangeFilter("(16,17)")
-        val filter17 = VersionRangeFilter("(17,18)")
+        val filter16 = VersionRangeFilter("(16,17)", false)
+        val filter17 = VersionRangeFilter("(17,18)", false)
 
         val first = VersionParser.parse("17-beta+31-202107202346")
         val second = VersionParser.parse("17+20-202105070000")

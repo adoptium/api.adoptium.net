@@ -1,14 +1,13 @@
 package net.adoptium.api
 
 import kotlinx.coroutines.runBlocking
-import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.v3.dataSources.ReleaseVersionResolver
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.UrlRequest
 import net.adoptium.api.v3.models.ReleaseInfo
 import org.apache.http.HttpResponse
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class ReleaseVersionResolverTest : BaseTest() {
 
@@ -38,7 +37,12 @@ class ReleaseVersionResolverTest : BaseTest() {
     @Test
     fun availableVersionsIsCorrect() {
         check { releaseInfo ->
-            releaseInfo.available_releases.contentEquals(AdoptReposTestDataGenerator.generate().repos.keys.toTypedArray())
+            //remove the releases that do not have ga's
+            val versions = AdoptReposTestDataGenerator.generate().repos.keys
+                .filter { it != 18 }
+                .toTypedArray()
+
+            releaseInfo.available_releases.contentEquals(versions)
         }
     }
 
@@ -66,7 +70,7 @@ class ReleaseVersionResolverTest : BaseTest() {
     @Test
     fun mostRecentFeatureVersionIsCorrect() {
         check { releaseInfo ->
-            releaseInfo.most_recent_feature_version == 12
+            releaseInfo.most_recent_feature_version == 18
         }
     }
 
