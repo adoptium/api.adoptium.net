@@ -119,6 +119,10 @@ constructor(
         @QueryParam("sort_method")
         sortMethod: SortMethod?,
 
+        @Parameter(name = "show_page_count", required = false, hidden = true)
+        @QueryParam("show_page_count")
+        showPageCount: Boolean?,
+
         @Context
         uriInfo: UriInfo,
     ): Response {
@@ -139,7 +143,7 @@ constructor(
         )
             .map { it.release_name }
 
-        val pagedReleases = getPage(pageSize, page, releases)
+        val pagedReleases = getPage(pageSize, page, releases, showPageCount ?: false)
 
         return formPagedResponse(ReleaseList(pagedReleases.data.toTypedArray()), uriInfo, pagedReleases)
     }
@@ -216,6 +220,10 @@ constructor(
         @QueryParam("sort_method")
         sortMethod: SortMethod?,
 
+        @Parameter(name = "show_page_count", required = false, hidden = true)
+        @QueryParam("show_page_count")
+        showPageCount: Boolean?,
+
         @Context
         uriInfo: UriInfo,
     ): Response {
@@ -237,7 +245,7 @@ constructor(
             .map { it.version_data }
             .distinct()
 
-        val pagedReleases = getPage(pageSize, page, releases, maxPageSizeNum = Pagination.largerPageSizeNum)
+        val pagedReleases = getPage(pageSize, page, releases, showPageCount ?: false, maxPageSizeNum = Pagination.largerPageSizeNum)
 
         return formPagedResponse(ReleaseVersionList(pagedReleases.data.toTypedArray()), uriInfo, pagedReleases)
     }

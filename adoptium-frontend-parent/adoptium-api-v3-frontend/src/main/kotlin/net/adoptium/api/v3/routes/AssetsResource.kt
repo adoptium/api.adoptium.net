@@ -145,6 +145,10 @@ constructor(
         @QueryParam("sort_method")
         sortMethod: SortMethod?,
 
+        @Parameter(name = "show_page_count", required = false, hidden = true)
+        @QueryParam("show_page_count")
+        showPageCount: Boolean?,
+
         @Context
         uriInfo: UriInfo,
     ): Response {
@@ -164,7 +168,7 @@ constructor(
             .getAdoptRepos()
             .getFilteredReleases(version, releaseFilter, binaryFilter, order, releaseSortMethod)
 
-        return getResponseForPage(uriInfo, pageSize, page, releases)
+        return getResponseForPage(uriInfo, pageSize, page, releases, showPageCount ?: false)
     }
 
     @GET
@@ -338,6 +342,10 @@ constructor(
         @QueryParam("sort_method")
         sortMethod: SortMethod?,
 
+        @Parameter(name = "show_page_count", required = false, hidden = true)
+        @QueryParam("show_page_count")
+        showPageCount: Boolean?,
+
         @Context
         uriInfo: UriInfo,
     ): Response {
@@ -356,7 +364,7 @@ constructor(
             project,
             cLib
         )
-        return getResponseForPage(uriInfo, pageSize, page, releases)
+        return getResponseForPage(uriInfo, pageSize, page, releases, showPageCount ?: false)
     }
 
     data class BinaryPermutation(

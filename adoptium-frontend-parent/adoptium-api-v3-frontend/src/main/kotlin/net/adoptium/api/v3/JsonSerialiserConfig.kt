@@ -7,6 +7,8 @@ import net.adoptium.api.v3.models.JvmImpl
 import net.adoptium.api.v3.models.Vendor
 import java.lang.reflect.Type
 import java.time.format.DateTimeFormatter
+import javax.enterprise.context.Dependent
+import javax.enterprise.inject.Instance
 import javax.json.bind.JsonbConfig
 import javax.json.bind.serializer.JsonbSerializer
 import javax.json.bind.serializer.SerializationContext
@@ -14,6 +16,27 @@ import javax.json.stream.JsonGenerator
 import javax.ws.rs.ext.ParamConverter
 import javax.ws.rs.ext.ParamConverterProvider
 import javax.ws.rs.ext.Provider
+
+class JsonbConfig {
+    @Dependent
+    fun jsonConfig(customizers: Instance<JsonbConfigCustomizer?>): JsonbConfig {
+        val config = JsonbConfig()
+
+        for (customizer in customizers) {
+            customizer?.customize(config)
+        }
+
+        // For whatever reason JsonSerializerCustomizer does not seem to be detected
+        val hasCustomizer = customizers
+            .any { it?.javaClass?.name?.contains(JsonSerializerCustomizer::class.java.name) == true }
+
+        if (!hasCustomizer) {
+            JsonSerializerCustomizer().customize(config)
+        }
+
+        return config
+    }
+}
 
 @Provider
 class JsonSerializerCustomizer : JsonbConfigCustomizer {

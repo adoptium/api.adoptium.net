@@ -24,10 +24,10 @@
         <maven.compiler.testTarget>17</maven.compiler.testTarget>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>2.11.0.Final</quarkus.version>
+        <quarkus.version>2.14.0.Final</quarkus.version>
         <rest-assured.version>5.1.1</rest-assured.version>
         <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
-        <jackson.version>2.13.3</jackson.version>
+        <jackson.version>2.14.0</jackson.version>
         <kmongo.version>4.6.1</kmongo.version>
     </properties>
 
@@ -236,7 +236,7 @@
             <dependency>
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>applicationinsights-runtime-attach</artifactId>
-                <version>3.3.1</version>
+                <version>3.4.2</version>
             </dependency>
             <dependency>
                 <groupId>io.opentelemetry</groupId>
@@ -301,7 +301,7 @@
             <dependency>
                 <groupId>io.smallrye</groupId>
                 <artifactId>smallrye-open-api-core</artifactId>
-                <version>2.1.17</version>
+                <version>2.3.1</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

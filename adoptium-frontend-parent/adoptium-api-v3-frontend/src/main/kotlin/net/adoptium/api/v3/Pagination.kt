@@ -28,21 +28,50 @@ object Pagination {
             builder = builder.link(nextUri, "next")
         }
 
+        if (pageInfo.pageCount != null) {
+            builder = builder.header("X-PageCount", pageInfo.pageCount)
+        }
+
         return builder.build()
     }
 
-    fun <T> getResponseForPage(uriInfo: UriInfo, pageSize: Int?, page: Int?, releases: Sequence<T>, maxPageSizeNum: Int = this.maxPageSizeNum): Response {
-        val pageInfo = getPage(pageSize, page, releases, maxPageSizeNum)
+    fun <T> getResponseForPage(
+        uriInfo: UriInfo,
+        pageSize: Int?,
+        page: Int?,
+        releases: Sequence<T>,
+        showPageCount: Boolean,
+        maxPageSizeNum: Int = this.maxPageSizeNum,
+    ): Response {
+        val pageInfo = getPage(pageSize, page, releases, showPageCount, maxPageSizeNum)
         return formPagedResponse(pageInfo.data, uriInfo, pageInfo)
     }
 
-    fun <T> getPage(pageSize: Int?, page: Int?, releases: Sequence<T>, maxPageSizeNum: Int = this.maxPageSizeNum): PaginationInfo<T> {
+    fun <T> getPage(
+        pageSize: Int?,
+        page: Int?,
+        releases: Sequence<T>,
+        showPageCount: Boolean,
+        maxPageSizeNum: Int = this.maxPageSizeNum,
+    ): PaginationInfo<T> {
         val pageSizeNum = min(maxPageSizeNum, (pageSize ?: defaultPageSizeNum))
         val pageNum = page ?: 0
 
-        val chunked = releases.chunked(pageSizeNum)
-
         return try {
+
+            var totalPages: Int? = null;
+
+            val chunked = if (showPageCount) {
+                val releasesList = releases.toList()
+                val seq = releasesList.chunked(pageSizeNum)
+
+                totalPages = seq.size
+
+                seq.asSequence()
+            } else {
+                releases.chunked(pageSizeNum)
+            }
+
             val pages = chunked.drop(pageNum).take(2).toList()
 
             if (pages.isEmpty()) {
@@ -62,6 +91,7 @@ object Pagination {
             PaginationInfo(
                 if (hasNext) pageNum + 1 else null,
                 pageSizeNum,
+                totalPages,
                 pages[0]
             )
         } catch (e: IndexOutOfBoundsException) {
@@ -72,6 +102,8 @@ object Pagination {
     data class PaginationInfo<T>(
         val next: Int?,
         val pageSize: Int,
+        val pageCount: Int?,
+
         val data: List<T>
     )
 }
