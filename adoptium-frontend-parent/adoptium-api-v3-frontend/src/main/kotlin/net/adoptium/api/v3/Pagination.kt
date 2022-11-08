@@ -29,7 +29,7 @@ object Pagination {
         }
 
         if (pageInfo.pageCount != null) {
-            builder = builder.header("X-PageCount", pageInfo.pageCount)
+            builder = builder.header("PageCount", pageInfo.pageCount)
         }
 
         return builder.build()
