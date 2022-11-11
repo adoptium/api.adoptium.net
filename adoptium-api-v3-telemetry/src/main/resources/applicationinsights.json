@@ -1,4 +1,9 @@
 {
+  "preview" : {
+    "profiler" : {
+      "enabled" : true
+    }
+  },
   "sampling" : {
     "percentage" : 100
   },
