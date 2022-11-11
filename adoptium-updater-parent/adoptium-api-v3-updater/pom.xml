@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>adoptium-api-v3-updater</artifactId>
+    <packaging>jar</packaging>
 
     <properties>
         <main.class>net.adoptium.api.v3.Main</main.class>
@@ -53,14 +54,6 @@
         <dependency>
             <groupId>net.adoptium.api</groupId>
             <artifactId>adoptium-api-v3-telemetry</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>applicationinsights-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>applicationinsights-logging-logback</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jboss.weld.se</groupId>

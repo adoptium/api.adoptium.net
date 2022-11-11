@@ -1,5 +1,6 @@
 package net.adoptium.api.v3
 
+import com.microsoft.applicationinsights.attach.ApplicationInsights
 import io.quarkus.runtime.Startup
 import net.adoptium.api.v3.dataSources.APIDataStore
 import javax.annotation.PostConstruct
