@@ -103,7 +103,8 @@ class BinaryResource @Inject constructor(private val packageEndpoint: PackageEnd
     @Operation(
         operationId = "getBinaryByVersionHead",
         summary = "Redirects to the binary that matches your current query",
-        description = "Redirects to the binary that matches your current query"
+        description = "Redirects to the binary that matches your current query",
+        hidden = true
     )
     @APIResponses(
         value = [
