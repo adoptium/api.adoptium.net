@@ -2,6 +2,7 @@
     <logger name="org.apache.http" level="INFO"/>
     <logger name="org.apache.http.client.protocol.ResponseProcessCookies" level="ERROR"/>
     <logger name="net.adoptium.api.v3.dataSources.APIDataStore" level="WARN"/>
+    <logger name="net.adoptium.api.v3.Pagination" level="INFO"/>
     <logger name="com.microsoft.applicationinsights" level="WARN"/>
     <logger name="org.mongodb" level="INFO"/>
     <logger name="io.quarkus.vertx.http.runtime.ForwardedParser" level="INFO"/>
