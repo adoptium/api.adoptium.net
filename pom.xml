@@ -16,7 +16,7 @@
         <jacoco.version>0.8.8</jacoco.version>
         <jdk.version>17</jdk.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <kotlin.version>1.7.10</kotlin.version>
+        <kotlin.version>1.7.21</kotlin.version>
         <coroutine.version>1.6.4</coroutine.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
@@ -25,10 +25,18 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.version>2.14.0.Final</quarkus.version>
-        <rest-assured.version>5.1.1</rest-assured.version>
+        <rest-assured.version>5.2.0</rest-assured.version>
         <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
         <jackson.version>2.14.0</jackson.version>
-        <kmongo.version>4.6.1</kmongo.version>
+        <kmongo.version>4.7.2</kmongo.version>
+        <maven-dependency-plugin.version>3.3.0</maven-dependency-plugin.version>
+        <spotbugs-maven-plugin.version>4.7.2.1</spotbugs-maven-plugin.version>
+        <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
+        <maven-pmd-plugin.version>3.19.0</maven-pmd-plugin.version>
+        <maven-project-info-reports-plugin.version>3.4.1</maven-project-info-reports-plugin.version>
+        <apache-rat-plugin.version>0.15</apache-rat-plugin.version>
+        <jdepend-maven-plugin.version>2.0</jdepend-maven-plugin.version>
+        <versions-maven-plugin.version>2.13.0</versions-maven-plugin.version>
     </properties>
 
     <modules>
@@ -83,8 +91,8 @@
             </dependency>
             <dependency>
                 <groupId>io.mockk</groupId>
-                <artifactId>mockk</artifactId>
-                <version>1.12.4</version>
+                <artifactId>mockk-jvm</artifactId>
+                <version>1.13.2</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -178,7 +186,7 @@
             <dependency>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-test-junit5</artifactId>
-                <version>1.7.0</version>
+                <version>1.7.10</version>
             </dependency>
             <!-- Explicitly adding this because Maven can't see it via the kmongo dep in
              adoptium-api-v3-updater pom file. Why? Nobody knows -->
@@ -194,6 +202,10 @@
                 <artifactId>httpasyncclient</artifactId>
                 <version>4.1.5</version>
             </dependency>
+            <!--
+            TODO Moved to 5.x under a new artifact id
+            https://mvnrepository.com/artifact/org.apache.httpcomponents.core5/httpcore5
+            -->
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpcore</artifactId>
@@ -214,14 +226,14 @@
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-xml</artifactId>
-                <version>3.0.12</version>
+                <version>3.0.13</version>
             </dependency>
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq</artifactId>
-                <version>3.17.2</version>
+                <version>3.17.5</version>
             </dependency>
-            <!-- 2.0.0-alpha releases are out -->
+            <!-- TODO 2.0.3 is out -->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
@@ -236,12 +248,12 @@
             <dependency>
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>applicationinsights-runtime-attach</artifactId>
-                <version>3.4.2</version>
+                <version>3.4.3</version>
             </dependency>
             <dependency>
                 <groupId>io.opentelemetry</groupId>
                 <artifactId>opentelemetry-api</artifactId>
-                <version>1.16.0</version>
+                <version>1.19.0</version>
             </dependency>
             <!-- TODO Update to 4.0.0 Final now -->
             <dependency>
@@ -265,6 +277,7 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <!-- TODO swap to Jakarta EE once Quarkus fully moves over -->
             <dependency>
                 <groupId>javax.enterprise</groupId>
                 <artifactId>cdi-api</artifactId>
@@ -273,7 +286,7 @@
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy</artifactId>
-                <version>3.0.12</version>
+                <version>3.0.13</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkiverse.logging.logback</groupId>
@@ -295,9 +308,10 @@
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>
-                <version>5.8.1</version>
+                <version>5.9.1</version>
                 <scope>test</scope>
             </dependency>
+            <!-- TODO Now at 3.0.1 -->
             <dependency>
                 <groupId>io.smallrye</groupId>
                 <artifactId>smallrye-open-api-core</artifactId>
@@ -307,24 +321,26 @@
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-server</artifactId>
-                <version>11.0.6</version>
+                <version>11.0.12</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-client</artifactId>
-                <version>11.0.6</version>
+                <version>11.0.12</version>
             </dependency>
             <dependency>
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcpg-jdk15on</artifactId>
                 <version>1.70</version>
             </dependency>
+            <!-- TODO at 1.4.4 -->
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-core</artifactId>
                 <version>1.2.11</version>
             </dependency>
+            <!-- TODO at 1.4.4 -->
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
@@ -333,7 +349,7 @@
             <dependency>
                 <groupId>org.litote.kmongo</groupId>
                 <artifactId>kmongo-id-jackson</artifactId>
-                <version>4.6.1</version>
+                <version>4.7.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -348,24 +364,9 @@
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <groupId>io.quarkus</groupId>
-                    <artifactId>quarkus-maven-plugin</artifactId>
-                    <version>${quarkus.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>io.swagger</groupId>
-                    <artifactId>swaggerhub-maven-plugin</artifactId>
-                    <version>1.0.9</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.openapitools</groupId>
-                    <artifactId>openapi-generator-maven-plugin</artifactId>
-                    <version>5.2.1</version>
-                </plugin>
-                <plugin>
                     <groupId>com.github.spotbugs</groupId>
                     <artifactId>spotbugs-maven-plugin</artifactId>
-                    <version>4.7.0.0</version>
+                    <version>${spotbugs-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>com.ning.maven.plugins</groupId>
@@ -384,6 +385,31 @@
                     </executions>
                 </plugin>
                 <plugin>
+                    <groupId>io.quarkus</groupId>
+                    <artifactId>quarkus-maven-plugin</artifactId>
+                    <version>${quarkus.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>io.swagger</groupId>
+                    <artifactId>swaggerhub-maven-plugin</artifactId>
+                    <version>1.0.9</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <version>3.1.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.4.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>3.2.0</version>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.10.1</version>
@@ -398,28 +424,50 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-antrun-plugin</artifactId>
-                    <version>3.1.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.3.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.2.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
+                    <version>${maven-dependency-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+                <!-- TODO Moving to 3.0.0 invokes a stricter parser that causes some build blockers due to Quarkus dependencies -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>3.0.0-M3</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>${surefire-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.shared</groupId>
+                    <artifactId>maven-filtering</artifactId>
                     <version>3.3.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-help-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.3.0</version>
+                </plugin>
+                <!-- TODO Moving to 3.0.1 created a multi-module packaging issue -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>2.5.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.3.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.4.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -441,44 +489,13 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.0.0-M2</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-failsafe-plugin</artifactId>
-                    <version>${surefire-plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.shared</groupId>
-                    <artifactId>maven-filtering</artifactId>
-                    <version>3.2.0</version>
-                </plugin>
-                <!-- TODO Moving to 3.0.1 created a multi-module packaging issue -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-install-plugin</artifactId>
-                    <version>2.5.2</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.4.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.2.2</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jxr-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>${maven-jxr-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
-                    <version>3.16.0</version>
+                    <version>${maven-pmd-plugin.version}</version>
                     <configuration>
                         <targetJdk>${jdk.version}</targetJdk>
                     </configuration>
@@ -486,12 +503,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-project-info-reports-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>${maven-project-info-reports-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-release-plugin</artifactId>
-                    <version>2.5.3</version>
+                    <version>3.0.0-M6</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -501,17 +518,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-scm-plugin</artifactId>
-                    <version>1.13.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>${surefire-plugin.version}</version>
+                    <version>2.0.0-M3</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.12.0</version>
+                    <version>4.0.0-M3</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -520,8 +532,13 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${surefire-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-toolchains-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.0</version>
                     <executions>
                         <execution>
                             <id>validate</id>
@@ -548,7 +565,7 @@
                 <plugin>
                     <groupId>org.apache.rat</groupId>
                     <artifactId>apache-rat-plugin</artifactId>
-                    <version>0.14</version>
+                    <version>${apache-rat-plugin.version}</version>
                     <executions>
                         <execution>
                             <phase>verify</phase>
@@ -566,12 +583,12 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>exec-maven-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>jdepend-maven-plugin</artifactId>
-                    <version>2.0</version>
+                    <version>${jdepend-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
@@ -589,7 +606,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>tidy-maven-plugin</artifactId>
-                    <version>1.1.0</version>
+                    <version>1.2.0</version>
                     <executions>
                         <execution>
                             <id>validate</id>
@@ -603,7 +620,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
-                    <version>2.11.0</version>
+                    <version>${versions-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>
@@ -616,15 +633,14 @@
                     <version>${kotlin.version}</version>
                 </plugin>
                 <plugin>
+                    <groupId>org.openapitools</groupId>
+                    <artifactId>openapi-generator-maven-plugin</artifactId>
+                    <version>6.2.1</version>
+                </plugin>
+                <plugin>
                     <groupId>org.pitest</groupId>
                     <artifactId>pitest-maven</artifactId>
-                    <version>1.8.0</version>
-                </plugin>
-                <!-- TODO Moving to 3.0.0 invokes a stricter parser that causes some build blockers due to Quarkus dependencies -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>3.0.0-M3</version>
+                    <version>1.9.9</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -794,9 +810,10 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.7.1.0</version>
+                <version>${spotbugs-maven-plugin.version}</version>
                 <configuration>
                     <plugins>
+                        <!-- A newer version exists 0.10.1 but is not in Maven Central -->
                         <plugin>
                             <groupId>org.mutabilitydetector</groupId>
                             <artifactId>MutabilityDetector4FindBugs</artifactId>
@@ -828,17 +845,17 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>${maven-dependency-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jxr-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>${maven-jxr-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.17.0</version>
+                <version>${maven-pmd-plugin.version}</version>
                 <configuration>
                     <targetJdk>${jdk.version}</targetJdk>
                 </configuration>
@@ -846,22 +863,22 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>${maven-project-info-reports-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.rat</groupId>
                 <artifactId>apache-rat-plugin</artifactId>
-                <version>0.14</version>
+                <version>${apache-rat-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>jdepend-maven-plugin</artifactId>
-                <version>2.0</version>
+                <version>${jdepend-maven-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
-                <version>2.11.0</version>
+                <version>${versions-maven-plugin.version}</version>
                 <reportSets>
                     <reportSet>
                         <reports>
