@@ -30,7 +30,7 @@
         <jackson.version>2.14.0</jackson.version>
         <kmongo.version>4.7.2</kmongo.version>
         <maven-dependency-plugin.version>3.3.0</maven-dependency-plugin.version>
-        <spotbugs-maven-plugin.version>4.7.2.1</spotbugs-maven-plugin.version>
+        <spotbugs-maven-plugin.version>4.7.3.0</spotbugs-maven-plugin.version>
         <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
         <maven-pmd-plugin.version>3.19.0</maven-pmd-plugin.version>
         <maven-project-info-reports-plugin.version>3.4.1</maven-project-info-reports-plugin.version>
