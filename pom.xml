@@ -253,7 +253,7 @@
             <dependency>
                 <groupId>io.opentelemetry</groupId>
                 <artifactId>opentelemetry-api</artifactId>
-                <version>1.19.0</version>
+                <version>1.20.0</version>
             </dependency>
             <!-- TODO Update to 4.0.0 Final now -->
             <dependency>
