@@ -27,7 +27,15 @@ interface AdoptRepository {
     suspend fun getReleaseById(gitHubId: GitHubId): ReleaseResult?
 
     companion object {
-        val VENDORS_EXCLUDED_FROM_FULL_UPDATE = setOf(Vendor.adoptopenjdk)
+        val VENDORS_EXCLUDED_FROM_FULL_UPDATE: Set<Vendor>
+
+        init {
+            VENDORS_EXCLUDED_FROM_FULL_UPDATE = if (!System.getProperties().containsKey("DONT_EXCLUDE_VENDORS")) {
+                emptySet()
+            } else {
+                setOf(Vendor.adoptopenjdk)
+            }
+        }
     }
 }
 
