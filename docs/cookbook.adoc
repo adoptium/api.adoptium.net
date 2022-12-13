@@ -14,7 +14,7 @@ The first example is a simple API query that returns the list of Java versions a
 [source,html]
 https://api.adoptium.net/v3/info/available_releases
 
-the result will be something like this
+open that link in a browser and the result will be something like this
 
 [code,json]
 ----
@@ -51,9 +51,11 @@ $ curl -s https://api.adoptium.net/v3/info/available_releases | jq '.most_recent
 ----
 
 [#example-two]
-== Example Two: Downloading the latest JDK or JRE
+== Example Two: Linking to the latest JDK or JRE
 
-You can download the latest long-term supported (LTS) Linux x64 JDK version 17 JDK using the following stable URL
+In this example we show how to construct a stable URL to a specific Java version on a specific platform. You can embed a link like this in a webpage directing users to download Java for use in your application.
+
+The following stable URL downloads the latest long-term supported (LTS) Linux x64 JDK version 17 JDK.
 
 [source, html]
 ----
@@ -66,7 +68,9 @@ Here's an example of using the API to download the latest Java 17 JRE installer 
 https://api.adoptium.net/v3/installer/latest/17/ga/windows/x64/jre/hotspot/normal/eclipse?project=jdk
 
 ****
-Looking at these URLs you can see they follows a general structure with replaceable variables in the path:
+Looking at these links you can see they follows a general
+https://en.wikipedia.org/wiki/Clean_URL[clean URL]
+structure with replaceable variables in the path:
 `https://api.adoptium.net/v3/binary/latest/{feature_version}/ga/{os}/{arch}/{image_type}/hotspot/normal/eclipse`
 
 so downloading for other Java API versions and platforms is simply a case of replacing the variables with the required values
@@ -90,6 +94,8 @@ Rather than use a URL in the browser you can download Temurin binaries and check
 ----
 #!/bin/bash
 set -eu
+
+# Specify the Java version and platform
 API_URL="https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse"
 
 # Fetch the archive
@@ -102,20 +108,38 @@ curl -Ls "${FETCH_URL}.sha256.txt" | sha256sum -c --status
 echo "Downloaded successfully as ${FILENAME}"
 ----
 
-Again, the download URL can be adapted for different Java versions etc. as shown in <<example-two,Example Two>>.
+Again, the `API_URL` can be adapted for different Java versions etc. as shown in <<example-two,Example Two>>.
 
 
 == Example Three: More complex queries
 
-The API can be supplemented to filter the details response by Java version, platform, and other conditions. For example, the following API call will find all builds of Java 19 or later for Windows 32-bit architecture:
+The API can be supplemented to filter the details response by Java version, platform, and other conditions and can be used to answer detailed queries.
+
+For example, to find the date of the most recent build of Java 19 on Windows 32-bit. The following API call will find all builds of Java 19 or later for Windows 32-bit architecture, sorted with most recent first.
 
 [source,html]
-https://api.adoptium.net/v3/assets/version/%5B19%2C%5D?os=windows&architecture=x32
+https://api.adoptium.net/v3/assets/version/%5B19%2C%5D?os=windows&architecture=x32&sort_method=DATE&sort_order=DESC
 
 [TIP]
 The string `%5B17%2C%5D` is a 
-https://www.urldecoder.org/[URL encoding] of "[19," which
+https://www.urldecoder.org/[URL encoding] of "[19,]" which
 https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html[describes the version range] "19 onwards".
+
+You can then extract the date of the most recent build using `jq` as follows
+
+[source, bash]
+----
+$ curl -s 'https://api.adoptium.net/v3/assets/version/%5B19%2C%5D?os=windows&architecture=x32&sort_method=DATE&sort_order=DESC' | jq '.[0].binaries[0].updated_at'
+"2022-12-13T09:39:04Z"
+----
+
+Or find out how many downloads of the latest Java 8 on Linux x64?
+
+[source, bash]
+----
+$ curl -s 'https://api.adoptium.net/v3/assets/version/%5B8%2C9%29?architecture=x64&os=linux&image_type=jdk&project=jdk&release_type=ga&sort_method=DATE&sort_order=DESC' | jq '.[0].binaries[0].download_count'
+236264
+----
 
 The full set of filters and possible argument values is available in
 https://api.adoptium.net/q/swagger-ui/[the API documentation]
