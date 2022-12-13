@@ -115,21 +115,21 @@ Again, the `API_URL` can be adapted for different Java versions etc. as shown in
 
 The API can be supplemented to filter the details response by Java version, platform, and other conditions and can be used to answer detailed queries.
 
-For example, to find the date of the most recent build of Java 19 on Windows 32-bit. The following API call will find all builds of Java 19 or later for Windows 32-bit architecture, sorted with most recent first.
+For example, to find the date of the most recent build of Java 19 on Windows 32-bit. The following API call will find all builds of Java 19 for Windows 32-bit architecture, sorted with most recent first.
 
 [source,html]
-https://api.adoptium.net/v3/assets/version/%5B19%2C%5D?os=windows&architecture=x32&sort_method=DATE&sort_order=DESC
+https://api.adoptium.net/v3/assets/version/%5B19%2C20%29?os=windows&architecture=x32&sort_method=DATE&sort_order=DESC
 
 [TIP]
-The string `%5B17%2C%5D` is a 
-https://www.urldecoder.org/[URL encoding] of "[19,]" which
-https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html[describes the version range] "19 onwards".
+The string `%5B19%2C20%29` is a 
+https://www.urldecoder.org/[URL encoding] of "[19,20)" which
+https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html[describes the version range] "All version 19 builds up to, but not including version 20".
 
 You can then extract the date of the most recent build using `jq` as follows
 
 [source, bash]
 ----
-$ curl -s 'https://api.adoptium.net/v3/assets/version/%5B19%2C%5D?os=windows&architecture=x32&sort_method=DATE&sort_order=DESC' | jq '.[0].binaries[0].updated_at'
+$ curl -s 'https://api.adoptium.net/v3/assets/version/%5B19%2C20%29?os=windows&architecture=x32&sort_method=DATE&sort_order=DESC' | jq '.[0].binaries[0].updated_at'
 "2022-12-13T09:39:04Z"
 ----
 
