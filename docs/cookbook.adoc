@@ -115,7 +115,7 @@ Again, the `API_URL` can be adapted for different Java versions etc. as shown in
 
 The API can be supplemented to filter the details response by Java version, platform, and other conditions and can be used to answer detailed queries.
 
-For example, to find the date of the most recent build of Java 19 on Windows 32-bit. The following API call will find all builds of Java 19 for Windows 32-bit architecture, sorted with most recent first.
+For example, to find the date of the most recently released build of Java 19 on Windows 32-bit. The following API call will find all builds of Java 19 for Windows 32-bit architecture, sorted with most recent first.
 
 [source,html]
 https://api.adoptium.net/v3/assets/version/%5B19%2C20%29?os=windows&architecture=x32&sort_method=DATE&sort_order=DESC
@@ -125,7 +125,7 @@ The string `%5B19%2C20%29` is a
 https://www.urldecoder.org/[URL encoding] of "[19,20)" which
 https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html[describes the version range] "All version 19 builds up to, but not including version 20".
 
-You can then extract the date of the most recent build using `jq` as follows
+You can then extract the date of the most recent release using `jq` as follows
 
 [source, bash]
 ----
