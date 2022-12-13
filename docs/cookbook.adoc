@@ -147,6 +147,6 @@ and can be used to specify exactly the information you require.
 
 == More examples
 
-Looking for more API examples? Got an example you'd like to sahre? Drop us a note on the
+Looking for more API examples? Got an example you'd like to share? Drop us a note on the
 https://adoptium.net/slack[Adoptium Slack API channel]
 or suggest a change to this document directly and we will help with the use of the API.
