@@ -2,7 +2,39 @@
   "preview" : {
     "profiler" : {
       "enabled" : true
-    }
+    },
+    "processors" : [
+      {
+        "type" : "attribute",
+        "actions" : [
+          {
+            "key" : "http.client_ip",
+            "action" : "update",
+            "value" : "0.0.0.0"
+          },
+          {
+            "key" : "http.client_ip",
+            "action" : "update",
+            "value" : "0.0.0.0"
+          },
+          {
+            "key" : "client_StateOrProvince",
+            "action" : "insert",
+            "value" : "unknown"
+          },
+          {
+            "key" : "client_CountryOrRegion",
+            "action" : "insert",
+            "value" : "unknown"
+          },
+          {
+            "key" : "client_City",
+            "action" : "insert",
+            "value" : "unknown"
+          }
+        ]
+      }
+    ]
   },
   "sampling" : {
     "percentage" : 100
