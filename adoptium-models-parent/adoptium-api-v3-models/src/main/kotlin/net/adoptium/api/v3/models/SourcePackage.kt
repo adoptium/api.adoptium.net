@@ -41,7 +41,7 @@ open class FileAsset {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as Package
+        other as FileAsset
 
         if (name != other.name) return false
         if (link != other.link) return false
