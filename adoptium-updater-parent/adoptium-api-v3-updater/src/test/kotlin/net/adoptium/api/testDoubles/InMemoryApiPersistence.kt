@@ -4,12 +4,14 @@ import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
+import net.adoptium.api.v3.dataSources.models.ReleaseNotes
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.dataSources.persitence.mongo.UpdatedInfo
 import net.adoptium.api.v3.models.DockerDownloadStatsDbEntry
 import net.adoptium.api.v3.models.GHReleaseMetadata
 import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
 import net.adoptium.api.v3.models.ReleaseInfo
+import net.adoptium.api.v3.models.Vendor
 import java.time.ZonedDateTime
 import javax.annotation.Priority
 import javax.enterprise.inject.Alternative
@@ -26,6 +28,7 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos) : A
     private var githubStats = ArrayList<GitHubDownloadStatsDbEntry>()
     private var dockerStats = ArrayList<DockerDownloadStatsDbEntry>()
     private var ghReleaseMetadata = HashMap<GitHubId, GHReleaseMetadata>()
+    val releaseNotes = ArrayList<ReleaseNotes>()
 
     override suspend fun updateAllRepos(repos: AdoptRepos, checksum: String) {
         this.repos = repos
@@ -97,5 +100,20 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos) : A
 
     override suspend fun setGhReleaseMetadata(ghReleaseMetadata: GHReleaseMetadata) {
         this.ghReleaseMetadata[ghReleaseMetadata.gitHubId] = ghReleaseMetadata
+    }
+
+    override suspend fun hasReleaseNotesForGithubId(gitHubId: GitHubId): Boolean {
+        return releaseNotes.count { it.id == gitHubId.id } > 0
+    }
+
+    override suspend fun putReleaseNote(releaseNotes: ReleaseNotes) {
+        this.releaseNotes.removeAll { it.id == releaseNotes.id }
+        this.releaseNotes.add(releaseNotes)
+    }
+
+    override suspend fun getReleaseNotes(vendor: Vendor, releaseName: String): ReleaseNotes? {
+        return releaseNotes
+            .filter { it.vendor == vendor }
+            .firstOrNull { it.release_name == releaseName }
     }
 }

@@ -14,6 +14,7 @@ import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.Versions
+import net.adoptium.api.v3.releaseNotes.AdoptReleaseNotes
 import net.adoptium.api.v3.stats.StatsInterface
 import org.slf4j.LoggerFactory
 import java.io.OutputStream
@@ -54,7 +55,8 @@ class V3Updater @Inject constructor(
     private val apiDataStore: APIDataStore,
     private val database: ApiPersistence,
     private val statsInterface: StatsInterface,
-    private val releaseVersionResolver: ReleaseVersionResolver
+    private val releaseVersionResolver: ReleaseVersionResolver,
+    private val adoptReleaseNotes: AdoptReleaseNotes
 ) : Updater {
 
     private val mutex = Mutex()
@@ -264,6 +266,9 @@ class V3Updater @Inject constructor(
                         database.setReleaseInfo(releaseVersionResolver.formReleaseInfo(repo))
                     }
                 }
+
+                LOGGER.info("Updating Release Notes")
+                adoptReleaseNotes.updateReleaseNotes(repo)
 
                 LOGGER.info("Full update done")
                 return@runBlocking repo

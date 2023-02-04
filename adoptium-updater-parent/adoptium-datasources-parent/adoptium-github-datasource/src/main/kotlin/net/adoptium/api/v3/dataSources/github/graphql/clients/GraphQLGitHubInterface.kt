@@ -2,8 +2,9 @@ package net.adoptium.api.v3.dataSources.github.graphql.clients
 
 import com.expediagroup.graphql.client.types.GraphQLClientRequest
 import com.expediagroup.graphql.client.types.GraphQLClientResponse
-import io.ktor.client.features.ClientRequestException
-import io.ktor.http.HttpStatusCode
+import com.fasterxml.jackson.module.kotlin.MissingKotlinParameterException
+import io.ktor.client.features.*
+import io.ktor.http.*
 import kotlinx.coroutines.delay
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
@@ -51,6 +52,11 @@ abstract class GraphQLGitHubInterface(
         }
 
         val result = queryApi(requestEntityBuilder, cursor)
+
+        if (result == null) {
+            LOGGER.warn("No data returned")
+            return emptyList()
+        }
 
         if (repoDoesNotExist(result)) return listOf()
 
@@ -145,7 +151,7 @@ abstract class GraphQLGitHubInterface(
     protected suspend fun <F : HasRateLimit> queryApi(
         requestEntityBuilder: (cursor: String?) -> GraphQLClientRequest<F>,
         cursor: String?
-    ): GraphQLClientResponse<F> {
+    ): GraphQLClientResponse<F>? {
 
         val query = requestEntityBuilder.invoke(cursor)
 
@@ -178,6 +184,8 @@ abstract class GraphQLGitHubInterface(
                     throw Exception("Unexpected return type ${e.response.status}")
                 }
 
+            } catch (e: MissingKotlinParameterException) {
+                return null;
             } catch (e: Exception) {
                 LOGGER.error("Query failed", e)
                 throw e

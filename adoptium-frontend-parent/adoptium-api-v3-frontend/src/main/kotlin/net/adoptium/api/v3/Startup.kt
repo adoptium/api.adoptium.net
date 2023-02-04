@@ -1,6 +1,5 @@
 package net.adoptium.api.v3
 
-import com.microsoft.applicationinsights.attach.ApplicationInsights
 import io.quarkus.runtime.Startup
 import net.adoptium.api.v3.dataSources.APIDataStore
 import javax.annotation.PostConstruct
@@ -14,7 +13,7 @@ class Startup
 constructor(private val apiDataStore: APIDataStore) {
 
     companion object {
-        val ENABLE_PERIODIC_UPDATES: String = "enablePeriodicUpdates"
+        const val ENABLE_PERIODIC_UPDATES: String = "enablePeriodicUpdates"
     }
 
     @Inject

@@ -5,6 +5,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.github.GitHubApi
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleasesSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
@@ -25,6 +26,7 @@ interface AdoptRepository {
     suspend fun getRelease(version: Int): FeatureRelease?
     suspend fun getSummary(version: Int): GHRepositorySummary
     suspend fun getReleaseById(gitHubId: GitHubId): ReleaseResult?
+    suspend fun getReleaseFilesForId(gitHubId: GitHubId): List<GHAsset>?
 
     companion object {
         val VENDORS_EXCLUDED_FROM_FULL_UPDATE = setOf(Vendor.adoptopenjdk)
@@ -76,11 +78,18 @@ class AdoptRepositoryImpl @Inject constructor(
 
     override suspend fun getReleaseById(gitHubId: GitHubId): ReleaseResult? {
         val release = client.getReleaseById(gitHubId)
-        if (release == null) {
-            return null
-        }
+
+        if (release == null) return null;
+
         return getMapperForRepo(release.url)
             .toAdoptRelease(release)
+    }
+
+    override suspend fun getReleaseFilesForId(gitHubId: GitHubId): List<GHAsset>? {
+        LOGGER.info("Getting files for " + gitHubId.id)
+        return client.getReleaseById(gitHubId)
+            ?.releaseAssets
+            ?.assets
     }
 
     override suspend fun getRelease(version: Int): FeatureRelease {

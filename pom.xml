@@ -248,7 +248,7 @@
             <dependency>
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>applicationinsights-runtime-attach</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.9</version>
             </dependency>
             <dependency>
                 <groupId>io.opentelemetry</groupId>
@@ -436,7 +436,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>3.0.0-M3</version>
+                    <version>3.2.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
