@@ -12,9 +12,9 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
 
-        <quarkus.version>2.11.0.Final</quarkus.version>
+        <quarkus.version>2.14.0.Final</quarkus.version>
         <jacoco.version>0.8.8</jacoco.version>
-        <kotlin.version>1.7.10</kotlin.version>
+        <kotlin.version>1.7.21</kotlin.version>
         <adoptiumVersion>3.0.1-SNAPSHOT</adoptiumVersion>
     </properties>
 
@@ -90,6 +90,22 @@
                 <groupId>net.adoptium.api</groupId>
                 <artifactId>adoptium-api-v3-adoptium-specific-models</artifactId>
                 <version>${adoptiumVersion}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.microsoft.azure</groupId>
+                <artifactId>applicationinsights-core</artifactId>
+                <version>2.6.4</version>
+            </dependency>
+            <dependency>
+                <groupId>com.microsoft.azure</groupId>
+                <artifactId>applicationinsights-logging-logback</artifactId>
+                <version>2.6.4</version>
+            </dependency>
+            <dependency>
+                <groupId>io.mockk</groupId>
+                <artifactId>mockk</artifactId>
+                <version>1.13.4</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
