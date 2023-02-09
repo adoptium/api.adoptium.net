@@ -6,16 +6,14 @@
 ## Overview
 
 The Adoptium API provides a way to consume JSON information about the Adoptium Temurin releases and nightly builds.  
-Sign up to the [mailing list](https://mail.openjdk.java.net/mailman/listinfo/adoption-discuss) where major API updates will be announced, and visit [adoptium.net](https://adoptium.net) to find out more about the community.
-
-To learn more about how we build & run the API, check out [CONTRIBUTING.md](CONTRIBUTING.md) and the [FAQs](FAQ.md).
+Sign up to the [`#api` Slack channel](https://adoptium.net/slack/) where major API updates will be announced, and visit [adoptium.net](https://adoptium.net) to find out more about the community.
 
 ## Usage
 
 The API is documented using Swagger.  The Swagger documentation can be viewed at: [api.adoptium.net/swagger-ui](https://api.adoptium.net/swagger-ui).
 The Open API spec for this can be viewed at: [api.adoptium.net/openapi](https://api.adoptium.net/openapi)
 
-For more information, including example queries, please look at [STRUCTURE.md](docs/STRUCTURE.md)
+For more information, including example queries, please look at the [API cookbook](https://github.com/adoptium/api.adoptium.net/blob/main/docs/cookbook.adoc).
 
 ## Who's using the Adoptium API?
 
@@ -32,3 +30,7 @@ The following list highlights a small subset of consumers and their use-cases:
 ## Marketplace
 
 See [Marketplace](marketplace/README.md)
+
+## Development
+
+To learn more about how we build & run the API, check out [CONTRIBUTING.md](CONTRIBUTING.md) and the [FAQs](FAQ.md).

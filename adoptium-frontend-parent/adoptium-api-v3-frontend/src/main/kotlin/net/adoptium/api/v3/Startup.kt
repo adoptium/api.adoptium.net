@@ -13,7 +13,7 @@ class Startup
 constructor(private val apiDataStore: APIDataStore) {
 
     companion object {
-        val ENABLE_PERIODIC_UPDATES: String = "enablePeriodicUpdates"
+        const val ENABLE_PERIODIC_UPDATES: String = "enablePeriodicUpdates"
     }
 
     @Inject
