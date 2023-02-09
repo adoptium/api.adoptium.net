@@ -1,0 +1,80 @@
+{
+  "preview" : {
+    "profiler" : {
+      "enabled" : true
+    },
+    "processors" : [
+      {
+        "type" : "attribute",
+        "actions" : [
+          {
+            "key" : "http.client_ip",
+            "action" : "update",
+            "value" : "0.0.0.0"
+          },
+          {
+            "key" : "http.client_ip",
+            "action" : "update",
+            "value" : "0.0.0.0"
+          },
+          {
+            "key" : "client_StateOrProvince",
+            "action" : "insert",
+            "value" : "unknown"
+          },
+          {
+            "key" : "client_CountryOrRegion",
+            "action" : "insert",
+            "value" : "unknown"
+          },
+          {
+            "key" : "client_City",
+            "action" : "insert",
+            "value" : "unknown"
+          }
+        ]
+      }
+    ]
+  },
+  "sampling" : {
+    "percentage" : 100
+  },
+  "instrumentation" : {
+    "logging" : {
+      "level" : "WARN"
+    },
+    "azureSdk" : {
+      "enabled" : false
+    },
+    "cassandra" : {
+      "enabled" : false
+    },
+    "jdbc" : {
+      "enabled" : false
+    },
+    "jms" : {
+      "enabled" : false
+    },
+    "kafka" : {
+      "enabled" : false
+    },
+    "micrometer" : {
+      "enabled" : false
+    },
+    "mongo" : {
+      "enabled" : false
+    },
+    "quartz" : {
+      "enabled" : false
+    },
+    "rabbitmq" : {
+      "enabled" : false
+    },
+    "redis" : {
+      "enabled" : false
+    },
+    "springScheduling" : {
+      "enabled" : false
+    }
+  }
+}

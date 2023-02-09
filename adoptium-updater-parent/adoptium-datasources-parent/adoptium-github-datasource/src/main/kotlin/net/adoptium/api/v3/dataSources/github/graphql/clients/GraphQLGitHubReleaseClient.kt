@@ -20,7 +20,7 @@ class GraphQLGitHubReleaseClient @Inject constructor(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    suspend fun getReleaseById(id: GitHubId): GHRelease {
+    suspend fun getReleaseById(id: GitHubId): GHRelease? {
 
         LOGGER.info("Getting id $id")
 
@@ -28,11 +28,11 @@ class GraphQLGitHubReleaseClient @Inject constructor(
 
         val result = queryApi(query::withCursor, null)
 
-        val release: GHRelease = if (result.data?.release?.releaseAssets?.pageInfo?.hasNextPage == true) {
+        val release: GHRelease = if (result?.data?.release?.releaseAssets?.pageInfo?.hasNextPage == true) {
             getAllReleaseAssets(result.data!!.release)
         } else {
-            if (result.data == null) {
-                throw Exception("No data returned")
+            if (result?.data == null) {
+                return null
             }
             result.data!!.release
         }

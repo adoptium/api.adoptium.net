@@ -1,0 +1,152 @@
+= Adoptium API Cookbook
+
+The Adoptium API is a powerful tool providing data about the Adoptium
+https://adoptium.net/temurin/[Temurin Java] builds. It provides stable URLs that can be embedded into webpages, or used in scripts to automate the querying and downloading of information. The API forms the basis of the Adoptium website, scripts, and other project infrastructure, and is available for end users to use in their own scripts.
+
+This document shows some simple and popular uses of the Adoptium API to achieve specific goals. See the
+https://api.adoptium.net/q/swagger-ui/[full API documentation]
+to build more complex queries, including access to nightly builds, debug builds, and sources.
+
+== Example One: Explore available releases
+
+The first example is a simple API query that returns the list of Java versions available from Adoptium, including the regular and long term supported (LTS) versions. The API doesn't take any arguments, and returns a JSON formatted list of versions.
+
+[source,html]
+https://api.adoptium.net/v3/info/available_releases
+
+open that link in a browser and the result will be something like this
+
+[code,json]
+----
+{
+    "available_lts_releases": [
+        8,
+        11,
+        17
+    ],
+    "available_releases": [
+        8,
+        11,
+        16,
+        17,
+        18,
+        19
+    ],
+    "most_recent_feature_release": 19,
+    "most_recent_feature_version": 20,
+    "most_recent_lts": 17,
+    "tip_version": 21
+}
+----
+
+This can be consumed directly in your application, or used in script. It may be convenient to extract part of the data from the JSON results of an Adoptium API call, and this example shows how to do that using
+https://stedolan.github.io/jq/[the `jq` tool] that is broadly available.
+
+For example, to get the most recent LTS version available you can use:
+
+[source, bash]
+----
+$ curl -s https://api.adoptium.net/v3/info/available_releases | jq '.most_recent_lts'
+17
+----
+
+[#example-two]
+== Example Two: Linking to the latest JDK or JRE
+
+In this example we show how to construct a stable URL to a specific Java version on a specific platform. You can embed a link like this in a webpage directing users to download Java for use in your application.
+
+The following stable URL downloads the latest long-term supported (LTS) Linux x64 JDK version 17 JDK.
+
+[source, html]
+----
+https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse
+----
+
+Here's an example of using the API to download the latest Java 17 JRE installer for Windows on 64-bit Intel CPUs.
+
+[source,html]
+https://api.adoptium.net/v3/installer/latest/17/ga/windows/x64/jre/hotspot/normal/eclipse?project=jdk
+
+****
+Looking at these links you can see they follows a general
+https://en.wikipedia.org/wiki/Clean_URL[clean URL]
+structure with replaceable variables in the path:
+`https://api.adoptium.net/v3/binary/latest/{feature_version}/ga/{os}/{arch}/{image_type}/hotspot/normal/eclipse`
+
+so downloading for other Java API versions and platforms is simply a case of replacing the variables with the required values
+
+[unordered.stack]
+feature_version:: the Java API version, choose one of "8", "11", "17", "19" and so on.
+os:: the operating system, one of "linux", "windows", "mac", "solaris", "aix", or "alpine-linux".
+arch:: the CPU architecture, one of "x64", "x86", "x32", "ppc64", "ppc64le", "s390x", "aarch64", "arm", "sparcv9", or "riscv64".
+image_type:: product type, choose one of "jdk" or "jre".
+ 
+[NOTE]
+Not all combinations of values are valid, so if there is no Temurin build available for the combination you specify the API will return a `HTTP/1.1 404 Not Found` response.
+****
+
+
+== Example Three: Scripting a download using the Adoptium API
+
+Rather than use a URL in the browser you can download Temurin binaries and check they were received successfully using a shell script, as follows:
+
+[source, bash]
+----
+#!/bin/bash
+set -eu
+
+# Specify the Java version and platform
+API_URL="https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse"
+
+# Fetch the archive
+FETCH_URL=$(curl -s -w %{redirect_url} "${API_URL}")
+FILENAME=$(curl -OLs -w %{filename_effective} "${FETCH_URL}")
+
+# Validate the checksum
+curl -Ls "${FETCH_URL}.sha256.txt" | sha256sum -c --status
+
+echo "Downloaded successfully as ${FILENAME}"
+----
+
+Again, the `API_URL` can be adapted for different Java versions etc. as shown in <<example-two,Example Two>>.
+
+
+== Example Three: More complex queries
+
+The API can be supplemented to filter the details response by Java version, platform, and other conditions and can be used to answer detailed queries.
+
+For example, to find the date of the most recently released build of Java 19 on Windows 32-bit. The following API call will find all builds of Java 19 for Windows 32-bit architecture, sorted with most recent first.
+
+[source,html]
+https://api.adoptium.net/v3/assets/version/%5B19%2C20%29?os=windows&architecture=x32&sort_method=DATE&sort_order=DESC
+
+[TIP]
+The string `%5B19%2C20%29` is a 
+https://www.urldecoder.org/[URL encoding] of "[19,20)" which
+https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html[describes the version range] "All version 19 builds up to, but not including version 20".
+
+You can then extract the date of the most recent release using `jq` as follows
+
+[source, bash]
+----
+$ curl -s 'https://api.adoptium.net/v3/assets/version/%5B19%2C20%29?os=windows&architecture=x32&sort_method=DATE&sort_order=DESC' | jq '.[0].binaries[0].updated_at'
+"2022-12-13T09:39:04Z"
+----
+
+Or find out how many downloads of the latest Java 8 on Linux x64?
+
+[source, bash]
+----
+$ curl -s 'https://api.adoptium.net/v3/assets/version/%5B8%2C9%29?architecture=x64&os=linux&image_type=jdk&project=jdk&release_type=ga&sort_method=DATE&sort_order=DESC' | jq '.[0].binaries[0].download_count'
+236264
+----
+
+The full set of filters and possible argument values is available in
+https://api.adoptium.net/q/swagger-ui/[the API documentation]
+and can be used to specify exactly the information you require.
+
+== More examples
+
+Looking for more API examples? Got an example you'd like to share? Drop us a note on the
+https://adoptium.net/slack[Adoptium Slack API channel]
+or suggest a change to this document directly and we will help with the use of the API.

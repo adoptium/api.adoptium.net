@@ -83,7 +83,8 @@ class AdoptReposTest : BaseTest() {
             release.download_count + 3,
             release.vendor,
             release.version_data,
-            release.source
+            release.source,
+            release.release_notes
         )
         val repo2 = repo.removeRelease(8, release).addRelease(8, release2)
 
@@ -149,7 +150,6 @@ class AdoptReposTest : BaseTest() {
                             "c",
                             "d"
                         )
-
                     )
                 )
             )

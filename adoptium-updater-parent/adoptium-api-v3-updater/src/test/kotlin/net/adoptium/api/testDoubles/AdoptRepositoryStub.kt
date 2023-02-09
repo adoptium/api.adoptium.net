@@ -5,6 +5,7 @@ import net.adoptium.api.GHSummaryTestDataGenerator
 import net.adoptium.api.v3.AdoptRepository
 import net.adoptium.api.v3.ReleaseResult
 import net.adoptium.api.v3.TimeSource
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
@@ -96,5 +97,28 @@ open class AdoptRepositoryStub : AdoptRepository {
                 ReleaseResult(listOf(it))
             }
             .firstOrNull()
+    }
+
+    override suspend fun getReleaseFilesForId(gitHubId: GitHubId): List<GHAsset>? {
+        return updated
+            .allReleases
+            .getReleases()
+            .filter {
+                GitHubId(it.id) == gitHubId
+            }
+            .flatMap {
+                it
+                    .binaries
+                    .map {
+                        GHAsset(
+                            it.`package`.name,
+                            it.`package`.size,
+                            it.`package`.link,
+                            it.`package`.download_count,
+                            it.updated_at.dateTime.toString()
+                        )
+                    }
+            }
+            .toList()
     }
 }

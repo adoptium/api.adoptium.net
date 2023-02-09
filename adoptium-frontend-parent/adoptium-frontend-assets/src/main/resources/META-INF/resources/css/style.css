@@ -2,16 +2,16 @@ body {
     padding: 40px 0;
 }
 
-h1, h2, h3, h4 {
+h1, h2 {
     margin-top: 40px;
+}
+
+h3, h4 {
+    margin-top: 20px;
 }
 
 p {
     margin: 15px 0;
-}
-
-li {
-    margin: 10px 0;
 }
 
 pre {
@@ -36,6 +36,11 @@ table {
 
 table th {
     font-weight: 600;
+}
+
+span {
+    font-weight: 400;
+    font-size: medium;
 }
 
 table th, table td {

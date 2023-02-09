@@ -2,6 +2,7 @@ package net.adoptium.api.v3.routes.info
 
 import net.adoptium.api.v3.OpenApiDocs
 import net.adoptium.api.v3.Pagination
+import net.adoptium.api.v3.Pagination.formPagedResponse
 import net.adoptium.api.v3.Pagination.getPage
 import net.adoptium.api.v3.dataSources.SortMethod
 import net.adoptium.api.v3.dataSources.SortOrder
@@ -19,8 +20,11 @@ import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.routes.ReleaseEndpoint
 import org.eclipse.microprofile.openapi.annotations.Operation
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
+import org.eclipse.microprofile.openapi.annotations.media.Content
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
@@ -28,7 +32,10 @@ import javax.ws.rs.GET
 import javax.ws.rs.Path
 import javax.ws.rs.Produces
 import javax.ws.rs.QueryParam
+import javax.ws.rs.core.Context
 import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.Response
+import javax.ws.rs.core.UriInfo
 
 @Tag(name = "Release Info")
 @Path("/v3/info")
@@ -43,6 +50,14 @@ constructor(
     @GET
     @Path("/release_names")
     @Operation(summary = "Returns a list of all release names", operationId = "getReleaseNames")
+    @APIResponses(
+        value = [
+            APIResponse(
+                responseCode = "200", description = "A list of all release names",
+                content = [Content(schema = Schema(type = SchemaType.OBJECT, implementation = ReleaseList::class))]
+            )
+        ]
+    )
     fun get(
         @Parameter(name = "release_type", description = OpenApiDocs.RELEASE_TYPE, required = false)
         @QueryParam("release_type")
@@ -102,8 +117,15 @@ constructor(
 
         @Parameter(name = "sort_method", description = "Result sort method", required = false)
         @QueryParam("sort_method")
-        sortMethod: SortMethod?
-    ): ReleaseList {
+        sortMethod: SortMethod?,
+
+        @Parameter(name = "show_page_count", required = false, hidden = true)
+        @QueryParam("show_page_count")
+        showPageCount: Boolean?,
+
+        @Context
+        uriInfo: UriInfo,
+    ): Response {
         val releases = releaseEndpoint.getReleases(
             sortOrder,
             sortMethod,
@@ -121,15 +143,22 @@ constructor(
         )
             .map { it.release_name }
 
-        val pagedReleases = getPage(pageSize, page, releases)
+        val pagedReleases = getPage(pageSize, page, releases, showPageCount ?: false)
 
-        return ReleaseList(pagedReleases.toTypedArray())
+        return formPagedResponse(ReleaseList(pagedReleases.data.toTypedArray()), uriInfo, pagedReleases)
     }
 
     @Path("/release_versions")
     @GET
     @Operation(summary = "Returns a list of all release versions", operationId = "getReleaseVersions")
-
+    @APIResponses(
+        value = [
+            APIResponse(
+                responseCode = "200", description = "A list of all release versions",
+                content = [Content(schema = Schema(type = SchemaType.OBJECT, implementation = ReleaseVersionList::class))]
+            )
+        ]
+    )
     fun getVersions(
         @Parameter(name = "release_type", description = OpenApiDocs.RELEASE_TYPE, required = false)
         @QueryParam("release_type")
@@ -189,9 +218,15 @@ constructor(
 
         @Parameter(name = "sort_method", description = "Result sort method", required = false)
         @QueryParam("sort_method")
-        sortMethod: SortMethod?
+        sortMethod: SortMethod?,
 
-    ): ReleaseVersionList {
+        @Parameter(name = "show_page_count", required = false, hidden = true)
+        @QueryParam("show_page_count")
+        showPageCount: Boolean?,
+
+        @Context
+        uriInfo: UriInfo,
+    ): Response {
         val releases = releaseEndpoint.getReleases(
             sortOrder,
             sortMethod,
@@ -210,8 +245,8 @@ constructor(
             .map { it.version_data }
             .distinct()
 
-        val pagedReleases = getPage(pageSize, page, releases, maxPageSizeNum = Pagination.largerPageSizeNum)
+        val pagedReleases = getPage(pageSize, page, releases, showPageCount ?: false, maxPageSizeNum = Pagination.largerPageSizeNum)
 
-        return ReleaseVersionList(pagedReleases.toTypedArray())
+        return formPagedResponse(ReleaseVersionList(pagedReleases.data.toTypedArray()), uriInfo, pagedReleases)
     }
 }
