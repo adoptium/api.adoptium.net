@@ -1,5 +1,8 @@
 package net.adoptium.api.v3.dataSources.github
 
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.enterprise.inject.Model
+import jakarta.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.GlobalScope
@@ -17,18 +20,16 @@ import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.util.Locale
+import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
-import javax.inject.Inject
-import javax.inject.Singleton
 
 interface GitHubHtmlClient {
     suspend fun getUrl(url: String): String?
 }
 
-@Singleton
-class CachedGitHubHtmlClient @Inject constructor(
+@ApplicationScoped
+open class CachedGitHubHtmlClient @Inject constructor(
     private val internalDbStore: InternalDbStore,
     private val updaterHtmlClient: UpdaterHtmlClient
 ) : GitHubHtmlClient {

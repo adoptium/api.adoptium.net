@@ -1,13 +1,13 @@
 package net.adoptium.api.v3.dataSources
 
+import jakarta.enterprise.context.ApplicationScoped
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.models.ReleaseInfo
 import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Versions
-import javax.inject.Inject
-import javax.inject.Singleton
+import jakarta.inject.Inject
 
-@Singleton
+@ApplicationScoped
 class ReleaseVersionResolver @Inject constructor(
     private val updaterHtmlClient: UpdaterHtmlClient
 ) {

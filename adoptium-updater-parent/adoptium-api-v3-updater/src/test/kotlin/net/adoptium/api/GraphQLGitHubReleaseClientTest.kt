@@ -6,7 +6,9 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.AdoptRepositoryImpl
+import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubInterface
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubReleaseClient
+import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubReleaseRequest
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubRepositoryClient
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubSummaryClient
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLRequest
@@ -67,20 +69,21 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
     @Test
     fun `GraphQLGitHubReleaseClient client returns correct release`() {
         runBlocking {
-            val client = GraphQLGitHubReleaseClient(
-                object : GraphQLRequest {
-                    override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
-                        val builder = mockk<GraphQLClientResponse<F>>()
+            val graphQLRequest = object : GraphQLRequest {
+                override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
+                    val builder = mockk<GraphQLClientResponse<F>>()
 
-                        assert(query.query.contains("a-github-id"))
-                        every { builder.data } returns GHReleaseResult(response, RateLimit(0, 5000)) as F
-                        every { builder.errors } returns null
-                        return builder
-                    }
-                },
-                mockkHttpClient()
-            )
+                    assert(query.query.contains("a-github-id"))
+                    every { builder.data } returns GHReleaseResult(response, RateLimit(0, 5000)) as F
+                    every { builder.errors } returns null
+                    return builder
+                }
+            }
 
+            val graphQLGitHubInterface = GraphQLGitHubInterface(graphQLRequest, mockkHttpClient())
+            val graphQLGitHubReleaseRequest = GraphQLGitHubReleaseRequest(graphQLGitHubInterface)
+
+            val client = GraphQLGitHubReleaseClient(graphQLGitHubInterface, graphQLGitHubReleaseRequest)
             val release = client.getReleaseById(GitHubId("a-github-id"))
 
             assertEquals(response, release)
@@ -90,20 +93,22 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
     @Test
     fun `GraphQLGitHubRepositoryClient client returns correct repository`() {
         runBlocking {
-            val client = GraphQLGitHubRepositoryClient(
-                object : GraphQLRequest {
-                    override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
-                        val builder = mockk<GraphQLClientResponse<F>>()
+            val graphQLRequest = object : GraphQLRequest {
+                override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
+                    val builder = mockk<GraphQLClientResponse<F>>()
 
-                        assert(query.query.contains("a-repo-name"))
+                    assert(query.query.contains("a-repo-name"))
 
-                        every { builder.data } returns QueryData(repo, RateLimit(0, 5000)) as F
-                        every { builder.errors } returns null
-                        return builder
-                    }
-                },
-                mockkHttpClient()
-            )
+                    every { builder.data } returns QueryData(repo, RateLimit(0, 5000)) as F
+                    every { builder.errors } returns null
+                    return builder
+                }
+            };
+
+            val graphQLGitHubInterface = GraphQLGitHubInterface(graphQLRequest, mockkHttpClient())
+            val graphQLGitHubReleaseRequest = GraphQLGitHubReleaseRequest(graphQLGitHubInterface)
+
+            val client = GraphQLGitHubRepositoryClient(graphQLGitHubInterface, graphQLGitHubReleaseRequest)
 
             val repo = client.getRepository(AdoptRepositoryImpl.ADOPT_ORG, "a-repo-name")
 
@@ -132,20 +137,20 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                 RateLimit(0, 5000)
             )
 
-            val client = GraphQLGitHubSummaryClient(
-                object : GraphQLRequest {
-                    override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
-                        val builder = mockk<GraphQLClientResponse<F>>()
+            val graphQLRequest = object : GraphQLRequest {
+                override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
+                    val builder = mockk<GraphQLClientResponse<F>>()
 
-                        assert(query.query.contains("a-repo-name"))
+                    assert(query.query.contains("a-repo-name"))
 
-                        every { builder.data } returns summary as F
-                        every { builder.errors } returns null
-                        return builder
-                    }
-                },
-                mockkHttpClient()
-            )
+                    every { builder.data } returns summary as F
+                    every { builder.errors } returns null
+                    return builder
+                }
+            }
+            val graphQLGitHubInterface = GraphQLGitHubInterface(graphQLRequest, mockkHttpClient())
+
+            val client = GraphQLGitHubSummaryClient(graphQLGitHubInterface)
 
             val repo = client.getRepositorySummary(AdoptRepositoryImpl.ADOPT_ORG, "a-repo-name")
 
@@ -156,28 +161,32 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
     @Test
     fun `requests second page`() {
         runBlocking {
-            val client = GraphQLGitHubRepositoryClient(
-                object : GraphQLRequest {
-                    override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
-                        val builder = mockk<GraphQLClientResponse<F>>()
 
-                        assert(query.query.contains("a-repo-name"))
+            val graphQLRequest = object : GraphQLRequest {
+                override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
+                    val builder = mockk<GraphQLClientResponse<F>>()
 
-                        val pageInfo = if ((query.variables as Map<String, String>)["cursorPointer"] != null) {
-                            PageInfo(false, null)
-                        } else {
-                            PageInfo(true, "next-page-id")
-                        }
+                    assert(query.query.contains("a-repo-name"))
 
-                        val repo = GHRepository(GHReleases(listOf(response), pageInfo))
-
-                        every { builder.data } returns QueryData(repo, RateLimit(0, 5000)) as F
-                        every { builder.errors } returns null
-                        return builder
+                    val pageInfo = if ((query.variables as Map<String, String>)["cursorPointer"] != null) {
+                        PageInfo(false, null)
+                    } else {
+                        PageInfo(true, "next-page-id")
                     }
-                },
-                mockkHttpClient()
-            )
+
+                    val repo = GHRepository(GHReleases(listOf(response), pageInfo))
+
+                    every { builder.data } returns QueryData(repo, RateLimit(0, 5000)) as F
+                    every { builder.errors } returns null
+                    return builder
+                }
+            }
+
+
+            val graphQLGitHubInterface = GraphQLGitHubInterface(graphQLRequest, mockkHttpClient())
+            val graphQLGitHubReleaseRequest = GraphQLGitHubReleaseRequest(graphQLGitHubInterface)
+
+            val client = GraphQLGitHubRepositoryClient(graphQLGitHubInterface, graphQLGitHubReleaseRequest)
 
             val repo = client.getRepository(AdoptRepositoryImpl.ADOPT_ORG, "a-repo-name")
 

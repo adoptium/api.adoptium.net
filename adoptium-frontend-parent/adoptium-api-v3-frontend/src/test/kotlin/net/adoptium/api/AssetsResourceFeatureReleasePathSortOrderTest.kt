@@ -1,9 +1,10 @@
 package net.adoptium.api
 
 import io.mockk.mockk
+import jakarta.ws.rs.core.UriInfo
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.TimeSource
-import net.adoptium.api.v3.dataSources.APIDataStoreImpl
+import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.SortMethod
 import net.adoptium.api.v3.dataSources.SortOrder
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
@@ -28,7 +29,6 @@ import net.adoptium.api.v3.routes.ReleaseEndpoint
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.ZonedDateTime
-import javax.ws.rs.core.UriInfo
 
 class AssetsResourceFeatureReleasePathSortOrderTest : FrontendTest() {
 
@@ -101,7 +101,7 @@ class AssetsResourceFeatureReleasePathSortOrderTest : FrontendTest() {
     }
 
     @Test
-    fun doesSortObaySortMethod(apiDatastore: APIDataStoreImpl) {
+    fun doesSortObaySortMethod(apiDatastore: APIDataStore) {
         runBlocking {
             assertEquals("bar", getRelease(SortOrder.DESC, SortMethod.DATE)[0].id)
             assertEquals("foo", getRelease(SortOrder.DESC, SortMethod.DEFAULT)[0].id)

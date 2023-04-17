@@ -7,14 +7,14 @@ import net.adoptium.api.v3.models.JvmImpl
 import net.adoptium.api.v3.models.Vendor
 import java.lang.reflect.Type
 import java.time.format.DateTimeFormatter
-import javax.enterprise.context.Dependent
-import javax.json.bind.JsonbConfig
-import javax.json.bind.serializer.JsonbSerializer
-import javax.json.bind.serializer.SerializationContext
-import javax.json.stream.JsonGenerator
-import javax.ws.rs.ext.ParamConverter
-import javax.ws.rs.ext.ParamConverterProvider
-import javax.ws.rs.ext.Provider
+import jakarta.enterprise.context.Dependent
+import jakarta.json.bind.JsonbConfig
+import jakarta.json.bind.serializer.JsonbSerializer
+import jakarta.json.bind.serializer.SerializationContext
+import jakarta.json.stream.JsonGenerator
+import jakarta.ws.rs.ext.ParamConverter
+import jakarta.ws.rs.ext.ParamConverterProvider
+import jakarta.ws.rs.ext.Provider
 
 @Provider
 class JsonSerializerCustomizer : JsonbConfigCustomizer {

@@ -1,16 +1,16 @@
 package net.adoptium.api.testDoubles
 
+import jakarta.annotation.Priority
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.enterprise.inject.Alternative
 import kotlinx.coroutines.Job
 import net.adoptium.api.v3.dataSources.mongo.CacheDbEntry
 import net.adoptium.api.v3.dataSources.mongo.InternalDbStore
 import java.time.ZonedDateTime
-import javax.annotation.Priority
-import javax.enterprise.inject.Alternative
-import javax.inject.Singleton
 
 @Priority(1)
 @Alternative
-@Singleton
+@ApplicationScoped
 class InMemoryInternalDbStore : InternalDbStore {
     private val cache: MutableMap<String, CacheDbEntry> = HashMap()
     override fun putCachedWebpage(url: String, lastModified: String?, date: ZonedDateTime, data: String?): Job {

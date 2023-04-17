@@ -41,4 +41,4 @@ jobs:
         cache: 'maven'
 
     - name: Build app
-      run: ./mvnw --batch-mode clean install jacoco:report jacoco:report-aggregate ${{ env.ARGS }}
+      run: ./mvnw --batch-mode clean install ${{ env.ARGS }}

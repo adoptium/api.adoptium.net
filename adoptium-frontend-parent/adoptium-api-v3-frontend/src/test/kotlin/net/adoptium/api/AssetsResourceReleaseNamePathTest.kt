@@ -22,8 +22,8 @@ import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.stream.Stream
-import javax.inject.Inject
-import javax.ws.rs.BadRequestException
+import jakarta.inject.Inject
+import jakarta.ws.rs.BadRequestException
 
 @QuarkusTest
 @ExtendWith(value = [DbExtension::class])
@@ -110,7 +110,7 @@ class AssetsResourceReleaseNamePathTest : FrontendTest() {
     }
 
     @Test
-    fun `release with different vendor 404s`(apiDataStore: APIDataStore) {
+    fun `release with different vendor 404s`() {
         val releaseName = apiDataStore
             .getAdoptRepos()
             .allReleases

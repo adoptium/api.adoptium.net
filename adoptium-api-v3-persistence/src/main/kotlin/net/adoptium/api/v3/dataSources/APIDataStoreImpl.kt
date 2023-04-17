@@ -1,5 +1,7 @@
 package net.adoptium.api.v3.dataSources
 
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
@@ -15,17 +17,15 @@ import java.time.ZonedDateTime
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.concurrent.timerTask
 
-@Singleton
+@ApplicationScoped
 open class APIDataStoreImpl : APIDataStore {
     private var dataStore: ApiPersistence
     private var updatedAt: UpdatedInfo
     private var binaryRepos: AdoptRepos
     private var releaseInfo: ReleaseInfo
-    var schedule: ScheduledFuture<*>?
+    open var schedule: ScheduledFuture<*>?
 
     companion object {
         @JvmStatic
