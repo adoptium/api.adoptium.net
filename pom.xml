@@ -186,7 +186,7 @@
             <dependency>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-test-junit5</artifactId>
-                <version>1.7.10</version>
+                <version>1.8.10</version>
             </dependency>
             <!-- Explicitly adding this because Maven can't see it via the kmongo dep in
              adoptium-api-v3-updater pom file. Why? Nobody knows -->
@@ -226,7 +226,7 @@
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-xml</artifactId>
-                <version>3.0.13</version>
+                <version>3.0.15</version>
             </dependency>
             <dependency>
                 <groupId>org.jooq</groupId>
