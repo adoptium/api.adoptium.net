@@ -27,7 +27,7 @@
         <jacoco.version>0.8.8</jacoco.version>
         <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
         <kotlin.version>1.8.10</kotlin.version>
-        <quarkus.version>3.0.0.Final</quarkus.version>
+        <quarkus.version>3.0.3.Final</quarkus.version>
         <maven-dependency-plugin.version>3.3.0</maven-dependency-plugin.version>
     </properties>
 
