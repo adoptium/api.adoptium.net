@@ -2,7 +2,7 @@ package net.adoptium.api.v3.models
 
 object Versions {
 
-    private const val DEFAULT_LATEST_JAVA_VERSION = 19
+    private const val DEFAULT_LATEST_JAVA_VERSION = 21
     private const val LATEST_JAVA_VERSION_PROPERTY = "LATEST_JAVA_VERSION"
 
     private val latestJavaVersion: Int
