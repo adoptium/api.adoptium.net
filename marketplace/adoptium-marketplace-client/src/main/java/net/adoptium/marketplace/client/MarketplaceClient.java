@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,11 +28,11 @@ public class MarketplaceClient {
     private final String repoAddress;
 
     public static MarketplaceClient build(String repoAddress, String publicKey) throws Exception {
-        return build(repoAddress, SignatureType.getDefault(), publicKey);
+        return build(repoAddress, SignatureType.getDefault(), Collections.singletonList(publicKey));
     }
 
-    public static MarketplaceClient build(String repoAddress, SignatureType signatureType, String publicKey) throws Exception {
-        SignatureVerifier sv = SignatureVerifier.build(signatureType, publicKey);
+    public static MarketplaceClient build(String repoAddress, SignatureType signatureType, List<String> publicKeys) throws Exception {
+        SignatureVerifier sv = SignatureVerifier.build(signatureType, publicKeys);
         return new MarketplaceClient(repoAddress, MarketplaceHttpClient.build(sv));
     }
 

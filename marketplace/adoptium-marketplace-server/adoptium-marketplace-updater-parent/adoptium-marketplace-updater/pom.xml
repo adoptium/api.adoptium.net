@@ -151,6 +151,11 @@
             <artifactId>jetty-server</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>net.adoptium.api</groupId>
+            <artifactId>adoptium-api-v3-models</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

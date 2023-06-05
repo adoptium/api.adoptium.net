@@ -10,6 +10,7 @@ import org.jboss.weld.junit5.auto.AddPackages
 import org.jboss.weld.junit5.auto.EnableAutoWeld
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import java.util.Collections
 
 
 @QuarkusTest
@@ -22,7 +23,7 @@ class UpdateRunnerNoDb {
         val adoptiumMarketplaceUpdater = AdoptiumMarketplaceUpdater(apiDataStore, object : VendorList {
             override fun getVendorInfo(): Map<Vendor, VendorInfo> {
                 return mapOf(
-                    Vendor.adoptium to VendorInfo(Vendor.adoptium, "http://localhost:8090/", "../../../exampleRepositories/keys/public.pem")
+                    Vendor.adoptium to VendorInfo(Vendor.adoptium, "http://localhost:8090/", Collections.singletonList("../../../exampleRepositories/keys/public.pem"))
                 )
             }
         })

@@ -9,7 +9,7 @@ import kotlin.io.path.readBytes
 class VendorInfo(
     private val vendor: Vendor,
     private val repoUrl: String? = null,
-    private val publicKey: String? = null,
+    private val publicKeys: List<String>? = null,
     private val signatureType: SignatureType? = null
 ) {
     companion object {
@@ -23,7 +23,8 @@ class VendorInfo(
     }
 
     fun valid(): Boolean {
-        return getUrl() != null && getKey() != null
+        val keys = getKeys();
+        return getUrl() != null && !keys.isNullOrEmpty()
     }
 
     fun getSignatureType(): SignatureType {
@@ -54,28 +55,64 @@ class VendorInfo(
         return key ?: repoUrl
     }
 
-    fun getKey(): String? {
-        var key = getConfigValue(publicKey)
-
-        if (key == null) {
-            key = getConfigValue(vendor.name.uppercase() + "_KEY")
-
-            //look up again as this may point to a file
-            if (key != null) {
-                key = getConfigValue(key)
+    fun getKeys(): List<String> {
+        val keysProvided: List<String>? = publicKeys
+            ?.map { publicKey ->
+                return@map getConfigValue(publicKey)
             }
+            ?.filterNotNull()
+
+        val envKeys: List<String> = keysFromEnvVars();
+
+        val allKeys: Sequence<String> = if (keysProvided != null) {
+            envKeys
+                .asSequence()
+                .plus(keysProvided)
+        } else {
+            envKeys
+                .asSequence()
         }
 
-        if (key == null || key.isEmpty() || key == vendor.name.uppercase() + "_KEY") {
-            return publicKey
+        return allKeys
+            .map {
+                //look up again as this may point to a file
+                return@map getConfigValue(it)
+            }
+            .map { key ->
+                if (key.isNullOrEmpty() || key.startsWith(vendor.name.uppercase() + "_KEY")) {
+                    return@map key
+                }
+
+                return@map if (!key.contains("BEGIN PUBLIC KEY")) {
+                    "-----BEGIN PUBLIC KEY-----\n" +
+                        key + "\n" +
+                        "-----END PUBLIC KEY-----"
+                } else {
+                    key
+                }
+            }
+            .filterNotNull()
+            .toList()
+    }
+
+    private fun keysFromEnvVars(): List<String> {
+        var keys = emptyList<String>()
+        val key = getConfigValue("{$vendor.name.uppercase()}_KEY")
+
+        if (key != null && System.getenv(key) != null) {
+            keys = keys.plus(key)
         }
 
-        if (!key.contains("BEGIN PUBLIC KEY")) {
-            key = "-----BEGIN PUBLIC KEY-----\n" +
-                key + "\n" +
-                "-----END PUBLIC KEY-----"
+        var index = 0
+        while (System.getenv("{$vendor.name.uppercase()}_KEY_$index") != null) {
+            val key = getConfigValue(System.getenv("{$vendor.name.uppercase()}_KEY_$index"))
+            if (key != null) {
+                keys = keys.plus(key)
+            }
+            index++
         }
-        return key
+
+        return keys
     }
 
     private fun getConfigValue(keyName: String?): String? {

@@ -8,7 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class RepoValidationTest {
@@ -19,13 +21,24 @@ public class RepoValidationTest {
         String publicKey = System.getenv("REPO_KEY");
         String repoUrl = System.getenv("REPO_URL");
 
+
+        List<String> keys = new ArrayList<>();
+        keys.add(publicKey);
+
+        int index = 0;
+        while (System.getenv("REPO_KEY_" + index) != null) {
+            keys.add(System.getenv("REPO_KEY_" + index));
+            index++;
+        }
+
+
         SignatureType signatureType = SignatureType.BASE64_ENCODED;
 
         if (System.getenv("REPO_SIGNATURE_TYPE") != null) {
             signatureType = SignatureType.valueOf(System.getenv("REPO_SIGNATURE_TYPE"));
         }
 
-        MarketplaceClient client = MarketplaceClient.build(repoUrl, signatureType, publicKey);
+        MarketplaceClient client = MarketplaceClient.build(repoUrl, signatureType, keys);
         Assertions.assertTrue(RepoValidationTest.validateRepo(client));
     }
 

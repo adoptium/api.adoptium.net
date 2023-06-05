@@ -33,6 +33,7 @@ import org.litote.kmongo.coroutine.coroutine
 import org.litote.kmongo.id.jackson.IdJacksonModule
 import org.litote.kmongo.reactivestreams.KMongo
 import org.litote.kmongo.util.KMongoConfiguration
+import java.util.Collections
 import javax.annotation.Priority
 import javax.enterprise.inject.Alternative
 import javax.inject.Singleton
@@ -44,7 +45,7 @@ import javax.ws.rs.core.Response
 class MockVendorList : VendorList {
     override fun getVendorInfo(): Map<Vendor, VendorInfo> {
         return mapOf(
-            Vendor.adoptium to VendorInfo(Vendor.adoptium, "http://localhost:8090/workingRepository", "../../../exampleRepositories/keys/public.pem")
+            Vendor.adoptium to VendorInfo(Vendor.adoptium, "http://localhost:8090/workingRepository", Collections.singletonList("../../../exampleRepositories/keys/public.pem"))
         )
     }
 }

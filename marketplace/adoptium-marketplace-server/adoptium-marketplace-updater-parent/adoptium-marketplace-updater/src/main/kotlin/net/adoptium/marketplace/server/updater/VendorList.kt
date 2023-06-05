@@ -29,7 +29,7 @@ class DefaultVendorList : VendorList {
     init {
         VENDORS
             .forEach {
-                LOGGER.info("Loaded config for ${it.key}, ${it.value.getUrl()} ${it.value.getKey()}")
+                LOGGER.info("Loaded config for ${it.key}, ${it.value.getUrl()} ${it.value.getKeys()?.size}")
             }
     }
 

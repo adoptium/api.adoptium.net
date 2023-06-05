@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
+import java.util.Collections;
+
 public class ValidateRedhatTest {
 
     @EnabledIfEnvironmentVariable(named = "VALIDATE_REPO", matches = ".*")
@@ -29,7 +31,7 @@ public class ValidateRedhatTest {
 
         String repoUrl = "https://raw.githubusercontent.com/rh-openjdk/marketplace/main/index.json";
 
-        MarketplaceClient client = MarketplaceClient.build(repoUrl, SignatureType.BASE64_ENCODED, publicKey);
+        MarketplaceClient client = MarketplaceClient.build(repoUrl, SignatureType.BASE64_ENCODED, Collections.singletonList(publicKey));
         Assertions.assertTrue(RepoValidationTest.validateRepo(client));
 
     }
