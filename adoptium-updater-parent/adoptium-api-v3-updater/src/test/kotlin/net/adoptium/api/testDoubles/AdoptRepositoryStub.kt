@@ -14,7 +14,11 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositor
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
-import net.adoptium.api.v3.models.*
+import net.adoptium.api.v3.models.Release
+import net.adoptium.api.v3.models.ReleaseType
+import net.adoptium.api.v3.models.DateTime
+import net.adoptium.api.v3.models.Vendor
+import net.adoptium.api.v3.models.VersionData
 import org.jboss.weld.junit5.auto.ExcludeBean
 
 @Priority(1)

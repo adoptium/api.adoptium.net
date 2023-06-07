@@ -34,7 +34,7 @@ open class DefaultUpdaterHtmlClient @Inject constructor(
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
         private val TOKEN: String? = GitHubAuth.readToken()
-        private const val REQUEST_TIMEOUT = 12000L
+        private const val REQUEST_TIMEOUT = 12_000L
         private val GITHUB_DOMAINS = listOf("api.github.com", "github.com")
 
         fun extractBody(response: HttpResponse?): String? {

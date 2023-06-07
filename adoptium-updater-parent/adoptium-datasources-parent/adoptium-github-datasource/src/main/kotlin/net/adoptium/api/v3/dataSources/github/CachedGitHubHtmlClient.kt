@@ -1,7 +1,6 @@
 package net.adoptium.api.v3.dataSources.github
 
 import jakarta.enterprise.context.ApplicationScoped
-import jakarta.enterprise.inject.Model
 import jakarta.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
@@ -20,7 +19,7 @@ import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 
