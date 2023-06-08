@@ -1,5 +1,8 @@
 package net.adoptium.api.v3.stats.dockerstats
 
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.enterprise.inject.Produces
+import jakarta.inject.Inject
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.config.Ecosystem
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
@@ -7,12 +10,9 @@ import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.DockerDownloadStatsDbEntry
 import org.slf4j.LoggerFactory
-import javax.enterprise.inject.Produces
-import javax.inject.Inject
-import javax.inject.Singleton
-import javax.json.JsonObject
+import jakarta.json.JsonObject
 
-@Singleton
+@ApplicationScoped
 class DockerStatsInterfaceFactory @Inject constructor(
     private var database: ApiPersistence,
     private val updaterHtmlClient: UpdaterHtmlClient
@@ -20,7 +20,7 @@ class DockerStatsInterfaceFactory @Inject constructor(
     var cached: DockerStatsInterface? = null
 
     @Produces
-    @Singleton
+    @ApplicationScoped
     fun get(): DockerStatsInterface {
         if (cached == null) {
             cached = when (Ecosystem.CURRENT) {
@@ -33,7 +33,6 @@ class DockerStatsInterfaceFactory @Inject constructor(
     }
 }
 
-@Singleton
 interface DockerStatsInterface {
     suspend fun updateDb()
 }

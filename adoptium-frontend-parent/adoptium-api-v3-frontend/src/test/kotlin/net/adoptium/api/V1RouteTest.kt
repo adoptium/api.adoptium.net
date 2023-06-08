@@ -4,7 +4,7 @@ import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import javax.ws.rs.core.Response
+import jakarta.ws.rs.core.Response
 
 @QuarkusTest
 @ExtendWith(value = [DbExtension::class])

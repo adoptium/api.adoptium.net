@@ -1,6 +1,8 @@
 package net.adoptium.api.v3.dataSources.github.graphql.clients
 
 import com.expediagroup.graphql.client.types.GraphQLClientRequest
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
@@ -10,20 +12,21 @@ import net.adoptium.api.v3.dataSources.models.GitHubId
 import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
 
-abstract class GraphQLGitHubReleaseRequest(
-    graphQLRequest: GraphQLRequest,
-    updaterHtmlClient: UpdaterHtmlClient
-) : GraphQLGitHubInterface(graphQLRequest, updaterHtmlClient) {
+@ApplicationScoped
+open class GraphQLGitHubReleaseRequest @Inject constructor(
+    private val graphQLGitHubInterface: GraphQLGitHubInterface
+) {
+
     companion object {
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    protected suspend fun getAllReleaseAssets(release: GHRelease): GHRelease {
+    open suspend fun getAllReleaseAssets(release: GHRelease): GHRelease {
         val query = GetMoreReleaseAssetsQuery(release.id)
 
         LOGGER.debug("Getting release assets ${release.id.id}")
-        val moreAssets = getAll(
+        val moreAssets = graphQLGitHubInterface.getAll(
             query::withCursor,
             { asset ->
                 if (asset.assetNode == null) listOf()
@@ -53,7 +56,7 @@ abstract class GraphQLGitHubReleaseRequest(
         )
     }
 
-    class GetMoreReleaseAssetsQuery(private val releaseId: GitHubId, override val variables: Any = mapOf<String, String>()) : GraphQLClientRequest<ReleaseQueryData> {
+    private class GetMoreReleaseAssetsQuery(private val releaseId: GitHubId, override val variables: Any = mapOf<String, String>()) : GraphQLClientRequest<ReleaseQueryData> {
 
         fun withCursor(cursor: String?): GetMoreReleaseAssetsQuery {
             return if (cursor != null) GetMoreReleaseAssetsQuery(releaseId, mapOf("cursorPointer" to cursor))
@@ -92,6 +95,5 @@ abstract class GraphQLGitHubReleaseRequest(
         override fun responseType(): KClass<ReleaseQueryData> {
             return ReleaseQueryData::class
         }
-
     }
 }

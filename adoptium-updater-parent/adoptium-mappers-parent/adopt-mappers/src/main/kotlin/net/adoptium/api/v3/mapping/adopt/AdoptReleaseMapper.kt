@@ -1,5 +1,7 @@
 package net.adoptium.api.v3.mapping.adopt
 
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.enterprise.inject.Model
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.adoptium.api.v3.ReleaseResult
@@ -27,11 +29,11 @@ import java.security.MessageDigest
 import java.time.ZonedDateTime
 import java.util.*
 import java.util.regex.Pattern
-import javax.inject.Inject
-import javax.inject.Singleton
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 
-@Singleton
-class AdoptReleaseMapperFactory @Inject constructor(
+@ApplicationScoped
+open class AdoptReleaseMapperFactory @Inject constructor(
     val adoptBinaryMapper: AdoptBinaryMapper,
     val htmlClient: GitHubHtmlClient
 ) {

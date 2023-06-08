@@ -3,33 +3,32 @@ package net.adoptium.api.v3.dataSources.github.graphql.clients
 /* ktlint-disable no-wildcard-imports */
 /* ktlint-enable no-wildcard-imports */
 import com.expediagroup.graphql.client.types.GraphQLClientRequest
-import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHReleases
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRepository
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.QueryData
 import org.slf4j.LoggerFactory
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.reflect.KClass
 
-@Singleton
-class GraphQLGitHubRepositoryClient @Inject constructor(
-    graphQLRequest: GraphQLRequest,
-    updaterHtmlClient: UpdaterHtmlClient
-) : GraphQLGitHubReleaseRequest(graphQLRequest, updaterHtmlClient) {
+@ApplicationScoped
+open class GraphQLGitHubRepositoryClient @Inject constructor(
+    private val graphQLGitHubInterface: GraphQLGitHubInterface,
+    private val graphQLGitHubReleaseRequest: GraphQLGitHubReleaseRequest
+) {
     companion object {
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    suspend fun getRepository(owner: String, repoName: String): GHRepository {
+    open suspend fun getRepository(owner: String, repoName: String): GHRepository {
         val query = GetQueryData(owner, repoName)
 
         LOGGER.info("Getting repo $repoName")
 
-        val releases = getAll(
+        val releases = graphQLGitHubInterface.getAll(
             query::withCursor,
             { request -> getAllAssets(request) },
             { it.repository!!.releases.pageInfo.hasNextPage },
@@ -48,14 +47,14 @@ class GraphQLGitHubRepositoryClient @Inject constructor(
         return request.repository.releases.releases
             .map { release ->
                 if (release.releaseAssets.pageInfo.hasNextPage) {
-                    getAllReleaseAssets(release)
+                    graphQLGitHubReleaseRequest.getAllReleaseAssets(release)
                 } else {
                     release
                 }
             }
     }
 
-    class GetQueryData(private val owner: String, private val repoName: String, override val variables: Any = mapOf<String, String>()) :
+    private class GetQueryData(private val owner: String, private val repoName: String, override val variables: Any = mapOf<String, String>()) :
         GraphQLClientRequest<QueryData> {
 
         fun withCursor(cursor: String?): GetQueryData {

@@ -7,6 +7,9 @@ import io.mockk.spyk
 import io.mockk.verify
 import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.enterprise.inject.Alternative
+import jakarta.ws.rs.core.Response
 import net.adoptium.api.v3.Updater
 import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.models.Release
@@ -14,14 +17,11 @@ import org.jboss.weld.junit5.auto.EnableAlternatives
 import org.jboss.weld.junit5.auto.EnableAutoWeld
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import javax.annotation.Priority
-import javax.enterprise.inject.Alternative
-import javax.inject.Singleton
-import javax.ws.rs.core.Response
+import jakarta.annotation.Priority
 
 @Priority(1)
 @Alternative
-@Singleton
+@ApplicationScoped
 class MockUpdater : Updater {
     companion object {
         var spied: Updater = spyk(object : Updater {

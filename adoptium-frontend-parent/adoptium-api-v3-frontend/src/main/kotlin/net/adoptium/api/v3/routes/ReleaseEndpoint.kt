@@ -1,5 +1,8 @@
 package net.adoptium.api.v3.routes
 
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
+import jakarta.ws.rs.BadRequestException
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.SortMethod
 import net.adoptium.api.v3.dataSources.SortOrder
@@ -18,14 +21,13 @@ import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.parser.FailedToParse
 import net.adoptium.api.v3.parser.maven.InvalidVersionSpecificationException
-import javax.enterprise.context.ApplicationScoped
-import javax.inject.Inject
-import javax.ws.rs.BadRequestException
 
 @ApplicationScoped
 class ReleaseEndpoint
 @Inject
-constructor(private val apiDataStore: APIDataStore) {
+constructor(
+    private val apiDataStore: APIDataStore
+) {
     fun getReleases(
         sortOrder: SortOrder?,
         sortMethod: SortMethod?,

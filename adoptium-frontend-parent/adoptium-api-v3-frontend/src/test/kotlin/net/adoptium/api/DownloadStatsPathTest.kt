@@ -20,7 +20,7 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.format.DateTimeFormatter
-import javax.ws.rs.BadRequestException
+import jakarta.ws.rs.BadRequestException
 
 @ExtendWith(value = [DbExtension::class])
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

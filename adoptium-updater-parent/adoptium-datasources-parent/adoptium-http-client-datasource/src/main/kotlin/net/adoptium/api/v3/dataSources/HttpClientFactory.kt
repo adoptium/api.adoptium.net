@@ -1,5 +1,8 @@
 package net.adoptium.api.v3.dataSources
 
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.enterprise.inject.Produces
+import jakarta.inject.Named
 import org.apache.http.HttpRequest
 import org.apache.http.HttpResponse
 import org.apache.http.client.RedirectStrategy
@@ -9,11 +12,9 @@ import org.apache.http.impl.NoConnectionReuseStrategy
 import org.apache.http.impl.nio.client.HttpAsyncClients
 import org.apache.http.nio.client.HttpAsyncClient
 import org.apache.http.protocol.HttpContext
-import javax.enterprise.inject.Produces
-import javax.inject.Named
-import javax.inject.Singleton
 
-class HttpClientFactory {
+@ApplicationScoped
+open class HttpClientFactory {
     companion object {
         val REQUEST_CONFIG = RequestConfig
             .copy(RequestConfig.DEFAULT)
@@ -26,7 +27,7 @@ class HttpClientFactory {
         const val REDIRECTING = "redirect"
     }
 
-    @Singleton
+    @ApplicationScoped
     @Produces
     @Named(REDIRECTING)
     fun getHttpClient(): HttpAsyncClient {
@@ -39,7 +40,7 @@ class HttpClientFactory {
         return client
     }
 
-    @Singleton
+    @ApplicationScoped
     @Produces
     @Named(NON_REDIRECTING)
     fun getNonRedirectHttpClient(): HttpAsyncClient {

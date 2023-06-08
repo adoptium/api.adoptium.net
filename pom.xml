@@ -13,10 +13,8 @@
     </prerequisites>
 
     <properties>
-        <jacoco.version>0.8.8</jacoco.version>
         <jdk.version>17</jdk.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <kotlin.version>1.7.21</kotlin.version>
         <coroutine.version>1.6.4</coroutine.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
@@ -24,22 +22,17 @@
         <maven.compiler.testTarget>17</maven.compiler.testTarget>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>2.14.0.Final</quarkus.version>
-        <rest-assured.version>5.2.0</rest-assured.version>
+
+        <!-- Keep all these in sync with adoptium-api-versions -->
+        <jacoco.version>0.8.8</jacoco.version>
         <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
-        <jackson.version>2.14.0</jackson.version>
-        <kmongo.version>4.7.2</kmongo.version>
+        <kotlin.version>1.8.10</kotlin.version>
+        <quarkus.version>3.0.3.Final</quarkus.version>
         <maven-dependency-plugin.version>3.3.0</maven-dependency-plugin.version>
-        <spotbugs-maven-plugin.version>4.7.3.0</spotbugs-maven-plugin.version>
-        <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
-        <maven-pmd-plugin.version>3.19.0</maven-pmd-plugin.version>
-        <maven-project-info-reports-plugin.version>3.4.1</maven-project-info-reports-plugin.version>
-        <apache-rat-plugin.version>0.15</apache-rat-plugin.version>
-        <jdepend-maven-plugin.version>2.0</jdepend-maven-plugin.version>
-        <versions-maven-plugin.version>2.13.0</versions-maven-plugin.version>
     </properties>
 
     <modules>
+        <module>adoptium-api-versions</module>
         <module>adoptium-models-parent</module>
         <module>adoptium-api-v3-persistence</module>
         <module>adoptium-api-v3-telemetry</module>
@@ -50,306 +43,11 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-bom</artifactId>
-                <version>${kotlin.version}</version>
+                <groupId>net.adoptium.api</groupId>
+                <artifactId>adoptium-api-versions</artifactId>
+                <version>${project.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.jetbrains.kotlinx</groupId>
-                <artifactId>kotlinx-coroutines-bom</artifactId>
-                <version>${coroutine.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>com.fasterxml.jackson.module</groupId>
-                <artifactId>jackson-module-kotlin</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-jsr310</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-jsr353</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-annotations</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.mockk</groupId>
-                <artifactId>mockk-jvm</artifactId>
-                <version>1.13.2</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>io.quarkus</groupId>
-                <artifactId>quarkus-bom</artifactId>
-                <version>${quarkus.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>io.quarkus</groupId>
-                <artifactId>quarkus-smallrye-openapi</artifactId>
-                <version>${quarkus.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.rest-assured</groupId>
-                <artifactId>rest-assured</artifactId>
-                <version>${rest-assured.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>io.rest-assured</groupId>
-                <artifactId>json-path</artifactId>
-                <version>${rest-assured.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>net.adoptium.api</groupId>
-                <artifactId>adoptium-api-v3-models</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>net.adoptium.api</groupId>
-                <artifactId>adoptium-api-v3-persistence</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>net.adoptium.api</groupId>
-                <artifactId>adoptium-api-v3-telemetry</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>net.adoptium.api</groupId>
-                <artifactId>adoptium-api-v3-updater</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.maven</groupId>
-                <artifactId>maven-artifact</artifactId>
-                <version>3.8.6</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.microprofile.openapi</groupId>
-                <artifactId>microprofile-openapi-api</artifactId>
-                <version>3.0</version>
-            </dependency>
-            <!-- TODO 2.0.1 is the latest but moves to jakarta.ee for internal packages -->
-            <dependency>
-                <groupId>org.glassfish</groupId>
-                <artifactId>jakarta.json</artifactId>
-                <version>1.1.6</version>
-            </dependency>
-            <dependency>
-                <groupId>org.litote.kmongo</groupId>
-                <artifactId>kmongo-coroutine</artifactId>
-                <version>${kmongo.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.litote.kmongo</groupId>
-                <artifactId>kmongo-flapdoodle</artifactId>
-                <version>${kmongo.version}</version>
-                <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-simple</artifactId>
-                    </exclusion>
-                    <!-- Flapdoodle does not enforce itself and asks for 4.12 and 4.13.2, this is sad. -->
-                    <exclusion>
-                        <groupId>junit</groupId>
-                        <artifactId>junit</artifactId>
-                    </exclusion>
-                    <!-- We exclude this not to get junit 4 style annotations -->
-                    <exclusion>
-                        <groupId>org.jetbrains.kotlin</groupId>
-                        <artifactId>kotlin-test-junit</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <!-- We exclude this not to get junit 4 style annotations -->
-            <dependency>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-test-junit5</artifactId>
-                <version>1.8.10</version>
-            </dependency>
-            <!-- Explicitly adding this because Maven can't see it via the kmongo dep in
-             adoptium-api-v3-updater pom file. Why? Nobody knows -->
-            <!-- Latest version at 3.4.6 but this changes how config of mongo works -->
-            <dependency>
-                <groupId>de.flapdoodle.embed</groupId>
-                <artifactId>de.flapdoodle.embed.mongo</artifactId>
-                <version>2.2.0</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpasyncclient</artifactId>
-                <version>4.1.5</version>
-            </dependency>
-            <!--
-            TODO Moved to 5.x under a new artifact id
-            https://mvnrepository.com/artifact/org.apache.httpcomponents.core5/httpcore5
-            -->
-            <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpcore</artifactId>
-                <version>4.4.15</version>
-            </dependency>
-            <dependency>
-                <groupId>org.assertj</groupId>
-                <artifactId>assertj-core</artifactId>
-                <version>3.23.1</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.awaitility</groupId>
-                <artifactId>awaitility</artifactId>
-                <version>4.2.0</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.codehaus.groovy</groupId>
-                <artifactId>groovy-xml</artifactId>
-                <version>3.0.15</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jooq</groupId>
-                <artifactId>jooq</artifactId>
-                <version>3.17.5</version>
-            </dependency>
-            <!-- TODO 2.0.3 is out -->
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>1.7.36</version>
-            </dependency>
-            <dependency>
-                <groupId>org.skyscreamer</groupId>
-                <artifactId>jsonassert</artifactId>
-                <version>1.5.1</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.microsoft.azure</groupId>
-                <artifactId>applicationinsights-runtime-attach</artifactId>
-                <version>3.4.9</version>
-            </dependency>
-            <dependency>
-                <groupId>io.opentelemetry</groupId>
-                <artifactId>opentelemetry-api</artifactId>
-                <version>1.20.0</version>
-            </dependency>
-            <!-- TODO Update to 4.0.0 Final now -->
-            <dependency>
-                <groupId>org.jboss.weld</groupId>
-                <artifactId>weld-junit5</artifactId>
-                <version>2.0.2.Final</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.weld.se</groupId>
-                <artifactId>weld-se-core</artifactId>
-                <version>3.1.5.Final</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>jakarta.el</groupId>
-                        <artifactId>jakarta.el-api</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>jakarta.enterprise</groupId>
-                        <artifactId>jakarta.enterprise.cdi-api</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <!-- TODO swap to Jakarta EE once Quarkus fully moves over -->
-            <dependency>
-                <groupId>javax.enterprise</groupId>
-                <artifactId>cdi-api</artifactId>
-                <version>2.0</version>
-            </dependency>
-            <dependency>
-                <groupId>org.codehaus.groovy</groupId>
-                <artifactId>groovy</artifactId>
-                <version>3.0.13</version>
-            </dependency>
-            <dependency>
-                <groupId>io.quarkiverse.logging.logback</groupId>
-                <artifactId>quarkus-logging-logback</artifactId>
-                <version>0.13.0</version>
-            </dependency>
-            <dependency>
-                <groupId>io.quarkiverse.logging.logback</groupId>
-                <artifactId>quarkus-logging-logback-impl</artifactId>
-                <version>0.13.0</version>
-            </dependency>
-
-            <!-- Additional dependencies used by marketplace-->
-            <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-jdk8</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter</artifactId>
-                <version>5.9.1</version>
-                <scope>test</scope>
-            </dependency>
-            <!-- TODO Now at 3.0.1 -->
-            <dependency>
-                <groupId>io.smallrye</groupId>
-                <artifactId>smallrye-open-api-core</artifactId>
-                <version>2.3.1</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-server</artifactId>
-                <version>11.0.12</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-client</artifactId>
-                <version>11.0.12</version>
-            </dependency>
-            <dependency>
-                <groupId>org.bouncycastle</groupId>
-                <artifactId>bcpg-jdk15on</artifactId>
-                <version>1.70</version>
-            </dependency>
-            <!-- TODO at 1.4.4 -->
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-core</artifactId>
-                <version>1.2.11</version>
-            </dependency>
-            <!-- TODO at 1.4.4 -->
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>1.2.11</version>
-            </dependency>
-            <dependency>
-                <groupId>org.litote.kmongo</groupId>
-                <artifactId>kmongo-id-jackson</artifactId>
-                <version>4.7.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

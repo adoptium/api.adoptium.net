@@ -8,14 +8,14 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
-import javax.ws.rs.PathParam
+import jakarta.ws.rs.PathParam
 import org.slf4j.LoggerFactory
-import javax.enterprise.context.ApplicationScoped
-import javax.ws.rs.BadRequestException
-import javax.ws.rs.GET
-import javax.ws.rs.Path
-import javax.ws.rs.Produces
-import javax.ws.rs.core.MediaType
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.ws.rs.BadRequestException
+import jakarta.ws.rs.GET
+import jakarta.ws.rs.Path
+import jakarta.ws.rs.Produces
+import jakarta.ws.rs.core.MediaType
 
 @Tag(name = "Version")
 @Path("/v3/version/")

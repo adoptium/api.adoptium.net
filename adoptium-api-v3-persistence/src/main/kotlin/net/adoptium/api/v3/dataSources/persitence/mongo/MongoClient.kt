@@ -2,17 +2,17 @@ package net.adoptium.api.v3.dataSources.persitence.mongo
 
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
+import jakarta.enterprise.context.ApplicationScoped
 import org.litote.kmongo.coroutine.CoroutineClient
 import org.litote.kmongo.coroutine.CoroutineDatabase
 import org.litote.kmongo.coroutine.coroutine
 import org.litote.kmongo.reactivestreams.KMongo
 import org.slf4j.LoggerFactory
-import javax.inject.Singleton
 
-@Singleton
+@ApplicationScoped
 open class MongoClient {
-    val database: CoroutineDatabase
-    val client: CoroutineClient
+    open val database: CoroutineDatabase
+    open val client: CoroutineClient
 
     companion object {
         @JvmStatic
@@ -64,15 +64,12 @@ open class MongoClient {
             port = System.getenv("MONGODB_PORT"),
             serverSelectionTimeoutMills = System.getenv("MONGODB_SERVER_SELECTION_TIMEOUT_MILLIS")
         )
-
         var settingsBuilder = MongoClientSettings.builder()
             .applyConnectionString(ConnectionString(connectionString))
-
         val sslEnabled = System.getenv("MONGODB_SSL")?.toBoolean()
         if (sslEnabled == true) {
             settingsBuilder = settingsBuilder.applyToSslSettings { it.enabled(true).invalidHostNameAllowed(true) }
         }
-
         client = KMongo.createClient(settingsBuilder.build()).coroutine
         database = client.getDatabase(dbName)
     }

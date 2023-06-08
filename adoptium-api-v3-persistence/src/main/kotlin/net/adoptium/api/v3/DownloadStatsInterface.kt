@@ -1,5 +1,7 @@
 package net.adoptium.api.v3
 
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
 import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.DbStatsEntry
@@ -15,8 +17,6 @@ import net.adoptium.api.v3.models.Versions
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.math.max
 import kotlin.math.min
 
@@ -26,7 +26,7 @@ class StatEntry(
 )
 
 @Schema(hidden = true)
-@Singleton
+@ApplicationScoped
 class DownloadStatsInterface {
 
     @Schema(hidden = true)
