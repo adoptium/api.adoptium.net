@@ -85,7 +85,7 @@ class VersionRange private constructor(
          * @throws InvalidVersionSpecificationException
          */
         @Throws(InvalidVersionSpecificationException::class)
-        fun createFromVersionSpec(spec: String?): VersionRange? {
+        fun createFromVersionSpec(spec: String?, semver: Boolean): VersionRange? {
             if (spec == null) {
                 return null
             }
@@ -110,7 +110,7 @@ class VersionRange private constructor(
                 if (index < 0) {
                     throw InvalidVersionSpecificationException("Unbounded range: $spec")
                 }
-                val restriction = parseRestriction(process.substring(0, index + 1))
+                val restriction = parseRestriction(process.substring(0, index + 1), semver)
                 if (lowerBound == null) {
                     lowerBound = restriction.lowerBound
                 }
@@ -142,7 +142,7 @@ class VersionRange private constructor(
         }
 
         @Throws(InvalidVersionSpecificationException::class)
-        private fun parseRestriction(spec: String): Restriction {
+        private fun parseRestriction(spec: String, semver: Boolean): Restriction {
             val lowerBoundInclusive = spec.startsWith("[")
             val upperBoundInclusive = spec.endsWith("]")
             val process = spec.substring(1, spec.length - 1).trim { it <= ' ' }
@@ -152,7 +152,7 @@ class VersionRange private constructor(
                 if (!lowerBoundInclusive || !upperBoundInclusive) {
                     throw InvalidVersionSpecificationException("Single version must be surrounded by []: $spec")
                 }
-                val version: VersionData = parse(process, false, true)
+                val version: VersionData = versionData(semver, process)
                 restriction = Restriction(version, lowerBoundInclusive, version, upperBoundInclusive)
             } else {
                 val lowerBound = process.substring(0, index).trim { it <= ' ' }
@@ -162,11 +162,11 @@ class VersionRange private constructor(
                 }
                 var lowerVersion: VersionData? = null
                 if (lowerBound.isNotEmpty()) {
-                    lowerVersion = parse(lowerBound, false, true)
+                    lowerVersion = versionData(semver, lowerBound)
                 }
                 var upperVersion: VersionData? = null
                 if (upperBound.isNotEmpty()) {
-                    upperVersion = parse(upperBound, false, true)
+                    upperVersion = versionData(semver, upperBound)
                 }
                 if (upperVersion != null && lowerVersion != null && upperVersion < lowerVersion) {
                     throw InvalidVersionSpecificationException("Range defies version ordering: $spec")
@@ -174,6 +174,12 @@ class VersionRange private constructor(
                 restriction = Restriction(lowerVersion, lowerBoundInclusive, upperVersion, upperBoundInclusive)
             }
             return restriction
+        }
+
+        private fun versionData(semver: Boolean, version: String) = if (semver) {
+            SemverParser.parseAdoptSemverNonNull(version)
+        } else {
+            parse(version, false, true)
         }
     }
 }

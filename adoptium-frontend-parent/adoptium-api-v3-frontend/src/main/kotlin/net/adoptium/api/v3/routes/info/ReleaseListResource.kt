@@ -123,6 +123,14 @@ constructor(
         @QueryParam("show_page_count")
         showPageCount: Boolean?,
 
+        @Parameter(name = "semver",
+            description = "Indicates that any version arguments provided in this request were Adoptium semantic versions",
+            required = false,
+            schema = Schema(defaultValue = "false", type = SchemaType.BOOLEAN)
+        )
+        @QueryParam("semver")
+        semver: Boolean?,
+
         @Context
         uriInfo: UriInfo,
     ): Response {
@@ -139,7 +147,8 @@ constructor(
             jvm_impl,
             heap_size,
             project,
-            cLib
+            cLib,
+            semver
         )
             .map { it.release_name }
 
@@ -224,6 +233,14 @@ constructor(
         @QueryParam("show_page_count")
         showPageCount: Boolean?,
 
+        @Parameter(name = "semver",
+            description = "Indicates that any version arguments provided in this request were Adoptium semantic versions",
+            required = false,
+            schema = Schema(defaultValue = "false", type = SchemaType.BOOLEAN)
+        )
+        @QueryParam("semver")
+        semver: Boolean?,
+
         @Context
         uriInfo: UriInfo,
     ): Response {
@@ -240,7 +257,8 @@ constructor(
             jvm_impl,
             heap_size,
             project,
-            cLib
+            cLib,
+            semver
         )
             .map { it.version_data }
             .distinct()

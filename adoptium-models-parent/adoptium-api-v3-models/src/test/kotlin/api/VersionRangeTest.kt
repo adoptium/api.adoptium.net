@@ -15,7 +15,7 @@ class VersionRangeTest {
 
     @Test
     fun `filters correctly`() {
-        val range = VersionRange.createFromVersionSpec("[11.0.1.1,)")!!
+        val range = VersionRange.createFromVersionSpec("[11.0.1.1,)", false)!!
         assertFalse(range.containsVersion(noPatch))
         assertTrue(range.containsVersion(patch1))
         assertTrue(range.containsVersion(patch2))
@@ -24,7 +24,7 @@ class VersionRangeTest {
 
     @Test
     fun `filters correctly 2`() {
-        val range = VersionRange.createFromVersionSpec("(,11.0.1.1+4)")!!
+        val range = VersionRange.createFromVersionSpec("(,11.0.1.1+4)", false)!!
         assertTrue(range.containsVersion(noPatch))
         assertFalse(range.containsVersion(patch1))
         assertFalse(range.containsVersion(patch2))
@@ -33,7 +33,7 @@ class VersionRangeTest {
 
     @Test
     fun `filters correctly 3`() {
-        val range = VersionRange.createFromVersionSpec("(,11.0.1.1+4]")!!
+        val range = VersionRange.createFromVersionSpec("(,11.0.1.1+4]", false)!!
         assertTrue(range.containsVersion(noPatch))
         assertTrue(range.containsVersion(patch1))
         assertFalse(range.containsVersion(patch2))
@@ -42,7 +42,7 @@ class VersionRangeTest {
 
     @Test
     fun `filters correctly 4`() {
-        val range = VersionRange.createFromVersionSpec("(,11.0.1.2+1]")!!
+        val range = VersionRange.createFromVersionSpec("(,11.0.1.2+1]", false)!!
         assertTrue(range.containsVersion(noPatch))
         assertTrue(range.containsVersion(patch1))
         assertFalse(range.containsVersion(patch2))
@@ -51,7 +51,7 @@ class VersionRangeTest {
 
     @Test
     fun `filters correctly 5`() {
-        val range = VersionRange.createFromVersionSpec("[11.0.1+4,11.0.2+5)")!!
+        val range = VersionRange.createFromVersionSpec("[11.0.1+4,11.0.2+5)", false)!!
         assertTrue(range.containsVersion(noPatch))
         assertTrue(range.containsVersion(patch1))
         assertTrue(range.containsVersion(patch2))
@@ -60,7 +60,7 @@ class VersionRangeTest {
 
     @Test
     fun `filters correctly 6`() {
-        val range = VersionRange.createFromVersionSpec("[11.0.2+4,)")!!
+        val range = VersionRange.createFromVersionSpec("[11.0.2+4,)", false)!!
         assertFalse(range.containsVersion(noPatch))
         assertFalse(range.containsVersion(patch1))
         assertFalse(range.containsVersion(patch2))

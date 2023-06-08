@@ -30,6 +30,7 @@ class AssetsResourceVersionPathTest : AssetsPathTest() {
         val JAVA11 = "11.0.200+2.1"
         val ABOVE_8 = "[8.0.0,)"
         val BELOW_11 = "(,11.0.0]"
+        val JAVA18_0_2_101 = "18.0.2+101"
     }
 
     @TestFactory
@@ -68,6 +69,50 @@ class AssetsResourceVersionPathTest : AssetsPathTest() {
                             }
                         })
                         .statusCode(200)
+                }
+            }
+            .stream()
+    }
+
+
+    @TestFactory
+    fun `semver does match in range`(): Stream<DynamicTest> {
+        return listOf(
+            JAVA18_0_2_101,
+            "[18.0.2+100,18.0.2+102]",
+            "[18.0.2+100,18.0.2+101.1]",
+            "[18.0.2+101,18.0.2+102]"
+        )
+            .map { request -> "${getPath()}/$request?semver=true" }
+            .map { request ->
+                DynamicTest.dynamicTest(request) {
+                    RestAssured.given()
+                        .`when`()
+                        .get(request)
+                        .then()
+                        .statusCode(200)
+                }
+            }
+            .stream()
+    }
+
+
+    @TestFactory
+    fun `semver does not match out of range`(): Stream<DynamicTest> {
+        return listOf(
+            "18.0.2+100",
+            "[18.0.2+102,18.0.2+103]",
+            "[18.0.2+100,18.0.2+101.1)",
+            "(18.0.2+101.1,18.0.2+102]"
+        )
+            .map { request -> "${getPath()}/$request?semver=true" }
+            .map { request ->
+                DynamicTest.dynamicTest(request) {
+                    RestAssured.given()
+                        .`when`()
+                        .get(request)
+                        .then()
+                        .statusCode(404)
                 }
             }
             .stream()

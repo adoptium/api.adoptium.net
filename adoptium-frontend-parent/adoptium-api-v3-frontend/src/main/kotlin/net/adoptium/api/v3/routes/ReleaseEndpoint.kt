@@ -39,14 +39,15 @@ constructor(private val apiDataStore: APIDataStore) {
         jvm_impl: JvmImpl?,
         heap_size: HeapSize?,
         project: Project?,
-        cLib: CLib?
+        cLib: CLib?,
+        semver: Boolean?
     ): Sequence<Release> {
         val order = sortOrder ?: SortOrder.DESC
         val vendorNonNull = vendor ?: Vendor.getDefault()
         val releaseSortMethod = sortMethod ?: SortMethod.DEFAULT
 
         val range = try {
-            VersionRangeFilter(version)
+            VersionRangeFilter(version, semver ?: false)
         } catch (e: InvalidVersionSpecificationException) {
             throw BadRequestException("Invalid version range", e)
         } catch (e: FailedToParse) {
