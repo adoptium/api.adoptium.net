@@ -54,7 +54,7 @@ To perform a full build and test you run the following:
 
 `./mvnw clean install -Padoptium`
 
-If you wish to view all of the Maven reporting about the project you run the following:
+If you wish to view all the Maven reporting about the project you run the following:
 
 `./mvnw clean install site -Padoptium`
 
