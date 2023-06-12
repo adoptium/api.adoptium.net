@@ -8,24 +8,53 @@
     <packaging>pom</packaging>
 
     <properties>
-        <jdk.version>17</jdk.version>
-        <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <kotlin.version>1.8.10</kotlin.version>
         <coroutine.version>1.6.4</coroutine.version>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <maven.compiler.testSource>17</maven.compiler.testSource>
-        <maven.compiler.testTarget>17</maven.compiler.testTarget>
+        <jackson.version>2.15.2</jackson.version>
+        <jdk.version>17</jdk.version>
+        <kmongo.version>4.9.0</kmongo.version>
+        <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
+        <kotlin.version>1.8.21</kotlin.version>
+        <logback.version>1.4.7</logback.version>
+        <maven.compiler.release>17</maven.compiler.release>
+        <maven.version>3.9.2</maven.version>
+        <maven.project-info-reports-plugin.version>3.4.5</maven.project-info-reports-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.0.3.Final</quarkus.version>
-        <jackson.version>2.14.2</jackson.version>
-        <kmongo.version>4.8.0</kmongo.version>
+        <quarkus.version>3.1.1.Final</quarkus.version>
         <rest-assured.version>5.3.0</rest-assured.version>
     </properties>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <id>enforce</id>
+                        <configuration>
+                            <rules>
+                                <dependencyConvergence>
+                                    <uniqueVersions>true</uniqueVersions>
+                                </dependencyConvergence>
+                                <requireMavenVersion>
+                                    <version>${maven.version}</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
     <dependencyManagement>
         <dependencies>
+            <!-- Kotlin Programming Language Support -->
             <dependency>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-bom</artifactId>
@@ -41,6 +70,7 @@
                 <scope>import</scope>
             </dependency>
 
+            <!-- JSON processing via Jackson libs -->
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-kotlin</artifactId>
@@ -66,12 +96,15 @@
                 <artifactId>jackson-annotations</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
+
+            <!-- Mocking libs -->
             <dependency>
                 <groupId>io.mockk</groupId>
                 <artifactId>mockk-jvm</artifactId>
-                <version>1.13.4</version>
+                <version>1.13.5</version>
                 <scope>test</scope>
             </dependency>
+
             <dependency>
                 <groupId>io.quarkus</groupId>
                 <artifactId>quarkus-bom</artifactId>
@@ -79,6 +112,8 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
+            <!-- REST Assured testing libs -->
             <dependency>
                 <groupId>io.rest-assured</groupId>
                 <artifactId>rest-assured</artifactId>
@@ -91,6 +126,8 @@
                 <version>${rest-assured.version}</version>
                 <scope>test</scope>
             </dependency>
+
+            <!-- Adoptium API Dependencies -->
             <dependency>
                 <groupId>net.adoptium.api</groupId>
                 <artifactId>adoptium-api-v3-models</artifactId>
@@ -111,17 +148,21 @@
                 <artifactId>adoptium-api-v3-updater</artifactId>
                 <version>${project.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-artifact</artifactId>
-                <version>3.8.6</version>
+                <version>${maven.version}</version>
             </dependency>
-            <!-- TODO 2.0.1 is the latest but moves to jakarta.ee for internal packages -->
+
+            <!-- TODO Ther persistence layer uses this, but do we really need this? -->
             <dependency>
                 <groupId>org.glassfish</groupId>
                 <artifactId>jakarta.json</artifactId>
                 <version>2.0.1</version>
             </dependency>
+
+            <!-- Kotlin dependencies for MongoDB -->
             <dependency>
                 <groupId>org.litote.kmongo</groupId>
                 <artifactId>kmongo-coroutine</artifactId>
@@ -149,7 +190,6 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-            <!-- We exclude this not to get junit 4 style annotations -->
             <dependency>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-test-junit5</artifactId>
@@ -157,13 +197,17 @@
             </dependency>
             <!-- Explicitly adding this because Maven can't see it via the kmongo dep in
              adoptium-api-v3-updater pom file. Why? Nobody knows -->
-            <!-- Latest version at 3.4.6 but this changes how config of mongo works -->
             <dependency>
                 <groupId>de.flapdoodle.embed</groupId>
                 <artifactId>de.flapdoodle.embed.mongo</artifactId>
-                <version>4.4.0</version>
+                <version>4.7.0</version>
                 <scope>test</scope>
             </dependency>
+
+            <!--
+                TODO Moved to 5.x under a new artifact id
+                https://mvnrepository.com/artifact/org.apache.httpcomponents.core5/httpcore5
+            -->
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpasyncclient</artifactId>
@@ -178,6 +222,7 @@
                 <artifactId>httpcore</artifactId>
                 <version>4.4.16</version>
             </dependency>
+
             <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
@@ -190,21 +235,24 @@
                 <version>4.2.0</version>
                 <scope>test</scope>
             </dependency>
+
+            <!-- TODO Moved to org.apache.groovy and 4.0.x -->
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-xml</artifactId>
-                <version>3.0.15</version>
+                <version>3.0.17</version>
             </dependency>
+
+
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq</artifactId>
-                <version>3.17.7</version>
+                <version>3.18.4</version>
             </dependency>
-            <!-- TODO 2.0.3 is out -->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>2.0.6</version>
+                <version>2.0.7</version>
             </dependency>
             <dependency>
                 <groupId>org.skyscreamer</groupId>
@@ -215,14 +263,13 @@
             <dependency>
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>applicationinsights-runtime-attach</artifactId>
-                <version>3.4.9</version>
+                <version>3.4.13</version>
             </dependency>
             <dependency>
                 <groupId>io.opentelemetry</groupId>
                 <artifactId>opentelemetry-api</artifactId>
-                <version>1.22.0</version>
+                <version>1.26.0</version>
             </dependency>
-            <!-- TODO Update to 4.0.0 Final now -->
             <dependency>
                 <groupId>org.jboss.weld</groupId>
                 <artifactId>weld-junit5</artifactId>
@@ -234,26 +281,26 @@
                 <artifactId>weld-se-core</artifactId>
                 <version>5.1.0.Final</version>
             </dependency>
-            <!-- TODO swap to Jakarta EE once Quarkus fully moves over -->
             <dependency>
                 <groupId>javax.enterprise</groupId>
                 <artifactId>jakarta.enterprise.cdi-api</artifactId>
                 <version>4.0.1</version>
             </dependency>
+            <!-- TODO org.apache.groovy at 4.0.x -->
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy</artifactId>
-                <version>3.0.14</version>
+                <version>3.0.17</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkiverse.logging.logback</groupId>
                 <artifactId>quarkus-logging-logback</artifactId>
-                <version>0.13.0</version>
+                <version>1.1.0</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkiverse.logging.logback</groupId>
                 <artifactId>quarkus-logging-logback-impl</artifactId>
-                <version>0.13.0</version>
+                <version>1.1.0</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkus</groupId>
@@ -285,43 +332,40 @@
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>
-                <version>5.9.2</version>
+                <version>5.9.3</version>
                 <scope>test</scope>
             </dependency>
-            <!-- TODO Now at 3.0.1 -->
             <dependency>
                 <groupId>io.smallrye</groupId>
                 <artifactId>smallrye-open-api-core</artifactId>
-                <version>3.1.2</version>
+                <version>3.3.4</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-server</artifactId>
-                <version>11.0.12</version>
+                <version>11.0.15</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-client</artifactId>
-                <version>11.0.12</version>
+                <version>11.0.15</version>
             </dependency>
             <dependency>
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcpg-jdk15on</artifactId>
                 <version>1.70</version>
             </dependency>
-            <!-- TODO at 1.4.4 -->
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-core</artifactId>
-                <version>1.4.5</version>
+                <version>${logback.version}</version>
             </dependency>
-            <!-- TODO at 1.4.4 -->
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
-                <version>1.4.5</version>
+                <version>${logback.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.litote.kmongo</groupId>
@@ -341,22 +385,12 @@
             <dependency>
                 <groupId>jakarta.inject</groupId>
                 <artifactId>jakarta.inject-api</artifactId>
-                <version>2.0.1</version>
+                <version>2.0.1.MR</version>
             </dependency>
             <dependency>
                 <groupId>jakarta.enterprise</groupId>
                 <artifactId>jakarta.enterprise.cdi-api</artifactId>
                 <version>4.0.1</version>
-            </dependency>
-            <dependency>
-                <groupId>jakarta.inject</groupId>
-                <artifactId>jakarta.inject-api</artifactId>
-                <version>2.0.1</version>
-            </dependency>
-            <dependency>
-                <groupId>jakarta.ws.rs</groupId>
-                <artifactId>jakarta.ws.rs-api</artifactId>
-                <version>3.1.0</version>
             </dependency>
             <dependency>
                 <groupId>net.adoptium.api</groupId>
@@ -366,6 +400,7 @@
             <dependency>
                 <groupId>com.expediagroup</groupId>
                 <artifactId>graphql-kotlin-ktor-client</artifactId>
+                <!-- TODO Migrate to 6.4.0 -->
                 <version>5.5.0</version>
                 <exclusions>
                     <exclusion>
@@ -377,13 +412,20 @@
             <dependency>
                 <groupId>com.expediagroup</groupId>
                 <artifactId>graphql-kotlin-client-jackson</artifactId>
+                <!-- TODO Migrate to 6.4.0 -->
                 <version>5.5.0</version>
-            </dependency>
-            <dependency>
-                <groupId>net.adoptium.api</groupId>
-                <artifactId>adoptium-api-v3-persistence</artifactId>
-                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>${maven.project-info-reports-plugin.version}</version>
+            </plugin>
+        </plugins>
+    </reporting>
+
 </project>
