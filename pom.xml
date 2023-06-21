@@ -25,7 +25,7 @@
         <maven.build-helper-plugin.version>3.4.0</maven.build-helper-plugin.version>
         <maven.changes-plugin.version>2.12.1</maven.changes-plugin.version>
         <maven.checkstyle-plugin.version>3.3.0</maven.checkstyle-plugin.version>
-        <maven.clean-plugin.version>3.2.0</maven.clean-plugin.version>
+        <maven.clean-plugin.version>3.3.1</maven.clean-plugin.version>
         <maven.compiler-plugin.version>3.11.0</maven.compiler-plugin.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.release>17</maven.compiler.release>
