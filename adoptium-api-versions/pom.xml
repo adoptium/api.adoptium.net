@@ -8,7 +8,7 @@
     <packaging>pom</packaging>
 
     <properties>
-        <coroutine.version>1.7.2</coroutine.version>
+        <coroutine.version>1.7.3</coroutine.version>
         <jackson.version>2.15.2</jackson.version>
         <jdk.version>17</jdk.version>
         <kmongo.version>4.10.0</kmongo.version>
