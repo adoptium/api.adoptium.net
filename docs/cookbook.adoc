@@ -111,7 +111,7 @@ echo "Downloaded successfully as ${FILENAME}"
 Again, the `API_URL` can be adapted for different Java versions etc. as shown in <<example-two,Example Two>>.
 
 
-== Example Three: More complex queries
+== Example Four: More complex queries
 
 The API can be supplemented to filter the details response by Java version, platform, and other conditions and can be used to answer detailed queries.
 
