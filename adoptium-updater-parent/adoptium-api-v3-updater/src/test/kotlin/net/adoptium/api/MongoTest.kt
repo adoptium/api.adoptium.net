@@ -42,7 +42,7 @@ abstract class MongoTest {
             LOGGER.info("Mongo test connection string - $mongodbTestConnectionString")
             System.setProperty("MONGODB_TEST_CONNECTION_STRING", mongodbTestConnectionString)
 
-            mongodExecutable = Mongod.instance().withNet(Start.to(Net::class.java).initializedWith(net)).start(Version.V4_4_18).current()
+            mongodExecutable = Mongod.instance().withNet(Start.to(Net::class.java).initializedWith(net)).start(Version.V6_0_8).current()
 
             LOGGER.info("FMongo started")
         }
