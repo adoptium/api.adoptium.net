@@ -54,8 +54,7 @@ class DownloadStatsInterface {
             // need +1 as for a diff you need num days +1 from db
             (days ?: 30) + 1
         }
-        
-        val daysSince = (days ?: 30) + 1
+
         val statsSource = source ?: StatsSource.all
         val periodEnd = to ?: TimeSource.now()
 
