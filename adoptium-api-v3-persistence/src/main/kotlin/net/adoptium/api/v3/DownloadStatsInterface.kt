@@ -38,7 +38,7 @@ class DownloadStatsInterface {
     }
 
     suspend fun getTrackingStats(
-        days: Int? = null,
+        var days: Int? = null,
         from: ZonedDateTime? = null,
         to: ZonedDateTime? = null,
         source: StatsSource? = null,
