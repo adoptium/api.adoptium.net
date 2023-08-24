@@ -47,8 +47,14 @@ class DownloadStatsInterface {
         jvmImpl: JvmImpl? = null
     ): List<DownloadDiff> {
 
-        // need +1 as for a diff you need num days +1 from db
-        val daysSince = (days ?: 30) + 1
+        // If to and from are set days
+        val daysSince = if (to != null && from != null) {
+            ChronoUnit.DAYS.between(from, to).toInt() + 1
+        } else {
+            // need +1 as for a diff you need num days +1 from db
+            (days ?: 30) + 1
+        }
+
         val statsSource = source ?: StatsSource.all
         val periodEnd = to ?: TimeSource.now()
 
