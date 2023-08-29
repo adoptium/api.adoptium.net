@@ -266,9 +266,9 @@
                 <version>3.4.15</version>
             </dependency>
             <dependency>
-                <groupId>io.opentelemetry</groupId>
-                <artifactId>opentelemetry-api</artifactId>
-                <version>1.28.0</version>
+                <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+                <artifactId>opentelemetry-javaagent-kotlinx-coroutines</artifactId>
+                <version>1.28.0-alpha</version>
             </dependency>
             <dependency>
                 <groupId>org.jboss.weld</groupId>
