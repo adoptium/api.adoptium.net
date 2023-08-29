@@ -20,7 +20,7 @@
         <maven.project-info-reports-plugin.version>3.4.5</maven.project-info-reports-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.1.2.Final</quarkus.version>
+        <quarkus.version>3.3.1</quarkus.version>
         <rest-assured.version>5.3.1</rest-assured.version>
     </properties>
 
@@ -271,6 +271,11 @@
                 <version>1.28.0-alpha</version>
             </dependency>
             <dependency>
+                <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+                <artifactId>opentelemetry-javaagent-netty-4.1</artifactId>
+                <version>1.28.0-alpha</version>
+            </dependency>
+            <dependency>
                 <groupId>org.jboss.weld</groupId>
                 <artifactId>weld-junit5</artifactId>
                 <version>4.0.0.Final</version>
@@ -400,8 +405,7 @@
             <dependency>
                 <groupId>com.expediagroup</groupId>
                 <artifactId>graphql-kotlin-ktor-client</artifactId>
-                <!-- TODO Migrate to 6.4.0 -->
-                <version>5.5.0</version>
+                <version>6.5.3</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.jetbrains.kotlinx</groupId>
@@ -412,8 +416,7 @@
             <dependency>
                 <groupId>com.expediagroup</groupId>
                 <artifactId>graphql-kotlin-client-jackson</artifactId>
-                <!-- TODO Migrate to 6.4.0 -->
-                <version>5.5.0</version>
+                <version>6.5.3</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
