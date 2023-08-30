@@ -2,10 +2,13 @@ package net.adoptium.api.v3
 
 import io.quarkus.arc.profile.UnlessBuildProfile
 import io.quarkus.runtime.Startup
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
+import jakarta.ws.rs.ApplicationPath
+import jakarta.ws.rs.core.Application
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import net.adoptium.api.v3.ai.AppInsightsTelemetry
 import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.ReleaseVersionResolver
@@ -23,10 +26,6 @@ import java.util.*
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import jakarta.enterprise.context.ApplicationScoped
-import jakarta.inject.Inject
-import jakarta.ws.rs.ApplicationPath
-import jakarta.ws.rs.core.Application
 import kotlin.concurrent.timerTask
 
 @UnlessBuildProfile("test")
@@ -73,7 +72,7 @@ class V3Updater @Inject constructor(
     }
 
     init {
-        AppInsightsTelemetry.start()
+        //AppInsightsTelemetry.start()
     }
 
     override fun addToUpdate(toUpdate: String): List<Release> {
