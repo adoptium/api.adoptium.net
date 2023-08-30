@@ -21,6 +21,10 @@
             <artifactId>opentelemetry-javaagent-kotlinx-coroutines</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+            <artifactId>opentelemetry-javaagent-netty-4.1</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-extension-kotlin</artifactId>
         </dependency>
