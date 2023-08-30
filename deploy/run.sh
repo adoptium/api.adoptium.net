@@ -8,10 +8,12 @@ KEY_FILE=/ssl/tls.key
 CERT_FILE=/ssl/tls.crt
 MONGO_CERT_FILE=/mongo/tls.crt
 
+JAVA_OPTS="$JAVA_OPTS -Dvertx.cacheDirBase=/tmp/vertx -Xlog:gc*:gc.log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/logs/frontendDump.hdump"
+
 if [ -f "${KEY_FILE}" ] && [ -f "${CERT_FILE}" ];
 then
-  JAVA_OPTS="$JAVA_OPTS -Dquarkus.http.ssl.certificate.file=${CERT_FILE}"
-  JAVA_OPTS="$JAVA_OPTS -Dquarkus.http.ssl.certificate.key-file=${KEY_FILE}"
+  JAVA_OPTS="$JAVA_OPTS -Dquarkus.http.ssl.certificate.files=${CERT_FILE}"
+  JAVA_OPTS="$JAVA_OPTS -Dquarkus.http.ssl.certificate.key-files=${KEY_FILE}"
   JAVA_OPTS="$JAVA_OPTS -Dquarkus.http.insecure-requests=disabled"
 fi
 

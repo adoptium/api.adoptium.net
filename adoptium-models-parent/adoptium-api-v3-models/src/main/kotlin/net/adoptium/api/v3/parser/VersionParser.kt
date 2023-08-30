@@ -174,7 +174,7 @@ object VersionParser {
 
             val version = matched.group("version")
 
-            val parsed = VersionData(major, minor, security, null, 1, build, opt, version, null, null)
+            val parsed = VersionData(major, minor, security, null, null, build, opt, version, null, null)
             if (!sanityCheck || sanityCheck(parsed)) {
                 return parsed
             }

@@ -1,11 +1,11 @@
 package net.adoptium.api.v3.stats
 
+import jakarta.enterprise.context.ApplicationScoped
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.stats.dockerstats.DockerStatsInterfaceFactory
-import javax.inject.Inject
-import javax.inject.Singleton
+import jakarta.inject.Inject
 
-@Singleton
+@ApplicationScoped
 class StatsInterface @Inject constructor(
     private val gitHubDownloadStatsCalculator: GitHubDownloadStatsCalculator,
     dockerStatsInterfaceFactory: DockerStatsInterfaceFactory

@@ -1,5 +1,7 @@
 package net.adoptium.api.v3.mapping.adopt
 
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.enterprise.inject.Model
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.adoptium.api.v3.ReleaseResult
@@ -15,6 +17,7 @@ import net.adoptium.api.v3.mapping.ReleaseMapper
 import net.adoptium.api.v3.models.DateTime
 import net.adoptium.api.v3.models.ImageType
 import net.adoptium.api.v3.models.Release
+import net.adoptium.api.v3.models.ReleaseNotesPackage
 import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.SourcePackage
 import net.adoptium.api.v3.models.Vendor
@@ -24,17 +27,17 @@ import net.adoptium.api.v3.parser.VersionParser
 import org.slf4j.LoggerFactory
 import java.security.MessageDigest
 import java.time.ZonedDateTime
-import java.util.Base64
+import java.util.*
 import java.util.regex.Pattern
-import javax.inject.Inject
-import javax.inject.Singleton
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 
-@Singleton
-class AdoptReleaseMapperFactory @Inject constructor(
+@ApplicationScoped
+open class AdoptReleaseMapperFactory @Inject constructor(
     val adoptBinaryMapper: AdoptBinaryMapper,
     val htmlClient: GitHubHtmlClient
 ) {
-    private val mappers: MutableMap<Vendor, AdoptReleaseMapper> = HashMap()
+    private val mappers: MutableMap<Vendor, AdoptReleaseMapper> = EnumMap(Vendor::class.java)
 
     fun get(vendor: Vendor): ReleaseMapper {
         return if (mappers.containsKey(vendor)) {
@@ -73,6 +76,8 @@ private class AdoptReleaseMapper constructor(
 
         val ghAssetsWithMetadata = associateMetadataWithBinaries(ghRelease.releaseAssets)
         val sourcePackage = getSourcePackage(ghRelease, ghAssetsWithMetadata)
+        val releaseNotes = getReleaseNotesPackage(ghRelease.releaseAssets.assets)
+        val aqavitResultsLink = getAqavitLink(ghRelease.releaseAssets.assets)
 
         try {
             val ghAssetsGroupedByVersion = ghAssetsWithMetadata
@@ -89,7 +94,7 @@ private class AdoptReleaseMapper constructor(
                     val ghAssets: List<GHAsset> = ghAssetsForVersion.value.map { ghAssetWithMetadata -> ghAssetWithMetadata.key }
                     val id = generateIdForSplitRelease(version, ghRelease)
 
-                    toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghRelease.releaseAssets.assets, sourcePackage)
+                    toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghRelease.releaseAssets.assets, sourcePackage, releaseNotes, aqavitResultsLink)
                 }
                 .ifEmpty {
                     try {
@@ -98,7 +103,7 @@ private class AdoptReleaseMapper constructor(
                         val ghAssets = ghRelease.releaseAssets.assets
                         val id = ghRelease.id.id
 
-                        return@ifEmpty listOf(toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghAssets, sourcePackage))
+                        return@ifEmpty listOf(toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghAssets, sourcePackage, releaseNotes, aqavitResultsLink))
                     } catch (e: Exception) {
                         throw FailedToParse("Failed to parse version $releaseName", e)
                     }
@@ -111,6 +116,19 @@ private class AdoptReleaseMapper constructor(
             LOGGER.error("Failed to parse $releaseName")
             return ReleaseResult(error = "Failed to parse $releaseName")
         }
+    }
+
+    private fun getAqavitLink(assets: List<GHAsset>): String? {
+        val aqavitAssets = assets
+            .filter { it.name.contains("AQAvitTapFiles") }
+            .map { it.downloadUrl }
+            .toList()
+
+        if (aqavitAssets.size > 1) {
+            LOGGER.warn("Multiple AqaVit assets present on release")
+        }
+
+        return aqavitAssets.firstOrNull()
     }
 
     private fun getReleaseVersion(ghAssetWithMetadata: Map.Entry<GHAsset, GHMetaData>): String {
@@ -166,7 +184,9 @@ private class AdoptReleaseMapper constructor(
         vendor: Vendor,
         version: VersionData,
         fullGhAssetList: List<GHAsset>,
-        sourcePackage: SourcePackage?
+        sourcePackage: SourcePackage?,
+        releaseNotes: ReleaseNotesPackage?,
+        aqavitResultsLink: String?
     ): Release {
         LOGGER.debug("Getting binaries $releaseName")
         val binaries = adoptBinaryMapper.toBinaryList(ghAssets, fullGhAssetList, ghAssetWithMetadata)
@@ -178,7 +198,21 @@ private class AdoptReleaseMapper constructor(
             }
             .map { it.downloadCount }.sum()
 
-        return Release(id, release_type, releaseLink, releaseName, DateTime(timestamp), DateTime(updatedAt), binaries.toTypedArray(), downloadCount, vendor, version, sourcePackage)
+        return Release(
+            id,
+            release_type,
+            releaseLink,
+            releaseName,
+            DateTime(timestamp),
+            DateTime(updatedAt),
+            binaries.toTypedArray(),
+            downloadCount,
+            vendor,
+            version,
+            sourcePackage,
+            releaseNotes,
+            aqavitResultsLink
+        )
     }
 
     private fun formReleaseType(release: GHRelease): ReleaseType {
@@ -229,7 +263,7 @@ private class AdoptReleaseMapper constructor(
     private suspend fun pairUpBinaryAndMetadata(releaseAssets: GHAssets, metadataAsset: GHAsset): Pair<GHAsset, GHMetaData>? {
         val binaryAsset = releaseAssets
             .assets
-            .filter { asset -> !asset.name.endsWith(".json") || ( asset.name.contains("sbom") && !asset.name.endsWith("-metadata.json"))}
+            .filter(::isReleaseAsset)
             .firstOrNull { // remove .json for matching, case: sbom.json with sbom-metadata.json 
                 metadataAsset.name.startsWith(it.name.removeSuffix(".json"))
             }
@@ -247,6 +281,11 @@ private class AdoptReleaseMapper constructor(
         }
         return null
     }
+
+    private fun isReleaseAsset(asset: GHAsset) = (
+        !asset.name.endsWith(".json")
+            || asset.name.contains("sbom") && !asset.name.endsWith("-metadata.json")
+        )
 
     private fun getFeatureVersion(release: GHRelease): VersionData {
         return VersionParser.parse(release.name)
@@ -266,6 +305,14 @@ private class AdoptReleaseMapper constructor(
             .filter { it.name.endsWith("tar.gz") }
             .filter { it.name.contains("-sources") }
             .map { SourcePackage(it.name, it.downloadUrl, it.size) }
+            .firstOrNull()
+    }
+
+
+    private fun getReleaseNotesPackage(releaseAssets: List<GHAsset>): ReleaseNotesPackage? {
+        return releaseAssets
+            .filter { it.name.contains("release-notes") }
+            .map { ReleaseNotesPackage(it.name, it.downloadUrl, it.size) }
             .firstOrNull()
     }
 }

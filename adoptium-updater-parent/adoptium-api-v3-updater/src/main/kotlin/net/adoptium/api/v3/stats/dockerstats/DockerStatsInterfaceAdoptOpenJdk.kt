@@ -5,7 +5,7 @@ import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.DockerDownloadStatsDbEntry
 import net.adoptium.api.v3.models.JvmImpl
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 class DockerStatsInterfaceAdoptOpenJdk @Inject constructor(
     database: ApiPersistence,

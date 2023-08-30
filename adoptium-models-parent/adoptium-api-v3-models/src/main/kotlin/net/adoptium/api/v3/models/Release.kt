@@ -8,6 +8,7 @@ import java.util.function.Predicate
 
 class Release {
 
+
     @Schema(example = "VXNlci0xMA==")
     val id: String
 
@@ -35,6 +36,11 @@ class Release {
 
     val source: SourcePackage?
 
+    val release_notes: ReleaseNotesPackage?
+
+    @Schema(example = "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.6%2B10/AQAvitTapFiles.tar.gz")
+    val aqavit_results_link: String?
+
     @JsonCreator
     constructor(
         @JsonProperty("id") id: String,
@@ -47,7 +53,9 @@ class Release {
         @JsonProperty("download_count") download_count: Long,
         @JsonProperty("vendor") vendor: Vendor,
         @JsonProperty("version_data") version_data: VersionData,
-        @JsonProperty("source") source: SourcePackage? = null
+        @JsonProperty("source") source: SourcePackage? = null,
+        @JsonProperty("release_notes") release_notes: ReleaseNotesPackage? = null,
+        @JsonProperty("aqavit_results_link") aqavit_results_link: String? = null
     ) {
         this.id = id
         this.release_type = release_type
@@ -60,6 +68,8 @@ class Release {
         this.vendor = vendor
         this.version_data = version_data
         this.source = source
+        this.release_notes = release_notes
+        this.aqavit_results_link = aqavit_results_link
     }
 
     constructor(release: Release, binaries: Array<Binary>) {
@@ -74,6 +84,8 @@ class Release {
         this.vendor = release.vendor
         this.version_data = release.version_data
         this.source = release.source
+        this.release_notes = release.release_notes
+        this.aqavit_results_link = release.aqavit_results_link
     }
 
     fun filterBinaries(binaryFilter: Predicate<Binary>): Release {
@@ -96,6 +108,8 @@ class Release {
         if (vendor != other.vendor) return false
         if (version_data != other.version_data) return false
         if (source != other.source) return false
+        if (release_notes != other.release_notes) return false
+        if (aqavit_results_link != other.aqavit_results_link) return false
 
         return true
     }
@@ -111,6 +125,8 @@ class Release {
         result = 31 * result + vendor.hashCode()
         result = 31 * result + version_data.hashCode()
         result = 31 * result + (source?.hashCode() ?: 0)
+        result = 31 * result + (release_notes?.hashCode() ?: 0)
+        result = 31 * result + (aqavit_results_link?.hashCode() ?: 0)
         return result
     }
 

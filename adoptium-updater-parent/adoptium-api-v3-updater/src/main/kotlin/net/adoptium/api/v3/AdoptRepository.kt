@@ -1,10 +1,12 @@
 package net.adoptium.api.v3
 
+import jakarta.enterprise.context.ApplicationScoped
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.github.GitHubApi
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleasesSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
@@ -18,13 +20,13 @@ import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
 import org.slf4j.LoggerFactory
-import javax.inject.Inject
-import javax.inject.Singleton
+import jakarta.inject.Inject
 
 interface AdoptRepository {
     suspend fun getRelease(version: Int): FeatureRelease?
     suspend fun getSummary(version: Int): GHRepositorySummary
     suspend fun getReleaseById(gitHubId: GitHubId): ReleaseResult?
+    suspend fun getReleaseFilesForId(gitHubId: GitHubId): List<GHAsset>?
 
     companion object {
         val VENDORS_EXCLUDED_FROM_FULL_UPDATE: Set<Vendor>
@@ -39,8 +41,8 @@ interface AdoptRepository {
     }
 }
 
-@Singleton
-class AdoptRepositoryImpl @Inject constructor(
+@ApplicationScoped
+open class AdoptRepositoryImpl @Inject constructor(
     val client: GitHubApi,
     adoptReleaseMapperFactory: AdoptReleaseMapperFactory
 ) : AdoptRepository {
@@ -84,11 +86,18 @@ class AdoptRepositoryImpl @Inject constructor(
 
     override suspend fun getReleaseById(gitHubId: GitHubId): ReleaseResult? {
         val release = client.getReleaseById(gitHubId)
-        if (release == null) {
-            return null
-        }
+
+        if (release == null) return null;
+
         return getMapperForRepo(release.url)
             .toAdoptRelease(release)
+    }
+
+    override suspend fun getReleaseFilesForId(gitHubId: GitHubId): List<GHAsset>? {
+        LOGGER.info("Getting files for " + gitHubId.id)
+        return client.getReleaseById(gitHubId)
+            ?.releaseAssets
+            ?.assets
     }
 
     override suspend fun getRelease(version: Int): FeatureRelease {

@@ -2,7 +2,17 @@ package net.adoptium.api.v3.models
 
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 
-class SourcePackage {
+class SourcePackage(
+    name: String,
+    link: String,
+    size: Long) : FileAsset(name, link, size);
+
+class ReleaseNotesPackage(
+    name: String,
+    link: String,
+    size: Long) : FileAsset(name, link, size);
+
+open class FileAsset {
 
     @Schema(example = "OpenJDK8U-sources_8u232b09.tar.gz")
     val name: String
@@ -24,14 +34,14 @@ class SourcePackage {
     }
 
     override fun toString(): String {
-        return "SourcePackage(name='$name', link='$link', size=$size)"
+        return "FileAsset(name='$name', link='$link', size=$size)"
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as SourcePackage
+        other as FileAsset
 
         if (name != other.name) return false
         if (link != other.link) return false

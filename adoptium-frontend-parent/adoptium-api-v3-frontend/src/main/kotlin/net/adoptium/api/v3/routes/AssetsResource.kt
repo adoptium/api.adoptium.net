@@ -29,20 +29,20 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
-import javax.enterprise.context.ApplicationScoped
-import javax.inject.Inject
-import javax.ws.rs.BadRequestException
-import javax.ws.rs.GET
-import javax.ws.rs.NotFoundException
-import javax.ws.rs.Path
-import javax.ws.rs.PathParam
-import javax.ws.rs.Produces
-import javax.ws.rs.QueryParam
-import javax.ws.rs.ServerErrorException
-import javax.ws.rs.core.Context
-import javax.ws.rs.core.MediaType
-import javax.ws.rs.core.Response
-import javax.ws.rs.core.UriInfo
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
+import jakarta.ws.rs.BadRequestException
+import jakarta.ws.rs.GET
+import jakarta.ws.rs.NotFoundException
+import jakarta.ws.rs.Path
+import jakarta.ws.rs.PathParam
+import jakarta.ws.rs.Produces
+import jakarta.ws.rs.QueryParam
+import jakarta.ws.rs.ServerErrorException
+import jakarta.ws.rs.core.Context
+import jakarta.ws.rs.core.MediaType
+import jakarta.ws.rs.core.Response
+import jakarta.ws.rs.core.UriInfo
 
 @Tag(name = "Assets")
 @Path("/v3/assets/")
@@ -250,9 +250,11 @@ constructor(
             releases.isEmpty() -> {
                 throw NotFoundException("No releases found")
             }
+
             releases.size > 1 -> {
                 throw ServerErrorException("Multiple releases match request", Response.Status.INTERNAL_SERVER_ERROR)
             }
+
             else -> {
                 releases[0]
             }
@@ -346,6 +348,14 @@ constructor(
         @QueryParam("show_page_count")
         showPageCount: Boolean?,
 
+        @Parameter(name = "semver",
+            description = "Indicates that any version arguments provided in this request were Adoptium semantic versions",
+            required = false,
+            schema = Schema(defaultValue = "false", type = SchemaType.BOOLEAN)
+        )
+        @QueryParam("semver")
+        semver: Boolean?,
+
         @Context
         uriInfo: UriInfo,
     ): Response {
@@ -362,7 +372,8 @@ constructor(
             jvm_impl,
             heap_size,
             project,
-            cLib
+            cLib,
+            semver
         )
         return getResponseForPage(uriInfo, pageSize, page, releases, showPageCount ?: false)
     }

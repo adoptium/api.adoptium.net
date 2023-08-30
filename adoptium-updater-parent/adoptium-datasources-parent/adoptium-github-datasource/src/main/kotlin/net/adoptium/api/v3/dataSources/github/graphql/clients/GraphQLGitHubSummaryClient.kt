@@ -1,34 +1,33 @@
 package net.adoptium.api.v3.dataSources.github.graphql.clients
 
 import com.expediagroup.graphql.client.types.GraphQLClientRequest
-import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.QuerySummaryData
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleaseSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleasesSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import org.slf4j.LoggerFactory
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.reflect.KClass
 
-@Singleton
-class GraphQLGitHubSummaryClient @Inject constructor(
-    graphQLRequest: GraphQLRequest,
-    updaterHtmlClient: UpdaterHtmlClient
-) : GraphQLGitHubInterface(graphQLRequest, updaterHtmlClient) {
+@ApplicationScoped
+open class GraphQLGitHubSummaryClient @Inject constructor(
+    private val graphQLGitHubInterface: GraphQLGitHubInterface
+) {
+
 
     companion object {
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    suspend fun getRepositorySummary(owner: String, repoName: String): GHRepositorySummary {
+    open suspend fun getRepositorySummary(owner: String, repoName: String): GHRepositorySummary {
         val query = GetReleaseSummary(owner, repoName)
 
         LOGGER.info("Getting repo summary $repoName")
 
-        val releases = getAll(
+        val releases = graphQLGitHubInterface.getAll(
             query::withCursor,
             { request -> getSummary(request) },
             { it.repository!!.releases.pageInfo.hasNextPage },

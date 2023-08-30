@@ -2,6 +2,8 @@ package net.adoptium.api.v3.dataSources.mongo
 
 import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.model.UpdateOptions
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -13,9 +15,6 @@ import org.bson.BsonDocument
 import org.bson.Document
 import org.litote.kmongo.coroutine.CoroutineCollection
 import java.time.ZonedDateTime
-import javax.enterprise.inject.Default
-import javax.inject.Inject
-import javax.inject.Singleton
 
 interface InternalDbStore {
     fun putCachedWebpage(url: String, lastModified: String?, date: ZonedDateTime, data: String?): Job
@@ -23,10 +22,9 @@ interface InternalDbStore {
     suspend fun updateCheckedTime(url: String, dateTime: ZonedDateTime)
 }
 
-@Singleton
-@Default
-class InternalDbStoreImpl @Inject constructor(mongoClient: MongoClient) : MongoInterface(mongoClient), InternalDbStore {
-    private val webCache: CoroutineCollection<CacheDbEntry> = createCollection(database, "web-cache")
+@ApplicationScoped
+open class InternalDbStoreImpl @Inject constructor(mongoClient: MongoClient) : MongoInterface(), InternalDbStore {
+    private val webCache: CoroutineCollection<CacheDbEntry> = createCollection(mongoClient.database, "web-cache")
 
     init {
         runBlocking {

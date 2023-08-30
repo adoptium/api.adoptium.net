@@ -21,9 +21,9 @@ import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
 import java.net.URI
-import javax.enterprise.context.ApplicationScoped
-import javax.inject.Inject
-import javax.ws.rs.core.Response
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
+import jakarta.ws.rs.core.Response
 
 @ApplicationScoped
 open class PackageEndpoint @Inject constructor(private val apiDataStore: APIDataStore) {

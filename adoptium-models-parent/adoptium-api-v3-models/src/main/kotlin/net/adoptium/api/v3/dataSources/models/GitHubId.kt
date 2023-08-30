@@ -11,7 +11,7 @@ class GitHubId {
         @JsonProperty("id")
         gitHubId: String
     ) {
-        this.id = gitHubId.split("\\.")[0]
+        this.id = gitHubId.split(".")[0]
     }
 
     override fun equals(other: Any?): Boolean {
