@@ -32,7 +32,7 @@ interface AdoptRepository {
         val VENDORS_EXCLUDED_FROM_FULL_UPDATE: Set<Vendor>
 
         init {
-            VENDORS_EXCLUDED_FROM_FULL_UPDATE = if (!System.getProperties().containsKey("DONT_EXCLUDE_VENDORS")) {
+            VENDORS_EXCLUDED_FROM_FULL_UPDATE = if (System.getProperties().containsKey("DONT_EXCLUDE_VENDORS")) {
                 emptySet()
             } else {
                 setOf(Vendor.adoptopenjdk)
