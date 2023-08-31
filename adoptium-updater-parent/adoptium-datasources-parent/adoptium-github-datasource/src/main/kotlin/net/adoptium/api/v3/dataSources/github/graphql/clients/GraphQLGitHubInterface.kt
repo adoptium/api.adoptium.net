@@ -174,7 +174,7 @@ open class GraphQLGitHubInterface @Inject constructor(
 
                 LOGGER.info("Retrying ${retryCount++}")
                 delay((TimeUnit.SECONDS.toMillis(5) * retryCount))
-            } catch (e: ClientRequestException) {
+            } catch (e: ResponseException) {
                 if (e.response.status == HttpStatusCode.Forbidden ||
                     e.response.status == HttpStatusCode.BadGateway ||
                     e.response.status == HttpStatusCode.ServiceUnavailable ||
