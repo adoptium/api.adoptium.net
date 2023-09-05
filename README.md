@@ -27,6 +27,11 @@ The following list highlights a small subset of consumers and their use-cases:
 - [Gradle](https://docs.gradle.org/) - the Gradle project defaults to use the API for its [toolchains](https://docs.gradle.org/current/userguide/toolchains.html#sec:provisioning) feature.
 - [Update Watcher for Adoptium & AdoptOpenJDK](https://github.com/tushev/aojdk-updatewatcher) - uses the API to automatically manage the JDK installations on an individual's machine.
 
+## Version Bump
+
+When a new version of Java is released, the version at [Versions.kt](adoptium-models-parent/adoptium-api-v3-models/src/main/kotlin/net/adoptium/api/v3/models/Versions.kt),
+or by setting the property `LATEST_JAVA_VERSION` on the deployment.
+
 ## Development
 
 To learn more about how we build & run the API, check out [CONTRIBUTING.md](CONTRIBUTING.md) and the [FAQs](FAQ.md).

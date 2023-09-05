@@ -1,13 +1,10 @@
 package net.adoptium.api.v3.dataSources.persitence.mongo
 
 import kotlinx.coroutines.runBlocking
-import org.litote.kmongo.coroutine.CoroutineClient
 import org.litote.kmongo.coroutine.CoroutineCollection
 import org.litote.kmongo.coroutine.CoroutineDatabase
 
-abstract class MongoInterface(mongoClient: MongoClient) {
-    protected val database: CoroutineDatabase = mongoClient.database
-    protected val client: CoroutineClient = mongoClient.client
+abstract class MongoInterface {
 
     inline fun <reified T : Any> createCollection(database: CoroutineDatabase, collectionName: String): CoroutineCollection<T> {
         return runBlocking {

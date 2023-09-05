@@ -20,7 +20,7 @@ import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.SourcePackage
 import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.models.VersionData
-import java.util.Random
+import java.util.*
 
 object AdoptReposTestDataGenerator {
 
@@ -94,17 +94,74 @@ object AdoptReposTestDataGenerator {
         )
     )
 
-    fun generate(): AdoptRepos {
+    fun generate(includeReleaseWithNoGas: Boolean = true): AdoptRepos {
         rand = Random(1)
-        return AdoptRepos(
+
+        val repo = AdoptRepos(
             TEST_VERSIONS.associateWith { version ->
                 FeatureRelease(version, createRepos(version))
             }
                 .filter {
                     it.value.releases.nodeList.isNotEmpty()
-                }
+                })
+
+        if (!includeReleaseWithNoGas) {
+            return repo
+        }
+
+        return repo.addRelease(
+            18, generate18Release()
         )
     }
+
+    private fun generate18Release() = Release(
+        "a",
+        ReleaseType.ea,
+        "b",
+        "c",
+        randomDate(),
+        randomDate(),
+        arrayListOf(
+            Binary(
+                Package(
+                    randomString("package name"),
+                    "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/",
+                    rand.nextLong(),
+                    randomString("checksum"),
+                    randomString("checksum link"),
+                    1,
+                    randomString("signature link"),
+                    randomString("metadata link")
+                ),
+                0,
+                randomDate(),
+                "",
+                null,
+                HeapSize.normal,
+                OperatingSystem.linux,
+                Architecture.x64,
+                ImageType.jdk,
+                JvmImpl.hotspot,
+                Project.jdk,
+                null
+            )
+        ).toTypedArray(),
+        1,
+        Vendor.getDefault(),
+        VersionData(
+            18,
+            0,
+            2,
+            null,
+            1,
+            1,
+            null,
+            "18.0.2.1+1",
+            "18.0.2+101",
+            1
+        ),
+        null
+    )
 
     private fun createRepos(majorVersion: Int): List<AdoptRepo> {
         return (1..2)

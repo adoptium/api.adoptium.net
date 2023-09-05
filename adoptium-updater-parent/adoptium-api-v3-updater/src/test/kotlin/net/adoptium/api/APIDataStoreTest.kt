@@ -9,12 +9,12 @@ import net.adoptium.api.v3.dataSources.APIDataStoreImpl
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.Binary
-import org.junit.jupiter.api.Test
-import org.skyscreamer.jsonassert.JSONAssert
-import org.slf4j.LoggerFactory
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.skyscreamer.jsonassert.JSONAssert
+import org.slf4j.LoggerFactory
 
 class APIDataStoreTest : MongoTest() {
 
@@ -76,7 +76,7 @@ class APIDataStoreTest : MongoTest() {
     }
 
     @Test
-    fun `update is not scheduled by default`(apiDataStore: APIDataStore) {
-        assertNull((apiDataStore as APIDataStoreImpl).schedule)
+    fun `update is not scheduled by default`(apiDataStore: APIDataStoreImpl) {
+        assertNull(apiDataStore.schedule)
     }
 }

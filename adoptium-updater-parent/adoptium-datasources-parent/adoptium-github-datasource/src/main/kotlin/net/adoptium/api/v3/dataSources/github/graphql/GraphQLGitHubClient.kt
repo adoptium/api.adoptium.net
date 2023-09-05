@@ -1,5 +1,7 @@
 package net.adoptium.api.v3.dataSources.github.graphql
 
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
 import net.adoptium.api.v3.dataSources.github.GitHubApi
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubReleaseClient
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubRepositoryClient
@@ -8,10 +10,8 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRepository
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.GitHubId
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
+@ApplicationScoped
 open class GraphQLGitHubClient @Inject constructor(
     private val summaryClient: GraphQLGitHubSummaryClient,
     private val releaseClient: GraphQLGitHubReleaseClient,

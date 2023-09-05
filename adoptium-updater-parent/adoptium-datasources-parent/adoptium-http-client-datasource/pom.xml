@@ -21,8 +21,8 @@
             <artifactId>httpcore</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.enterprise</groupId>
-            <artifactId>cdi-api</artifactId>
+            <groupId>jakarta.enterprise</groupId>
+            <artifactId>jakarta.enterprise.cdi-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
@@ -34,7 +34,7 @@
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr353</artifactId>
+            <artifactId>jackson-datatype-jakarta-jsonp</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>

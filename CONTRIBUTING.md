@@ -54,9 +54,11 @@ To perform a full build and test you run the following:
 
 `./mvnw clean install -Padoptium`
 
-If you wish to view all of the Maven reporting about the project you run the following:
+If you wish to view all the Maven reporting about the project then after running the above you can run the following:
 
-`./mvnw clean install site -Padoptium`
+`./mvnw site -Padoptium`
+
+*WARN*: `./mvnw clean install site -Padoptium` does not work at time of writing due to an order of operations problem
 
 If you wish to produce an AdoptOpenJDK ecosystem build, use `-Padoptopenjdk` i.e.
 

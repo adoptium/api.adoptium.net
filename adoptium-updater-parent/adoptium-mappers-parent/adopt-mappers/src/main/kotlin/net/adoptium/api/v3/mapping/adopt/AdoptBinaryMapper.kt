@@ -1,5 +1,7 @@
 package net.adoptium.api.v3.mapping.adopt
 
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -20,10 +22,8 @@ import net.adoptium.api.v3.models.Package
 import net.adoptium.api.v3.models.Project
 import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
+@ApplicationScoped
 class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHubHtmlClient) : BinaryMapper() {
 
     companion object {

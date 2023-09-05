@@ -1,5 +1,6 @@
 package net.adoptium.api.v3
 
+import jakarta.enterprise.context.ApplicationScoped
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleaseSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
@@ -11,11 +12,10 @@ import net.adoptium.api.v3.models.GHReleaseMetadata
 import net.adoptium.api.v3.models.Release
 import org.slf4j.LoggerFactory
 import java.time.temporal.ChronoUnit
-import javax.inject.Inject
-import javax.inject.Singleton
+import jakarta.inject.Inject
 import kotlin.math.absoluteValue
 
-@Singleton
+@ApplicationScoped
 class AdoptReposBuilder @Inject constructor(private var adoptRepository: AdoptRepository) {
 
     companion object {

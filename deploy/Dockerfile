@@ -14,7 +14,8 @@ RUN     useradd -ms /bin/bash api && \
         mkdir -p /home/api/deployment/lib && \
         mkdir -p /home/api/build && \
         mkdir /tmp/build && \
-        chown -R api: /home/api/
+        chown -R api: /home/api/ && \
+        apt-get update && apt-get -y install openssl
 
 WORKDIR /tmp/build
 

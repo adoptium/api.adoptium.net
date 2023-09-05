@@ -11,7 +11,9 @@ import net.adoptium.api.v3.dataSources.github.CachedGitHubHtmlClient
 import net.adoptium.api.v3.dataSources.github.GitHubApi
 import net.adoptium.api.v3.dataSources.github.GitHubHtmlClient
 import net.adoptium.api.v3.dataSources.github.graphql.GraphQLGitHubClient
+import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubInterface
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubReleaseClient
+import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubReleaseRequest
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubRepositoryClient
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubSummaryClient
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLRequest
@@ -47,18 +49,25 @@ class UpdateRunner {
                 httpClientFactory.getHttpClient(),
                 httpClientFactory.getNonRedirectHttpClient()
             )
+
+            val graphQLGitHubInterface = GraphQLGitHubInterface(
+                graphQLRequest,
+                updaterHtmlClient
+            )
+
+            val graphQLGitHubReleaseRequest = GraphQLGitHubReleaseRequest(
+                graphQLGitHubInterface
+            )
+
             val client: GitHubApi = GraphQLGitHubClient(
-                GraphQLGitHubSummaryClient(
-                    graphQLRequest,
-                    updaterHtmlClient
-                ),
+                GraphQLGitHubSummaryClient(graphQLGitHubInterface),
                 GraphQLGitHubReleaseClient(
-                    graphQLRequest,
-                    updaterHtmlClient
+                    graphQLGitHubInterface,
+                    graphQLGitHubReleaseRequest
                 ),
                 GraphQLGitHubRepositoryClient(
-                    graphQLRequest,
-                    updaterHtmlClient
+                    graphQLGitHubInterface,
+                    graphQLGitHubReleaseRequest
                 )
             )
             val gitHubHtmlClient: GitHubHtmlClient = CachedGitHubHtmlClient(

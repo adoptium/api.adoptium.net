@@ -1,5 +1,6 @@
 package net.adoptium.api.v3.stats
 
+import jakarta.enterprise.context.ApplicationScoped
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
@@ -8,10 +9,9 @@ import net.adoptium.api.v3.models.JvmImpl
 import net.adoptium.api.v3.models.Vendor
 import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
-import javax.inject.Inject
-import javax.inject.Singleton
+import jakarta.inject.Inject
 
-@Singleton
+@ApplicationScoped
 open class GitHubDownloadStatsCalculator @Inject constructor(private val database: ApiPersistence) {
 
     companion object {
