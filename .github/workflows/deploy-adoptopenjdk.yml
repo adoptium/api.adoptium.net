@@ -67,7 +67,7 @@ jobs:
         run: echo "NAMESPACE=adoptopenjdk-do" >> $GITHUB_ENV
 
       - name: Save DigitalOcean kubeconfig
-        run: doctl kubernetes cluster kubeconfig save ${{ env.NAMESPACE }}
+        run: doctl kubernetes cluster kubeconfig save k8s-1-27-4-do-0-blr1-1693486270021
 
       - name: Redeploy updater-api on DigitalOcean
         if: startsWith(github.ref, 'refs/heads/production')
