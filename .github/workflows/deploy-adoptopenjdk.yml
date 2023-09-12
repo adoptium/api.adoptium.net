@@ -33,7 +33,7 @@ jobs:
           esac
 
       - name: Build container image and push to Azure
-        uses: ././github/actions/docker-build
+        uses: ./.github/actions/docker-build
         with:
           DOCKER_REPO: adoptopenjdkacr.azurecr.io/azure-${{ env.NAMESPACE }}
           BUILD_ARGS: MAVEN_FLAGS="-Padoptopenjdk,-adoptium"
@@ -45,7 +45,7 @@ jobs:
 
       # if the branch is production, redeploy the k8s service on digitalocean too
       - name: Login to DigitalOcean
-        uses: ././github/actions/do-login
+        uses: ./.github/actions/do-login
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
