@@ -1,0 +1,40 @@
+name: AKS and ACS login
+description: Logs in to Azure subscription and Azure Container Registry
+inputs:
+    AZURE_CLIENT_ID_OIDC:
+      description: 'Azure Client ID OIDC'
+      required: true
+    AZURE_TENANT_ID:
+      description: 'Azure Tenant ID'
+      required: true
+    AZURE_SUBSCRIPTION_ID:
+      description: 'Azure Subscription ID'
+      required: true
+    AZURE_CLIENT_ID:
+      description: 'Azure Client ID'
+      required: true
+    AZURE_CLIENT_SECRET:
+      description: 'Azure Client Secret'
+      required: true
+runs:
+  using: composite
+  steps:
+  - name: Login to our Azure subscription.
+    uses: azure/login@92a5484dfaf04ca78a94597f4f19fea633851fa2 # v1.4.7
+    with:
+      client-id: ${{ inputs.AZURE_CLIENT_ID_OIDC }}
+      tenant-id: ${{ inputs.AZURE_TENANT_ID }}
+      subscription-id: ${{ inputs.AZURE_SUBSCRIPTION_ID }}
+
+  - name: Login to Azure Container Registry
+    uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2.2.0
+    with:
+      registry: adoptopenjdkacr.azurecr.io
+      username: ${{ inputs.AZURE_CLIENT_ID }}
+      password: ${{ inputs.AZURE_CLIENT_SECRET }}
+
+  - name: Set the target Azure Kubernetes Service (AKS) cluster.
+    uses: azure/aks-set-context@4edaee69f820359371ee8bc85189ac03a21d3a58 # v3.2
+    with:
+      resource-group: adopt-api
+      cluster-name: aksff92

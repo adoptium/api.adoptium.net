@@ -1,0 +1,17 @@
+name: DigitalOcean Login
+description: Logs in to DigitalOcean
+inputs:
+    DIGITALOCEAN_ACCESS_TOKEN:
+      description: 'DigitalOcean access token'
+      required: true
+runs:
+  using: composite
+  steps:
+  - name: Login to DigitalOcean
+    uses: digitalocean/action-doctl@cf10ddb4467f6fb84c01f7cc5f099cec71eabc93 # v2.4.1
+    with:
+      token: ${{ inputs.DIGITALOCEAN_ACCESS_TOKEN }}
+
+  - name: Set the target Azure Kubernetes Service (AKS) cluster.
+    shell: bash
+    run: doctl kubernetes cluster kubeconfig save k8s-1-27-4-do-0-blr1-1693486270021
