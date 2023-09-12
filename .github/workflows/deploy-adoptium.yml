@@ -33,7 +33,7 @@ jobs:
           esac
 
       - name: Build container image and push to Azure
-        uses: ././github/actions/docker-build
+        uses: ./.github/actions/docker-build
         with:
           DOCKER_REPO: adoptopenjdkacr.azurecr.io/adoptopenjdk-${{ env.NAMESPACE }}
 
