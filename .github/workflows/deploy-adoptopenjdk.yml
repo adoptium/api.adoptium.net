@@ -1,0 +1,56 @@
+name: Docker Build (AdoptOpenJDK)
+
+on:
+  workflow_dispatch:
+  push:
+   branches: [ main, production ]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  docker-build:
+    if: startsWith(github.repository, 'adoptium/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+
+      - name: Login to Azure
+        uses: ./.github/actions/azure-login
+        with:
+          AZURE_CLIENT_ID_OIDC: ${{ secrets.AZURE_CLIENT_ID_OIDC }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_OIDC }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+      - name: Detect Branch
+        run: |
+          case ${GITHUB_REF##*/} in
+            production) echo "NAMESPACE=adoptopenjdk-alt" >> $GITHUB_ENV ;;
+            *) echo "NAMESPACE=adoptopenjdk-alt-staging" >> $GITHUB_ENV ;;
+          esac
+
+      - name: Build container image and push to Azure
+        uses: ././github/actions/docker-build
+        with:
+          DOCKER_REPO: adoptopenjdkacr.azurecr.io/azure-${{ env.NAMESPACE }}
+          BUILD_ARGS: MAVEN_FLAGS="-Padoptopenjdk,-adoptium"
+
+      - name: Redeploy Kubernetes Updater and Frontend
+        uses: ./.github/actions/kubectl-redeploy
+        with:
+          NAMESPACE: ${{ env.NAMESPACE }}
+
+      # if the branch is production, redeploy the k8s service on digitalocean too
+      - name: Login to DigitalOcean
+        uses: ././github/actions/do-login
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Redeploy Kubernetes Updater and Frontend
+        if: startsWith(github.ref, 'refs/heads/production')
+        uses: ./.github/actions/kubectl-redeploy
+        with:
+          NAMESPACE: adoptopenjdk-do
