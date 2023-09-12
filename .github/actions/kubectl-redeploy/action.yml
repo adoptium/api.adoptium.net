@@ -8,7 +8,9 @@ runs:
   using: composite
   steps:
   - name: Redeploy updater-api
+    shell: bash
     run: kubectl config set-context --current --namespace=${{ inputs.NAMESPACE }} && kubectl rollout restart deployment updater-api
 
   - name: Redeploy frontend-service
+    shell: bash
     run: kubectl config set-context --current --namespace=${{ inputs.NAMESPACE }} && kubectl rollout restart deployment frontend-service

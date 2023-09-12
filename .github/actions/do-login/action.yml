@@ -13,4 +13,5 @@ runs:
       token: ${{ inputs.DIGITALOCEAN_ACCESS_TOKEN }}
 
   - name: Set the target Azure Kubernetes Service (AKS) cluster.
+    shell: bash
     run: doctl kubernetes cluster kubeconfig save k8s-1-27-4-do-0-blr1-1693486270021
