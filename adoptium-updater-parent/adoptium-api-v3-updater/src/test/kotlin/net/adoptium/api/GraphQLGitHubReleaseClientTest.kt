@@ -73,7 +73,7 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                 override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
                     val builder = mockk<GraphQLClientResponse<F>>()
 
-                    assert(query.query.contains("a-github-id"))
+                    assert(query.query?.contains("a-github-id") == true)
                     every { builder.data } returns GHReleaseResult(response, RateLimit(0, 5000)) as F
                     every { builder.errors } returns null
                     return builder
@@ -97,7 +97,7 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                 override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
                     val builder = mockk<GraphQLClientResponse<F>>()
 
-                    assert(query.query.contains("a-repo-name"))
+                    assert(query.query?.contains("a-repo-name") == true)
 
                     every { builder.data } returns QueryData(repo, RateLimit(0, 5000)) as F
                     every { builder.errors } returns null
@@ -141,7 +141,7 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                 override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
                     val builder = mockk<GraphQLClientResponse<F>>()
 
-                    assert(query.query.contains("a-repo-name"))
+                    assert(query.query?.contains("a-repo-name") == true)
 
                     every { builder.data } returns summary as F
                     every { builder.errors } returns null
@@ -166,7 +166,7 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                 override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
                     val builder = mockk<GraphQLClientResponse<F>>()
 
-                    assert(query.query.contains("a-repo-name"))
+                    assert(query.query?.contains("a-repo-name") == true)
 
                     val pageInfo = if ((query.variables as Map<String, String>)["cursorPointer"] != null) {
                         PageInfo(false, null)
