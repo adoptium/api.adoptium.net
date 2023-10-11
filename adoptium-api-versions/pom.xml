@@ -16,7 +16,7 @@
         <kotlin.version>1.9.10</kotlin.version>
         <logback.version>1.4.11</logback.version>
         <maven.compiler.release>17</maven.compiler.release>
-        <maven.version>3.9.2</maven.version>
+        <maven.version>3.9.5</maven.version>
         <maven.project-info-reports-plugin.version>3.4.5</maven.project-info-reports-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
