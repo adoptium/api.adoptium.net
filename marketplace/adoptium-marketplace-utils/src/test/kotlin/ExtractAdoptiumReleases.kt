@@ -15,7 +15,7 @@ import java.util.*
 class ExtractAdoptiumReleases {
 
     companion object {
-        val VERSIONS = listOf(8, 11, 17)
+        val VERSIONS = listOf(8, 11, 17, 21)
     }
 
     //@Disabled("For manual execution")
