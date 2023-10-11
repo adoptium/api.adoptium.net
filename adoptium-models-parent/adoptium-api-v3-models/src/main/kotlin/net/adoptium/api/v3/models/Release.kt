@@ -1,11 +1,13 @@
 package net.adoptium.api.v3.models
 
 import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 import java.util.function.Predicate
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class Release {
 
 
