@@ -24,6 +24,10 @@
             <artifactId>quarkus-resteasy-reactive</artifactId>
         </dependency>
         <dependency>
+            <groupId>jakarta.enterprise</groupId>
+            <artifactId>jakarta.enterprise.cdi-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-kotlin</artifactId>
         </dependency>
@@ -50,10 +54,6 @@
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-core-jvm</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>net.adoptium.api</groupId>
-            <artifactId>adoptium-api-v3-telemetry</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jboss.weld.se</groupId>
@@ -136,8 +136,17 @@
             <artifactId>quarkus-elytron-security-properties-file</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.quarkiverse.logging.logback</groupId>
-            <artifactId>quarkus-logging-logback</artifactId>
+            <groupId>jakarta.inject</groupId>
+            <artifactId>jakarta.inject-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.flapdoodle.embed</groupId>
+            <artifactId>de.flapdoodle.embed.mongo</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
         </dependency>
     </dependencies>
 
@@ -187,7 +196,6 @@
         </plugins>
     </build>
 
-
     <profiles>
         <profile>
             <id>adoptopenjdk</id>
@@ -223,7 +231,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>${surefire-plugin.version}</version>
+                        <version>${maven.surefire-plugin.version}</version>
                         <configuration>
                             <excludes>
                                 <exclude>**/StatsCalculatorTest.java</exclude>
@@ -232,6 +240,7 @@
                     </plugin>
                 </plugins>
             </build>
+
         </profile>
     </profiles>
 </project>

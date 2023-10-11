@@ -16,13 +16,13 @@ import net.adoptium.api.v3.models.Vendor
 import org.hamcrest.Description
 import org.hamcrest.Matchers
 import org.hamcrest.TypeSafeMatcher
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.stream.Stream
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.fail
 
 @QuarkusTest
 @ExtendWith(value = [DbExtension::class])
@@ -31,7 +31,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
     @TestFactory
     fun noFilter(): Stream<DynamicTest> {
         return AdoptReposTestDataGenerator
-            .generate()
+            .generate(false)
             .repos
             .keys
             .flatMap { version ->
@@ -54,7 +54,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
     @TestFactory
     fun `no Vendor Defaults To Vendor Default`(): Stream<DynamicTest> {
         return AdoptReposTestDataGenerator
-            .generate()
+            .generate(false)
             .repos
             .keys
             .flatMap { version ->

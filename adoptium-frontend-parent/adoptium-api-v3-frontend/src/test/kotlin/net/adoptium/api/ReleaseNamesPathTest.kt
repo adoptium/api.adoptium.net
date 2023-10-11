@@ -6,9 +6,8 @@ import net.adoptium.api.v3.models.CLib
 import org.hamcrest.core.IsNull
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
 import java.util.stream.Stream
 
 @QuarkusTest
@@ -64,26 +63,34 @@ class ReleaseNamesPathTest : AssetsPathTest() {
             .statusCode(200)
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = ["[11,15]", "(11,15)", "(11,15]", "[11,15)"])
-    fun releaseNamesVersionRanges(version: String) {
-
-        RestAssured.given()
-            .`when`()
-            .get("/v3/info/release_names?version=$version")
-            .then()
-            .statusCode(200)
+    @TestFactory
+    fun releaseNamesVersionRanges(): Stream<DynamicTest> {
+        return Stream
+            .of("[11,15]", "(11,15)", "(11,15]", "[11,15)")
+            .map { version ->
+                DynamicTest.dynamicTest(version.toString()) {
+                    RestAssured.given()
+                        .`when`()
+                        .get("/v3/info/release_names?version=$version")
+                        .then()
+                        .statusCode(200)
+                }
+            }
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = ["[11,15", "(11,15", "11,15]", "11,15)", "11,15", "11,", ",15", "[11", "15)"])
-    fun releaseNamesInvalidVersionRanges(version: String) {
-
-        RestAssured.given()
-            .`when`()
-            .get("/v3/info/release_names?version=$version")
-            .then()
-            .statusCode(400)
+    @TestFactory
+    fun releaseNamesInvalidVersionRanges(): Stream<DynamicTest> {
+        return Stream
+            .of("[11,15", "(11,15", "11,15]", "11,15)", "11,15", "11,", ",15", "[11", "15)")
+            .map { version ->
+                DynamicTest.dynamicTest(version.toString()) {
+                    RestAssured.given()
+                        .`when`()
+                        .get("/v3/info/release_names?version=$version")
+                        .then()
+                        .statusCode(400)
+                }
+            }
     }
 
     @Test
@@ -130,25 +137,33 @@ class ReleaseNamesPathTest : AssetsPathTest() {
             .stream()
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = ["[11,15]", "(11,15)", "(11,15]", "[11,15)"])
-    fun releaseVersionsVersionRanges(version: String) {
-
-        RestAssured.given()
-            .`when`()
-            .get("/v3/info/release_versions?version=$version")
-            .then()
-            .statusCode(200)
+    @TestFactory
+    fun releaseVersionsVersionRanges(): Stream<DynamicTest> {
+        return Stream
+            .of("[11,15]", "(11,15)", "(11,15]", "[11,15)")
+            .map { version ->
+                DynamicTest.dynamicTest(version.toString()) {
+                    RestAssured.given()
+                        .`when`()
+                        .get("/v3/info/release_versions?version=$version")
+                        .then()
+                        .statusCode(200)
+                }
+            }
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = ["[11,15", "(11,15", "11,15]", "11,15)", "11,15", "11,", ",15", "[11", "15)"])
-    fun releaseVersionsInvalidVersionRanges(version: String) {
-
-        RestAssured.given()
-            .`when`()
-            .get("/v3/info/release_versions?version=$version")
-            .then()
-            .statusCode(400)
+    @TestFactory
+    fun releaseVersionsInvalidVersionRanges(): Stream<DynamicTest> {
+        return Stream
+            .of("[11,15", "(11,15", "11,15]", "11,15)", "11,15", "11,", ",15", "[11", "15)")
+            .map { version ->
+                DynamicTest.dynamicTest(version.toString()) {
+                    RestAssured.given()
+                        .`when`()
+                        .get("/v3/info/release_versions?version=$version")
+                        .then()
+                        .statusCode(400)
+                }
+            }
     }
 }

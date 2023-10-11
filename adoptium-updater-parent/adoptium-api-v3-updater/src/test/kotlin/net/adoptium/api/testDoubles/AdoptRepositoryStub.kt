@@ -1,5 +1,9 @@
 package net.adoptium.api.testDoubles
 
+import jakarta.annotation.Priority
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.enterprise.inject.Alternative
+import jakarta.enterprise.inject.Produces
 import net.adoptium.api.BaseTest
 import net.adoptium.api.GHSummaryTestDataGenerator
 import net.adoptium.api.v3.AdoptRepository
@@ -10,28 +14,24 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositor
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
-import net.adoptium.api.v3.models.DateTime
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
+import net.adoptium.api.v3.models.DateTime
 import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.models.VersionData
 import org.jboss.weld.junit5.auto.ExcludeBean
-import javax.annotation.Priority
-import javax.enterprise.inject.Alternative
-import javax.enterprise.inject.Produces
-import javax.inject.Singleton
 
 @Priority(1)
 @Alternative
-@Singleton
+@ApplicationScoped
 open class AdoptRepositoryStub : AdoptRepository {
     @Produces
     @ExcludeBean
-    val repo = BaseTest.adoptRepos
-    val toRemove = repo.getFeatureRelease(8)!!.releases.nodes.values.first()
-    val originalToUpdate = repo.getFeatureRelease(8)!!.releases.nodes.values.take(2).last()
+    open val repo = BaseTest.adoptRepos
+    open val toRemove = repo.getFeatureRelease(8)!!.releases.nodes.values.first()
+    open val originalToUpdate = repo.getFeatureRelease(8)!!.releases.nodes.values.take(2).last()
 
-    val toUpdate = Release(
+    open val toUpdate = Release(
         originalToUpdate.id, ReleaseType.ga, "openjdk-8u", "jdk8u-2018-09-27-08-50",
         DateTime(TimeSource.now().minusDays(2).withSecond(0).withMinute(0)),
         DateTime(TimeSource.now().minusDays(2).withSecond(0).withMinute(0)),

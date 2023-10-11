@@ -2,9 +2,12 @@ package net.adoptium.api.v3.dataSources.github.graphql.clients
 
 import com.expediagroup.graphql.client.types.GraphQLClientRequest
 import com.expediagroup.graphql.client.types.GraphQLClientResponse
-import com.fasterxml.jackson.module.kotlin.MissingKotlinParameterException
-import io.ktor.client.features.*
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
+import io.ktor.client.plugins.*
 import io.ktor.http.*
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
+import jakarta.json.JsonObject
 import kotlinx.coroutines.delay
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
@@ -15,13 +18,13 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
-import javax.json.JsonObject
 import kotlin.math.max
 import kotlin.random.Random
 
-abstract class GraphQLGitHubInterface(
+@ApplicationScoped
+open class GraphQLGitHubInterface @Inject constructor(
     private val graphQLRequest: GraphQLRequest,
-    val updaterHtmlClient: UpdaterHtmlClient
+    private val updaterHtmlClient: UpdaterHtmlClient
 ) {
     companion object {
         @JvmStatic
@@ -31,7 +34,7 @@ abstract class GraphQLGitHubInterface(
     private val THRESHOLD_START = System.getenv("GITHUB_THRESHOLD")?.toFloatOrNull() ?: 1000f
     private val THRESHOLD_HARD_FLOOR = System.getenv("GITHUB_THRESHOLD_HARD_FLOOR")?.toFloatOrNull() ?: 200f
 
-    protected suspend fun <E, F : HasRateLimit> getAll(
+    open suspend fun <E, F : HasRateLimit> getAll(
         requestEntityBuilder: (cursor: String?) -> GraphQLClientRequest<F>,
 
         extract: suspend (F) -> List<E>,
@@ -148,7 +151,7 @@ abstract class GraphQLGitHubInterface(
         }
     }
 
-    protected suspend fun <F : HasRateLimit> queryApi(
+    open suspend fun <F : HasRateLimit> queryApi(
         requestEntityBuilder: (cursor: String?) -> GraphQLClientRequest<F>,
         cursor: String?
     ): GraphQLClientResponse<F>? {
@@ -171,7 +174,7 @@ abstract class GraphQLGitHubInterface(
 
                 LOGGER.info("Retrying ${retryCount++}")
                 delay((TimeUnit.SECONDS.toMillis(5) * retryCount))
-            } catch (e: ClientRequestException) {
+            } catch (e: ResponseException) {
                 if (e.response.status == HttpStatusCode.Forbidden ||
                     e.response.status == HttpStatusCode.BadGateway ||
                     e.response.status == HttpStatusCode.ServiceUnavailable ||
@@ -184,7 +187,7 @@ abstract class GraphQLGitHubInterface(
                     throw Exception("Unexpected return type ${e.response.status}")
                 }
 
-            } catch (e: MissingKotlinParameterException) {
+            } catch (e: MismatchedInputException) {
                 return null;
             } catch (e: Exception) {
                 LOGGER.error("Query failed", e)

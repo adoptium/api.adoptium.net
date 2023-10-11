@@ -1,5 +1,6 @@
 package net.adoptium.api.v3.releaseNotes
 
+import jakarta.enterprise.context.ApplicationScoped
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.AdoptRepository
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
@@ -12,10 +13,9 @@ import net.adoptium.api.v3.dataSources.models.ReleaseNotes
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.ReleaseType
 import org.slf4j.LoggerFactory
-import javax.inject.Inject
-import javax.inject.Singleton
+import jakarta.inject.Inject
 
-@Singleton
+@ApplicationScoped
 class AdoptReleaseNotes @Inject constructor(
     private var adoptRepository: AdoptRepository,
     private val database: ApiPersistence,

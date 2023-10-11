@@ -1,5 +1,6 @@
 package net.adoptium.api.v3
 
+import jakarta.enterprise.context.ApplicationScoped
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -19,8 +20,7 @@ import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
 import org.slf4j.LoggerFactory
-import javax.inject.Inject
-import javax.inject.Singleton
+import jakarta.inject.Inject
 
 interface AdoptRepository {
     suspend fun getRelease(version: Int): FeatureRelease?
@@ -33,8 +33,8 @@ interface AdoptRepository {
     }
 }
 
-@Singleton
-class AdoptRepositoryImpl @Inject constructor(
+@ApplicationScoped
+open class AdoptRepositoryImpl @Inject constructor(
     val client: GitHubApi,
     adoptReleaseMapperFactory: AdoptReleaseMapperFactory
 ) : AdoptRepository {

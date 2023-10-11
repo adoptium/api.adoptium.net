@@ -1,15 +1,15 @@
 package net.adoptium.api
 
+import jakarta.annotation.Priority
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.enterprise.inject.Alternative
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.models.ReleaseInfo
-import javax.annotation.Priority
-import javax.enterprise.inject.Alternative
-import javax.inject.Singleton
 
 @Priority(1)
 @Alternative
-@Singleton
+@ApplicationScoped
 open class ApiDataStoreStub : APIDataStore {
 
     open var scheduled: Boolean = false

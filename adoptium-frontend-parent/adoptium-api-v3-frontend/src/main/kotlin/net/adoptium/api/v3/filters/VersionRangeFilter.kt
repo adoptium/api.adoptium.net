@@ -2,15 +2,17 @@ package net.adoptium.api.v3.filters
 
 import net.adoptium.api.v3.models.VersionData
 import net.adoptium.api.v3.parser.VersionParser
+import net.adoptium.api.v3.parser.maven.SemverParser
 import net.adoptium.api.v3.parser.maven.VersionRange
 import java.util.function.Predicate
 
-class VersionRangeFilter(range: String?) : Predicate<VersionData> {
+class VersionRangeFilter(range: String?, val semver: Boolean) : Predicate<VersionData> {
 
     private val rangeMatcher: VersionRange?
     private val exactMatcher: VersionData?
 
     init {
+
         if (range == null) {
             rangeMatcher = null
             exactMatcher = null
@@ -21,9 +23,13 @@ class VersionRangeFilter(range: String?) : Predicate<VersionData> {
             !range.endsWith(']')
         ) {
             rangeMatcher = null
-            exactMatcher = VersionParser.parse(range, sanityCheck = false, exactMatch = true)
+            if (semver) {
+                exactMatcher = SemverParser.parseAdoptSemver(range)
+            } else {
+                exactMatcher = VersionParser.parse(range, sanityCheck = false, exactMatch = true)
+            }
         } else {
-            rangeMatcher = VersionRange.createFromVersionSpec(range)
+            rangeMatcher = VersionRange.createFromVersionSpec(range, semver)
             exactMatcher = null
         }
     }
@@ -31,11 +37,17 @@ class VersionRangeFilter(range: String?) : Predicate<VersionData> {
     override fun test(version: VersionData): Boolean {
         return when {
             exactMatcher != null -> {
-                exactMatcher.compareVersionNumber(version)
+                if (semver) {
+                    exactMatcher.semver == version.semver
+                } else {
+                    exactMatcher.compareVersionNumber(version)
+                }
             }
+
             rangeMatcher != null -> {
                 rangeContainsVersion(rangeMatcher, version)
             }
+
             else -> {
                 true
             }

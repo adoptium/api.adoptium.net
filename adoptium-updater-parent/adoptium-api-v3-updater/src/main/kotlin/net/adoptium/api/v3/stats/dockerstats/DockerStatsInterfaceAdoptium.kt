@@ -4,7 +4,7 @@ import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.DockerDownloadStatsDbEntry
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 class DockerStatsInterfaceAdoptium @Inject constructor(
     database: ApiPersistence,

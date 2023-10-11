@@ -1,6 +1,8 @@
 FROM eclipse-temurin:17
 
 # BUILDS FOR ADOPTIUM, NOT ADOPTOPENJDK
+ARG MAVEN_FLAGS="-Padoptium,-adoptopenjdk"
+ENV MAVEN_FLAGS=$MAVEN_FLAGS
 
 ARG REPOSITORY="https://github.com/adoptium/api.adoptium.net.git"
 ENV REPOSITORY=$REPOSITORY
@@ -14,7 +16,8 @@ RUN     useradd -ms /bin/bash api && \
         mkdir -p /home/api/deployment/lib && \
         mkdir -p /home/api/build && \
         mkdir /tmp/build && \
-        chown -R api: /home/api/
+        chown -R api: /home/api/ && \
+        apt-get update && apt-get -y install openssl
 
 WORKDIR /tmp/build
 
@@ -24,7 +27,7 @@ RUN chown -R api: /tmp/build
 
 USER api
 
-RUN     ./mvnw clean install -Padoptium,-adoptopenjdk && \
+RUN     ./mvnw clean install $MAVEN_FLAGS && \
         cp adoptium-updater-parent/adoptium-api-v3-updater/target/adoptium-api-v3-updater-*-jar-with-dependencies.jar /home/api/deployment/updater.jar && \
         cp -r adoptium-frontend-parent/adoptium-api-v3-frontend/target/quarkus-app/* /home/api/deployment/ && \
         mv /home/api/deployment/quarkus-run.jar /home/api/deployment/frontend.jar && \

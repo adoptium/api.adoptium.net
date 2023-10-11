@@ -1,5 +1,6 @@
 package net.adoptium.api.testDoubles
 
+import jakarta.enterprise.context.ApplicationScoped
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
@@ -13,14 +14,13 @@ import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
 import net.adoptium.api.v3.models.ReleaseInfo
 import net.adoptium.api.v3.models.Vendor
 import java.time.ZonedDateTime
-import javax.annotation.Priority
-import javax.enterprise.inject.Alternative
-import javax.inject.Inject
-import javax.inject.Singleton
+import jakarta.annotation.Priority
+import jakarta.enterprise.inject.Alternative
+import jakarta.inject.Inject
 
 @Priority(1)
 @Alternative
-@Singleton
+@ApplicationScoped
 open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos) : ApiPersistence {
     private var updatedAtInfo: UpdatedInfo? = null
     private var releaseInfo: ReleaseInfo? = null

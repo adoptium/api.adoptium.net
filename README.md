@@ -31,6 +31,11 @@ The following list highlights a small subset of consumers and their use-cases:
 
 See [Marketplace](marketplace/README.md)
 
+## Version Bump
+
+When a new version of Java is released, the version at [Versions.kt](adoptium-models-parent/adoptium-api-v3-models/src/main/kotlin/net/adoptium/api/v3/models/Versions.kt),
+or by setting the property `LATEST_JAVA_VERSION` on the deployment.
+
 ## Development
 
 To learn more about how we build & run the API, check out [CONTRIBUTING.md](CONTRIBUTING.md) and the [FAQs](FAQ.md).

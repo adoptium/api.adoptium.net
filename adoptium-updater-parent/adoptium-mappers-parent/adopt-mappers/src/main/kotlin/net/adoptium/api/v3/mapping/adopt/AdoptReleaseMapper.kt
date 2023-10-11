@@ -1,5 +1,7 @@
 package net.adoptium.api.v3.mapping.adopt
 
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.enterprise.inject.Model
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.adoptium.api.v3.ReleaseResult
@@ -27,11 +29,11 @@ import java.security.MessageDigest
 import java.time.ZonedDateTime
 import java.util.*
 import java.util.regex.Pattern
-import javax.inject.Inject
-import javax.inject.Singleton
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 
-@Singleton
-class AdoptReleaseMapperFactory @Inject constructor(
+@ApplicationScoped
+open class AdoptReleaseMapperFactory @Inject constructor(
     val adoptBinaryMapper: AdoptBinaryMapper,
     val htmlClient: GitHubHtmlClient
 ) {
@@ -75,6 +77,7 @@ private class AdoptReleaseMapper constructor(
         val ghAssetsWithMetadata = associateMetadataWithBinaries(ghRelease.releaseAssets)
         val sourcePackage = getSourcePackage(ghRelease, ghAssetsWithMetadata)
         val releaseNotes = getReleaseNotesPackage(ghRelease.releaseAssets.assets)
+        val aqavitResultsLink = getAqavitLink(ghRelease.releaseAssets.assets)
 
         try {
             val ghAssetsGroupedByVersion = ghAssetsWithMetadata
@@ -91,7 +94,7 @@ private class AdoptReleaseMapper constructor(
                     val ghAssets: List<GHAsset> = ghAssetsForVersion.value.map { ghAssetWithMetadata -> ghAssetWithMetadata.key }
                     val id = generateIdForSplitRelease(version, ghRelease)
 
-                    toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghRelease.releaseAssets.assets, sourcePackage, releaseNotes)
+                    toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghRelease.releaseAssets.assets, sourcePackage, releaseNotes, aqavitResultsLink)
                 }
                 .ifEmpty {
                     try {
@@ -100,7 +103,7 @@ private class AdoptReleaseMapper constructor(
                         val ghAssets = ghRelease.releaseAssets.assets
                         val id = ghRelease.id.id
 
-                        return@ifEmpty listOf(toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghAssets, sourcePackage, releaseNotes))
+                        return@ifEmpty listOf(toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghAssets, sourcePackage, releaseNotes, aqavitResultsLink))
                     } catch (e: Exception) {
                         throw FailedToParse("Failed to parse version $releaseName", e)
                     }
@@ -113,6 +116,19 @@ private class AdoptReleaseMapper constructor(
             LOGGER.error("Failed to parse $releaseName")
             return ReleaseResult(error = "Failed to parse $releaseName")
         }
+    }
+
+    private fun getAqavitLink(assets: List<GHAsset>): String? {
+        val aqavitAssets = assets
+            .filter { it.name.contains("AQAvitTapFiles") }
+            .map { it.downloadUrl }
+            .toList()
+
+        if (aqavitAssets.size > 1) {
+            LOGGER.warn("Multiple AqaVit assets present on release")
+        }
+
+        return aqavitAssets.firstOrNull()
     }
 
     private fun getReleaseVersion(ghAssetWithMetadata: Map.Entry<GHAsset, GHMetaData>): String {
@@ -169,7 +185,8 @@ private class AdoptReleaseMapper constructor(
         version: VersionData,
         fullGhAssetList: List<GHAsset>,
         sourcePackage: SourcePackage?,
-        releaseNotes: ReleaseNotesPackage?
+        releaseNotes: ReleaseNotesPackage?,
+        aqavitResultsLink: String?
     ): Release {
         LOGGER.debug("Getting binaries $releaseName")
         val binaries = adoptBinaryMapper.toBinaryList(ghAssets, fullGhAssetList, ghAssetWithMetadata)
@@ -181,7 +198,21 @@ private class AdoptReleaseMapper constructor(
             }
             .map { it.downloadCount }.sum()
 
-        return Release(id, release_type, releaseLink, releaseName, DateTime(timestamp), DateTime(updatedAt), binaries.toTypedArray(), downloadCount, vendor, version, sourcePackage, releaseNotes)
+        return Release(
+            id,
+            release_type,
+            releaseLink,
+            releaseName,
+            DateTime(timestamp),
+            DateTime(updatedAt),
+            binaries.toTypedArray(),
+            downloadCount,
+            vendor,
+            version,
+            sourcePackage,
+            releaseNotes,
+            aqavitResultsLink
+        )
     }
 
     private fun formReleaseType(release: GHRelease): ReleaseType {

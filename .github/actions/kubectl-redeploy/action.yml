@@ -1,0 +1,16 @@
+name: Kubernetes Rollout Restart
+description: Redeploy frontend and updater
+inputs:
+    NAMESPACE:
+      description: 'Kubernetes namespace'
+      required: true
+runs:
+  using: composite
+  steps:
+  - name: Redeploy updater-api
+    shell: bash
+    run: kubectl config set-context --current --namespace=${{ inputs.NAMESPACE }} && kubectl rollout restart deployment updater-api
+
+  - name: Redeploy frontend-service
+    shell: bash
+    run: kubectl config set-context --current --namespace=${{ inputs.NAMESPACE }} && kubectl rollout restart deployment frontend-service
