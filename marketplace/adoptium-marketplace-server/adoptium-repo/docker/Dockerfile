@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17 as buildwebsite
+FROM eclipse-temurin:21 as buildwebsite
 
 ARG SIGNING_KEY_PASSWORD
 ENV SIGNING_KEY_PASSWORD ${SIGNING_KEY_PASSWORD}
