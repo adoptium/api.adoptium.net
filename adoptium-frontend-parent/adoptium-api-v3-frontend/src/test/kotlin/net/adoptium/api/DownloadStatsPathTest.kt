@@ -21,6 +21,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.format.DateTimeFormatter
 import jakarta.ws.rs.BadRequestException
+import net.adoptium.api.v3.models.ReleaseType
 
 @ExtendWith(value = [DbExtension::class])
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -174,6 +175,7 @@ class DownloadStatsPathTest : FrontendTest() {
             val releases = getReleases()
 
             val release = releases
+                .filter { it.release_type == ReleaseType.ga }
                 .filter { it.vendor == Vendor.getDefault() }
                 .first()
 
