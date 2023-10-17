@@ -89,7 +89,7 @@ class DownloadStatsResource {
     @GET
     @Schema(hidden = true)
     @Path("/total/{feature_version}/{release_name}")
-    @Operation(summary = "Get download stats for feature verson", description = "stats", hidden = true)
+    @Operation(summary = "Get download stats for feature version", description = "stats", hidden = true)
     fun getTotalDownloadStatsForTag(
         @Parameter(name = "feature_version", description = "Feature version (i.e 8, 9, 10...)", required = true)
         @PathParam("feature_version")
@@ -102,6 +102,7 @@ class DownloadStatsResource {
             ?: throw BadRequestException("Unable to find version $featureVersion")
 
         return getAdoptReleases(release)
+            .filter { it.release_type == ReleaseType.ga }
             .filter { it.release_name == releaseName }
             .flatMap { it.binaries.asSequence() }
             .flatMap {
