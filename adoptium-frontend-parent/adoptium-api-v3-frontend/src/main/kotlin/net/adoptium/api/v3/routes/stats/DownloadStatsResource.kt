@@ -68,14 +68,13 @@ class DownloadStatsResource {
         @Parameter(name = "feature_version", description = "Feature version (i.e 8, 9, 10...)", required = true)
         @PathParam("feature_version")
         featureVersion: Int,
-        @Parameter(name = "release_type", description = "Release type (i.e all, ga, ea)", required = false)
-        @PathParam("release_type")
-        releaseType: ReleaseType = ReleaseType.ga
+        @Parameter(name = "release_types", description = "List of release types to include in computation (i.e &release_types=ga,ea)", required = false)
+        @QueryParam("release_types") releaseTypes: List<ReleaseType> = listOf(ReleaseType.ga)
     ): Map<String, Long> {
         val release = apiDataStore.getAdoptRepos().getFeatureRelease(featureVersion)
             ?: throw BadRequestException("Unable to find version $featureVersion")
 
-        return getAdoptReleases(release, releaseType, null)
+        return getAdoptReleases(release, releaseTypes, null)
             .map { grouped ->
                 Pair(
                     grouped.release_name,
@@ -99,14 +98,13 @@ class DownloadStatsResource {
         @Parameter(name = "release_name", description = "Release Name i.e jdk-11.0.4+11", required = true)
         @PathParam("release_name")
         releaseName: String,
-        @Parameter(name = "release_type", description = "Release type (i.e all, ga, ea)", required = false)
-        @PathParam("release_type")
-        releaseType: ReleaseType = ReleaseType.ga
+        @Parameter(name = "release_types", description = "List of release types to include in computation (i.e &release_types=ga,ea)", required = false)
+        @QueryParam("release_types") releaseTypes: List<ReleaseType> = listOf(ReleaseType.ga)
     ): Map<String, Long> {
         val release = apiDataStore.getAdoptRepos().getFeatureRelease(featureVersion)
             ?: throw BadRequestException("Unable to find version $featureVersion")
 
-        return getAdoptReleases(release, releaseType, releaseName)
+        return getAdoptReleases(release, releaseTypes, releaseName)
             .flatMap { it.binaries.asSequence() }
             .flatMap {
                 val archive = Pair(it.`package`.name, it.download_count)
@@ -119,13 +117,13 @@ class DownloadStatsResource {
             .toMap()
     }
 
-    private fun getAdoptReleases(release: FeatureRelease, releaseType: ReleaseType, releaseName: String?): Sequence<Release> {
+    private fun getAdoptReleases(release: FeatureRelease, releaseTypes: List<ReleaseType>, releaseName: String?): Sequence<Release> {
         var releases = release
             .releases
             .getReleases()
 
-        if(releaseType != ReleaseType.all) {
-            releases = releases.filter { it.release_type == releaseType }
+        if(releaseTypes.isNotEmpty()) {
+            releases = releases.filter { releaseTypes.contains(it.release_type) }
         }
         if(releaseName != null) {
             releases = releases.filter { it.release_name == releaseName }
