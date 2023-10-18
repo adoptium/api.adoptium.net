@@ -63,17 +63,19 @@ class DownloadStatsResource {
     @GET
     @Schema(hidden = true)
     @Path("/total/{feature_version}")
-    @Operation(summary = "Get download stats for feature verson", description = "stats", hidden = true)
+    @Operation(summary = "Get download stats for feature version", description = "stats", hidden = true)
     fun getTotalDownloadStats(
         @Parameter(name = "feature_version", description = "Feature version (i.e 8, 9, 10...)", required = true)
         @PathParam("feature_version")
-        featureVersion: Int
+        featureVersion: Int,
+        @Parameter(name = "release_type", description = "Release type (i.e all, ga, ea)", required = false)
+        @PathParam("release_type")
+        releaseType: ReleaseType = ReleaseType.ga
     ): Map<String, Long> {
         val release = apiDataStore.getAdoptRepos().getFeatureRelease(featureVersion)
             ?: throw BadRequestException("Unable to find version $featureVersion")
 
-        return getAdoptReleases(release)
-            .filter { it.release_type == ReleaseType.ga }
+        return getAdoptReleases(release, releaseType, null)
             .map { grouped ->
                 Pair(
                     grouped.release_name,
@@ -96,14 +98,15 @@ class DownloadStatsResource {
         featureVersion: Int,
         @Parameter(name = "release_name", description = "Release Name i.e jdk-11.0.4+11", required = true)
         @PathParam("release_name")
-        releaseName: String
+        releaseName: String,
+        @Parameter(name = "release_type", description = "Release type (i.e all, ga, ea)", required = false)
+        @PathParam("release_type")
+        releaseType: ReleaseType = ReleaseType.ga
     ): Map<String, Long> {
         val release = apiDataStore.getAdoptRepos().getFeatureRelease(featureVersion)
             ?: throw BadRequestException("Unable to find version $featureVersion")
 
-        return getAdoptReleases(release)
-            .filter { it.release_type == ReleaseType.ga }
-            .filter { it.release_name == releaseName }
+        return getAdoptReleases(release, releaseType, releaseName)
             .flatMap { it.binaries.asSequence() }
             .flatMap {
                 val archive = Pair(it.`package`.name, it.download_count)
@@ -116,17 +119,26 @@ class DownloadStatsResource {
             .toMap()
     }
 
-    private fun getAdoptReleases(release: FeatureRelease): Sequence<Release> {
-        return release
+    private fun getAdoptReleases(release: FeatureRelease, releaseType: ReleaseType, releaseName: String?): Sequence<Release> {
+        var releases = release
             .releases
             .getReleases()
+
+        if(releaseType != ReleaseType.all) {
+            releases = releases.filter { it.release_type == releaseType }
+        }
+        if(releaseName != null) {
+            releases = releases.filter { it.release_name == releaseName }
+        }
+
+        return releases
             .filter { it.vendor == Vendor.getDefault() }
     }
 
     @GET
     @Schema(hidden = true)
     @Path("/tracking")
-    @Operation(summary = "Get download stats for feature verson", description = "stats", hidden = true)
+    @Operation(summary = "Get download stats for feature version", description = "stats", hidden = true)
     fun tracking(
         @Parameter(name = "days", description = "Number of days to display, if used in conjunction with from/to then this will limit the request to x days before the end of the given period", schema = Schema(defaultValue = "30", type = SchemaType.INTEGER), required = false)
         @QueryParam("days")
@@ -166,7 +178,7 @@ class DownloadStatsResource {
     @GET
     @Schema(hidden = true)
     @Path("/monthly")
-    @Operation(summary = "Get download stats for feature verson", description = "stats", hidden = true)
+    @Operation(summary = "Get download stats for feature version", description = "stats", hidden = true)
     fun monthly(
         @Parameter(name = "source", description = "Stats data source", schema = Schema(defaultValue = "all"), required = false)
         @QueryParam("source")
