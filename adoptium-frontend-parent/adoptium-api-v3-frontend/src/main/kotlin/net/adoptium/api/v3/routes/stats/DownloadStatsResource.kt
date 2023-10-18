@@ -121,16 +121,17 @@ class DownloadStatsResource {
         var releases = release
             .releases
             .getReleases()
+            .filter { it.vendor == Vendor.getDefault() }
 
         if(releaseTypes.isNotEmpty()) {
             releases = releases.filter { releaseTypes.contains(it.release_type) }
         }
+
         if(releaseName != null) {
             releases = releases.filter { it.release_name == releaseName }
         }
 
         return releases
-            .filter { it.vendor == Vendor.getDefault() }
     }
 
     @GET
