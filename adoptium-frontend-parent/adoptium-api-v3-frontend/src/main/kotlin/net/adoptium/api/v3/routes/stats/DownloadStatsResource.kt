@@ -21,6 +21,7 @@ import java.util.concurrent.CompletionStage
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.BadRequestException
+import jakarta.ws.rs.DefaultValue
 import jakarta.ws.rs.GET
 import jakarta.ws.rs.Path
 import jakarta.ws.rs.PathParam
@@ -68,8 +69,11 @@ class DownloadStatsResource {
         @Parameter(name = "feature_version", description = "Feature version (i.e 8, 9, 10...)", required = true)
         @PathParam("feature_version")
         featureVersion: Int,
-        @Parameter(name = "release_types", description = "List of release types to include in computation (i.e &release_types=ga,ea)", required = false)
-        @QueryParam("release_types") releaseTypes: List<ReleaseType> = listOf(ReleaseType.ga)
+
+        @Parameter(name = "release_types", description = "List of release types to include in computation (i.e &release_types=ga&release_types=ea)", required = false)
+        @QueryParam("release_types")
+        @DefaultValue("ga")
+        releaseTypes: List<ReleaseType>?
     ): Map<String, Long> {
         val release = apiDataStore.getAdoptRepos().getFeatureRelease(featureVersion)
             ?: throw BadRequestException("Unable to find version $featureVersion")
@@ -95,11 +99,15 @@ class DownloadStatsResource {
         @Parameter(name = "feature_version", description = "Feature version (i.e 8, 9, 10...)", required = true)
         @PathParam("feature_version")
         featureVersion: Int,
+
         @Parameter(name = "release_name", description = "Release Name i.e jdk-11.0.4+11", required = true)
         @PathParam("release_name")
         releaseName: String,
-        @Parameter(name = "release_types", description = "List of release types to include in computation (i.e &release_types=ga,ea)", required = false)
-        @QueryParam("release_types") releaseTypes: List<ReleaseType> = listOf(ReleaseType.ga)
+
+        @Parameter(name = "release_types", description = "List of release types to include in computation (i.e &release_types=ga&release_types=ea)", required = false)
+        @QueryParam("release_types")
+        @DefaultValue("ga")
+        releaseTypes: List<ReleaseType>?
     ): Map<String, Long> {
         val release = apiDataStore.getAdoptRepos().getFeatureRelease(featureVersion)
             ?: throw BadRequestException("Unable to find version $featureVersion")
@@ -117,13 +125,13 @@ class DownloadStatsResource {
             .toMap()
     }
 
-    private fun getAdoptReleases(release: FeatureRelease, releaseTypes: List<ReleaseType>, releaseName: String?): Sequence<Release> {
+    private fun getAdoptReleases(release: FeatureRelease, releaseTypes: List<ReleaseType>?, releaseName: String?): Sequence<Release> {
         var releases = release
             .releases
             .getReleases()
             .filter { it.vendor == Vendor.getDefault() }
 
-        if(releaseTypes.isNotEmpty()) {
+        if(releaseTypes != null && releaseTypes.isNotEmpty()) {
             releases = releases.filter { releaseTypes.contains(it.release_type) }
         }
 
