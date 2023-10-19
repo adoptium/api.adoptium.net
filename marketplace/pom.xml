@@ -28,6 +28,7 @@
         <module>adoptium-marketplace-utils</module>
         <module>adoptium-marketplace-server</module>
         <module>adoptium-marketplace-vendor-validation</module>
+        <module>adoptium-marketplace-staging-checker</module>
     </modules>
 
     <dependencyManagement>
@@ -106,6 +107,11 @@
                 <groupId>io.mockk</groupId>
                 <artifactId>mockk</artifactId>
                 <version>1.13.4</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.enterprise</groupId>
+                <artifactId>cdi-api</artifactId>
+                <version>2.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
