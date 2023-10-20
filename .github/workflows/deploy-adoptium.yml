@@ -36,6 +36,7 @@ jobs:
         uses: ./.github/actions/docker-build
         with:
           DOCKER_REPO: adoptopenjdkacr.azurecr.io/adoptopenjdk-${{ env.NAMESPACE }}
+          DOCKER_FILE: ./deploy/Dockerfile
 
       - name: Redeploy Kubernetes Updater and Frontend
         uses: ./.github/actions/kubectl-redeploy

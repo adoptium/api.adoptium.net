@@ -1,7 +1,0 @@
-#!/bin/bash
-
-pushd ${HOME} >/dev/null
-
-tar cf - ./.m2
-
-popd >/dev/null
