@@ -4,6 +4,9 @@ inputs:
     DOCKER_REPO:
       description: 'Docker repository'
       required: true
+    DOCKER_FILE:
+      description: 'Dockerfile path'
+      required: true
     BUILD_ARGS:
       description: 'Build arguments'
       required: false
@@ -13,7 +16,7 @@ runs:
   - name: Build container image and push to Azure
     uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
     with:
-      file: ./deploy/Dockerfile
+      file: ${{ inputs.DOCKER_FILE }}
       tags: ${{ inputs.DOCKER_REPO }}:latest
       build-args: ${{ inputs.BUILD_ARGS }}
       push: true
