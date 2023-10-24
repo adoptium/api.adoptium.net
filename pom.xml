@@ -32,7 +32,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.testSource>17</maven.compiler.testSource>
         <maven.compiler.testTarget>17</maven.compiler.testTarget>
-        <maven.dependency-plugin.version>3.6.0</maven.dependency-plugin.version>
+        <maven.dependency-plugin.version>3.6.1</maven.dependency-plugin.version>
         <maven.dependency-versions-check-plugin.version>2.0.4</maven.dependency-versions-check-plugin.version>
         <maven.deploy-plugin.version>3.1.1</maven.deploy-plugin.version>
         <maven.directory-maven-plugin.version>1.0</maven.directory-maven-plugin.version>
