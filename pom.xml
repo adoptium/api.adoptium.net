@@ -56,7 +56,7 @@
         <maven.jdeprscan-plugin.version>3.0.0-alpha-1</maven.jdeprscan-plugin.version>
         <maven.jdeps-plugin.version>3.1.2</maven.jdeps-plugin.version>
         <maven.jxr-plugin.version>3.3.1</maven.jxr-plugin.version>
-        <maven.license-plugin.version>2.2.0</maven.license-plugin.version>
+        <maven.license-plugin.version>2.3.0</maven.license-plugin.version>
         <maven.openapi-generator-maven-plugin.version>7.0.1</maven.openapi-generator-maven-plugin.version>
         <maven.pitest-plugin.version>1.15.1</maven.pitest-plugin.version>
         <maven.pmd-plugin.version>3.21.0</maven.pmd-plugin.version>
