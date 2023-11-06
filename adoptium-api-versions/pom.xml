@@ -343,7 +343,13 @@
             <dependency>
                 <groupId>io.smallrye</groupId>
                 <artifactId>smallrye-open-api-core</artifactId>
-                <version>3.6.2</version>
+                <version>3.7.0</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.smallrye</groupId>
+                <artifactId>smallrye-open-api-jaxrs</artifactId>
+                <version>3.7.0</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
