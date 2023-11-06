@@ -74,7 +74,8 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                     val builder = mockk<GraphQLClientResponse<F>>()
 
                     assert(query.query?.contains("a-github-id") == true)
-                    every { builder.data } returns GHReleaseResult(response, RateLimit(0, 5000)) as F
+                    every { builder.data } returns GHReleaseResult(response, RateLimit(0, 5000)) as? F
+                        ?: throw ClassCastException("Invalid cast to GHReleaseResult")
                     every { builder.errors } returns null
                     return builder
                 }
@@ -99,7 +100,8 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
 
                     assert(query.query?.contains("a-repo-name") == true)
 
-                    every { builder.data } returns QueryData(repo, RateLimit(0, 5000)) as F
+                    every { builder.data } returns QueryData(repo, RateLimit(0, 5000)) as? F
+                        ?: throw ClassCastException("Invalid cast to QueryData")
                     every { builder.errors } returns null
                     return builder
                 }
@@ -143,7 +145,8 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
 
                     assert(query.query?.contains("a-repo-name") == true)
 
-                    every { builder.data } returns summary as F
+                    every { builder.data } returns summary as? F
+                        ?: throw ClassCastException("Invalid cast to QuerySummaryData")
                     every { builder.errors } returns null
                     return builder
                 }
@@ -168,7 +171,8 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
 
                     assert(query.query?.contains("a-repo-name") == true)
 
-                    val pageInfo = if ((query.variables as Map<String, String>)["cursorPointer"] != null) {
+                    val unsafeMap = query.variables as? Map<*, *>
+                    val pageInfo = if (unsafeMap?.all { (key, value) -> key is String && value is String } == true && unsafeMap["cursorPointer"] != null) {
                         PageInfo(false, null)
                     } else {
                         PageInfo(true, "next-page-id")
@@ -176,7 +180,8 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
 
                     val repo = GHRepository(GHReleases(listOf(response), pageInfo))
 
-                    every { builder.data } returns QueryData(repo, RateLimit(0, 5000)) as F
+                    every { builder.data } returns QueryData(repo, RateLimit(0, 5000)) as? F
+                        ?: throw ClassCastException("Invalid cast to QueryData")
                     every { builder.errors } returns null
                     return builder
                 }
