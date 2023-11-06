@@ -347,6 +347,12 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>io.smallrye</groupId>
+                <artifactId>smallrye-open-api-jaxrs</artifactId>
+                <version>3.7.0</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-server</artifactId>
                 <version>12.0.2</version>
