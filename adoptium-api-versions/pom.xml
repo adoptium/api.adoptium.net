@@ -11,7 +11,7 @@
         <coroutine.version>1.7.3</coroutine.version>
         <jackson.version>2.15.3</jackson.version>
         <jdk.version>17</jdk.version>
-        <kmongo.version>4.10.0</kmongo.version>
+        <kmongo.version>4.11.0</kmongo.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
         <kotlin.version>1.9.20</kotlin.version>
         <logback.version>1.4.11</logback.version>
