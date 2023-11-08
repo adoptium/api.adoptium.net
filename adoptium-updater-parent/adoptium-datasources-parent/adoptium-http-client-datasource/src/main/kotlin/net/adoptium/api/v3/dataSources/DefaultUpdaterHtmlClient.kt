@@ -19,6 +19,7 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import net.adoptium.api.v3.dataSources.GitHubAuth.AuthInfo
 
 @Default
 @ApplicationScoped
@@ -33,7 +34,6 @@ open class DefaultUpdaterHtmlClient @Inject constructor(
     companion object {
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
-        private val TOKEN: String? = GitHubAuth.readToken()
         private const val REQUEST_TIMEOUT = 12_000L
         private val GITHUB_DOMAINS = listOf("api.github.com", "github.com")
 
@@ -50,7 +50,8 @@ open class DefaultUpdaterHtmlClient @Inject constructor(
     class ResponseHandler(
         val client: DefaultUpdaterHtmlClient,
         private val continuation: Continuation<HttpResponse>,
-        val request: UrlRequest?
+        val request: UrlRequest?,
+        val token: String?
     ) : FutureCallback<HttpResponse> {
         override fun cancelled() {
             continuation.resumeWithException(Exception("cancelled"))
@@ -64,7 +65,7 @@ open class DefaultUpdaterHtmlClient @Inject constructor(
                     }
 
                     isARedirect(response) -> {
-                        client.getData(UrlRequest(response.getFirstHeader("location").value, request?.lastModified), continuation)
+                        client.getData(UrlRequest(response.getFirstHeader("location").value, request?.lastModified), continuation, token)
                     }
 
                     response.statusLine.statusCode == 404 -> {
@@ -93,14 +94,14 @@ open class DefaultUpdaterHtmlClient @Inject constructor(
 
         override fun failed(e: java.lang.Exception?) {
             if (e == null) {
-                continuation.resumeWithException(Exception("Failed Uknown reason"))
+                continuation.resumeWithException(Exception("Failed Unknown reason"))
             } else {
                 continuation.resumeWithException(e)
             }
         }
     }
 
-    private fun getData(urlRequest: UrlRequest, continuation: Continuation<HttpResponse>) {
+    private fun getData(urlRequest: UrlRequest, continuation: Continuation<HttpResponse>, token: String?) {
         try {
             val url = URL(urlRequest.url)
             val request = RequestBuilder
@@ -112,8 +113,8 @@ open class DefaultUpdaterHtmlClient @Inject constructor(
                 request.addHeader("If-Modified-Since", urlRequest.lastModified)
             }
 
-            if (GITHUB_DOMAINS.contains(url.host) && TOKEN != null) {
-                request.setHeader("Authorization", "token $TOKEN")
+            if (token != null && GITHUB_DOMAINS.contains(url.host)) {
+                request.setHeader("Authorization", "token $token")
             }
 
             val client =
@@ -123,20 +124,25 @@ open class DefaultUpdaterHtmlClient @Inject constructor(
                     redirectingHttpClient
                 }
 
-            client.execute(request, ResponseHandler(this, continuation, urlRequest))
+            client.execute(request, ResponseHandler(this, continuation, urlRequest, token))
         } catch (e: Exception) {
             continuation.resumeWith(Result.failure(e))
         }
     }
 
     override suspend fun getFullResponse(request: UrlRequest): HttpResponse? {
+        val requestURL = URL(request.url)
+        var authInfo: AuthInfo? = null
+        if (GITHUB_DOMAINS.contains(requestURL.host)) {
+            authInfo = GitHubAuth.getAuthenticationToken()
+        }
         // Retry up to 10 times
         for (retryCount in 1..10) {
             try {
                 LOGGER.debug("Getting ${request.url} ${request.lastModified}")
                 val response: HttpResponse = withTimeout(REQUEST_TIMEOUT) {
                     suspendCoroutine<HttpResponse> { continuation ->
-                        getData(request, continuation)
+                        getData(request, continuation, authInfo?.token)
                     }
                 }
                 LOGGER.debug("Got  ${request.url}")
