@@ -5,6 +5,8 @@
     <logger name="com.microsoft.applicationinsights" level="WARN"/>
     <logger name="org.mongodb" level="INFO"/>
     <logger name="io.netty" level="INFO"/>
+    <logger name="org.kohsuke" level="WARN"/>
+    <logger name="jdk.event.security" level="WARN"/>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>/tmp/updater.log</file>

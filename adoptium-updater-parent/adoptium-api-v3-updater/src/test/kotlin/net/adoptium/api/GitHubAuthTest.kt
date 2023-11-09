@@ -50,14 +50,14 @@ class GitHubAuthTest {
     }
 
     @Test
-    fun `readToken prioritizes system property if env var is not defined`() {
+    suspend fun `readToken prioritizes system property if env var is not defined`() {
         assertFalse(System.getenv().containsKey(tokenKey))
 
         val prevTokenProperty: String? = System.getProperty(tokenKey)
         System.setProperty(tokenKey, "system-property-token")
 
         try {
-            val actualToken = GitHubAuth.readToken()
+            val actualToken = GitHubAuth.getAuthenticationToken().token
             assertEquals("system-property-token", actualToken)
         } finally {
             if (prevTokenProperty == null) {
@@ -69,7 +69,7 @@ class GitHubAuthTest {
     }
 
     @Test
-    fun `readToken falls back to property file if env var and system property are not defined`() {
+    suspend fun `readToken falls back to property file if env var and system property are not defined`() {
         assertFalse(System.getenv().containsKey(tokenKey))
         assertFalse(System.getProperties().containsKey(tokenKey))
 
@@ -81,7 +81,7 @@ class GitHubAuthTest {
         }
 
         try {
-            val actualToken = GitHubAuth.readToken()
+            val actualToken = GitHubAuth.getAuthenticationToken().token
             assertEquals("real-file-token", actualToken)
         } finally {
             tokenDir.deleteRecursively()
@@ -89,11 +89,11 @@ class GitHubAuthTest {
     }
 
     @Test
-    fun readsTokenNullFromFile() {
+    suspend fun readsTokenNullFromFile() {
         assertFalse(System.getenv().containsKey(tokenKey))
         assertFalse(File(tempDir, ".adopt_api").exists())
 
-        val actualToken = GitHubAuth.readToken()
+        val actualToken = GitHubAuth.getAuthenticationToken().token
         assertThat(actualToken, oneOf(null, ""))
     }
 }
