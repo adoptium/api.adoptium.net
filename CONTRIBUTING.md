@@ -34,6 +34,24 @@ If you want to use the updater tool to add entries into the database, you need t
 
 The production server uses mongodb to store data, however you can also use Fongo. If you would like to install mongodb and are on mac, I used this [guide](https://zellwk.com/blog/install-mongodb/) which utilizes homebrew. You can also install `mongo` which is a command-line tool that gives you access to your mongodb, allowing you to manually search through the database.
 
+### GitHub App Authentication
+
+The updater can be used with a GitHub Token or GitHub App. To use a GitHub app you need to generate an app on GitHub. Once you've done that you need to convert the key to PKCS#8 format using the following command:
+
+```bash
+openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in your-rsa-private-key.pem -out pkcs8-key.pem
+```
+
+Once this is done you can export the following variables at runtime:
+
+```bash
+export GITHUB_APP_ID="1234"
+export GITHUB_APP_INSTALLATION_ID="1234"
+export GITHUB_APP_PRIVATE_KEY=$'-----BEGIN PRIVATE KEY-----
+<key contents>
+-----END PRIVATE KEY-----'
+```
+
 ### Build Tool
 
 [Maven](https://maven.apache.org/index.html) is used to build the project.

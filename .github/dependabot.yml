@@ -4,11 +4,29 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+  # Maintain dependencies for GitHub composite Actions (/.github/actions)
+  # Waiting for supporting wildcards see https://github.com/dependabot/dependabot-core/issues/5137
+  - package-ecosystem: "github-actions"
+    directory: "/.github/actions/azure-login"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "github-actions"
+    directory: "/.github/actions/do-login"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "github-actions"
+    directory: "/.github/actions/docker-build"
+    schedule:
+      interval: "daily"
   - package-ecosystem: "maven"
     directory: "/"
     schedule:
       interval: "daily"
   - package-ecosystem: docker
     directory: "/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: docker
+    directory: "/deploy"
     schedule:
       interval: "daily"

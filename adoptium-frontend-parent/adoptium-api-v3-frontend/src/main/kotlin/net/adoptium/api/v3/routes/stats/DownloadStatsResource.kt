@@ -21,6 +21,7 @@ import java.util.concurrent.CompletionStage
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.BadRequestException
+import jakarta.ws.rs.DefaultValue
 import jakarta.ws.rs.GET
 import jakarta.ws.rs.Path
 import jakarta.ws.rs.PathParam
@@ -63,17 +64,21 @@ class DownloadStatsResource {
     @GET
     @Schema(hidden = true)
     @Path("/total/{feature_version}")
-    @Operation(summary = "Get download stats for feature verson", description = "stats", hidden = true)
+    @Operation(summary = "Get download stats for feature version", description = "stats", hidden = true)
     fun getTotalDownloadStats(
         @Parameter(name = "feature_version", description = "Feature version (i.e 8, 9, 10...)", required = true)
         @PathParam("feature_version")
-        featureVersion: Int
+        featureVersion: Int,
+
+        @Parameter(name = "release_types", description = "List of release types to include in computation (i.e &release_types=ga&release_types=ea)", required = false)
+        @QueryParam("release_types")
+        @DefaultValue("ga")
+        releaseTypes: List<ReleaseType>?
     ): Map<String, Long> {
         val release = apiDataStore.getAdoptRepos().getFeatureRelease(featureVersion)
             ?: throw BadRequestException("Unable to find version $featureVersion")
 
-        return getAdoptReleases(release)
-            .filter { it.release_type == ReleaseType.ga }
+        return getAdoptReleases(release, releaseTypes, null)
             .map { grouped ->
                 Pair(
                     grouped.release_name,
@@ -89,20 +94,25 @@ class DownloadStatsResource {
     @GET
     @Schema(hidden = true)
     @Path("/total/{feature_version}/{release_name}")
-    @Operation(summary = "Get download stats for feature verson", description = "stats", hidden = true)
+    @Operation(summary = "Get download stats for feature version", description = "stats", hidden = true)
     fun getTotalDownloadStatsForTag(
         @Parameter(name = "feature_version", description = "Feature version (i.e 8, 9, 10...)", required = true)
         @PathParam("feature_version")
         featureVersion: Int,
+
         @Parameter(name = "release_name", description = "Release Name i.e jdk-11.0.4+11", required = true)
         @PathParam("release_name")
-        releaseName: String
+        releaseName: String,
+
+        @Parameter(name = "release_types", description = "List of release types to include in computation (i.e &release_types=ga&release_types=ea)", required = false)
+        @QueryParam("release_types")
+        @DefaultValue("ga")
+        releaseTypes: List<ReleaseType>?
     ): Map<String, Long> {
         val release = apiDataStore.getAdoptRepos().getFeatureRelease(featureVersion)
             ?: throw BadRequestException("Unable to find version $featureVersion")
 
-        return getAdoptReleases(release)
-            .filter { it.release_name == releaseName }
+        return getAdoptReleases(release, releaseTypes, releaseName)
             .flatMap { it.binaries.asSequence() }
             .flatMap {
                 val archive = Pair(it.`package`.name, it.download_count)
@@ -115,17 +125,27 @@ class DownloadStatsResource {
             .toMap()
     }
 
-    private fun getAdoptReleases(release: FeatureRelease): Sequence<Release> {
-        return release
+    private fun getAdoptReleases(release: FeatureRelease, releaseTypes: List<ReleaseType>?, releaseName: String?): Sequence<Release> {
+        var releases = release
             .releases
             .getReleases()
             .filter { it.vendor == Vendor.getDefault() }
+
+        if(releaseTypes != null && releaseTypes.isNotEmpty()) {
+            releases = releases.filter { releaseTypes.contains(it.release_type) }
+        }
+
+        if(releaseName != null) {
+            releases = releases.filter { it.release_name == releaseName }
+        }
+
+        return releases
     }
 
     @GET
     @Schema(hidden = true)
     @Path("/tracking")
-    @Operation(summary = "Get download stats for feature verson", description = "stats", hidden = true)
+    @Operation(summary = "Get download stats for feature version", description = "stats", hidden = true)
     fun tracking(
         @Parameter(name = "days", description = "Number of days to display, if used in conjunction with from/to then this will limit the request to x days before the end of the given period", schema = Schema(defaultValue = "30", type = SchemaType.INTEGER), required = false)
         @QueryParam("days")
@@ -165,7 +185,7 @@ class DownloadStatsResource {
     @GET
     @Schema(hidden = true)
     @Path("/monthly")
-    @Operation(summary = "Get download stats for feature verson", description = "stats", hidden = true)
+    @Operation(summary = "Get download stats for feature version", description = "stats", hidden = true)
     fun monthly(
         @Parameter(name = "source", description = "Stats data source", schema = Schema(defaultValue = "all"), required = false)
         @QueryParam("source")

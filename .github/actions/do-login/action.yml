@@ -8,7 +8,7 @@ runs:
   using: composite
   steps:
   - name: Login to DigitalOcean
-    uses: digitalocean/action-doctl@cf10ddb4467f6fb84c01f7cc5f099cec71eabc93 # v2.4.1
+    uses: digitalocean/action-doctl@e5cb5b0cde9789f79c5115c2c4d902f38a708804 # v2.5.0
     with:
       token: ${{ inputs.DIGITALOCEAN_ACCESS_TOKEN }}
 

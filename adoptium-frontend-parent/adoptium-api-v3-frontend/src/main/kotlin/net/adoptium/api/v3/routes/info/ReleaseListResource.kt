@@ -151,6 +151,7 @@ constructor(
             semver
         )
             .map { it.release_name }
+            .distinct()
 
         val pagedReleases = getPage(pageSize, page, releases, showPageCount ?: false)
 
