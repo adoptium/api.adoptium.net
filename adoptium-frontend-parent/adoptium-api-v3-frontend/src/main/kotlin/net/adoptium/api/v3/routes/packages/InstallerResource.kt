@@ -154,9 +154,7 @@ class InstallerResource @Inject constructor(private val packageEndpoint: Package
         @QueryParam("project")
         project: Project?
     ): Response {
-        val releaseList = packageEndpoint.getRelease(release_type, version, vendor, os, arch, image_type, jvm_impl, heap_size, project, cLib)
-
-        val release = releaseList
+        val release = packageEndpoint.getReleasesOrderByNewest(release_type, version, vendor, os, arch, image_type, jvm_impl, heap_size, project, cLib)
             .lastOrNull { release ->
                 release.binaries.any { it.installer != null }
             }

@@ -43,6 +43,9 @@ import jakarta.ws.rs.core.Context
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 import jakarta.ws.rs.core.UriInfo
+import net.adoptium.api.v3.filters.VersionRangeFilter
+import net.adoptium.api.v3.parser.FailedToParse
+import net.adoptium.api.v3.parser.maven.InvalidVersionSpecificationException
 
 @Tag(name = "Assets")
 @Path("/v3/assets/")
@@ -150,23 +153,26 @@ constructor(
         showPageCount: Boolean?,
 
         @Context
-        uriInfo: UriInfo,
+        uriInfo: UriInfo
     ): Response {
-        val order = sortOrder ?: SortOrder.DESC
-        val releaseSortMethod = sortMethod ?: SortMethod.DEFAULT
-        val vendorNonNull = vendor ?: Vendor.getDefault()
+        // check if this version repository exists
+        val repos = apiDataStore.getAdoptRepos().getFeatureRelease(version!!) ?: throw NotFoundException()
 
-        val releaseFilter = ReleaseFilter(releaseType = release_type, featureVersion = version, vendor = vendorNonNull, jvm_impl = jvm_impl)
-        val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, heap_size, project, before, cLib)
-        val repos = apiDataStore.getAdoptRepos().getFeatureRelease(version!!)
-
-        if (repos == null) {
-            throw NotFoundException()
-        }
-
-        val releases = apiDataStore
-            .getAdoptRepos()
-            .getFilteredReleases(version, releaseFilter, binaryFilter, order, releaseSortMethod)
+        val releases = releaseEndpoint.getFeatureReleasesAssets(
+            release_type,
+            version,
+            os,
+            arch,
+            image_type,
+            cLib,
+            jvm_impl,
+            heap_size,
+            vendor,
+            project,
+            before,
+            sortOrder,
+            sortMethod
+        )
 
         return getResponseForPage(uriInfo, pageSize, page, releases, showPageCount ?: false)
     }
@@ -233,18 +239,18 @@ constructor(
             throw BadRequestException("Must provide a vendor")
         }
 
-        val releaseFilter = ReleaseFilter(vendor = vendor, releaseName = releaseName.trim(), jvm_impl = jvm_impl)
-        val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, heap_size, project, null, cLib)
-
-        val releases = apiDataStore
-            .getAdoptRepos()
-            .getFilteredReleases(
-                releaseFilter,
-                binaryFilter,
-                SortOrder.DESC,
-                SortMethod.DEFAULT
-            )
-            .toList()
+        val releases = releaseEndpoint.getReleaseNameAssets(
+            vendor,
+            releaseName,
+            os,
+            arch,
+            image_type,
+            cLib,
+            jvm_impl,
+            heap_size,
+            project
+        )
+        .toList()
 
         return when {
             releases.isEmpty() -> {
@@ -256,7 +262,7 @@ constructor(
             }
 
             else -> {
-                releases[0]
+                releases.first
             }
         }
     }
@@ -357,12 +363,20 @@ constructor(
         semver: Boolean?,
 
         @Context
-        uriInfo: UriInfo,
+        uriInfo: UriInfo
     ): Response {
-        val releases = releaseEndpoint.getReleases(
+        val range = try {
+            VersionRangeFilter(version, semver ?: false)
+        } catch (e: InvalidVersionSpecificationException) {
+            throw BadRequestException("Invalid version range", e)
+        } catch (e: FailedToParse) {
+            throw BadRequestException("Invalid version string", e)
+        }
+
+        val releases = releaseEndpoint.getVersionAssets(
+            range,
             sortOrder,
             sortMethod,
-            version,
             release_type,
             vendor,
             lts,
@@ -372,9 +386,9 @@ constructor(
             jvm_impl,
             heap_size,
             project,
-            cLib,
-            semver
+            cLib
         )
+
         return getResponseForPage(uriInfo, pageSize, page, releases, showPageCount ?: false)
     }
 
@@ -389,7 +403,6 @@ constructor(
     @Path("/latest/{feature_version}/{jvm_impl}")
     @Operation(summary = "Returns list of latest assets for the given feature version and jvm impl", operationId = "getLatestAssets")
     fun getLatestAssets(
-
         @Parameter(
             name = "feature_version", description = OpenApiDocs.FEATURE_RELEASE, required = true,
             schema = Schema(defaultValue = "8", type = SchemaType.INTEGER)
@@ -415,15 +428,16 @@ constructor(
 
         @Parameter(name = "image_type", description = "Image Type", required = false)
         @QueryParam("image_type")
-        image_type: ImageType?,
-
-        ): List<BinaryAssetView> {
-        val binaryVendor = vendor ?: Vendor.getDefault()
-        val releaseFilter = ReleaseFilter(ReleaseType.ga, featureVersion = version, vendor = binaryVendor, jvm_impl = jvm_impl)
-        val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, null, null)
-        val releases = apiDataStore
-            .getAdoptRepos()
-            .getFilteredReleases(version, releaseFilter, binaryFilter, SortOrder.ASC, SortMethod.DEFAULT)
+        image_type: ImageType?
+    ): List<BinaryAssetView> {
+        val releases = releaseEndpoint.getLatestAssets(
+            version,
+            jvm_impl,
+            vendor,
+            os,
+            arch,
+            image_type
+        )
 
         return releases
             .flatMap { release ->

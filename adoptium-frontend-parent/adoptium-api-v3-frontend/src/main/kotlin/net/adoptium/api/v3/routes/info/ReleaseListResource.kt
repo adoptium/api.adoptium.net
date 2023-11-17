@@ -28,6 +28,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import jakarta.ws.rs.BadRequestException
 import jakarta.ws.rs.GET
 import jakarta.ws.rs.Path
 import jakarta.ws.rs.Produces
@@ -36,6 +37,9 @@ import jakarta.ws.rs.core.Context
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 import jakarta.ws.rs.core.UriInfo
+import net.adoptium.api.v3.filters.VersionRangeFilter
+import net.adoptium.api.v3.parser.FailedToParse
+import net.adoptium.api.v3.parser.maven.InvalidVersionSpecificationException
 
 @Tag(name = "Release Info")
 @Path("/v3/info")
@@ -134,10 +138,18 @@ constructor(
         @Context
         uriInfo: UriInfo,
     ): Response {
-        val releases = releaseEndpoint.getReleases(
+        val range = try {
+            VersionRangeFilter(version, semver ?: false)
+        } catch (e: InvalidVersionSpecificationException) {
+            throw BadRequestException("Invalid version range", e)
+        } catch (e: FailedToParse) {
+            throw BadRequestException("Invalid version string", e)
+        }
+
+        val releases = releaseEndpoint.getVersionAssets(
+            range,
             sortOrder,
             sortMethod,
-            version,
             release_type,
             vendor,
             lts,
@@ -147,8 +159,7 @@ constructor(
             jvm_impl,
             heap_size,
             project,
-            cLib,
-            semver
+            cLib
         )
             .map { it.release_name }
             .distinct()
@@ -245,10 +256,18 @@ constructor(
         @Context
         uriInfo: UriInfo,
     ): Response {
-        val releases = releaseEndpoint.getReleases(
+        val range = try {
+            VersionRangeFilter(version, semver ?: false)
+        } catch (e: InvalidVersionSpecificationException) {
+            throw BadRequestException("Invalid version range", e)
+        } catch (e: FailedToParse) {
+            throw BadRequestException("Invalid version string", e)
+        }
+
+        val releases = releaseEndpoint.getVersionAssets(
+            range,
             sortOrder,
             sortMethod,
-            version,
             release_type,
             vendor,
             lts,
@@ -258,8 +277,7 @@ constructor(
             jvm_impl,
             heap_size,
             project,
-            cLib,
-            semver
+            cLib
         )
             .map { it.version_data }
             .distinct()

@@ -41,7 +41,11 @@ open class PackageEndpoint @Inject constructor(private val apiDataStore: APIData
     ): List<Release> {
         val releaseFilter = ReleaseFilter(releaseName = release_name, vendor = vendor, jvm_impl = jvm_impl)
         val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, heap_size, project, null, cLib)
-        return apiDataStore.getAdoptRepos().getFilteredReleases(releaseFilter, binaryFilter, SortOrder.DESC, SortMethod.DEFAULT).toList()
+
+        return apiDataStore
+            .getAdoptRepos()
+            .getFilteredReleases(releaseFilter, binaryFilter, SortOrder.DESC, SortMethod.DEFAULT)
+            .toList()
     }
 
     open fun <T : Asset> formResponse(
@@ -85,17 +89,32 @@ open class PackageEndpoint @Inject constructor(private val apiDataStore: APIData
             .build()
     }
 
-    open fun getRelease(release_type: ReleaseType?, version: Int?, vendor: Vendor?, os: OperatingSystem?, arch: Architecture?, image_type: ImageType?, jvm_impl: JvmImpl?, heap_size: HeapSize?, project: Project?, cLib: CLib?): List<Release> {
-        val releaseFilter = ReleaseFilter(releaseType = release_type, featureVersion = version, vendor = vendor, jvm_impl = jvm_impl)
-        val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, heap_size, project, null, cLib)
-        val releases = apiDataStore.getAdoptRepos().getFilteredReleases(releaseFilter, binaryFilter, SortOrder.DESC, SortMethod.DEFAULT).toList()
-
+    open fun getReleasesOrderByNewest(
+        release_type: ReleaseType?,
+        version: Int?,
+        vendor: Vendor?,
+        os: OperatingSystem?,
+        arch: Architecture?,
+        image_type: ImageType?,
+        jvm_impl: JvmImpl?,
+        heap_size: HeapSize?,
+        project: Project?,
+        cLib: CLib?
+    ): List<Release> {
         // We use updated_at and timestamp as well JIC we've made a mistake and respun the same version number twice, in which case newest wins.
-        val comparator = RELEASE_COMPARATOR.thenBy { it.version_data.optional }
+        val comparator = RELEASE_COMPARATOR
+            .thenBy { it.version_data.optional }
             .thenBy { it.updated_at.dateTime }
             .thenBy { it.timestamp.dateTime }
 
-        return releases.sortedWith(comparator)
+        val releaseFilter = ReleaseFilter(releaseType = release_type, featureVersion = version, vendor = vendor, jvm_impl = jvm_impl)
+        val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, heap_size, project, null, cLib)
+
+        return apiDataStore
+            .getAdoptRepos()
+            .getFilteredReleases(releaseFilter, binaryFilter, SortOrder.DESC, SortMethod.DEFAULT)
+            .sortedWith(comparator)
+            .toList()
     }
 
     open fun redirectToAsset(): (Asset) -> Response {
