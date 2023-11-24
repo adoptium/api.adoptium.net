@@ -7,8 +7,6 @@ import net.adoptium.api.v3.Pagination.maxPageSize
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.SortMethod
 import net.adoptium.api.v3.dataSources.SortOrder
-import net.adoptium.api.v3.filters.BinaryFilter
-import net.adoptium.api.v3.filters.ReleaseFilter
 import net.adoptium.api.v3.models.Architecture
 import net.adoptium.api.v3.models.BinaryAssetView
 import net.adoptium.api.v3.models.CLib

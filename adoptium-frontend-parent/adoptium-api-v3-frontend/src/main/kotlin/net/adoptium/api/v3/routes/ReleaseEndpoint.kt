@@ -2,14 +2,6 @@ package net.adoptium.api.v3.routes
 
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
-import jakarta.ws.rs.BadRequestException
-import jakarta.ws.rs.NotFoundException
-import jakarta.ws.rs.PathParam
-import jakarta.ws.rs.QueryParam
-import jakarta.ws.rs.core.Context
-import jakarta.ws.rs.core.UriInfo
-import net.adoptium.api.v3.OpenApiDocs
-import net.adoptium.api.v3.Pagination
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.SortMethod
 import net.adoptium.api.v3.dataSources.SortOrder
@@ -27,11 +19,6 @@ import net.adoptium.api.v3.models.Project
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
-import net.adoptium.api.v3.parser.FailedToParse
-import net.adoptium.api.v3.parser.maven.InvalidVersionSpecificationException
-import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
-import org.eclipse.microprofile.openapi.annotations.media.Schema
-import org.eclipse.microprofile.openapi.annotations.parameters.Parameter
 
 @ApplicationScoped
 class ReleaseEndpoint
