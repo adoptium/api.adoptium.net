@@ -17,10 +17,10 @@
         <logback.version>1.4.11</logback.version>
         <maven.compiler.release>17</maven.compiler.release>
         <maven.version>3.9.5</maven.version>
-        <maven.project-info-reports-plugin.version>3.4.5</maven.project-info-reports-plugin.version>
+        <maven.project-info-reports-plugin.version>3.5.0</maven.project-info-reports-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.5.2</quarkus.version>
+        <quarkus.version>3.6.0</quarkus.version>
         <rest-assured.version>5.3.2</rest-assured.version>
     </properties>
 
@@ -200,7 +200,7 @@
             <dependency>
                 <groupId>de.flapdoodle.embed</groupId>
                 <artifactId>de.flapdoodle.embed.mongo</artifactId>
-                <version>4.10.1</version>
+                <version>4.11.1</version>
                 <scope>test</scope>
             </dependency>
 
@@ -268,12 +268,12 @@
             <dependency>
                 <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
                 <artifactId>opentelemetry-javaagent-kotlinx-coroutines</artifactId>
-                <version>1.31.0-alpha</version>
+                <version>1.32.0-alpha</version>
             </dependency>
             <dependency>
                 <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
                 <artifactId>opentelemetry-javaagent-netty-4.1</artifactId>
-                <version>1.31.0-alpha</version>
+                <version>1.32.0-alpha</version>
             </dependency>
             <dependency>
                 <groupId>org.jboss.weld</groupId>
