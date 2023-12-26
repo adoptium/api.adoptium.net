@@ -9,7 +9,7 @@
 
     <properties>
         <coroutine.version>1.7.3</coroutine.version>
-        <jackson.version>2.16.0</jackson.version>
+        <jackson.version>2.16.1</jackson.version>
         <jdk.version>17</jdk.version>
         <kmongo.version>4.11.0</kmongo.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
