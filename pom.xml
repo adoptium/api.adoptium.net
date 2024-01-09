@@ -61,7 +61,7 @@
         <maven.pitest-plugin.version>1.15.3</maven.pitest-plugin.version>
         <maven.pmd-plugin.version>3.21.2</maven.pmd-plugin.version>
         <maven.project-info-reports-plugin.version>3.5.0</maven.project-info-reports-plugin.version>
-        <maven.rat-plugin.version>0.15</maven.rat-plugin.version>
+        <maven.rat-plugin.version>0.16</maven.rat-plugin.version>
         <maven.release-plugin.version>3.0.1</maven.release-plugin.version>
         <maven.resources-plugin.version>3.3.1</maven.resources-plugin.version>
         <maven.scm-plugin.version>2.0.1</maven.scm-plugin.version>
