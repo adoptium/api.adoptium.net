@@ -20,7 +20,7 @@ runs:
   using: composite
   steps:
   - name: Login to our Azure subscription.
-    uses: azure/login@de95379fe4dadc2defb305917eaa7e5dde727294 # v1.5.1
+    uses: azure/login@e15b166166a8746d1a47596803bd8c1b595455cf # v1.6.0
     with:
       client-id: ${{ inputs.AZURE_CLIENT_ID_OIDC }}
       tenant-id: ${{ inputs.AZURE_TENANT_ID }}
