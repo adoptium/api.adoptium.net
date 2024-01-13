@@ -103,4 +103,16 @@ open class PackageEndpoint @Inject constructor(private val apiDataStore: APIData
             Response.temporaryRedirect(URI.create(asset.link)).build()
         }
     }
+
+    open fun redirectToAssetSignature(): (Asset) -> Response {
+        return { asset ->
+            Response.temporaryRedirect(URI.create(asset.signature_link)).build()
+        }
+    }
+
+    open fun redirectToAssetChecksum(): (Asset) -> Response {
+        return { asset ->
+            Response.temporaryRedirect(URI.create(asset.checksum_link)).build()
+        }
+    }
 }
