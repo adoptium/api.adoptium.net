@@ -20,7 +20,7 @@
         <maven.project-info-reports-plugin.version>3.5.0</maven.project-info-reports-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.6.7</quarkus.version>
+        <quarkus.version>3.7.0</quarkus.version>
         <rest-assured.version>5.4.0</rest-assured.version>
     </properties>
 
