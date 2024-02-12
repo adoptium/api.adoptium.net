@@ -190,3 +190,14 @@ If you need to add/edit/remove a supported version string then you need to updat
 
 You'll need to start at the [Platforms JSON](adoptium-api-v3-frontend/src/main/resources/JSON/platforms.json) and
 [Variants JSON](adoptium-api-v3-frontend/src/main/resources/JSON/variants.json).
+
+### I want to upgrade the Maven version
+
+```bash
+mvn -N wrapper:wrapper -Dmaven=xxx.yyy.zzz
+```
+e.g. to upgrate to version 3.6.9
+
+```bash
+mvn -N wrapper:wrapper -Dmaven=3.9.6
+```

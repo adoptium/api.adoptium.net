@@ -125,12 +125,12 @@ object AdoptReposTestDataGenerator {
             Binary(
                 Package(
                     randomString("package name"),
-                    "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/",
+                    "https://github.com/adoptium/temurin11-binaries/releases/download/",
                     rand.nextLong(),
                     randomString("checksum"),
-                    randomString("checksum link"),
+                    "https://github.com/adoptium/temurin11-binaries/releases/download/",
                     1,
-                    randomString("signature link"),
+                    "https://github.com/adoptium/temurin11-binaries/releases/download/",
                     randomString("metadata link")
                 ),
                 0,
@@ -208,12 +208,12 @@ object AdoptReposTestDataGenerator {
         private fun createPackage(): Package {
             return Package(
                 randomString("package name"),
-                "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/",
+                "https://github.com/adoptium/temurin11-binaries/releases/download/",
                 rand.nextLong(),
                 randomString("checksum"),
-                randomString("checksum link"),
+                "https://github.com/adoptium/temurin11-binaries/releases/download/",
                 1,
-                randomString("signature link"),
+                "https://github.com/adoptium/temurin11-binaries/releases/download/",
                 randomString("metadata link")
             )
         }
@@ -221,12 +221,12 @@ object AdoptReposTestDataGenerator {
         private fun createInstaller(): Installer {
             return Installer(
                 randomString("installer name"),
-                "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/",
+                "https://github.com/adoptium/temurin11-binaries/releases/download/",
                 2,
                 randomString("checksum"),
-                randomString("checksum link"),
+                "https://github.com/adoptium/temurin11-binaries/releases/download/",
                 3,
-                randomString("signature link"),
+                "https://github.com/adoptium/temurin11-binaries/releases/download/",
                 randomString("metadata link")
             )
         }

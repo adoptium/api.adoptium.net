@@ -108,4 +108,32 @@ abstract class PackageEndpointTest : FrontendTest() {
             .statusCode(307)
             .header("Location", Matchers.startsWith(binary.`package`.link))
     }
+
+    protected fun requestSignatureExpecting307(
+        releaseGetter: (() -> Pair<Release, Binary>),
+        getPath: ((Release, Binary) -> String)
+    ) {
+        val (release, binary) = releaseGetter()
+
+        val path = getPath(release, binary)
+
+        performRequest(path)
+            .then()
+            .statusCode(307)
+            .header("Location", Matchers.startsWith(binary.`package`.signature_link))
+    }
+
+    protected fun requestChecksumExpecting307(
+        releaseGetter: (() -> Pair<Release, Binary>),
+        getPath: ((Release, Binary) -> String)
+    ) {
+        val (release, binary) = releaseGetter()
+
+        val path = getPath(release, binary)
+
+        performRequest(path)
+            .then()
+            .statusCode(307)
+            .header("Location", Matchers.startsWith(binary.`package`.checksum_link))
+    }
 }

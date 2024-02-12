@@ -28,7 +28,7 @@ class InstallerPathTest : PackageEndpointTest() {
         performRequest(path)
             .then()
             .statusCode(307)
-            .header("Location", Matchers.startsWith("https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/"))
+            .header("Location", Matchers.startsWith("https://github.com/adoptium/temurin11-binaries/releases/download/"))
     }
 
     @Test
@@ -37,7 +37,7 @@ class InstallerPathTest : PackageEndpointTest() {
         performRequest(path)
             .then()
             .statusCode(307)
-            .header("Location", Matchers.startsWith("https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/"))
+            .header("Location", Matchers.startsWith("https://github.com/adoptium/temurin11-binaries/releases/download/"))
     }
 
     @Test
