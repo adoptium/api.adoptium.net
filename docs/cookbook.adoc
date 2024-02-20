@@ -145,6 +145,82 @@ The full set of filters and possible argument values is available in
 https://api.adoptium.net/q/swagger-ui/[the API documentation]
 and can be used to specify exactly the information you require.
 
+
+== Example Five: Scripting a download using the Adoptium API for Windows via Powershell
+
+Below is a sample script written in Powershell for Windows, that downloads and verifies the JDKs via the API, and performs checksum validation and notifications via email for the results. 
+
+[source, powershell]
+----
+$ProgressPreference = 'SilentlyContinue'
+$SmtpServer = "[if you want to send notifications]"
+$From = "[account the alert will be sent from]"
+$ChecksumRecipients = "[account where the alert will be sent to]"
+
+$LinuxShareFolder = "<path to where the Linux builds will be copied to>"
+$WindowsShareFolder = "<path to where the Windows builds will be copied to>"
+# Uncomment the following 2 lines for debugging
+# $Date = Get-Date -format yyyy-MM-dd-HHmm
+# Start-Transcript -Path "C:\work\getJavaReleases\transcript-$Date.txt"
+
+$Releases = @('8','11','17','21')
+$Releases | ForEach-Object {
+    $Release = $_
+    $Platforms = @('linux','windows')
+    $Platforms | ForEach-Object {
+        $Platform = $_
+        $Types = @('jdk','jre')
+        $Types | ForEach-Object {
+            $Type = $_
+            $ReleaseInfo = Invoke-WebRequest -Uri "https://api.adoptium.net/v3/assets/latest/$Release/hotspot?architecture=x64&image_type=$Type&os=$Platform&vendor=eclipse" -UseBasicParsing | ConvertFrom-Json
+            $CurrentDate = Get-Date -UFormat "%Y-%m-%dT%H:%M:%SZ"
+            $TimeDifference = New-TimeSpan -Start $ReleaseInfo.binary.updated_at -End $CurrentDate
+            if ($TimeDifference -lt (New-TimeSpan -Hours 24)) {
+                if ("$Platform" -eq "linux") {
+                    $Found = Get-ChildItem -Filter $ReleaseInfo.binary.package.name -Path $LinuxShareFolder
+                    if ($null -eq $Found) {
+                        Remove-Item $LinuxShareFolder\OpenJDK$($Release)U-$($Type)*
+                        Write-Host "Downloading file $($ReleaseInfo.binary.package.name) to $($LinuxShareFolder)"
+                        Invoke-WebRequest -Uri "https://api.adoptium.net/v3/binary/latest/$Release/ga/$Platform/x64/$Type/hotspot/normal/eclipse" -UseBasicParsing -OutFile $LinuxShareFolder\$($ReleaseInfo.binary.package.name)
+                        Write-Host "Comparing checksums"
+                        $DownloadHash = Get-FileHash $LinuxShareFolder\$($ReleaseInfo.binary.package.name)
+                        $AdoptiumHash = $ReleaseInfo.binary.package.checksum
+                        if ($AdoptiumHash -ne $DownloadHash.hash) {
+                            $ChecksumSubject="An integrity issue has been found with an Adoptium download"
+                            $ChecksumBody ="An integrity issue has been found with $($ReleaseInfo.binary.package.name) on $($LinuxShareFolder)"
+                            Write-Output "Sending Email: SMTP Server - $SmtpServer"
+                            Send-Mailmessage -smtpServer $SmtpServer -from $From -to $ChecksumRecipients -subject $ChecksumSubject -body $ChecksumBody -bodyasHTML -priority High -Encoding UTF8 -UseSsl -ErrorAction Stop
+                        }
+                    } else {
+                        Write-Host "The file $($ReleaseInfo.binary.package.name) appears to have already been downloaded."
+                    }
+                } else {
+                    $Found = Get-ChildItem -Filter $ReleaseInfo.binary.package.name -Path $WindowsShareFolder
+                    if ($null -eq $Found) {
+                        Remove-Item $WindowsShareFolder\OpenJDK$($Release)U-$($Type)*
+                        Write-Host "Downloading file $($ReleaseInfo.binary.package.name) to $($WindowsShareFolder)"
+                        Invoke-WebRequest -Uri "https://api.adoptium.net/v3/binary/latest/$Release/ga/$Platform/x64/$Type/hotspot/normal/eclipse" -UseBasicParsing -OutFile $WindowsShareFolder\$($ReleaseInfo.binary.package.name)
+                        Write-Host "Comparing checksums"
+                        $DownloadHash = Get-FileHash $WindowsShareFolder\$($ReleaseInfo.binary.package.name)
+                        $AdoptiumHash = $ReleaseInfo.binary.package.checksum
+                        if ($AdoptiumHash -ne $DownloadHash.hash) {
+                            $ChecksumSubject="An integrity issue has been found with an Adoptium download"
+                            $ChecksumBody ="An integrity issue has been found with $($ReleaseInfo.binary.package.name) on $($WindowsShareFolder)"
+                            Write-Host "Sending Email: SMTP Server - $SmtpServer"
+                            Send-Mailmessage -smtpServer $SmtpServer -from $From -to $ChecksumRecipients -subject $ChecksumSubject -body $ChecksumBody -bodyasHTML -priority High -Encoding UTF8 -UseSsl -ErrorAction Stop
+                        }
+                    } else {
+                        Write-Host "The file $($ReleaseInfo.binary.package.name) appears to have already been downloaded."
+                    }
+                }
+            } else {
+                Write-Host "The current release for Java $Release is outside the 24 hour window for download."
+            }
+        }
+    }
+}
+----
+
 == More examples
 
 Looking for more API examples? Got an example you'd like to share? Drop us a note on the
