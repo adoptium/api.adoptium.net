@@ -145,10 +145,10 @@ The full set of filters and possible argument values is available in
 https://api.adoptium.net/q/swagger-ui/[the API documentation]
 and can be used to specify exactly the information you require.
 
+[#example-five]
+== Example Five: Download Windows JDKs via the API using Powershell
 
-== Example Five: Scripting a download using the Adoptium API for Windows via Powershell
-
-Below is a sample script written in Powershell for Windows, that downloads and verifies the JDKs via the API, and performs checksum validation and notifications via email for the results. 
+Below is a sample script written in Powershell for Windows, that downloads and verifies the JDKs via the API, and performs checksum validation and notifications via email for the results. This script is provided as an example to demonstrate how the API can be used to automate tasks such as downloading and verifying the JDK.
 
 [source, powershell]
 ----
