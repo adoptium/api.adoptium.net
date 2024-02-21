@@ -148,13 +148,12 @@ and can be used to specify exactly the information you require.
 [#example-five]
 == Example Five: Download JDKs via the API using Powershell.
 
-Below is a sample script written in Powershell for Windows This script downloads and verifies the JDKs via the API, and performs checksum validation and notifications via email for the results. This script is provided as an example to demonstrate how the API can be used to automate tasks such as downloading and verifying the JDK.
+Below is a sample script written in Powershell for Windows This script downloads and verifies the JDKs via the API, and performs checksum validation. This script is provided as an example to demonstrate how the API can be used to automate tasks such as downloading and verifying the JDK.
 
 [source, powershell]
 ----
 # Define Folders For Downloads
-$LinuxShareFolder = "<path to where the Linux builds will be copied to>"
-$WindowsShareFolder = "<path to where the Windows builds will be copied to>"
+$ShareFolder = "<path to where the builds will be copied to>"
 # Define Releases To Download
 $Releases = @('8','11','17','21')
 $Releases | ForEach-Object {
@@ -170,31 +169,31 @@ $Releases | ForEach-Object {
             $TimeDifference = New-TimeSpan -Start $ReleaseInfo.binary.updated_at -End $CurrentDate
             
                 if ("$Platform" -eq "linux") {
-                    $Found = Get-ChildItem -Filter $ReleaseInfo.binary.package.name -Path $LinuxShareFolder
+                    $Found = Get-ChildItem -Filter $ReleaseInfo.binary.package.name -Path $ShareFolder
                     if ($null -eq $Found) {
-                        Remove-Item $LinuxShareFolder\OpenJDK$($Release)U-$($Type)*
-                        Write-Host "Downloading file $($ReleaseInfo.binary.package.name) to $($LinuxShareFolder)"
-                        Invoke-WebRequest -Uri "https://api.adoptium.net/v3/binary/latest/$Release/ga/$Platform/x64/$Type/hotspot/normal/eclipse" -UseBasicParsing -OutFile $LinuxShareFolder\$($ReleaseInfo.binary.package.name)
+                        Remove-Item $ShareFolder\OpenJDK$($Release)U-$($Type)*
+                        Write-Host "Downloading file $($ReleaseInfo.binary.package.name) to $($ShareFolder)"
+                        Invoke-WebRequest -Uri "https://api.adoptium.net/v3/binary/latest/$Release/ga/$Platform/x64/$Type/hotspot/normal/eclipse" -UseBasicParsing -OutFile $ShareFolder\$($ReleaseInfo.binary.package.name)
                         Write-Host "Comparing checksums"
-                        $DownloadHash = Get-FileHash $LinuxShareFolder\$($ReleaseInfo.binary.package.name)
+                        $DownloadHash = Get-FileHash $ShareFolder\$($ReleaseInfo.binary.package.name)
                         $AdoptiumHash = $ReleaseInfo.binary.package.checksum
                         if ($AdoptiumHash -ne $DownloadHash.hash) {
-                            Write-Host "An integrity issue has been found with $($ReleaseInfo.binary.package.name) on $($LinuxShareFolder)"
+                            Write-Host "An integrity issue has been found with $($ReleaseInfo.binary.package.name) on $($ShareFolder)"
                         }
                     } else {
                         Write-Host "The file $($ReleaseInfo.binary.package.name) appears to have already been downloaded."
                     }
                 } else {
-                    $Found = Get-ChildItem -Filter $ReleaseInfo.binary.package.name -Path $WindowsShareFolder
+                    $Found = Get-ChildItem -Filter $ReleaseInfo.binary.package.name -Path $ShareFolder
                     if ($null -eq $Found) {
-                        Remove-Item $WindowsShareFolder\OpenJDK$($Release)U-$($Type)*
-                        Write-Host "Downloading file $($ReleaseInfo.binary.package.name) to $($WindowsShareFolder)"
-                        Invoke-WebRequest -Uri "https://api.adoptium.net/v3/binary/latest/$Release/ga/$Platform/x64/$Type/hotspot/normal/eclipse" -UseBasicParsing -OutFile $WindowsShareFolder\$($ReleaseInfo.binary.package.name)
+                        Remove-Item $ShareFolder\OpenJDK$($Release)U-$($Type)*
+                        Write-Host "Downloading file $($ReleaseInfo.binary.package.name) to $($ShareFolder)"
+                        Invoke-WebRequest -Uri "https://api.adoptium.net/v3/binary/latest/$Release/ga/$Platform/x64/$Type/hotspot/normal/eclipse" -UseBasicParsing -OutFile $ShareFolder\$($ReleaseInfo.binary.package.name)
                         Write-Host "Comparing checksums"
-                        $DownloadHash = Get-FileHash $WindowsShareFolder\$($ReleaseInfo.binary.package.name)
+                        $DownloadHash = Get-FileHash $ShareFolder\$($ReleaseInfo.binary.package.name)
                         $AdoptiumHash = $ReleaseInfo.binary.package.checksum
                         if ($AdoptiumHash -ne $DownloadHash.hash) {
-                            Write-Host "An integrity issue has been found with $($ReleaseInfo.binary.package.name) on $($WindowsShareFolder)"
+                            Write-Host "An integrity issue has been found with $($ReleaseInfo.binary.package.name) on $($ShareFolder)"
                         }
                     } else {
                         Write-Host "The file $($ReleaseInfo.binary.package.name) appears to have already been downloaded."
