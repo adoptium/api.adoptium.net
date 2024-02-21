@@ -152,9 +152,10 @@ Below is a sample script written in Powershell for Windows This script downloads
 
 [source, powershell]
 ----
+# Define Folders For Downloads
 $LinuxShareFolder = "<path to where the Linux builds will be copied to>"
 $WindowsShareFolder = "<path to where the Windows builds will be copied to>"
-
+# Define Releases To Download
 $Releases = @('8','11','17','21')
 $Releases | ForEach-Object {
     $Release = $_
@@ -167,7 +168,7 @@ $Releases | ForEach-Object {
             $ReleaseInfo = Invoke-WebRequest -Uri "https://api.adoptium.net/v3/assets/latest/$Release/hotspot?architecture=x64&image_type=$Type&os=$Platform&vendor=eclipse" -UseBasicParsing | ConvertFrom-Json
             $CurrentDate = Get-Date -UFormat "%Y-%m-%dT%H:%M:%SZ"
             $TimeDifference = New-TimeSpan -Start $ReleaseInfo.binary.updated_at -End $CurrentDate
-            if ($TimeDifference -lt (New-TimeSpan -Hours 24)) {
+            
                 if ("$Platform" -eq "linux") {
                     $Found = Get-ChildItem -Filter $ReleaseInfo.binary.package.name -Path $LinuxShareFolder
                     if ($null -eq $Found) {
@@ -199,10 +200,7 @@ $Releases | ForEach-Object {
                         Write-Host "The file $($ReleaseInfo.binary.package.name) appears to have already been downloaded."
                     }
                 }
-            } else {
-                Write-Host "The current release for Java $Release is outside the 24 hour window for download."
             }
-        }
     }
 }
 ----
