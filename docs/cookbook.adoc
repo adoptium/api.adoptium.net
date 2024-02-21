@@ -152,16 +152,8 @@ Below is a sample script written in Powershell for Windows This script downloads
 
 [source, powershell]
 ----
-$ProgressPreference = 'SilentlyContinue'
-$SmtpServer = "[if you want to send notifications]"
-$From = "[account the alert will be sent from]"
-$ChecksumRecipients = "[account where the alert will be sent to]"
-
 $LinuxShareFolder = "<path to where the Linux builds will be copied to>"
 $WindowsShareFolder = "<path to where the Windows builds will be copied to>"
-# Uncomment the following 2 lines for debugging
-# $Date = Get-Date -format yyyy-MM-dd-HHmm
-# Start-Transcript -Path "C:\work\getJavaReleases\transcript-$Date.txt"
 
 $Releases = @('8','11','17','21')
 $Releases | ForEach-Object {
@@ -186,10 +178,7 @@ $Releases | ForEach-Object {
                         $DownloadHash = Get-FileHash $LinuxShareFolder\$($ReleaseInfo.binary.package.name)
                         $AdoptiumHash = $ReleaseInfo.binary.package.checksum
                         if ($AdoptiumHash -ne $DownloadHash.hash) {
-                            $ChecksumSubject="An integrity issue has been found with an Adoptium download"
-                            $ChecksumBody ="An integrity issue has been found with $($ReleaseInfo.binary.package.name) on $($LinuxShareFolder)"
-                            Write-Output "Sending Email: SMTP Server - $SmtpServer"
-                            Send-Mailmessage -smtpServer $SmtpServer -from $From -to $ChecksumRecipients -subject $ChecksumSubject -body $ChecksumBody -bodyasHTML -priority High -Encoding UTF8 -UseSsl -ErrorAction Stop
+                            Write-Host "An integrity issue has been found with $($ReleaseInfo.binary.package.name) on $($LinuxShareFolder)"
                         }
                     } else {
                         Write-Host "The file $($ReleaseInfo.binary.package.name) appears to have already been downloaded."
@@ -204,10 +193,7 @@ $Releases | ForEach-Object {
                         $DownloadHash = Get-FileHash $WindowsShareFolder\$($ReleaseInfo.binary.package.name)
                         $AdoptiumHash = $ReleaseInfo.binary.package.checksum
                         if ($AdoptiumHash -ne $DownloadHash.hash) {
-                            $ChecksumSubject="An integrity issue has been found with an Adoptium download"
-                            $ChecksumBody ="An integrity issue has been found with $($ReleaseInfo.binary.package.name) on $($WindowsShareFolder)"
-                            Write-Host "Sending Email: SMTP Server - $SmtpServer"
-                            Send-Mailmessage -smtpServer $SmtpServer -from $From -to $ChecksumRecipients -subject $ChecksumSubject -body $ChecksumBody -bodyasHTML -priority High -Encoding UTF8 -UseSsl -ErrorAction Stop
+                            Write-Host "An integrity issue has been found with $($ReleaseInfo.binary.package.name) on $($WindowsShareFolder)"
                         }
                     } else {
                         Write-Host "The file $($ReleaseInfo.binary.package.name) appears to have already been downloaded."
