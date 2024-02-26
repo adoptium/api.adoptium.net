@@ -20,7 +20,7 @@
         <maven.project-info-reports-plugin.version>3.5.0</maven.project-info-reports-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.7.3</quarkus.version>
+        <quarkus.version>3.8.0</quarkus.version>
         <rest-assured.version>5.4.0</rest-assured.version>
     </properties>
 
@@ -247,7 +247,7 @@
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq</artifactId>
-                <version>3.19.3</version>
+                <version>3.19.4</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -278,7 +278,7 @@
             <dependency>
                 <groupId>org.jboss.weld</groupId>
                 <artifactId>weld-junit5</artifactId>
-                <version>4.0.1.Final</version>
+                <version>4.0.2.Final</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -343,13 +343,13 @@
             <dependency>
                 <groupId>io.smallrye</groupId>
                 <artifactId>smallrye-open-api-core</artifactId>
-                <version>3.9.0</version>
+                <version>3.10.0</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>io.smallrye</groupId>
                 <artifactId>smallrye-open-api-jaxrs</artifactId>
-                <version>3.9.0</version>
+                <version>3.10.0</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
