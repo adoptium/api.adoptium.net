@@ -19,9 +19,9 @@
         <jacoco.version>0.8.11</jacoco.version>
         <jdk.version>17</jdk.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <kotlin.version>1.9.22</kotlin.version>
+        <kotlin.version>1.9.23</kotlin.version>
         <maven.antrun-plugin.version>3.1.0</maven.antrun-plugin.version>
-        <maven.assembly-plugin.version>3.6.0</maven.assembly-plugin.version>
+        <maven.assembly-plugin.version>3.7.0</maven.assembly-plugin.version>
         <maven.build-helper-plugin.version>3.5.0</maven.build-helper-plugin.version>
         <maven.changes-plugin.version>2.12.1</maven.changes-plugin.version>
         <maven.checkstyle-plugin.version>3.3.0</maven.checkstyle-plugin.version>
@@ -37,8 +37,8 @@
         <maven.deploy-plugin.version>3.1.1</maven.deploy-plugin.version>
         <maven.directory-maven-plugin.version>1.0</maven.directory-maven-plugin.version>
         <maven.enforcer-plugin.version>3.4.1</maven.enforcer-plugin.version>
-        <maven.exec-plugin.version>3.1.1</maven.exec-plugin.version>
-        <maven.filtering-plugin.version>3.3.1</maven.filtering-plugin.version>
+        <maven.exec-plugin.version>3.2.0</maven.exec-plugin.version>
+        <maven.filtering-plugin.version>3.3.2</maven.filtering-plugin.version>
         <maven.help-plugin.version>3.4.0</maven.help-plugin.version>
         <!--
              TODO Moving to 3.1.1 created a multi-module packaging issue:
@@ -58,7 +58,7 @@
         <maven.jxr-plugin.version>3.3.2</maven.jxr-plugin.version>
         <maven.license-plugin.version>2.4.0</maven.license-plugin.version>
         <maven.openapi-generator-maven-plugin.version>7.3.0</maven.openapi-generator-maven-plugin.version>
-        <maven.pitest-plugin.version>1.15.7</maven.pitest-plugin.version>
+        <maven.pitest-plugin.version>1.15.8</maven.pitest-plugin.version>
         <maven.pmd-plugin.version>3.21.2</maven.pmd-plugin.version>
         <maven.project-info-reports-plugin.version>3.5.0</maven.project-info-reports-plugin.version>
         <maven.rat-plugin.version>0.16.1</maven.rat-plugin.version>
@@ -82,7 +82,7 @@
         <spotbugs.version>4.7.3</spotbugs.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.7.2</quarkus.version>
+        <quarkus.version>3.8.2</quarkus.version>
     </properties>
 
     <modules>

@@ -145,6 +145,48 @@ The full set of filters and possible argument values is available in
 https://api.adoptium.net/q/swagger-ui/[the API documentation]
 and can be used to specify exactly the information you require.
 
+[#example-five]
+== Example Five: Download JDKs via the API using Powershell.
+
+Below is a sample script written in Powershell for Windows This script downloads and verifies the JDKs via the API, and performs checksum validation. This script is provided as an example to demonstrate how the API can be used to automate tasks such as downloading and verifying the JDK.
+
+[source, powershell]
+----
+# Define Folders For Downloads
+$ShareFolder = "<path to where the builds will be copied to>"
+# Define Releases To Download
+$Releases = @('8', '11', '17', '21')
+$Releases | ForEach-Object {
+    $Release = $_
+    $Platforms = @('linux', 'windows')
+    $Platforms | ForEach-Object {
+        $Platform = $_
+        $Types = @('jdk', 'jre')
+        $Types | ForEach-Object {
+            $Type = $_
+            $ReleaseInfo = Invoke-WebRequest -Uri "https://api.adoptium.net/v3/assets/latest/$Release/hotspot?architecture=x64&image_type=$Type&os=$Platform&vendor=eclipse" -UseBasicParsing | ConvertFrom-Json
+            $CurrentDate = Get-Date -UFormat "%Y-%m-%dT%H:%M:%SZ"
+            $TimeDifference = New-TimeSpan -Start $ReleaseInfo.binary.updated_at -End $CurrentDate
+            $Found = Get-ChildItem -Filter $ReleaseInfo.binary.package.name -Path $ShareFolder
+            if ($null -eq $Found) {
+                Remove-Item "$ShareFolder\OpenJDK$ReleaseU-$Type*"
+                Write-Host "Downloading file $($ReleaseInfo.binary.package.name) to $ShareFolder"
+                Invoke-WebRequest -Uri "https://api.adoptium.net/v3/binary/latest/$Release/ga/$Platform/x64/$Type/hotspot/normal/eclipse" -UseBasicParsing -OutFile "$ShareFolder\$($ReleaseInfo.binary.package.name)"
+                Write-Host "Comparing checksums"
+                $DownloadHash = Get-FileHash "$ShareFolder\$($ReleaseInfo.binary.package.name)"
+                $AdoptiumHash = $ReleaseInfo.binary.package.checksum
+
+                if ($AdoptiumHash -ne $DownloadHash.hash) {
+                    Write-Host "An integrity issue has been found with $($ReleaseInfo.binary.package.name) on $ShareFolder"
+                }
+            } else {
+                Write-Host "The file $($ReleaseInfo.binary.package.name) appears to have already been downloaded."
+            }
+        }
+    }
+}
+----
+
 == More examples
 
 Looking for more API examples? Got an example you'd like to share? Drop us a note on the
