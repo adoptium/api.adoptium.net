@@ -38,7 +38,7 @@
         <maven.directory-maven-plugin.version>1.0</maven.directory-maven-plugin.version>
         <maven.enforcer-plugin.version>3.4.1</maven.enforcer-plugin.version>
         <maven.exec-plugin.version>3.2.0</maven.exec-plugin.version>
-        <maven.filtering-plugin.version>3.3.1</maven.filtering-plugin.version>
+        <maven.filtering-plugin.version>3.3.2</maven.filtering-plugin.version>
         <maven.help-plugin.version>3.4.0</maven.help-plugin.version>
         <!--
              TODO Moving to 3.1.1 created a multi-module packaging issue:
