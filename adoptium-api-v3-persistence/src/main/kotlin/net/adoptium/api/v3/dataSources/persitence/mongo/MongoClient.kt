@@ -68,7 +68,9 @@ open class MongoClient {
             .applyConnectionString(ConnectionString(connectionString))
         val sslEnabled = System.getenv("MONGODB_SSL")?.toBoolean()
         if (sslEnabled == true) {
-            settingsBuilder = settingsBuilder.applyToSslSettings { it.enabled(true).invalidHostNameAllowed(true) }
+            val checkMongoHostName = System.getenv("DISABLE_MONGO_HOST_CHECK")?.toBoolean() ?: true
+
+            settingsBuilder = settingsBuilder.applyToSslSettings { it.enabled(true).invalidHostNameAllowed(checkMongoHostName) }
         }
         client = KMongo.createClient(settingsBuilder.build()).coroutine
         database = client.getDatabase(dbName)
