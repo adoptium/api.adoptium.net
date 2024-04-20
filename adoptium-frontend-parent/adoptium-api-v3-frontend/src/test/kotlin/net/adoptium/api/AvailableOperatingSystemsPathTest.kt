@@ -1,7 +1,6 @@
 package net.adoptium.api
 
 import io.restassured.RestAssured
-import io.restassured.config.RedirectConfig
 import net.adoptium.api.v3.JsonMapper
 import net.adoptium.api.v3.models.OperatingSystem
 import org.junit.jupiter.api.Test
