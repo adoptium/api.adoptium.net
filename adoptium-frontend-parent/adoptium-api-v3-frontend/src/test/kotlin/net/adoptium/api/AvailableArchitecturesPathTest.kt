@@ -1,6 +1,7 @@
 package net.adoptium.api
 
 import io.restassured.RestAssured
+import io.restassured.config.RedirectConfig
 import net.adoptium.api.v3.JsonMapper
 import net.adoptium.api.v3.models.Architecture
 import org.junit.jupiter.api.Test
@@ -8,10 +9,20 @@ import org.junit.jupiter.api.Test
 class AvailableArchitecturesPathTest : FrontendTest() {
 
     @Test
+    fun availableArchitectures_deprecated() {
+        RestAssured.given()
+            .config(RestAssured.config().redirect(RedirectConfig.redirectConfig().followRedirects(false)))
+            .`when`()
+            .get("/v3/info/available_architectures")
+            .then()
+            .statusCode(301)
+    }
+
+    @Test
     fun availableArchitectures() {
         RestAssured.given()
             .`when`()
-            .get("/v3/info/available_architectures")
+            .get("/v3/info/available/architectures")
             .then()
             .statusCode(200)
     }
@@ -20,7 +31,7 @@ class AvailableArchitecturesPathTest : FrontendTest() {
     fun availableArchitecturesAreCorrect() {
         var body = RestAssured.given()
             .`when`()
-            .get("/v3/info/available_architectures")
+            .get("/v3/info/available/architectures")
             .body
 
         val architectures = parseArchitectures(body.asString())

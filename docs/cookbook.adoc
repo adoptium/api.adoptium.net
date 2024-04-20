@@ -12,7 +12,7 @@ to build more complex queries, including access to nightly builds, debug builds,
 The first example is a simple API query that returns the list of Java versions available from Adoptium, including the regular and long term supported (LTS) versions. The API doesn't take any arguments, and returns a JSON formatted list of versions.
 
 [source,html]
-https://api.adoptium.net/v3/info/available_releases
+https://api.adoptium.net/v3/info/available/releases
 
 open that link in a browser and the result will be something like this
 
@@ -46,7 +46,7 @@ For example, to get the most recent LTS version available you can use:
 
 [source, bash]
 ----
-$ curl -s https://api.adoptium.net/v3/info/available_releases | jq '.most_recent_lts'
+$ curl -s https://api.adoptium.net/v3/info/available/releases | jq '.most_recent_lts'
 17
 ----
 
