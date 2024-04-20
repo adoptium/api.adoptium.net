@@ -9,16 +9,6 @@ import org.junit.jupiter.api.Test
 class AvailableArchitecturesPathTest : FrontendTest() {
 
     @Test
-    fun availableArchitectures_deprecated() {
-        RestAssured.given()
-            .config(RestAssured.config().redirect(RedirectConfig.redirectConfig().followRedirects(false)))
-            .`when`()
-            .get("/v3/info/available_architectures")
-            .then()
-            .statusCode(301)
-    }
-
-    @Test
     fun availableArchitectures() {
         RestAssured.given()
             .`when`()
