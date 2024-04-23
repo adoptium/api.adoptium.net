@@ -28,7 +28,7 @@ class JsonSerializationTest : FrontendTest() {
     fun isPrettyPrinted() {
         RestAssured.given()
             .`when`()
-            .get("/v3/info/available_releases")
+            .get("/v3/info/available/releases")
             .then()
             .statusCode(200)
             .body(PrettyPrintMatcher())

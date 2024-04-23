@@ -11,7 +11,7 @@ class AvailableOperatingSystemsPathTest : FrontendTest() {
     fun availableOperatingSystems() {
         RestAssured.given()
             .`when`()
-            .get("/v3/info/available_operating-systems")
+            .get("/v3/info/available/operating-systems")
             .then()
             .statusCode(200)
     }
@@ -20,7 +20,7 @@ class AvailableOperatingSystemsPathTest : FrontendTest() {
     fun availableOperatingSystemsAreCorrect() {
         var body = RestAssured.given()
             .`when`()
-            .get("/v3/info/available_operating-systems")
+            .get("/v3/info/available/operating-systems")
             .body
 
         val operatingSystems = parseOperatingSystems(body.asString())

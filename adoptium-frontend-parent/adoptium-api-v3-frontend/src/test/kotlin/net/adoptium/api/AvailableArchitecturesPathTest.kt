@@ -11,7 +11,7 @@ class AvailableArchitecturesPathTest : FrontendTest() {
     fun availableArchitectures() {
         RestAssured.given()
             .`when`()
-            .get("/v3/info/available_architectures")
+            .get("/v3/info/available/architectures")
             .then()
             .statusCode(200)
     }
@@ -20,7 +20,7 @@ class AvailableArchitecturesPathTest : FrontendTest() {
     fun availableArchitecturesAreCorrect() {
         var body = RestAssured.given()
             .`when`()
-            .get("/v3/info/available_architectures")
+            .get("/v3/info/available/architectures")
             .body
 
         val architectures = parseArchitectures(body.asString())

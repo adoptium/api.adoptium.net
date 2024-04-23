@@ -14,8 +14,9 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag
 @Produces(MediaType.APPLICATION_JSON)
 @ApplicationScoped
 class AvailableArchitecturesResource {
+
     @GET
-    @Path("/available_architectures")
+    @Path("/available/architectures")
     @Operation(summary = "Returns names of available architectures", operationId = "getAvailableArchitectures")
     fun get(): List<String> {
         return Architecture.values().map { it.name }.toList()
