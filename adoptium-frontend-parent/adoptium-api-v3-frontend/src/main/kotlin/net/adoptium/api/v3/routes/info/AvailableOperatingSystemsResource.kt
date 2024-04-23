@@ -16,7 +16,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag
 class AvailableOperatingSystemsResource {
 
     @GET
-    @Path("/available/operating-systems")
+    @Path("/available/operating_systems")
     @Operation(summary = "Returns names of available operating systems", operationId = "getAvailableOperatingSystems")
     fun get(): List<String> {
         return OperatingSystem.values().map { it.name }.toList()
