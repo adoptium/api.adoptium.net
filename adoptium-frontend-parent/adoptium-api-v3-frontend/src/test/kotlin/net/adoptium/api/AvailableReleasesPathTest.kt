@@ -2,6 +2,7 @@ package net.adoptium.api
 
 import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured
+import io.restassured.config.RedirectConfig
 import net.adoptium.api.v3.JsonMapper
 import net.adoptium.api.v3.models.ReleaseInfo
 import org.hamcrest.Description

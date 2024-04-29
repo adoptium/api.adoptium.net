@@ -16,17 +16,17 @@
     <!-- Keep all these in sync with adoptium-api-versions -->
     <properties>
         <coroutine.version>1.7.1</coroutine.version>
-        <jacoco.version>0.8.11</jacoco.version>
+        <jacoco.version>0.8.12</jacoco.version>
         <jdk.version>17</jdk.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
         <kotlin.version>1.9.23</kotlin.version>
         <maven.antrun-plugin.version>3.1.0</maven.antrun-plugin.version>
-        <maven.assembly-plugin.version>3.7.0</maven.assembly-plugin.version>
+        <maven.assembly-plugin.version>3.7.1</maven.assembly-plugin.version>
         <maven.build-helper-plugin.version>3.5.0</maven.build-helper-plugin.version>
         <maven.changes-plugin.version>2.12.1</maven.changes-plugin.version>
         <maven.checkstyle-plugin.version>3.3.0</maven.checkstyle-plugin.version>
         <maven.clean-plugin.version>3.3.2</maven.clean-plugin.version>
-        <maven.compiler-plugin.version>3.12.1</maven.compiler-plugin.version>
+        <maven.compiler-plugin.version>3.13.0</maven.compiler-plugin.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.release>17</maven.compiler.release>
         <maven.compiler.target>17</maven.compiler.target>
@@ -49,7 +49,7 @@
         <maven.install-plugin.version>2.5.2</maven.install-plugin.version>
         <!-- <maven.install-plugin.version>3.1.1</maven.install-plugin.version> -->
         <maven.jacoco-plugin.version>0.8.10</maven.jacoco-plugin.version>
-        <maven.jar-plugin.version>3.3.0</maven.jar-plugin.version>
+        <maven.jar-plugin.version>3.4.1</maven.jar-plugin.version>
         <maven.javadoc-plugin.version>3.6.3</maven.javadoc-plugin.version>
         <!-- Disabled further below until we get 2.1 https://www.mail-archive.com/dev@maven.apache.org/msg127389.html -->
         <maven.jdepend-plugin.version>2.0</maven.jdepend-plugin.version>
@@ -57,21 +57,21 @@
         <maven.jdeps-plugin.version>3.1.2</maven.jdeps-plugin.version>
         <maven.jxr-plugin.version>3.3.2</maven.jxr-plugin.version>
         <maven.license-plugin.version>2.4.0</maven.license-plugin.version>
-        <maven.openapi-generator-maven-plugin.version>7.3.0</maven.openapi-generator-maven-plugin.version>
-        <maven.pitest-plugin.version>1.15.8</maven.pitest-plugin.version>
-        <maven.pmd-plugin.version>3.21.2</maven.pmd-plugin.version>
+        <maven.openapi-generator-maven-plugin.version>7.5.0</maven.openapi-generator-maven-plugin.version>
+        <maven.pitest-plugin.version>1.16.0</maven.pitest-plugin.version>
+        <maven.pmd-plugin.version>3.22.0</maven.pmd-plugin.version>
         <maven.project-info-reports-plugin.version>3.5.0</maven.project-info-reports-plugin.version>
         <maven.rat-plugin.version>0.16.1</maven.rat-plugin.version>
         <maven.release-plugin.version>3.0.1</maven.release-plugin.version>
         <maven.resources-plugin.version>3.3.1</maven.resources-plugin.version>
-        <maven.scm-plugin.version>2.0.1</maven.scm-plugin.version>
+        <maven.scm-plugin.version>2.1.0</maven.scm-plugin.version>
         <maven.site-plugin.version>4.0.0-M13</maven.site-plugin.version>
-        <maven.source-plugin.version>3.3.0</maven.source-plugin.version>
-        <maven.spotbugs-plugin.version>4.8.3.1</maven.spotbugs-plugin.version>
+        <maven.source-plugin.version>3.3.1</maven.source-plugin.version>
+        <maven.spotbugs-plugin.version>4.8.4.0</maven.spotbugs-plugin.version>
         <maven.surefire-plugin.version>3.2.5</maven.surefire-plugin.version>
         <maven.swaggerhub-maven-plugin.version>1.0.10</maven.swaggerhub-maven-plugin.version>
         <maven.tidy-plugin.version>1.2.0</maven.tidy-plugin.version>
-        <maven.toolchains-plugin.version>3.1.0</maven.toolchains-plugin.version>
+        <maven.toolchains-plugin.version>3.2.0</maven.toolchains-plugin.version>
         <maven.version>3.9.6</maven.version>
         <maven.versions-plugin.version>2.16.2</maven.versions-plugin.version>
         <maven.war-plugin.version>3.4.0</maven.war-plugin.version>
@@ -82,7 +82,7 @@
         <spotbugs.version>4.7.3</spotbugs.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.8.2</quarkus.version>
+        <quarkus.version>3.9.4</quarkus.version>
     </properties>
 
     <modules>

@@ -26,8 +26,12 @@ fi
 if [ -f "${MONGO_CERT_FILE}" ];
 then
   cp $JAVA_HOME/lib/security/cacerts .
-  keytool -import -alias mongodb -storepass changeit -keystore ./cacerts -file "${MONGO_CERT_FILE}" -noprompt
-  JAVA_OPTS="$JAVA_OPTS -Djavax.net.ssl.trustStore=./cacerts -Djavax.net.ssl.trustStorePassword=changeit"
+  KEYSTORE_PASS=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 30; echo)
+  keytool -storepasswd -storepass changeit -new $KEYSTORE_PASS -keystore cacerts
+
+  keytool -import -alias mongodb -storepass $KEYSTORE_PASS -keystore ./cacerts -file "${MONGO_CERT_FILE}" -noprompt
+
+  JAVA_OPTS="$JAVA_OPTS -Djavax.net.ssl.trustStore=./cacerts -Djavax.net.ssl.trustStorePassword=$KEYSTORE_PASS"
   export MONGODB_SSL="true"
 fi
 
