@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 class TypesArchitecturesPathTest : FrontendTest() {
 
     @Test
-    fun availableArchitectures() {
+    fun getArchitectures() {
         RestAssured.given()
             .`when`()
             .get("/v3/types/architectures")
@@ -17,7 +17,7 @@ class TypesArchitecturesPathTest : FrontendTest() {
     }
 
     @Test
-    fun availableArchitecturesAreCorrect() {
+    fun getArchitecturesAreCorrect() {
         var body = RestAssured.given()
             .`when`()
             .get("/v3/types/architectures")

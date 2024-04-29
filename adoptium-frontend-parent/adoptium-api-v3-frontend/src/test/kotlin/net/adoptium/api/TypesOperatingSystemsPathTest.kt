@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 class TypesOperatingSystemsPathTest : FrontendTest() {
 
     @Test
-    fun availableOperatingSystems() {
+    fun getOperatingSystems() {
         RestAssured.given()
             .`when`()
             .get("/v3/types/operating_systems")
@@ -17,7 +17,7 @@ class TypesOperatingSystemsPathTest : FrontendTest() {
     }
 
     @Test
-    fun availableOperatingSystemsAreCorrect() {
+    fun getOperatingSystemsAreCorrect() {
         var body = RestAssured.given()
             .`when`()
             .get("/v3/types/operating_systems")

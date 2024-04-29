@@ -17,7 +17,7 @@ class TypesArchitecturesResource {
 
     @GET
     @Path("/architectures")
-    @Operation(summary = "Returns names of available architectures", operationId = "getAvailableArchitectures")
+    @Operation(summary = "Returns names of architectures", operationId = "getArchitectures")
     fun get(): List<String> {
         return Architecture.values().map { it.name }.toList()
     }

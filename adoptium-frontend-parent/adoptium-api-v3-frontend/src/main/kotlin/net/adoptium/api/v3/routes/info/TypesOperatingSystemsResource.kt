@@ -17,7 +17,7 @@ class TypesOperatingSystemsResource {
 
     @GET
     @Path("/operating_systems")
-    @Operation(summary = "Returns names of available operating systems", operationId = "getAvailableOperatingSystems")
+    @Operation(summary = "Returns names of operating systems", operationId = "getOperatingSystems")
     fun get(): List<String> {
         return OperatingSystem.values().map { it.name }.toList()
     }
