@@ -25,19 +25,6 @@ constructor(
 
     @GET
     @Path("/available_releases")
-    @Deprecated("Use the new get() method with new path /available/releases")
-    @Operation(hidden=true)
-    fun get301(uriInfo: UriInfo): Response {
-        val location = uriInfo.requestUriBuilder.replacePath("/v3/info/available/releases").build()
-        return Response
-            .status(Response.Status.MOVED_PERMANENTLY)
-            .location(location)
-            .entity(apiDataStore.getReleaseInfo())
-            .build()
-    }
-
-    @GET
-    @Path("/available/releases")
     @Operation(summary = "Returns information about available releases", operationId = "getAvailableReleases")
     fun get(): ReleaseInfo {
         return apiDataStore.getReleaseInfo()
