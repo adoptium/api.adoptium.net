@@ -5,20 +5,20 @@ import jakarta.ws.rs.GET
 import jakarta.ws.rs.Path
 import jakarta.ws.rs.Produces
 import jakarta.ws.rs.core.MediaType
-import net.adoptium.api.v3.models.Architecture
+import net.adoptium.api.v3.models.OperatingSystem
 import org.eclipse.microprofile.openapi.annotations.Operation
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
 
-@Tag(name = "Release Info")
-@Path("/v3/info")
+@Tag(name = "Types")
+@Path("/v3/types")
 @Produces(MediaType.APPLICATION_JSON)
 @ApplicationScoped
-class AvailableArchitecturesResource {
+class TypesOperatingSystemsResource {
 
     @GET
-    @Path("/available/architectures")
-    @Operation(summary = "Returns names of available architectures", operationId = "getAvailableArchitectures")
+    @Path("/operating_systems")
+    @Operation(summary = "Returns names of operating systems", operationId = "getOperatingSystems")
     fun get(): List<String> {
-        return Architecture.values().map { it.name }.toList()
+        return OperatingSystem.values().map { it.name }.toList()
     }
 }

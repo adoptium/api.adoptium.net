@@ -5,22 +5,22 @@ import net.adoptium.api.v3.JsonMapper
 import net.adoptium.api.v3.models.OperatingSystem
 import org.junit.jupiter.api.Test
 
-class AvailableOperatingSystemsPathTest : FrontendTest() {
+class TypesOperatingSystemsPathTest : FrontendTest() {
 
     @Test
-    fun availableOperatingSystems() {
+    fun getOperatingSystems() {
         RestAssured.given()
             .`when`()
-            .get("/v3/info/available/operating_systems")
+            .get("/v3/types/operating_systems")
             .then()
             .statusCode(200)
     }
 
     @Test
-    fun availableOperatingSystemsAreCorrect() {
+    fun getOperatingSystemsAreCorrect() {
         var body = RestAssured.given()
             .`when`()
-            .get("/v3/info/available/operating_systems")
+            .get("/v3/types/operating_systems")
             .body
 
         val operatingSystems = parseOperatingSystems(body.asString())

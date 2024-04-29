@@ -5,22 +5,22 @@ import net.adoptium.api.v3.JsonMapper
 import net.adoptium.api.v3.models.Architecture
 import org.junit.jupiter.api.Test
 
-class AvailableArchitecturesPathTest : FrontendTest() {
+class TypesArchitecturesPathTest : FrontendTest() {
 
     @Test
-    fun availableArchitectures() {
+    fun getArchitectures() {
         RestAssured.given()
             .`when`()
-            .get("/v3/info/available/architectures")
+            .get("/v3/types/architectures")
             .then()
             .statusCode(200)
     }
 
     @Test
-    fun availableArchitecturesAreCorrect() {
+    fun getArchitecturesAreCorrect() {
         var body = RestAssured.given()
             .`when`()
-            .get("/v3/info/available/architectures")
+            .get("/v3/types/architectures")
             .body
 
         val architectures = parseArchitectures(body.asString())
