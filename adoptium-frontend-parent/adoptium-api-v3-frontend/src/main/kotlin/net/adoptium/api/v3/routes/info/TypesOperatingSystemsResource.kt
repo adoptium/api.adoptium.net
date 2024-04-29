@@ -10,13 +10,13 @@ import org.eclipse.microprofile.openapi.annotations.Operation
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
 
 @Tag(name = "Release Info")
-@Path("/v3/info")
+@Path("/v3/types")
 @Produces(MediaType.APPLICATION_JSON)
 @ApplicationScoped
-class AvailableOperatingSystemsResource {
+class TypesOperatingSystemsResource {
 
     @GET
-    @Path("/available/operating_systems")
+    @Path("/operating_systems")
     @Operation(summary = "Returns names of available operating systems", operationId = "getAvailableOperatingSystems")
     fun get(): List<String> {
         return OperatingSystem.values().map { it.name }.toList()

@@ -10,13 +10,13 @@ import org.eclipse.microprofile.openapi.annotations.Operation
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
 
 @Tag(name = "Release Info")
-@Path("/v3/info")
+@Path("/v3/types")
 @Produces(MediaType.APPLICATION_JSON)
 @ApplicationScoped
-class AvailableArchitecturesResource {
+class TypesArchitecturesResource {
 
     @GET
-    @Path("/available/architectures")
+    @Path("/architectures")
     @Operation(summary = "Returns names of available architectures", operationId = "getAvailableArchitectures")
     fun get(): List<String> {
         return Architecture.values().map { it.name }.toList()
