@@ -13,20 +13,10 @@ import org.junit.jupiter.api.Test
 class AvailableReleasesPathTest : FrontendTest() {
 
     @Test
-    fun availableReleases_deprecated() {
-        RestAssured.given()
-            .config(RestAssured.config().redirect(RedirectConfig.redirectConfig().followRedirects(false)))
-            .`when`()
-            .get("/v3/info/available_releases")
-            .then()
-            .statusCode(301)
-    }
-
-    @Test
     fun availableReleases() {
         RestAssured.given()
             .`when`()
-            .get("/v3/info/available/releases")
+            .get("/v3/info/available_releases")
             .then()
             .statusCode(200)
     }
@@ -69,7 +59,7 @@ class AvailableReleasesPathTest : FrontendTest() {
     private fun check(matcher: (ReleaseInfo) -> Boolean) {
         RestAssured.given()
             .`when`()
-            .get("/v3/info/available/releases")
+            .get("/v3/info/available_releases")
             .then()
             .body(object : TypeSafeMatcher<String>() {
 
