@@ -9,7 +9,7 @@ import net.adoptium.api.v3.models.OperatingSystem
 import org.eclipse.microprofile.openapi.annotations.Operation
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
 
-@Tag(name = "Release Info")
+@Tag(name = "Types")
 @Path("/v3/types")
 @Produces(MediaType.APPLICATION_JSON)
 @ApplicationScoped
