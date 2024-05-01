@@ -46,7 +46,7 @@
              The packaging plugin for this project did not assign a main
              file to the project but it has attachments. Change packaging to 'pom'
          -->
-        <maven.install-plugin.version>2.5.2</maven.install-plugin.version>
+        <maven.install-plugin.version>3.1.2</maven.install-plugin.version>
         <!-- <maven.install-plugin.version>3.1.1</maven.install-plugin.version> -->
         <maven.jacoco-plugin.version>0.8.10</maven.jacoco-plugin.version>
         <maven.jar-plugin.version>3.4.1</maven.jar-plugin.version>
