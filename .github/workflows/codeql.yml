@@ -56,7 +56,7 @@ jobs:
 
     - if: matrix.build-mode == 'manual'
       run: |
-        ./mvnw --batch-mode clean -Dmaven.test.skip=true install -Padoptium,-adoptopenjdk
+        ./mvnw --batch-mode clean install -Padoptium,-adoptopenjdk
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@b7cec7526559c32f1616476ff32d17ba4c59b2d6 # v3.25.5
