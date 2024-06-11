@@ -76,7 +76,7 @@ class UpdateRunner {
             )
 
             val repo = AdoptRepositoryImpl(client, AdoptReleaseMapperFactory(AdoptBinaryMapper(gitHubHtmlClient), gitHubHtmlClient))
-            repo.getRelease(8)
+            repo.getRelease(8, ReleaseIncludeFilter.INCLUDE_ALL)
         }
     }
 }

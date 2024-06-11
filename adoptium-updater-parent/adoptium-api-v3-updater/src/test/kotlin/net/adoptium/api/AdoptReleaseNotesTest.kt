@@ -1,5 +1,6 @@
 package net.adoptium.api
 
+import ReleaseIncludeFilter
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.v3.AdoptRepository
@@ -63,8 +64,8 @@ class AdoptReleaseNotesTest : BaseTest() {
     }
 
     private fun addReleaseNotesFiles(adoptRepository: AdoptRepository) = object : AdoptRepository {
-        override suspend fun getRelease(version: Int): FeatureRelease? {
-            return adoptRepository.getRelease(version)
+        override suspend fun getRelease(version: Int, filter: ReleaseIncludeFilter): FeatureRelease? {
+            return adoptRepository.getRelease(version, filter)
         }
 
         override suspend fun getSummary(version: Int): GHRepositorySummary {

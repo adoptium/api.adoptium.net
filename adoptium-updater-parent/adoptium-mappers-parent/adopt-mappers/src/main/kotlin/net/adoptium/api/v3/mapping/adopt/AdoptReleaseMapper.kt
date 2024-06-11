@@ -39,7 +39,7 @@ open class AdoptReleaseMapperFactory @Inject constructor(
 ) {
     private val mappers: MutableMap<Vendor, AdoptReleaseMapper> = EnumMap(Vendor::class.java)
 
-    fun get(vendor: Vendor): ReleaseMapper {
+    open fun get(vendor: Vendor): ReleaseMapper {
         return if (mappers.containsKey(vendor)) {
             mappers[vendor]!!
         } else {

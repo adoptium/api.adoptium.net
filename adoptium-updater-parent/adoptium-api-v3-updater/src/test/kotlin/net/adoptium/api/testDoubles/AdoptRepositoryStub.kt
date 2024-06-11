@@ -1,5 +1,6 @@
 package net.adoptium.api.testDoubles
 
+import ReleaseIncludeFilter
 import jakarta.annotation.Priority
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.enterprise.inject.Alternative
@@ -74,7 +75,7 @@ open class AdoptRepositoryStub : AdoptRepository {
         )
     }
 
-    override suspend fun getRelease(version: Int): FeatureRelease? {
+    override suspend fun getRelease(version: Int, filter: ReleaseIncludeFilter): FeatureRelease? {
         return updated.getFeatureRelease(version)
     }
 

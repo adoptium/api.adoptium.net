@@ -26,7 +26,7 @@ open class GraphQLGitHubClient @Inject constructor(
         return releaseClient.getReleaseById(id)
     }
 
-    override suspend fun getRepository(owner: String, repoName: String): GHRepository {
-        return repositoryClientClient.getRepository(owner, repoName)
+    override suspend fun getRepository(owner: String, repoName: String, filter: (updatedAt: String, isPrerelease: Boolean) -> Boolean): GHRepository {
+        return repositoryClientClient.getRepository(owner, repoName, filter)
     }
 }
