@@ -68,7 +68,7 @@ open class MongoClient {
             .applyConnectionString(ConnectionString(connectionString))
         val sslEnabled = System.getenv("MONGODB_SSL")?.toBoolean()
         if (sslEnabled == true) {
-            val checkMongoHostName = System.getenv("DISABLE_MONGO_HOST_CHECK")?.toBoolean() ?: true
+            val checkMongoHostName = System.getenv("DISABLE_MONGO_HOST_CHECK")?.toBoolean() ?: false
 
             settingsBuilder = settingsBuilder.applyToSslSettings { it.enabled(true).invalidHostNameAllowed(checkMongoHostName) }
         }
