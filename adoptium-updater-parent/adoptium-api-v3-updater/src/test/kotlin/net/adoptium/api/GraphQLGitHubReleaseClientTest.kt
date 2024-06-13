@@ -220,7 +220,8 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                 "prereleases more than 90 days old are ignored",
                 ReleaseIncludeFilter(
                     releaseDate.plusDays(91),
-                    ReleaseFilterType.ALL
+                    ReleaseFilterType.ALL,
+                    excludedVendors = setOf()
                 ),
                 0
             ),
@@ -228,7 +229,8 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                 "prereleases less than 90 days old are not ignored",
                 ReleaseIncludeFilter(
                     releaseDate.plusDays(89),
-                    ReleaseFilterType.ALL
+                    ReleaseFilterType.ALL,
+                    excludedVendors = setOf()
                 ),
                 1
             ),
@@ -236,10 +238,38 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                 "release type filter is applied",
                 ReleaseIncludeFilter(
                     releaseDate.plusDays(89),
-                    ReleaseFilterType.RELEASES_ONLY
+                    ReleaseFilterType.RELEASES_ONLY,
+                    excludedVendors = setOf()
                 ),
                 0
-            )
+            ),
+            Triple(
+                "date filter is applied to non-excluded vendor",
+                ReleaseIncludeFilter(
+                    releaseDate.plusDays(91),
+                    ReleaseFilterType.RELEASES_ONLY,
+                    excludedVendors = setOf()
+                ),
+                0
+            ),
+            Triple(
+                "Excluded vendor more than 90 days is ignored",
+                ReleaseIncludeFilter(
+                    releaseDate.plusDays(91),
+                    ReleaseFilterType.ALL,
+                    excludedVendors = setOf(Vendor.getDefault())
+                ),
+                0
+            ),
+            Triple(
+                "Excluded vendor less than 90 days is ignored",
+                ReleaseIncludeFilter(
+                    releaseDate.plusDays(89),
+                    ReleaseFilterType.ALL,
+                    excludedVendors = setOf(Vendor.getDefault())
+                ),
+                0
+            ),
         )
             .map {
                 return@map DynamicTest.dynamicTest(it.first) {
@@ -257,8 +287,8 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
         val graphQLRequest = object : GraphQLRequest {
             override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
                 val builder = mockk<GraphQLClientResponse<F>>()
-
                 every { builder.data } returns QueryData(repo, RateLimit(0, 5000)) as F
+
                 every { builder.errors } returns null
                 return builder
             }
