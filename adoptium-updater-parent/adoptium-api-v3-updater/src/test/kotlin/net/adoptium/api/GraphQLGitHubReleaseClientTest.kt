@@ -1,11 +1,18 @@
 package net.adoptium.api
 
+import ReleaseFilterType
+import ReleaseIncludeFilter
 import com.expediagroup.graphql.client.types.GraphQLClientRequest
 import com.expediagroup.graphql.client.types.GraphQLClientResponse
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.AdoptRepositoryImpl
+import net.adoptium.api.v3.ReleaseResult
+import net.adoptium.api.v3.TimeSource
+import net.adoptium.api.v3.dataSources.github.GitHubHtmlClient
+import net.adoptium.api.v3.dataSources.github.graphql.GraphQLGitHubClient
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubInterface
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubReleaseClient
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubReleaseRequest
@@ -27,8 +34,20 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleaseSu
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleasesSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.GitHubId
+import net.adoptium.api.v3.mapping.ReleaseMapper
+import net.adoptium.api.v3.mapping.ReleaseMapper.Companion.parseDate
+import net.adoptium.api.v3.mapping.adopt.AdoptReleaseMapperFactory
+import net.adoptium.api.v3.models.DateTime
+import net.adoptium.api.v3.models.Release
+import net.adoptium.api.v3.models.ReleaseType
+import net.adoptium.api.v3.models.Vendor
+import net.adoptium.api.v3.models.VersionData
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
+import java.time.ZonedDateTime
+import java.util.stream.Stream
 
 class GraphQLGitHubReleaseClientTest : BaseTest() {
     companion object {
@@ -110,7 +129,7 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
 
             val client = GraphQLGitHubRepositoryClient(graphQLGitHubInterface, graphQLGitHubReleaseRequest)
 
-            val repo = client.getRepository(AdoptRepositoryImpl.ADOPT_ORG, "a-repo-name")
+            val repo = client.getRepository(AdoptRepositoryImpl.ADOPT_ORG, "a-repo-name", { _, _ -> true })
 
             assertEquals(Companion.repo, repo)
         }
@@ -182,15 +201,104 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                 }
             }
 
-
             val graphQLGitHubInterface = GraphQLGitHubInterface(graphQLRequest, mockkHttpClient())
             val graphQLGitHubReleaseRequest = GraphQLGitHubReleaseRequest(graphQLGitHubInterface)
 
             val client = GraphQLGitHubRepositoryClient(graphQLGitHubInterface, graphQLGitHubReleaseRequest)
 
-            val repo = client.getRepository(AdoptRepositoryImpl.ADOPT_ORG, "a-repo-name")
+            val repo = client.getRepository(AdoptRepositoryImpl.ADOPT_ORG, "a-repo-name", { _, _ -> true })
 
             assertEquals(2, repo.releases.releases.size)
         }
+    }
+
+    @TestFactory
+    fun filtersReleases(): Stream<DynamicTest> {
+        val releaseDate = parseDate("2013-02-27T19:35:32Z")
+        return listOf(
+            Triple(
+                "prereleases more than 90 days old are ignored",
+                ReleaseIncludeFilter(
+                    releaseDate.plusDays(91),
+                    ReleaseFilterType.ALL
+                ),
+                0
+            ),
+            Triple(
+                "prereleases less than 90 days old are not ignored",
+                ReleaseIncludeFilter(
+                    releaseDate.plusDays(89),
+                    ReleaseFilterType.ALL
+                ),
+                1
+            ),
+            Triple(
+                "release type filter is applied",
+                ReleaseIncludeFilter(
+                    releaseDate.plusDays(89),
+                    ReleaseFilterType.RELEASES_ONLY
+                ),
+                0
+            )
+        )
+            .map {
+                return@map DynamicTest.dynamicTest(it.first) {
+                    runBlocking {
+                        val repository = setupFilterTest()
+                        val repo = repository.getRelease(8, it.second)
+                        assertEquals(it.third, repo.releases.getReleases().count())
+                    }
+                }
+            }
+            .stream()
+    }
+
+    private fun setupFilterTest(): AdoptRepositoryImpl {
+        val graphQLRequest = object : GraphQLRequest {
+            override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
+                val builder = mockk<GraphQLClientResponse<F>>()
+
+                every { builder.data } returns QueryData(repo, RateLimit(0, 5000)) as F
+                every { builder.errors } returns null
+                return builder
+            }
+        };
+
+        val graphQLGitHubInterface = GraphQLGitHubInterface(graphQLRequest, mockkHttpClient())
+        val graphQLGitHubReleaseRequest = GraphQLGitHubReleaseRequest(graphQLGitHubInterface)
+
+        val client = GraphQLGitHubRepositoryClient(graphQLGitHubInterface, graphQLGitHubReleaseRequest)
+
+
+        val htmlClient = mockk<GitHubHtmlClient>();
+        coEvery { htmlClient.getUrl(any()) }.returns(null)
+
+        val adoptReleaseMapperFactory = mockk<AdoptReleaseMapperFactory>()
+        every { adoptReleaseMapperFactory.get(any()) }.returns(
+            object : ReleaseMapper() {
+                override suspend fun toAdoptRelease(ghRelease: GHRelease): ReleaseResult {
+                    return ReleaseResult(
+                        listOf(
+                            Release(
+                                "foo", ReleaseType.ga, "a", "foo",
+                                DateTime(ZonedDateTime.of(2010, 1, 1, 1, 1, 0, 0, TimeSource.ZONE)),
+                                DateTime(ZonedDateTime.of(2010, 1, 1, 1, 1, 0, 0, TimeSource.ZONE)),
+                                arrayOf(), 2, Vendor.getDefault(),
+                                VersionData(8, 0, 242, "b", null, 4, "b", "")
+                            ),
+                        )
+                    )
+                }
+            })
+
+        val repository = AdoptRepositoryImpl(
+            GraphQLGitHubClient(
+                mockk<GraphQLGitHubSummaryClient>(),
+                mockk<GraphQLGitHubReleaseClient>(),
+                client
+            ),
+            adoptReleaseMapperFactory
+        )
+        return repository
     }
 }

@@ -1,5 +1,7 @@
 package net.adoptium.api.v3
 
+import ReleaseFilterType
+import ReleaseIncludeFilter
 import io.quarkus.arc.profile.UnlessBuildProfile
 import io.quarkus.runtime.Startup
 import jakarta.enterprise.context.ApplicationScoped
@@ -16,6 +18,7 @@ import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.Release
+import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Versions
 import net.adoptium.api.v3.releaseNotes.AdoptReleaseNotes
 import net.adoptium.api.v3.stats.StatsInterface
@@ -26,6 +29,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.timerTask
 
 @UnlessBuildProfile("test")
@@ -63,11 +67,11 @@ class V3Updater @Inject constructor(
             return String(Base64.getEncoder().encode(md.digest()))
         }
 
-        fun copyOldReleasesIntoNewRepo(currentRepo: AdoptRepos, newRepoData: AdoptRepos) = newRepoData
+        fun copyOldReleasesIntoNewRepo(currentRepo: AdoptRepos, newRepoData: AdoptRepos, filter: ReleaseIncludeFilter) = newRepoData
             .addAll(currentRepo
                 .allReleases
                 .getReleases()
-                .filter { AdoptRepository.VENDORS_EXCLUDED_FROM_FULL_UPDATE.contains(it.vendor) }
+                .filter { !filter.filter(it.vendor, it.updated_at.dateTime, it.release_type == ReleaseType.ea) }
                 .toList())
     }
 
@@ -217,30 +221,42 @@ class V3Updater @Inject constructor(
             AdoptRepos(emptyList())
         }
 
+        val incrementalUpdateScheduled = AtomicBoolean(false)
+
         executor.scheduleWithFixedDelay(
             timerTask {
-                repo = fullUpdate(repo) ?: repo
+                repo = fullUpdate(repo, true) ?: repo
+                if (!incrementalUpdateScheduled.getAndSet(true)) {
+                    executor.scheduleWithFixedDelay(
+                        timerTask {
+                            repo = incrementalUpdate(repo) ?: repo
+                        },
+                        1, 6, TimeUnit.MINUTES
+                    )
+                }
+                repo = fullUpdate(repo, false) ?: repo
             },
             delay, 1, TimeUnit.DAYS
         )
-
-        executor.scheduleWithFixedDelay(
-            timerTask {
-                repo = incrementalUpdate(repo) ?: repo
-            },
-            1, 6, TimeUnit.MINUTES
-        )
     }
 
-    fun fullUpdate(currentRepo: AdoptRepos): AdoptRepos? {
+    fun fullUpdate(currentRepo: AdoptRepos, releasesOnly: Boolean): AdoptRepos? {
         // Must catch errors or may kill the scheduler
         try {
             return runBlocking {
-                LOGGER.info("Starting Full update")
+                LOGGER.info("Starting Full update {}", releasesOnly)
 
-                val newRepoData = adoptReposBuilder.build(Versions.versions)
+                val filterType: ReleaseFilterType = if (releasesOnly) {
+                    ReleaseFilterType.RELEASES_ONLY
+                } else {
+                    ReleaseFilterType.ALL
+                }
 
-                val repo = carryOverExcludedReleases(currentRepo, newRepoData)
+                val filter = ReleaseIncludeFilter(TimeSource.now(), filterType)
+
+                val newRepoData = adoptReposBuilder.build(Versions.versions, filter)
+
+                val repo = copyOldReleasesIntoNewRepo(currentRepo, newRepoData, filter)
 
                 val checksum = calculateChecksum(repo)
 
@@ -267,14 +283,5 @@ class V3Updater @Inject constructor(
         }
         return null
     }
-
-    // Releases that were excluded from the update due to being archived, copy them over from existing data
-    private fun carryOverExcludedReleases(currentRepo: AdoptRepos, newRepoData: AdoptRepos) = if (!APIConfig.UPDATE_ADOPTOPENJDK) {
-        // AdoptOpenJdk were excluded from full update so copy them from previous
-        copyOldReleasesIntoNewRepo(currentRepo, newRepoData)
-    } else {
-        newRepoData
-    }
-
 
 }

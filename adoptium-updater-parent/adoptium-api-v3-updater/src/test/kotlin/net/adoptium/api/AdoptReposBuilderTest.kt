@@ -1,5 +1,7 @@
 package net.adoptium.api
 
+import ReleaseFilterType
+import ReleaseIncludeFilter
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.spyk
@@ -8,12 +10,12 @@ import net.adoptium.api.testDoubles.AdoptRepositoryStub
 import net.adoptium.api.v3.AdoptReposBuilder
 import net.adoptium.api.v3.AdoptRepository
 import net.adoptium.api.v3.ReleaseResult
+import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.models.GHReleaseMetadata
 import org.jboss.weld.junit5.auto.EnableAutoWeld
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 @EnableAutoWeld
@@ -29,9 +31,9 @@ class AdoptReposBuilderTest : BaseTest() {
     }
 
     @Test
-    @Disabled("FIX ME, pending spyk fix from mockk")
-    fun addReleaseIsUpdatedExplicitly(adoptRepository: AdoptRepository) {
+    fun addReleaseIsUpdatedExplicitly() {
         runBlocking {
+            val adoptRepository = AdoptRepositoryStub()
             val adoptRepo = spyk(adoptRepository)
             val adoptReposBuilder = AdoptReposBuilder(adoptRepo)
 
@@ -96,9 +98,10 @@ class AdoptReposBuilderTest : BaseTest() {
     }
 
     @Test
-    @Disabled("FIX ME, pending spyk fix from mockk")
-    fun `young releases continue to be pulled`(repo: AdoptRepos, adoptRepository: AdoptRepository) {
+    fun `young releases continue to be pulled`() {
         runBlocking {
+            val repo = stub.repo;
+            val adoptRepository = AdoptRepositoryStub()
             val adoptRepo = spyk(adoptRepository)
             val adoptReposBuilder = AdoptReposBuilder(adoptRepo)
 
@@ -112,9 +115,9 @@ class AdoptReposBuilderTest : BaseTest() {
     }
 
     @Test
-    @Disabled("FIX ME, pending spyk fix from mockk")
-    fun `release is updated when binary count changes`(adoptRepository: AdoptRepository) {
+    fun `release is updated when binary count changes`() {
         runBlocking {
+            val adoptRepository = AdoptRepositoryStub()
             val adoptRepo = spyk(adoptRepository)
             val adoptReposBuilder = AdoptReposBuilder(adoptRepo)
 

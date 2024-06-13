@@ -20,7 +20,7 @@
         <maven.project-info-reports-plugin.version>3.5.0</maven.project-info-reports-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.9.4</quarkus.version>
+        <quarkus.version>3.11.1</quarkus.version>
         <rest-assured.version>5.4.0</rest-assured.version>
     </properties>
 
@@ -411,7 +411,7 @@
             <dependency>
                 <groupId>com.expediagroup</groupId>
                 <artifactId>graphql-kotlin-ktor-client</artifactId>
-                <version>7.0.2</version>
+                <version>7.1.1</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.jetbrains.kotlinx</groupId>
@@ -422,7 +422,7 @@
             <dependency>
                 <groupId>com.expediagroup</groupId>
                 <artifactId>graphql-kotlin-client-jackson</artifactId>
-                <version>7.0.2</version>
+                <version>7.1.1</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
