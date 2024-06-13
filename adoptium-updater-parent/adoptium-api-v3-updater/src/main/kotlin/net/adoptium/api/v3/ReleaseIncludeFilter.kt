@@ -39,15 +39,16 @@ class ReleaseIncludeFilter(
         if (includeAll || APIConfig.UPDATE_ADOPTOPENJDK) {
             return true // include all vendors
         } else {
-            var include = !excludedVendors.contains(vendor)
+            if (excludedVendors.contains(vendor)) {
+                return false
+            }
+
+            var include = true
 
             if (filterType == ReleaseFilterType.RELEASES_ONLY) {
-                include = include && isPrerelease == false
-
-                // For releases only do not apply date cut off
-                return include
+                return !isPrerelease
             } else if (filterType == ReleaseFilterType.SNAPSHOTS_ONLY) {
-                include = include && isPrerelease == true
+                include = isPrerelease
             }
 
             return include && Duration.between(startTime, now).toDays() < APIConfig.UPDATE_DAY_CUTOFF

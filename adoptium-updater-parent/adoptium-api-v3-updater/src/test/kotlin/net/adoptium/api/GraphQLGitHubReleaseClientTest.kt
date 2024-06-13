@@ -11,12 +11,14 @@ import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.AdoptRepositoryImpl
 import net.adoptium.api.v3.ReleaseResult
 import net.adoptium.api.v3.TimeSource
+import net.adoptium.api.v3.config.Ecosystem
 import net.adoptium.api.v3.dataSources.github.GitHubHtmlClient
 import net.adoptium.api.v3.dataSources.github.graphql.GraphQLGitHubClient
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubInterface
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubReleaseClient
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubReleaseRequest
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubRepositoryClient
+import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubRepositoryClient.GetQueryData
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubSummaryClient
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLRequest
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
@@ -220,7 +222,8 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                 "prereleases more than 90 days old are ignored",
                 ReleaseIncludeFilter(
                     releaseDate.plusDays(91),
-                    ReleaseFilterType.ALL
+                    ReleaseFilterType.ALL,
+                    excludedVendors = setOf()
                 ),
                 0
             ),
@@ -228,7 +231,8 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                 "prereleases less than 90 days old are not ignored",
                 ReleaseIncludeFilter(
                     releaseDate.plusDays(89),
-                    ReleaseFilterType.ALL
+                    ReleaseFilterType.ALL,
+                    excludedVendors = setOf()
                 ),
                 1
             ),
@@ -236,10 +240,38 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                 "release type filter is applied",
                 ReleaseIncludeFilter(
                     releaseDate.plusDays(89),
-                    ReleaseFilterType.RELEASES_ONLY
+                    ReleaseFilterType.RELEASES_ONLY,
+                    excludedVendors = setOf()
                 ),
                 0
-            )
+            ),
+            Triple(
+                "date filter is applied to non-excluded vendor",
+                ReleaseIncludeFilter(
+                    releaseDate.plusDays(91),
+                    ReleaseFilterType.RELEASES_ONLY,
+                    excludedVendors = setOf()
+                ),
+                0
+            ),
+            Triple(
+                "Excluded vendor more than 90 days is ignored",
+                ReleaseIncludeFilter(
+                    releaseDate.plusDays(91),
+                    ReleaseFilterType.ALL,
+                    excludedVendors = setOf(Vendor.getDefault())
+                ),
+                0
+            ),
+            Triple(
+                "Excluded vendor less than 90 days is ignored",
+                ReleaseIncludeFilter(
+                    releaseDate.plusDays(89),
+                    ReleaseFilterType.ALL,
+                    excludedVendors = setOf(Vendor.getDefault())
+                ),
+                0
+            ),
         )
             .map {
                 return@map DynamicTest.dynamicTest(it.first) {
@@ -258,7 +290,20 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
             override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
                 val builder = mockk<GraphQLClientResponse<F>>()
 
-                every { builder.data } returns QueryData(repo, RateLimit(0, 5000)) as F
+                val match = if (Ecosystem.CURRENT == Ecosystem.adoptopenjdk) {
+                    (query as GetQueryData).owner.lowercase() == "adoptopenjdk" &&
+                        (query as GetQueryData).repoName == "openjdk8-binaries"
+                } else {
+                    (query as GetQueryData).owner.lowercase() == "adoptium" &&
+                        (query as GetQueryData).repoName == "temurin8-binaries"
+                }
+
+                if (match) {
+                    every { builder.data } returns QueryData(repo, RateLimit(0, 5000)) as F
+                } else {
+                    every { builder.data } returns QueryData(GHRepository(GHReleases(listOf(), PageInfo(false, null))), RateLimit(0, 5000)) as F
+                }
+
                 every { builder.errors } returns null
                 return builder
             }

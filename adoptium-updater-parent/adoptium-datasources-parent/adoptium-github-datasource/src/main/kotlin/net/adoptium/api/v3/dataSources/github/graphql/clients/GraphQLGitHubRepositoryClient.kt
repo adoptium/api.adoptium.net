@@ -64,7 +64,7 @@ open class GraphQLGitHubRepositoryClient @Inject constructor(
             }
     }
 
-    private class GetQueryData(private val owner: String, private val repoName: String, override val variables: Any = mapOf<String, String>()) :
+    class GetQueryData(val owner: String, val repoName: String, override val variables: Any = mapOf<String, String>()) :
         GraphQLClientRequest<QueryData> {
 
         fun withCursor(cursor: String?): GetQueryData {
