@@ -4,6 +4,7 @@ import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 
 @Schema(type = SchemaType.STRING, enumeration = ["hotspot"])
+@Deprecated("This parameter is deprecated, please remove it from your requests.")
 internal class AdoptiumJvmImpl {
     companion object {
         // Duplicate of above array as we cannot referece this in an annotation, keep these lists in sync
