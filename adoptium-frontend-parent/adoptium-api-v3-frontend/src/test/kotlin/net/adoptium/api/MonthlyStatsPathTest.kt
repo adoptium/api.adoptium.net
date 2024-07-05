@@ -2,6 +2,7 @@ package net.adoptium.api
 
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
+import net.adoptium.api.testDoubles.UpdatableVersionSupplierStub
 import net.adoptium.api.v3.DownloadStatsInterface
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.config.APIConfig
@@ -12,10 +13,10 @@ import net.adoptium.api.v3.models.JvmImpl
 import net.adoptium.api.v3.models.MonthlyDownloadDiff
 import net.adoptium.api.v3.models.StatsSource
 import net.adoptium.api.v3.routes.stats.DownloadStatsResource
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(value = [DbExtension::class])
 class MonthlyStatsPathTest : FrontendTest() {
@@ -27,7 +28,7 @@ class MonthlyStatsPathTest : FrontendTest() {
 
         fun initDownloadStatsResource(): DownloadStatsResource {
             persistence = initApi()
-            return DownloadStatsResource(ApiDataStoreStub(), DownloadStatsInterface(persistence))
+            return DownloadStatsResource(ApiDataStoreStub(), DownloadStatsInterface(persistence, UpdatableVersionSupplierStub()))
         }
 
         fun initApi(): ApiPersistence {

@@ -1,37 +1,16 @@
 package net.adoptium.api
 
 import kotlinx.coroutines.runBlocking
+import net.adoptium.api.testDoubles.UpdatableVersionSupplierStub
 import net.adoptium.api.v3.dataSources.ReleaseVersionResolver
-import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
-import net.adoptium.api.v3.dataSources.UrlRequest
 import net.adoptium.api.v3.models.ReleaseInfo
-import org.apache.http.HttpResponse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ReleaseVersionResolverTest : BaseTest() {
 
     private fun getReleaseVersionResolver(): ReleaseVersionResolver {
-        return ReleaseVersionResolver(
-
-            object : UpdaterHtmlClient {
-                override suspend fun get(url: String): String? {
-                    return getTipMetadata()
-                }
-
-                fun getTipMetadata(): String {
-                    return """
-                        DEFAULT_VERSION_FEATURE=15
-                        DEFAULT_VERSION_INTERIM=0
-                    """.trimIndent()
-                }
-
-                override suspend fun getFullResponse(request: UrlRequest): HttpResponse? {
-                    return null
-                }
-            }
-
-        )
+        return ReleaseVersionResolver(UpdatableVersionSupplierStub())
     }
 
     @Test

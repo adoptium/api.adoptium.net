@@ -2,12 +2,14 @@ package net.adoptium.api
 
 import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured
+import jakarta.inject.Inject
+import jakarta.ws.rs.BadRequestException
 import net.adoptium.api.v3.JsonMapper
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.SortMethod
 import net.adoptium.api.v3.dataSources.SortOrder
 import net.adoptium.api.v3.filters.BinaryFilter
-import net.adoptium.api.v3.filters.ReleaseFilter
+import net.adoptium.api.v3.filters.ReleaseFilterFactory
 import net.adoptium.api.v3.models.Architecture
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
@@ -22,8 +24,6 @@ import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.stream.Stream
-import jakarta.inject.Inject
-import jakarta.ws.rs.BadRequestException
 
 @QuarkusTest
 @ExtendWith(value = [DbExtension::class])
@@ -40,7 +40,7 @@ class AssetsResourceReleaseNamePathTest : FrontendTest() {
                 apiDataStore
                     .getAdoptRepos()
                     .allReleases
-                    .getReleases(ReleaseFilter(vendor = vendor), SortOrder.DESC, SortMethod.DEFAULT)
+                    .getReleases(releaseFilterFactory.createFilter(vendor = vendor), SortOrder.DESC, SortMethod.DEFAULT)
                     .take(3)
                     .flatMap { release ->
                         ReleaseType
@@ -86,7 +86,7 @@ class AssetsResourceReleaseNamePathTest : FrontendTest() {
     fun `for frontend requests x86 == x32`() {
         val releaseName = apiDataStore
             .getAdoptRepos()
-            .getFilteredReleases(ReleaseFilter(vendor = Vendor.getDefault()), BinaryFilter(arch = Architecture.x32), SortOrder.DESC, SortMethod.DEFAULT)
+            .getFilteredReleases(releaseFilterFactory.createFilter(vendor = Vendor.getDefault()), BinaryFilter(arch = Architecture.x32), SortOrder.DESC, SortMethod.DEFAULT)
             .first()
             .release_name
 
@@ -114,7 +114,7 @@ class AssetsResourceReleaseNamePathTest : FrontendTest() {
         val releaseName = apiDataStore
             .getAdoptRepos()
             .allReleases
-            .getReleases(ReleaseFilter(vendor = Vendor.getDefault()), SortOrder.DESC, SortMethod.DEFAULT)
+            .getReleases(releaseFilterFactory.createFilter(vendor = Vendor.getDefault()), SortOrder.DESC, SortMethod.DEFAULT)
             .first()
             .release_name
 
@@ -128,7 +128,7 @@ class AssetsResourceReleaseNamePathTest : FrontendTest() {
     @Test
     fun `missing release_name 400s`() {
         assertThrows<BadRequestException> {
-            AssetsResource(apiDataStore, ReleaseEndpoint(apiDataStore))
+            AssetsResource(apiDataStore, ReleaseEndpoint(apiDataStore, releaseFilterFactory), releaseFilterFactory)
                 .get(
                     Vendor.adoptopenjdk,
                     null,
@@ -146,7 +146,7 @@ class AssetsResourceReleaseNamePathTest : FrontendTest() {
     @Test
     fun `missing vendor 400s`() {
         assertThrows<BadRequestException> {
-            AssetsResource(apiDataStore, ReleaseEndpoint(apiDataStore))
+            AssetsResource(apiDataStore, ReleaseEndpoint(apiDataStore, releaseFilterFactory), releaseFilterFactory)
                 .get(
                     null,
                     "foo",

@@ -7,7 +7,7 @@ import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.SortMethod
 import net.adoptium.api.v3.dataSources.SortOrder
 import net.adoptium.api.v3.filters.BinaryFilter
-import net.adoptium.api.v3.filters.ReleaseFilter
+import net.adoptium.api.v3.filters.ReleaseFilterFactory
 import net.adoptium.api.v3.filters.VersionRangeFilter
 import net.adoptium.api.v3.models.Architecture
 import net.adoptium.api.v3.models.CLib
@@ -26,7 +26,8 @@ import net.adoptium.api.v3.parser.maven.InvalidVersionSpecificationException
 class ReleaseEndpoint
 @Inject
 constructor(
-    private val apiDataStore: APIDataStore
+    private val apiDataStore: APIDataStore,
+    private val releaseFilterFactory: ReleaseFilterFactory
 ) {
     fun getReleases(
         sortOrder: SortOrder?,
@@ -56,7 +57,7 @@ constructor(
             throw BadRequestException("Invalid version string", e)
         }
 
-        val releaseFilter = ReleaseFilter(releaseType = release_type, vendor = vendorNonNull, versionRange = range, lts = lts, jvm_impl = jvm_impl)
+        val releaseFilter = releaseFilterFactory.createFilter(releaseType = release_type, vendor = vendorNonNull, versionRange = range, lts = lts, jvm_impl = jvm_impl)
         val binaryFilter = BinaryFilter(os = os, arch = arch, imageType = image_type, jvmImpl = jvm_impl, heapSize = heap_size, project = project, cLib = cLib)
 
         return apiDataStore

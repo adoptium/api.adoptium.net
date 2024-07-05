@@ -15,11 +15,11 @@ import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.ReleaseVersionResolver
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
+import net.adoptium.api.v3.dataSources.UpdatableVersionSupplier
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
-import net.adoptium.api.v3.models.Versions
 import net.adoptium.api.v3.releaseNotes.AdoptReleaseNotes
 import net.adoptium.api.v3.stats.StatsInterface
 import org.slf4j.LoggerFactory
@@ -45,7 +45,8 @@ class V3Updater @Inject constructor(
     private val database: ApiPersistence,
     private val statsInterface: StatsInterface,
     private val releaseVersionResolver: ReleaseVersionResolver,
-    private val adoptReleaseNotes: AdoptReleaseNotes
+    private val adoptReleaseNotes: AdoptReleaseNotes,
+    private val updatableVersionSupplier: UpdatableVersionSupplier
 ) : Updater {
 
     private val mutex = Mutex()
@@ -212,6 +213,7 @@ class V3Updater @Inject constructor(
     fun run(instantFullUpdate: Boolean) {
         val executor = Executors.newScheduledThreadPool(2)
 
+
         val delay = if (instantFullUpdate) 0L else 1L
 
         var repo: AdoptRepos = try {
@@ -246,6 +248,8 @@ class V3Updater @Inject constructor(
             return runBlocking {
                 LOGGER.info("Starting Full update {}", releasesOnly)
 
+                updatableVersionSupplier.updateVersions()
+
                 val filterType: ReleaseFilterType = if (releasesOnly) {
                     ReleaseFilterType.RELEASES_ONLY
                 } else {
@@ -254,7 +258,7 @@ class V3Updater @Inject constructor(
 
                 val filter = ReleaseIncludeFilter(TimeSource.now(), filterType)
 
-                val newRepoData = adoptReposBuilder.build(Versions.versions, filter)
+                val newRepoData = adoptReposBuilder.build(filter)
 
                 val repo = copyOldReleasesIntoNewRepo(currentRepo, newRepoData, filter)
 
