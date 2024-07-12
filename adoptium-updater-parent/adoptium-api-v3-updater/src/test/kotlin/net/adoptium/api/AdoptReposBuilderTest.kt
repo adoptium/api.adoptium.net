@@ -1,16 +1,15 @@
 package net.adoptium.api
 
-import ReleaseFilterType
-import ReleaseIncludeFilter
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.AdoptRepositoryStub
+import net.adoptium.api.testDoubles.UpdatableVersionSupplierStub
 import net.adoptium.api.v3.AdoptReposBuilder
 import net.adoptium.api.v3.AdoptRepository
 import net.adoptium.api.v3.ReleaseResult
-import net.adoptium.api.v3.TimeSource
+import net.adoptium.api.v3.dataSources.VersionSupplier
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.models.GHReleaseMetadata
@@ -23,7 +22,7 @@ class AdoptReposBuilderTest : BaseTest() {
 
     companion object {
         private val stub = AdoptRepositoryStub()
-        private val adoptReposBuilder: AdoptReposBuilder = AdoptReposBuilder(stub)
+        private val adoptReposBuilder: AdoptReposBuilder = AdoptReposBuilder(stub, UpdatableVersionSupplierStub())
         private var before: AdoptRepos = stub.repo
         private var updated: AdoptRepos = runBlocking {
             adoptReposBuilder.incrementalUpdate(emptySet(), before) { null }
@@ -35,7 +34,7 @@ class AdoptReposBuilderTest : BaseTest() {
         runBlocking {
             val adoptRepository = AdoptRepositoryStub()
             val adoptRepo = spyk(adoptRepository)
-            val adoptReposBuilder = AdoptReposBuilder(adoptRepo)
+            val adoptReposBuilder = AdoptReposBuilder(adoptRepo, UpdatableVersionSupplierStub())
 
             adoptReposBuilder.incrementalUpdate(setOf(before.repos[8]?.releases?.nodeList?.first()?.release_name!!), before) { null }
 
@@ -103,7 +102,7 @@ class AdoptReposBuilderTest : BaseTest() {
             val repo = stub.repo;
             val adoptRepository = AdoptRepositoryStub()
             val adoptRepo = spyk(adoptRepository)
-            val adoptReposBuilder = AdoptReposBuilder(adoptRepo)
+            val adoptReposBuilder = AdoptReposBuilder(adoptRepo, UpdatableVersionSupplierStub())
 
             coEvery { adoptRepo.getReleaseById(GitHubId(AdoptRepositoryStub.toAddSemiYoungRelease.id)) } returns ReleaseResult(listOf(AdoptRepositoryStub.toAddSemiYoungRelease))
 
@@ -119,7 +118,7 @@ class AdoptReposBuilderTest : BaseTest() {
         runBlocking {
             val adoptRepository = AdoptRepositoryStub()
             val adoptRepo = spyk(adoptRepository)
-            val adoptReposBuilder = AdoptReposBuilder(adoptRepo)
+            val adoptReposBuilder = AdoptReposBuilder(adoptRepo, UpdatableVersionSupplierStub())
 
             adoptReposBuilder.incrementalUpdate(emptySet(), before) {
                 if (before.repos[11]?.releases?.nodeList?.first()?.id == it.id) {
@@ -140,10 +139,10 @@ class AdoptReposBuilderTest : BaseTest() {
     }
 
     @Test
-    fun `release is not updated when binary count does not change`(adoptRepository: AdoptRepository) {
+    fun `release is not updated when binary count does not change`(adoptRepository: AdoptRepository, versionSupplier: VersionSupplier) {
         runBlocking {
             val adoptRepo = spyk(adoptRepository)
-            val adoptReposBuilder = AdoptReposBuilder(adoptRepo)
+            val adoptReposBuilder = AdoptReposBuilder(adoptRepo, versionSupplier)
 
             adoptReposBuilder.incrementalUpdate(emptySet(), before) {
                 GHReleaseMetadata(

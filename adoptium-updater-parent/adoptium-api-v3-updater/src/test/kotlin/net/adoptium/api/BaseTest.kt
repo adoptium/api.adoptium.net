@@ -5,6 +5,7 @@ import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.testDoubles.InMemoryInternalDbStore
+import net.adoptium.api.testDoubles.UpdatableVersionSupplierStub
 import net.adoptium.api.v3.dataSources.APIDataStoreImpl
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.UrlRequest
@@ -26,7 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 @EnableAutoWeld
 @ExtendWith(MockKExtension::class)
-@AddPackages(value = [InMemoryApiPersistence::class, InMemoryInternalDbStore::class, APIDataStoreImpl::class])
+@AddPackages(value = [InMemoryApiPersistence::class, InMemoryInternalDbStore::class, APIDataStoreImpl::class, UpdatableVersionSupplierStub::class])
 @EnableAlternatives
 abstract class BaseTest {
 

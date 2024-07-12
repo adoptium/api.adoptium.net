@@ -1,14 +1,43 @@
 package net.adoptium.api.v3.filters
 
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
 import net.adoptium.api.v3.config.Ecosystem
+import net.adoptium.api.v3.dataSources.VersionSupplier
 import net.adoptium.api.v3.models.JvmImpl
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
-import net.adoptium.api.v3.models.Versions
 import java.util.function.Predicate
 
-class ReleaseFilter(
+@ApplicationScoped
+class ReleaseFilterFactory @Inject constructor(
+    private val versionSupplier: VersionSupplier
+) {
+    fun createFilter(
+        releaseType: ReleaseType? = null,
+        featureVersion: Int? = null,
+        releaseName: String? = null,
+        vendor: Vendor? = null,
+        versionRange: VersionRangeFilter? = null,
+        lts: Boolean? = null,
+        jvm_impl: JvmImpl? = null
+    ): Predicate<Release> {
+        return ReleaseFilter(
+            versionSupplier.getLtsVersions(),
+            releaseType,
+            featureVersion,
+            releaseName,
+            vendor,
+            versionRange,
+            lts,
+            jvm_impl
+        )
+    }
+}
+
+private class ReleaseFilter(
+    private val ltsVersions: Array<Int>,
     private val releaseType: ReleaseType? = null,
     private val featureVersion: Int? = null,
     private val releaseName: String? = null,
@@ -19,7 +48,7 @@ class ReleaseFilter(
 ) : Predicate<Release> {
     override fun test(release: Release): Boolean {
         val ltsFilter = if (lts != null) {
-            val isLts = Versions.ltsVersions.contains(release.version_data.major)
+            val isLts = ltsVersions.contains(release.version_data.major)
             lts == isLts
         } else {
             true
