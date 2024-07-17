@@ -3,9 +3,8 @@ package net.adoptium.api.packages
 import io.restassured.RestAssured
 import io.restassured.response.Response
 import net.adoptium.api.FrontendTest
-import net.adoptium.api.testDoubles.UpdatableVersionSupplierStub
 import net.adoptium.api.v3.filters.BinaryFilter
-import net.adoptium.api.v3.filters.ReleaseFilterFactory
+import net.adoptium.api.v3.filters.ReleaseFilter
 import net.adoptium.api.v3.models.Architecture
 import net.adoptium.api.v3.models.Binary
 import net.adoptium.api.v3.models.CLib
@@ -80,7 +79,7 @@ abstract class PackageEndpointTest : FrontendTest() {
     }
 
     protected fun getClibBinary() = getRandomBinary(
-        ReleaseFilterFactory(UpdatableVersionSupplierStub()).createFilter(
+        ReleaseFilter(
             featureVersion = 11,
             releaseType = ReleaseType.ea,
             vendor = Vendor.getDefault(),

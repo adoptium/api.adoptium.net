@@ -3,7 +3,6 @@ package net.adoptium.api.v3
 import ReleaseIncludeFilter
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
-import net.adoptium.api.v3.dataSources.VersionSupplier
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleaseSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
@@ -18,10 +17,7 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.absoluteValue
 
 @ApplicationScoped
-class AdoptReposBuilder @Inject constructor(
-    private var adoptRepository: AdoptRepository,
-    private var versionSupplier: VersionSupplier
-    ) {
+class AdoptReposBuilder @Inject constructor(private var adoptRepository: AdoptRepository) {
 
     companion object {
         @JvmStatic
@@ -161,11 +157,10 @@ class AdoptReposBuilder @Inject constructor(
         }
     }
 
-    suspend fun build(filter: ReleaseIncludeFilter): AdoptRepos {
+    suspend fun build(versions: Array<Int>, filter: ReleaseIncludeFilter): AdoptRepos {
         excluded.clear()
         // Fetch repos in parallel
-        val reposMap = versionSupplier
-            .getAllVersions()
+        val reposMap = versions
             .reversed()
             .mapNotNull { version ->
                 adoptRepository.getRelease(version, filter)

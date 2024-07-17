@@ -6,7 +6,6 @@ import de.flapdoodle.embed.mongo.transitions.Mongod
 import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess
 import de.flapdoodle.embed.process.runtime.Network
 import de.flapdoodle.reverse.transitions.Start
-import net.adoptium.api.testDoubles.UpdatableVersionSupplierStub
 import net.adoptium.api.v3.dataSources.APIDataStoreImpl
 import org.jboss.weld.junit5.auto.AddPackages
 import org.jboss.weld.junit5.auto.EnableAutoWeld
@@ -15,7 +14,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.slf4j.LoggerFactory
 
 @EnableAutoWeld
-@AddPackages(value = [APIDataStoreImpl::class, UpdatableVersionSupplierStub::class])
+@AddPackages(value = [APIDataStoreImpl::class])
 abstract class MongoTest {
 
     companion object {

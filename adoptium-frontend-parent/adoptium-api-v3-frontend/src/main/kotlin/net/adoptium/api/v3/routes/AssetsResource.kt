@@ -22,7 +22,7 @@ import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.SortMethod
 import net.adoptium.api.v3.dataSources.SortOrder
 import net.adoptium.api.v3.filters.BinaryFilter
-import net.adoptium.api.v3.filters.ReleaseFilterFactory
+import net.adoptium.api.v3.filters.ReleaseFilter
 import net.adoptium.api.v3.models.Architecture
 import net.adoptium.api.v3.models.BinaryAssetView
 import net.adoptium.api.v3.models.CLib
@@ -52,8 +52,7 @@ class AssetsResource
 @Inject
 constructor(
     private val apiDataStore: APIDataStore,
-    private val releaseEndpoint: ReleaseEndpoint,
-    private val releaseFilterFactory: ReleaseFilterFactory
+    private val releaseEndpoint: ReleaseEndpoint
 ) {
 
     @GET
@@ -157,7 +156,7 @@ constructor(
         val releaseSortMethod = sortMethod ?: SortMethod.DEFAULT
         val vendorNonNull = vendor ?: Vendor.getDefault()
 
-        val releaseFilter = releaseFilterFactory.createFilter(releaseType = release_type, featureVersion = version, vendor = vendorNonNull, jvm_impl = jvm_impl)
+        val releaseFilter = ReleaseFilter(releaseType = release_type, featureVersion = version, vendor = vendorNonNull, jvm_impl = jvm_impl)
         val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, heap_size, project, before, cLib)
         val repos = apiDataStore.getAdoptRepos().getFeatureRelease(version!!)
 
@@ -234,7 +233,7 @@ constructor(
             throw BadRequestException("Must provide a vendor")
         }
 
-        val releaseFilter = releaseFilterFactory.createFilter(vendor = vendor, releaseName = releaseName.trim(), jvm_impl = jvm_impl)
+        val releaseFilter = ReleaseFilter(vendor = vendor, releaseName = releaseName.trim(), jvm_impl = jvm_impl)
         val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, heap_size, project, null, cLib)
 
         val releases = apiDataStore
@@ -420,7 +419,7 @@ constructor(
 
         ): List<BinaryAssetView> {
         val binaryVendor = vendor ?: Vendor.getDefault()
-        val releaseFilter = releaseFilterFactory.createFilter(ReleaseType.ga, featureVersion = version, vendor = binaryVendor, jvm_impl = jvm_impl)
+        val releaseFilter = ReleaseFilter(ReleaseType.ga, featureVersion = version, vendor = binaryVendor, jvm_impl = jvm_impl)
         val binaryFilter = BinaryFilter(os, arch, image_type, jvm_impl, null, null)
         val releases = apiDataStore
             .getAdoptRepos()

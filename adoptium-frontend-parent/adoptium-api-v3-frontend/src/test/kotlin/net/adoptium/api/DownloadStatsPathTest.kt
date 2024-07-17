@@ -21,7 +21,6 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.format.DateTimeFormatter
 import jakarta.ws.rs.BadRequestException
-import net.adoptium.api.testDoubles.UpdatableVersionSupplierStub
 import net.adoptium.api.v3.models.ReleaseType
 
 @ExtendWith(value = [DbExtension::class])
@@ -48,7 +47,7 @@ class DownloadStatsPathTest : FrontendTest() {
                 createGithubData()
             )
 
-            val downloadStatsResource = DownloadStatsResource(apiDataStore, DownloadStatsInterface(persistance, UpdatableVersionSupplierStub()))
+            val downloadStatsResource = DownloadStatsResource(apiDataStore, DownloadStatsInterface(persistance))
             downloadStatsResource
         }
     }

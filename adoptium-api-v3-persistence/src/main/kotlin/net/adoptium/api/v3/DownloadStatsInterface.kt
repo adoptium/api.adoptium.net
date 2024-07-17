@@ -3,7 +3,6 @@ package net.adoptium.api.v3
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import net.adoptium.api.v3.config.APIConfig
-import net.adoptium.api.v3.dataSources.VersionSupplier
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.DbStatsEntry
 import net.adoptium.api.v3.models.DockerDownloadStatsDbEntry
@@ -14,6 +13,7 @@ import net.adoptium.api.v3.models.JvmImpl
 import net.adoptium.api.v3.models.MonthlyDownloadDiff
 import net.adoptium.api.v3.models.StatsSource
 import net.adoptium.api.v3.models.TotalStats
+import net.adoptium.api.v3.models.Versions
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -30,15 +30,11 @@ class StatEntry(
 class DownloadStatsInterface {
 
     @Schema(hidden = true)
-    private var versionSupplier: VersionSupplier
-
-    @Schema(hidden = true)
     private val dataStore: ApiPersistence
 
     @Inject
-    constructor(dataStore: ApiPersistence, versionSupplier: VersionSupplier) {
+    constructor(dataStore: ApiPersistence) {
         this.dataStore = dataStore
-        this.versionSupplier = versionSupplier
     }
 
     suspend fun getTrackingStats(
@@ -288,7 +284,7 @@ class DownloadStatsInterface {
     }
 
     private suspend fun getGithubStats(): List<GitHubDownloadStatsDbEntry> {
-        return versionSupplier.getAllVersions()
+        return Versions.versions
             .mapNotNull { featureVersion ->
                 dataStore.getLatestGithubStatsForFeatureVersion(featureVersion)
             }

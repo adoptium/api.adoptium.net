@@ -10,7 +10,6 @@ import net.adoptium.api.v3.dataSources.SortOrder
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.Releases
-import net.adoptium.api.v3.filters.ReleaseFilterFactory
 import net.adoptium.api.v3.models.Architecture
 import net.adoptium.api.v3.models.Binary
 import net.adoptium.api.v3.models.DateTime
@@ -34,7 +33,7 @@ import java.time.ZonedDateTime
 class AssetsResourceFeatureReleasePathSortOrderTest : FrontendTest() {
 
     val apiDataStore = ApiDataStoreStub(createRepo())
-    var assetResource: AssetsResource = AssetsResource(apiDataStore, ReleaseEndpoint(apiDataStore, releaseFilterFactory), releaseFilterFactory)
+    var assetResource: AssetsResource = AssetsResource(apiDataStore, ReleaseEndpoint(apiDataStore))
 
     companion object {
         fun createRepo(): AdoptRepos {

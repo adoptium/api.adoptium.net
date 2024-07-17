@@ -11,6 +11,7 @@ import net.adoptium.api.v3.dataSources.persitence.mongo.UpdatedInfo
 import net.adoptium.api.v3.models.JvmImpl
 import net.adoptium.api.v3.models.ReleaseInfo
 import net.adoptium.api.v3.models.Vendor
+import net.adoptium.api.v3.models.Versions
 import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
 import java.util.concurrent.Executors
@@ -20,7 +21,6 @@ import kotlin.concurrent.timerTask
 
 @ApplicationScoped
 open class APIDataStoreImpl : APIDataStore {
-    private var versionSupplier: VersionSupplier
     private var dataStore: ApiPersistence
     private var updatedAt: UpdatedInfo
     private var binaryRepos: AdoptRepos
@@ -33,10 +33,8 @@ open class APIDataStoreImpl : APIDataStore {
     }
 
     @Inject
-    constructor(dataStore: ApiPersistence, versionSupplier: VersionSupplier) {
+    constructor(dataStore: ApiPersistence) {
         this.dataStore = dataStore
-        this.versionSupplier = versionSupplier;
-
         updatedAt = UpdatedInfo(ZonedDateTime.now().minusYears(10), "111", 0)
         schedule = null
         binaryRepos = try {
@@ -47,6 +45,14 @@ open class APIDataStoreImpl : APIDataStore {
         }
 
         releaseInfo = loadReleaseInfo()
+    }
+
+    constructor(binaryRepos: AdoptRepos, dataStore: ApiPersistence) {
+        this.dataStore = dataStore
+        updatedAt = UpdatedInfo(ZonedDateTime.now().minusYears(10), "111", 0)
+        schedule = null
+        this.binaryRepos = binaryRepos
+        this.releaseInfo = loadReleaseInfo()
     }
 
     override fun schedulePeriodicUpdates() {
@@ -91,8 +97,8 @@ open class APIDataStoreImpl : APIDataStore {
             val updated = dataStore.getUpdatedAt()
 
             if (forceUpdate || updated != updatedAt) {
-                val data = versionSupplier
-                    .getAllVersions()
+                val data = Versions
+                    .versions
                     .map { version ->
                         dataStore.readReleaseData(version)
                     }
