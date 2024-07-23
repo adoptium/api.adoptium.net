@@ -1,4 +1,6 @@
-FROM eclipse-temurin:21
+######################################################
+## Build
+FROM eclipse-temurin:21 as build
 
 # BUILDS FOR ADOPTIUM, NOT ADOPTOPENJDK
 ARG MAVEN_FLAGS="-Padoptium,-adoptopenjdk"
@@ -13,9 +15,7 @@ ENV BRANCH=$BRANCH
 RUN     apt-get update && apt-get -y install openssl adduser && \
         useradd -ms /bin/bash api && \
         mkdir -p /home/api/deployment/ && \
-        mkdir -p /logs && \
         mkdir -p /home/api/deployment/lib && \
-        mkdir -p /home/api/build && \
         mkdir /tmp/build && \
         chown -R api: /home/api/
 
@@ -36,6 +36,22 @@ RUN     ./mvnw clean install $MAVEN_FLAGS && \
         cd /tmp && \
         rm -rf /tmp/build ~/.m2 && \
         cd /home/api/ && find
+
+
+######################################################
+## Build Deployment
+FROM eclipse-temurin:21
+
+RUN     apt-get update && apt-get -y install openssl adduser && \
+        useradd -ms /bin/bash api && \
+        mkdir -p /home/api/ && \
+        mkdir -p /logs
+
+COPY --from=build /home/api/deployment /home/api/deployment
+
+RUN chown -R api: /home/api/ && find /home/api/
+
+USER api
 
 WORKDIR /home/api/deployment/
 
