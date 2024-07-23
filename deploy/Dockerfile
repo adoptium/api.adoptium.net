@@ -10,14 +10,14 @@ ENV REPOSITORY=$REPOSITORY
 ARG BRANCH="main"
 ENV BRANCH=$BRANCH
 
-RUN     useradd -ms /bin/bash api && \
+RUN     apt-get update && apt-get -y install openssl adduser && \
+        useradd -ms /bin/bash api && \
         mkdir -p /home/api/deployment/ && \
         mkdir -p /logs && \
         mkdir -p /home/api/deployment/lib && \
         mkdir -p /home/api/build && \
         mkdir /tmp/build && \
-        chown -R api: /home/api/ && \
-        apt-get update && apt-get -y install openssl
+        chown -R api: /home/api/
 
 WORKDIR /tmp/build
 
