@@ -49,7 +49,11 @@ RUN     apt-get update && apt-get -y install openssl adduser && \
 
 COPY --from=build /home/api/deployment /home/api/deployment
 
-RUN chown -R api: /home/api/ && find /home/api/
+RUN chown -R api: /home/api/ && \
+    chmod -R ug+r /home/api/ && \
+    chmod u+rwx /home/api/ && \
+    chmod u+rwx /home/api/deployment && \
+    find /home/api/
 
 USER api
 
@@ -59,5 +63,5 @@ ENV JAVA_OPTS=""
 ARG type=frontend
 ENV typeEnv=$type
 
-CMD cd /home/api/deployment/ && ./run.sh ${typeEnv}
+CMD ./run.sh ${typeEnv}
 
