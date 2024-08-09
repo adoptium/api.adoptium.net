@@ -1,10 +1,14 @@
 package net.adoptium.api.v3.models
 
+import net.adoptium.api.v3.config.Ecosystem
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 import java.util.*
 
 @Schema(type = SchemaType.STRING, enumeration = ["normal", "large"], example = "normal")
+if (Ecosystem.CURRENT == Ecosystem.adoptium) {
+    @Deprecated("This parameter is deprecated, please remove it from your requests.")
+}
 enum class HeapSize : FileNameMatcher {
     normal, large(0, "XL", "LinuxLH");
 
