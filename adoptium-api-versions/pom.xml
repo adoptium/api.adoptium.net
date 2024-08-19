@@ -9,7 +9,7 @@
 
     <properties>
         <coroutine.version>1.8.1</coroutine.version>
-        <jackson.version>2.17.1</jackson.version>
+        <jackson.version>2.17.2</jackson.version>
         <jdk.version>17</jdk.version>
         <kmongo.version>4.11.0</kmongo.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
@@ -17,7 +17,7 @@
         <logback.version>1.5.6</logback.version>
         <maven.compiler.release>17</maven.compiler.release>
         <maven.version>3.9.6</maven.version>
-        <maven.project-info-reports-plugin.version>3.5.0</maven.project-info-reports-plugin.version>
+        <maven.project-info-reports-plugin.version>3.6.2</maven.project-info-reports-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.version>3.13.0</quarkus.version>
@@ -29,7 +29,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>3.5.0</version>
                 <executions>
                     <execution>
                         <id>enforce</id>
@@ -257,13 +257,13 @@
             <dependency>
                 <groupId>org.skyscreamer</groupId>
                 <artifactId>jsonassert</artifactId>
-                <version>1.5.1</version>
+                <version>1.5.3</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>applicationinsights-runtime-attach</artifactId>
-                <version>3.5.2</version>
+                <version>3.5.3</version>
             </dependency>
             <dependency>
                 <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
@@ -343,13 +343,13 @@
             <dependency>
                 <groupId>io.smallrye</groupId>
                 <artifactId>smallrye-open-api-core</artifactId>
-                <version>3.10.0</version>
+                <version>3.11.0</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>io.smallrye</groupId>
                 <artifactId>smallrye-open-api-jaxrs</artifactId>
-                <version>3.10.0</version>
+                <version>3.11.0</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -361,7 +361,7 @@
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-client</artifactId>
-                <version>12.0.8</version>
+                <version>12.0.11</version>
             </dependency>
             <dependency>
                 <groupId>org.bouncycastle</groupId>

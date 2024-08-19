@@ -1,4 +1,6 @@
-FROM eclipse-temurin:21
+######################################################
+## Build
+FROM eclipse-temurin:21-jammy as build
 
 # BUILDS FOR ADOPTIUM, NOT ADOPTOPENJDK
 ARG MAVEN_FLAGS="-Padoptium,-adoptopenjdk"
@@ -10,32 +12,35 @@ ENV REPOSITORY=$REPOSITORY
 ARG BRANCH="main"
 ENV BRANCH=$BRANCH
 
-RUN     useradd -ms /bin/bash api && \
-        mkdir -p /home/api/deployment/ && \
-        mkdir -p /logs && \
-        mkdir -p /home/api/deployment/lib && \
-        mkdir -p /home/api/build && \
-        mkdir /tmp/build && \
-        chown -R api: /home/api/ && \
-        apt-get update && apt-get -y install openssl
+RUN     mkdir /tmp/build
 
 WORKDIR /tmp/build
 
 COPY . /tmp/build
 
-RUN chown -R api: /tmp/build
-
-USER api
-
 RUN     ./mvnw clean install $MAVEN_FLAGS && \
-        cp adoptium-updater-parent/adoptium-api-v3-updater/target/adoptium-api-v3-updater-*-jar-with-dependencies.jar /home/api/deployment/updater.jar && \
-        cp -r adoptium-frontend-parent/adoptium-api-v3-frontend/target/quarkus-app/* /home/api/deployment/ && \
-        mv /home/api/deployment/quarkus-run.jar /home/api/deployment/frontend.jar && \
-        cp deploy/run.sh /home/api/deployment/ && \
-        chmod +x /home/api/deployment/run.sh && \
+        mkdir -p /api/deployment && \
+        cp adoptium-updater-parent/adoptium-api-v3-updater/target/adoptium-api-v3-updater-*-jar-with-dependencies.jar /api/deployment/updater.jar && \
+        cp -r adoptium-frontend-parent/adoptium-api-v3-frontend/target/quarkus-app/* /api/deployment/ && \
+        mv /api/deployment/quarkus-run.jar /api/deployment/frontend.jar && \
+        cp deploy/run.sh /api/deployment/ && \
+        chmod +x /api/deployment/run.sh && \
         cd /tmp && \
         rm -rf /tmp/build ~/.m2 && \
-        cd /home/api/ && find
+        cd /api/ && find
+
+
+######################################################
+## Build Deployment
+FROM eclipse-temurin:21-jammy
+
+RUN     apt-get update && apt-get -y install openssl adduser && \
+        useradd -ms /bin/bash api && \
+        mkdir -p /logs
+
+COPY --chown=api:api --from=build /api/deployment /home/api/deployment
+
+USER api
 
 WORKDIR /home/api/deployment/
 
@@ -43,5 +48,5 @@ ENV JAVA_OPTS=""
 ARG type=frontend
 ENV typeEnv=$type
 
-CMD cd /home/api/deployment/ && ./run.sh ${typeEnv}
+CMD ./run.sh ${typeEnv}
 

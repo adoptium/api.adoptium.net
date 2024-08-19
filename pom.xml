@@ -36,10 +36,10 @@
         <maven.dependency-versions-check-plugin.version>2.0.4</maven.dependency-versions-check-plugin.version>
         <maven.deploy-plugin.version>3.1.2</maven.deploy-plugin.version>
         <maven.directory-maven-plugin.version>1.0</maven.directory-maven-plugin.version>
-        <maven.enforcer-plugin.version>3.4.1</maven.enforcer-plugin.version>
+        <maven.enforcer-plugin.version>3.5.0</maven.enforcer-plugin.version>
         <maven.exec-plugin.version>3.2.0</maven.exec-plugin.version>
         <maven.filtering-plugin.version>3.3.2</maven.filtering-plugin.version>
-        <maven.help-plugin.version>3.4.0</maven.help-plugin.version>
+        <maven.help-plugin.version>3.4.1</maven.help-plugin.version>
         <!--
              TODO Moving to 3.1.1 created a multi-module packaging issue:
 
@@ -49,7 +49,7 @@
         <maven.install-plugin.version>3.1.2</maven.install-plugin.version>
         <!-- <maven.install-plugin.version>3.1.1</maven.install-plugin.version> -->
         <maven.jacoco-plugin.version>0.8.10</maven.jacoco-plugin.version>
-        <maven.jar-plugin.version>3.4.1</maven.jar-plugin.version>
+        <maven.jar-plugin.version>3.4.2</maven.jar-plugin.version>
         <maven.javadoc-plugin.version>3.6.3</maven.javadoc-plugin.version>
         <!-- Disabled further below until we get 2.1 https://www.mail-archive.com/dev@maven.apache.org/msg127389.html -->
         <maven.jdepend-plugin.version>2.0</maven.jdepend-plugin.version>
@@ -57,10 +57,10 @@
         <maven.jdeps-plugin.version>3.1.2</maven.jdeps-plugin.version>
         <maven.jxr-plugin.version>3.4.0</maven.jxr-plugin.version>
         <maven.license-plugin.version>2.4.0</maven.license-plugin.version>
-        <maven.openapi-generator-maven-plugin.version>7.5.0</maven.openapi-generator-maven-plugin.version>
+        <maven.openapi-generator-maven-plugin.version>7.7.0</maven.openapi-generator-maven-plugin.version>
         <maven.pitest-plugin.version>1.16.1</maven.pitest-plugin.version>
         <maven.pmd-plugin.version>3.22.0</maven.pmd-plugin.version>
-        <maven.project-info-reports-plugin.version>3.5.0</maven.project-info-reports-plugin.version>
+        <maven.project-info-reports-plugin.version>3.6.2</maven.project-info-reports-plugin.version>
         <maven.rat-plugin.version>0.16.1</maven.rat-plugin.version>
         <maven.release-plugin.version>3.0.1</maven.release-plugin.version>
         <maven.resources-plugin.version>3.3.1</maven.resources-plugin.version>
@@ -68,7 +68,7 @@
         <maven.site-plugin.version>4.0.0-M13</maven.site-plugin.version>
         <maven.source-plugin.version>3.3.1</maven.source-plugin.version>
         <maven.spotbugs-plugin.version>4.8.5.0</maven.spotbugs-plugin.version>
-        <maven.surefire-plugin.version>3.3.0</maven.surefire-plugin.version>
+        <maven.surefire-plugin.version>3.3.1</maven.surefire-plugin.version>
         <maven.swaggerhub-maven-plugin.version>1.0.10</maven.swaggerhub-maven-plugin.version>
         <maven.tidy-plugin.version>1.2.0</maven.tidy-plugin.version>
         <maven.toolchains-plugin.version>3.2.0</maven.toolchains-plugin.version>
