@@ -27,7 +27,7 @@ class APIDataStoreTest : MongoTest() {
     fun reposHasElements() {
         runBlocking {
             val repo = BaseTest.adoptRepos
-            assert(repo.getFeatureRelease(8)!!.releases.getReleases().toList().size > 0)
+            assert(repo.getFeatureRelease(8)!!.releases.getReleases().toList().isNotEmpty())
         }
     }
 
@@ -77,6 +77,6 @@ class APIDataStoreTest : MongoTest() {
 
     @Test
     fun `update is not scheduled by default`(apiDataStore: APIDataStoreImpl) {
-        assertNull(apiDataStore.schedule)
+        assertNull(apiDataStore.getSchedule())
     }
 }

@@ -1,7 +1,7 @@
 package net.adoptium.api
 
-import ReleaseFilterType
-import ReleaseIncludeFilter
+import net.adoptium.api.v3.ReleaseFilterType
+import net.adoptium.api.v3.ReleaseIncludeFilter
 import com.expediagroup.graphql.client.types.GraphQLClientRequest
 import com.expediagroup.graphql.client.types.GraphQLClientResponse
 import io.mockk.coEvery
@@ -124,14 +124,14 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                     every { builder.errors } returns null
                     return builder
                 }
-            };
+            }
 
             val graphQLGitHubInterface = GraphQLGitHubInterface(graphQLRequest, mockkHttpClient())
             val graphQLGitHubReleaseRequest = GraphQLGitHubReleaseRequest(graphQLGitHubInterface)
 
             val client = GraphQLGitHubRepositoryClient(graphQLGitHubInterface, graphQLGitHubReleaseRequest)
 
-            val repo = client.getRepository(AdoptRepositoryImpl.ADOPT_ORG, "a-repo-name", { _, _ -> true })
+            val repo = client.getRepository(AdoptRepositoryImpl.ADOPT_ORG, "a-repo-name") { _, _ -> true }
 
             assertEquals(Companion.repo, repo)
         }
@@ -208,7 +208,7 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
 
             val client = GraphQLGitHubRepositoryClient(graphQLGitHubInterface, graphQLGitHubReleaseRequest)
 
-            val repo = client.getRepository(AdoptRepositoryImpl.ADOPT_ORG, "a-repo-name", { _, _ -> true })
+            val repo = client.getRepository(AdoptRepositoryImpl.ADOPT_ORG, "a-repo-name") { _, _ -> true }
 
             assertEquals(2, repo.releases.releases.size)
         }
@@ -307,7 +307,7 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                 every { builder.errors } returns null
                 return builder
             }
-        };
+        }
 
         val graphQLGitHubInterface = GraphQLGitHubInterface(graphQLRequest, mockkHttpClient())
         val graphQLGitHubReleaseRequest = GraphQLGitHubReleaseRequest(graphQLGitHubInterface)
@@ -315,7 +315,7 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
         val client = GraphQLGitHubRepositoryClient(graphQLGitHubInterface, graphQLGitHubReleaseRequest)
 
 
-        val htmlClient = mockk<GitHubHtmlClient>();
+        val htmlClient = mockk<GitHubHtmlClient>()
         coEvery { htmlClient.getUrl(any()) }.returns(null)
 
         val adoptReleaseMapperFactory = mockk<AdoptReleaseMapperFactory>()

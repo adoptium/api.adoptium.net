@@ -11,16 +11,16 @@
         <coroutine.version>1.8.1</coroutine.version>
         <jackson.version>2.17.2</jackson.version>
         <jdk.version>17</jdk.version>
-        <kmongo.version>4.11.0</kmongo.version>
+        <mongo.version>5.1.2</mongo.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <kotlin.version>1.9.23</kotlin.version>
+        <kotlin.version>2.0.10</kotlin.version>
         <logback.version>1.5.6</logback.version>
         <maven.compiler.release>17</maven.compiler.release>
-        <maven.version>3.9.6</maven.version>
+        <maven.version>3.9.8</maven.version>
         <maven.project-info-reports-plugin.version>3.6.2</maven.project-info-reports-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.13.0</quarkus.version>
+        <quarkus.version>3.13.2</quarkus.version>
         <rest-assured.version>5.4.0</rest-assured.version>
     </properties>
 
@@ -101,7 +101,7 @@
             <dependency>
                 <groupId>io.mockk</groupId>
                 <artifactId>mockk-jvm</artifactId>
-                <version>1.13.10</version>
+                <version>1.13.12</version>
                 <scope>test</scope>
             </dependency>
 
@@ -164,39 +164,16 @@
 
             <!-- Kotlin dependencies for MongoDB -->
             <dependency>
-                <groupId>org.litote.kmongo</groupId>
-                <artifactId>kmongo-coroutine</artifactId>
-                <version>${kmongo.version}</version>
+                <groupId>org.mongodb</groupId>
+                <artifactId>mongodb-driver-kotlin-coroutine</artifactId>
+                <version>5.1.2</version>
             </dependency>
-            <dependency>
-                <groupId>org.litote.kmongo</groupId>
-                <artifactId>kmongo-flapdoodle</artifactId>
-                <version>${kmongo.version}</version>
-                <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-simple</artifactId>
-                    </exclusion>
-                    <!-- Flapdoodle does not enforce itself and asks for 4.12 and 4.13.2, this is sad. -->
-                    <exclusion>
-                        <groupId>junit</groupId>
-                        <artifactId>junit</artifactId>
-                    </exclusion>
-                    <!-- We exclude this not to get junit 4 style annotations -->
-                    <exclusion>
-                        <groupId>org.jetbrains.kotlin</groupId>
-                        <artifactId>kotlin-test-junit</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
+
             <dependency>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-test-junit5</artifactId>
                 <version>${kotlin.version}</version>
             </dependency>
-            <!-- Explicitly adding this because Maven can't see it via the kmongo dep in
-             adoptium-api-v3-updater pom file. Why? Nobody knows -->
             <dependency>
                 <groupId>de.flapdoodle.embed</groupId>
                 <artifactId>de.flapdoodle.embed.mongo</artifactId>
@@ -377,11 +354,6 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${logback.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.litote.kmongo</groupId>
-                <artifactId>kmongo-id-jackson</artifactId>
-                <version>${kmongo.version}</version>
             </dependency>
             <dependency>
                 <groupId>jakarta.json.bind</groupId>

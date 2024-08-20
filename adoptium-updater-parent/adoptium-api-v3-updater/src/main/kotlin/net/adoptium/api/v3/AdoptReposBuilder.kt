@@ -1,6 +1,5 @@
 package net.adoptium.api.v3
 
-import ReleaseIncludeFilter
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import net.adoptium.api.v3.dataSources.VersionSupplier

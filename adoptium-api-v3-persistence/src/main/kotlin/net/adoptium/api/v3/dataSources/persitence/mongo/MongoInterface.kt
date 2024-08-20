@@ -1,18 +1,25 @@
 package net.adoptium.api.v3.dataSources.persitence.mongo
 
+import com.mongodb.MongoCommandException
+import com.mongodb.kotlin.client.coroutine.MongoCollection
+import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import kotlinx.coroutines.runBlocking
-import org.litote.kmongo.coroutine.CoroutineCollection
-import org.litote.kmongo.coroutine.CoroutineDatabase
 
 abstract class MongoInterface {
 
-    inline fun <reified T : Any> createCollection(database: CoroutineDatabase, collectionName: String): CoroutineCollection<T> {
-        return runBlocking {
-            if (!database.listCollectionNames().contains(collectionName)) {
-                // TODO add indexes
+    inline fun <reified T : Any> createCollection(database: MongoDatabase, collectionName: String): MongoCollection<T> {
+        runBlocking {
+            try {
                 database.createCollection(collectionName)
+            } catch (e: MongoCommandException) {
+                if (e.errorCode == 48) {
+                    // collection already exists ... ignore
+                } else {
+                    throw e
+                }
             }
-            return@runBlocking database.getCollection<T>(collectionName)
         }
+        return database.getCollection(collectionName, T::class.java)
+
     }
 }

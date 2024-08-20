@@ -4,7 +4,6 @@ import de.flapdoodle.embed.mongo.config.Net
 import de.flapdoodle.embed.mongo.distribution.Version
 import de.flapdoodle.embed.mongo.transitions.Mongod
 import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess
-import de.flapdoodle.embed.process.runtime.Network
 import de.flapdoodle.reverse.transitions.Start
 import net.adoptium.api.testDoubles.UpdatableVersionSupplierStub
 import net.adoptium.api.v3.dataSources.APIDataStoreImpl
@@ -34,12 +33,13 @@ abstract class MongoTest {
         @JvmStatic
         fun startFongo() {
             val bindIp = "localhost"
-            val net = Net.of("localhost",
-                Network.freeServerPort(Network.getLocalHost()),
-                Network.localhostIsIPv6()
-            )
 
-            val mongodbTestConnectionString = "mongodb://$bindIp:${net.port}"
+            val port = de.flapdoodle.net.Net.freeServerPort()
+
+            val net = Net.builder().bindIp(bindIp).port(port).isIpv6(false).build()
+
+            val mongodbTestConnectionString = "mongodb://$bindIp:$port"
+
             LOGGER.info("Mongo test connection string - $mongodbTestConnectionString")
             System.setProperty("MONGODB_TEST_CONNECTION_STRING", mongodbTestConnectionString)
 

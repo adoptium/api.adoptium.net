@@ -23,10 +23,10 @@ class VersionRangeFilter(range: String?, val semver: Boolean) : Predicate<Versio
             !range.endsWith(']')
         ) {
             rangeMatcher = null
-            if (semver) {
-                exactMatcher = SemverParser.parseAdoptSemver(range)
+            exactMatcher = if (semver) {
+                SemverParser.parseAdoptSemver(range)
             } else {
-                exactMatcher = VersionParser.parse(range, sanityCheck = false, exactMatch = true)
+                VersionParser.parse(range, sanityCheck = false, exactMatch = true)
             }
         } else {
             rangeMatcher = VersionRange.createFromVersionSpec(range, semver)

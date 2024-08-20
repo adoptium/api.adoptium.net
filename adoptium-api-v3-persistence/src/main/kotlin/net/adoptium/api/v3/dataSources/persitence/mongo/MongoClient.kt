@@ -2,17 +2,21 @@ package net.adoptium.api.v3.dataSources.persitence.mongo
 
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
+import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import jakarta.enterprise.context.ApplicationScoped
-import org.litote.kmongo.coroutine.CoroutineClient
-import org.litote.kmongo.coroutine.CoroutineDatabase
-import org.litote.kmongo.coroutine.coroutine
-import org.litote.kmongo.reactivestreams.KMongo
+import net.adoptium.api.v3.dataSources.persitence.mongo.codecs.JacksonCodecProvider
+import net.adoptium.api.v3.dataSources.persitence.mongo.codecs.ZonedDateTimeCodecProvider
+import org.bson.codecs.configuration.CodecRegistries
 import org.slf4j.LoggerFactory
+
 
 @ApplicationScoped
 open class MongoClient {
-    open val database: CoroutineDatabase
-    open val client: CoroutineClient
+    private val database: MongoDatabase
+    private val client: com.mongodb.kotlin.client.coroutine.MongoClient
+
+    // required as injection objects to the final field
+    open fun getDatabase() = database
 
     companion object {
         @JvmStatic
@@ -65,6 +69,12 @@ open class MongoClient {
             serverSelectionTimeoutMills = System.getenv("MONGODB_SERVER_SELECTION_TIMEOUT_MILLIS")
         )
         var settingsBuilder = MongoClientSettings.builder()
+            .codecRegistry(CodecRegistries.fromProviders(
+                MongoClientSettings.getDefaultCodecRegistry(),
+                ZonedDateTimeCodecProvider(),
+                JacksonCodecProvider()
+            )
+            )
             .applyConnectionString(ConnectionString(connectionString))
         val sslEnabled = System.getenv("MONGODB_SSL")?.toBoolean()
         if (sslEnabled == true) {
@@ -72,7 +82,8 @@ open class MongoClient {
 
             settingsBuilder = settingsBuilder.applyToSslSettings { it.enabled(true).invalidHostNameAllowed(checkMongoHostName) }
         }
-        client = KMongo.createClient(settingsBuilder.build()).coroutine
+        client = com.mongodb.kotlin.client.coroutine.MongoClient.create(settingsBuilder.build())
         database = client.getDatabase(dbName)
     }
+
 }

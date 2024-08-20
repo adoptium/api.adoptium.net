@@ -39,11 +39,11 @@ object UpstreamBinaryMapper : BinaryMapper() {
                 val signatureLink = getSignatureLink(assets, asset.name)
                 val pack = Package(asset.name, asset.downloadUrl, asset.size, null, null, asset.downloadCount, signatureLink, null)
 
-                val os = getEnumFromFileName(asset.name, OperatingSystem.values())
-                val architecture = getEnumFromFileName(asset.name, Architecture.values())
-                val imageType = getEnumFromFileName(asset.name, ImageType.values(), ImageType.jdk)
+                val os = getEnumFromFileName(asset.name, OperatingSystem.entries.toTypedArray())
+                val architecture = getEnumFromFileName(asset.name, Architecture.entries.toTypedArray())
+                val imageType = getEnumFromFileName(asset.name, ImageType.entries.toTypedArray(), ImageType.jdk)
                 val updatedAt = getUpdatedTime(asset)
-                val projectType = getEnumFromFileName(asset.name, Project.values(), Project.jdk)
+                val projectType = getEnumFromFileName(asset.name, Project.entries.toTypedArray(), Project.jdk)
 
                 Binary(
                     pack,

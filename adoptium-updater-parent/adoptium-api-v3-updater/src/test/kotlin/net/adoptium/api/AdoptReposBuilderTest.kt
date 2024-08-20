@@ -84,12 +84,9 @@ class AdoptReposBuilderTest : BaseTest() {
     fun updatedReleaseIsNotUpdatedWhenThingsDontChange() {
         runBlocking {
 
-            val updated2 = runBlocking {
-                adoptReposBuilder.incrementalUpdate(emptySet(), before) { null }
-            }
-            val updated3 = runBlocking {
-                adoptReposBuilder.incrementalUpdate(emptySet(), before) { null }
-            }
+            val updated2 = adoptReposBuilder.incrementalUpdate(emptySet(), before) { null }
+
+            val updated3 = adoptReposBuilder.incrementalUpdate(emptySet(), before) { null }
 
             assertTrue { updated == updated2 }
             assertTrue { updated2 == updated3 }
@@ -99,7 +96,7 @@ class AdoptReposBuilderTest : BaseTest() {
     @Test
     fun `young releases continue to be pulled`() {
         runBlocking {
-            val repo = stub.repo;
+            val repo = stub.repo
             val adoptRepository = AdoptRepositoryStub()
             val adoptRepo = spyk(adoptRepository)
             val adoptReposBuilder = AdoptReposBuilder(adoptRepo, UpdatableVersionSupplierStub())

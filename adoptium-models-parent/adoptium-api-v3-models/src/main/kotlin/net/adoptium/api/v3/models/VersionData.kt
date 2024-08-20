@@ -46,7 +46,7 @@ class VersionData : Comparable<VersionData> {
 
     // i.e 11.0.1+11.1
     fun formSemver(): String {
-        var semver = major.toString() + "." + minor + "." + security
+        var semver = "$major.$minor.$security"
 
         if (pre?.isNotEmpty() == true) {
             semver += "-$pre"

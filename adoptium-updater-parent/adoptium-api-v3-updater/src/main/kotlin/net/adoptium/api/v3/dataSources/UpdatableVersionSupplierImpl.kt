@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
 @ApplicationScoped
 class UpdatableVersionSupplierImpl @Inject constructor(val updaterHtmlClient: UpdaterHtmlClient) : VersionSupplier, UpdatableVersionSupplier {
     companion object {
-        private val LOGGER: Logger = LoggerFactory.getLogger(UpdatableVersionSupplierImpl::class.java);
+        private val LOGGER: Logger = LoggerFactory.getLogger(UpdatableVersionSupplierImpl::class.java)
     }
 
     private val DEFAULT_LATEST_JAVA_VERSION = 24

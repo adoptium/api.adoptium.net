@@ -24,7 +24,10 @@ open class APIDataStoreImpl : APIDataStore {
     private var updatedAt: UpdatedInfo
     private var binaryRepos: AdoptRepos
     private var releaseInfo: ReleaseInfo
-    open var schedule: ScheduledFuture<*>?
+    private var schedule: ScheduledFuture<*>?
+
+    // required as injection objects to the final field
+    open fun getSchedule() = schedule
 
     companion object {
         @JvmStatic

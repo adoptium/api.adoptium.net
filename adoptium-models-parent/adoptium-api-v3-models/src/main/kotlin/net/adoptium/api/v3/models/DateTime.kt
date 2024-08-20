@@ -73,9 +73,7 @@ class DateTime {
 
         other as DateTime
 
-        if (dateTime != other.dateTime) return false
-
-        return true
+        return dateTime == other.dateTime
     }
 
     override fun hashCode(): Int {

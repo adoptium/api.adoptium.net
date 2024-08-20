@@ -75,7 +75,7 @@ class GitHubAuth {
             return token
         }
 
-        private suspend fun authenticateAsGitHubApp(appId: String, privateKey: String, installationId: String): GHAppInstallationToken {
+        private fun authenticateAsGitHubApp(appId: String, privateKey: String, installationId: String): GHAppInstallationToken {
             try {
                 // Remove the first and last lines
                 val sanitizedKey = privateKey
@@ -101,7 +101,7 @@ class GitHubAuth {
                     .compact()
 
                 val gitHubApp: GitHub = GitHubBuilder().withJwtToken(jwtToken).build()
-                val appInstallation: GHAppInstallation = gitHubApp.getApp().getInstallationById(installationId.toLong())
+                val appInstallation: GHAppInstallation = gitHubApp.app.getInstallationById(installationId.toLong())
                 return appInstallation.createToken().create()
             } catch (e: Exception) {
                 LOGGER.error("Error authenticating as GitHub App", e)
@@ -110,5 +110,5 @@ class GitHubAuth {
         }
     }
 
-    class FailedToAuthenticateException : Exception("Failed to authenticate to GitHub") {}
+    class FailedToAuthenticateException : Exception("Failed to authenticate to GitHub")
 }

@@ -59,7 +59,7 @@ object Pagination {
 
         return try {
 
-            var totalPages: Int? = null;
+            var totalPages: Int? = null
 
             val chunked = if (showPageCount) {
                 val releasesList = releases.toList()

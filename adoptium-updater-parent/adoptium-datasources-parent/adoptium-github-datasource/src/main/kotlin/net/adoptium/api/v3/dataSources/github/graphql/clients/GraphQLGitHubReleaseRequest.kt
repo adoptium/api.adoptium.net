@@ -3,7 +3,6 @@ package net.adoptium.api.v3.dataSources.github.graphql.clients
 import com.expediagroup.graphql.client.types.GraphQLClientRequest
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
-import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo

@@ -52,7 +52,7 @@ abstract class BaseTest {
                 return null
             }
 
-            override suspend fun getFullResponse(request: UrlRequest): HttpResponse? {
+            override suspend fun getFullResponse(request: UrlRequest): HttpResponse {
                 val metadataResponse = mockk<HttpResponse>()
 
                 val entity = mockk<HttpEntity>()

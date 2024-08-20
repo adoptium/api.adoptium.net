@@ -1,4 +1,4 @@
-package net.adoptium.api.v3;
+package net.adoptium.api.v3
 
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
@@ -9,7 +9,7 @@ import net.adoptium.api.v3.dataSources.VersionSupplier
 class FrontEndVersionSupplier @Inject constructor(
     val apiDataStore: APIDataStore
 ) : VersionSupplier {
-    override fun getTipVersion(): Int? {
+    override fun getTipVersion(): Int {
         return apiDataStore.getReleaseInfo().tip_version
     }
 

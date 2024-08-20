@@ -119,8 +119,8 @@ class DownloadStatsInterface {
         return stats.groupBy { it.dateTime.toLocalDate() }
             .map { grouped ->
                 StatEntry(
-                    grouped.value.map { it.dateTime }.maxOrNull()!!,
-                    grouped.value.map { it.count }.sum()
+                    grouped.value.maxOf { it.dateTime },
+                    grouped.value.sumOf { it.count }
                 )
             }
             .sortedBy { it.dateTime }
@@ -161,7 +161,7 @@ class DownloadStatsInterface {
     private fun calculateMonthlyDiff(
         stats: Collection<StatEntry>
     ): List<MonthlyDownloadDiff> {
-        val toTwoChar = { value: Int -> if (value < 10) "0" + value else value.toString() } // Returns in MM format
+        val toTwoChar = { value: Int -> if (value < 10) "0$value" else value.toString() } // Returns in MM format
 
         return stats
             .windowed(2, 1, false) {
@@ -244,16 +244,14 @@ class DownloadStatsInterface {
         return stats
             .groupBy { it.getId() }
             .map { grouped -> grouped.value.maxByOrNull { it.date } }
-            .map { it!!.getMetric() }
-            .sum()
+            .sumOf { it!!.getMetric() }
     }
 
     private fun formTotalDownloads(stats: List<GitHubDownloadStatsDbEntry>, jvmImpl: JvmImpl): Long {
         return stats
             .groupBy { it.getId() }
             .map { grouped -> grouped.value.maxByOrNull { it.date } }
-            .map { (it!!.jvmImplDownloads?.get(jvmImpl) ?: 0) }
-            .sum()
+            .sumOf { (it!!.jvmImplDownloads?.get(jvmImpl) ?: 0) }
     }
 
     suspend fun getTotalDownloadStats(): DownloadStats {
@@ -261,21 +259,13 @@ class DownloadStatsInterface {
 
         val githubStats = getGithubStats()
 
-        val dockerPulls = dockerStats
-            .map { it.pulls }
-            .sum()
+        val dockerPulls = dockerStats.sumOf { it.pulls }
 
-        val githubDownloads = githubStats
-            .map { it.downloads }
-            .sum()
+        val githubDownloads = githubStats.sumOf { it.downloads }
 
-        val dockerBreakdown = dockerStats
-            .map { Pair(it.repo, it.pulls) }
-            .toMap()
+        val dockerBreakdown = dockerStats.associate { Pair(it.repo, it.pulls) }
 
-        val githubBreakdown = githubStats
-            .map { Pair(it.feature_version, it.downloads) }
-            .toMap()
+        val githubBreakdown = githubStats.associate { Pair(it.feature_version, it.downloads) }
 
         val totalStats = TotalStats(dockerPulls, githubDownloads, dockerPulls + githubDownloads)
         return DownloadStats(TimeSource.now(), totalStats, githubBreakdown, dockerBreakdown)

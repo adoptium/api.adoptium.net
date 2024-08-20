@@ -131,7 +131,7 @@ class DownloadStatsResource {
             .getReleases()
             .filter { it.vendor == Vendor.getDefault() }
 
-        if(releaseTypes != null && releaseTypes.isNotEmpty()) {
+        if(!releaseTypes.isNullOrEmpty()) {
             releases = releases.filter { releaseTypes.contains(it.release_type) }
         }
 

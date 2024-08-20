@@ -1,7 +1,8 @@
 package net.adoptium.api
 
-import ReleaseIncludeFilter
+import net.adoptium.api.v3.ReleaseIncludeFilter
 import kotlinx.coroutines.runBlocking
+import net.adoptium.api.v3.ReleaseFilterType
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.V3Updater
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
@@ -33,7 +34,7 @@ class V3UpdaterTest {
     fun `adoptOpenJdk releases are copied over`() {
 
         runBlocking {
-            val repo = AdoptReposTestDataGenerator.generate();
+            val repo = AdoptReposTestDataGenerator.generate()
 
             val filter = ReleaseIncludeFilter(
                 TimeSource.now(),

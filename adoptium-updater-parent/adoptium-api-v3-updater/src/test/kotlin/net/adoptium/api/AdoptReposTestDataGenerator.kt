@@ -28,7 +28,7 @@ object AdoptReposTestDataGenerator {
     private val TEST_VERSIONS = listOf(8, 10, 11, 12)
     private val TEST_RESOURCES = listOf(
         PermittedValues(
-            ReleaseType.values().asList(),
+            ReleaseType.entries,
             listOf(Vendor.adoptopenjdk),
             listOf(Project.jdk),
             listOf(JvmImpl.hotspot),
@@ -38,17 +38,17 @@ object AdoptReposTestDataGenerator {
             listOf(HeapSize.normal),
         ),
         PermittedValues(
-            ReleaseType.values().asList(),
+            ReleaseType.entries,
             listOf(Vendor.adoptopenjdk),
             listOf(Project.jdk),
             listOf(JvmImpl.openj9),
             listOf(ImageType.jre, ImageType.jdk),
             listOf(Architecture.x64, Architecture.x32, Architecture.arm),
             listOf(OperatingSystem.linux, OperatingSystem.mac, OperatingSystem.windows),
-            HeapSize.values().asList()
+            HeapSize.entries
         ),
         PermittedValues(
-            ReleaseType.values().asList(),
+            ReleaseType.entries,
             listOf(Vendor.openjdk),
             listOf(Project.jdk),
             listOf(JvmImpl.hotspot),
@@ -59,7 +59,7 @@ object AdoptReposTestDataGenerator {
             listOf(8, 11)
         ),
         PermittedValues(
-            ReleaseType.values().asList(),
+            ReleaseType.entries,
             listOf(Vendor.alibaba),
             listOf(Project.jdk),
             listOf(JvmImpl.dragonwell),
@@ -70,7 +70,7 @@ object AdoptReposTestDataGenerator {
             listOf(8, 11)
         ),
         PermittedValues(
-            ReleaseType.values().asList(),
+            ReleaseType.entries,
             listOf(Vendor.eclipse),
             listOf(Project.jdk),
             listOf(JvmImpl.hotspot),
@@ -81,7 +81,7 @@ object AdoptReposTestDataGenerator {
             listOf(8, 11, 12)
         ),
         PermittedValues(
-            ReleaseType.values().asList(),
+            ReleaseType.entries,
             listOf(Vendor.eclipse),
             listOf(Project.jdk),
             listOf(JvmImpl.hotspot),
@@ -232,7 +232,7 @@ object AdoptReposTestDataGenerator {
         }
 
         private fun exhaustiveBinaryList(): List<Binary> {
-            return HeapSize.values()
+            return HeapSize.entries
                 .map {
                     Binary(
                         createPackage(),
@@ -250,7 +250,7 @@ object AdoptReposTestDataGenerator {
                     )
                 }
                 .union(
-                    OperatingSystem.values()
+                    OperatingSystem.entries
                         .map {
                             Binary(
                                 createPackage(),
@@ -269,7 +269,7 @@ object AdoptReposTestDataGenerator {
                         }
                 )
                 .union(
-                    Architecture.values()
+                    Architecture.entries
                         .map {
                             Binary(
                                 createPackage(),
@@ -288,7 +288,7 @@ object AdoptReposTestDataGenerator {
                         }
                 )
                 .union(
-                    ImageType.values()
+                    ImageType.entries
                         .map {
                             Binary(
                                 createPackage(),
@@ -307,7 +307,7 @@ object AdoptReposTestDataGenerator {
                         }
                 )
                 .union(
-                    JvmImpl.values()
+                    JvmImpl.entries
                         .map {
                             Binary(
                                 createPackage(),
@@ -326,7 +326,7 @@ object AdoptReposTestDataGenerator {
                         }
                 )
                 .union(
-                    Project.values()
+                    Project.entries
                         .map {
                             Binary(
                                 createPackage(),
@@ -383,6 +383,7 @@ object AdoptReposTestDataGenerator {
                 return emptyList()
             }
             return releaseType
+                .asSequence()
                 .map { releaseBuilder()(it) }
                 .flatMap { builder -> vendor.map { builder(it) } }
                 .flatMap { builder -> getVersions(majorVersion).map { builder(it) } }
@@ -390,6 +391,7 @@ object AdoptReposTestDataGenerator {
                 .filter {
                     Vendor.validVendor(it.vendor)
                 }
+                .toList()
         }
 
         private fun getBinaries(): Array<Binary> {

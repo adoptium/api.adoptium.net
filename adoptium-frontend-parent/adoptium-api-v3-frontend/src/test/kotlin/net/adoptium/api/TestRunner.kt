@@ -31,6 +31,6 @@ class TestRunner : BaseTest() {
     @Test
     @Inject
     fun run() {
-        Awaitility.await().atMost(Long.MAX_VALUE, TimeUnit.NANOSECONDS).until({ 4 === 5 })
+        Awaitility.await().atMost(Long.MAX_VALUE, TimeUnit.NANOSECONDS).until { 4 === 5 }
     }
 }
