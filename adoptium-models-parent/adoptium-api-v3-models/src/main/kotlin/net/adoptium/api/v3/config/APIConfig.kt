@@ -11,5 +11,7 @@ class APIConfig {
 
         // We will only update pre-releases if they are less than n days old
         var UPDATE_DAY_CUTOFF: Int = System.getenv("UPDATE_DAY_CUTOFF")?.toInt() ?: 90
+
+        var DEPLOYMENT_TYPE: DeploymentType = DeploymentType.valueOf((System.getenv("DEPLOYMENT_TYPE") ?: "FRONTEND").uppercase())
     }
 }

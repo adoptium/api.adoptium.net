@@ -4,6 +4,8 @@ import io.quarkus.runtime.Startup
 import jakarta.annotation.PostConstruct
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import net.adoptium.api.v3.config.APIConfig
+import net.adoptium.api.v3.config.DeploymentType
 import net.adoptium.api.v3.dataSources.APIDataStore
 
 @ApplicationScoped
