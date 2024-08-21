@@ -35,4 +35,6 @@ then
   export MONGODB_SSL="true"
 fi
 
+export DEPLOYMENT_TYPE="${deploymentType}"
+
 java $JAVA_OPTS -jar ${deploymentType}.jar
