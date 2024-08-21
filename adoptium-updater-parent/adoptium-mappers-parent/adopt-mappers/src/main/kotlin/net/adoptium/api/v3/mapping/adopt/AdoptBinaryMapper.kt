@@ -28,12 +28,13 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
 
     companion object {
         @JvmStatic
-        private val LOGGER = LoggerFactory.getLogger(this::class.java)
+        private val LOGGER = LoggerFactory.getLogger(AdoptBinaryMapper::class.java)
         private const val HOTSPOT_JFR = "hotspot-jfr"
         private const val TEMURIN = "temurin"
+
+        private val EXCLUDED = listOf("corretto")
     }
 
-    private val EXCLUDED = listOf<String>("corretto")
 
     suspend fun toBinaryList(ghBinaryAssets: List<GHAsset>, allGhAssets: List<GHAsset>, ghAssetsWithMetadata: Map<GHAsset, GHMetaData>): List<Binary> {
         // probably whitelist rather than black list
@@ -55,9 +56,9 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
 
                 val binaryMetadata = ghAssetsWithMetadata[ghBinaryAsset]
 
-                val heapSize = getEnumFromFileName(ghBinaryAsset.name, HeapSize.values(), HeapSize.normal)
+                val heapSize = getEnumFromFileName(ghBinaryAsset.name, HeapSize.entries.toTypedArray(), HeapSize.normal)
 
-                val cLib = getEnumFromFileNameNullable(ghBinaryAsset.name, CLib.values(), null)
+                val cLib = getEnumFromFileNameNullable(ghBinaryAsset.name, CLib.entries.toTypedArray(), null)
 
                 val installer = getInstaller(ghBinaryAsset, allGhAssets)
                 val `package` = getPackage(allGhAssets, ghBinaryAsset, binaryMetadata)
@@ -90,13 +91,13 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         val binarySize = binaryAsset.size
         val binaryChecksumLink = getCheckSumLink(fullAssetList, binaryName)
         val signatureLink = getSignatureLink(fullAssetList, binaryAsset.name)
-        val binaryChecksum: String?
 
-        binaryChecksum = if (binaryMetadata != null && binaryMetadata.sha256.isNotEmpty()) {
-            binaryMetadata.sha256
-        } else {
-            getChecksum(binaryChecksumLink)
-        }
+        val binaryChecksum: String? =
+            if (binaryMetadata != null && binaryMetadata.sha256.isNotEmpty()) {
+                binaryMetadata.sha256
+            } else {
+                getChecksum(binaryChecksumLink)
+            }
 
         val metadataLink = getMetadataLink(fullAssetList, binaryName)
 
@@ -115,7 +116,7 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
     private suspend fun getInstaller(binaryAsset: GHAsset, fullAssetList: List<GHAsset>): Installer? {
 
         val nameWithoutExtension =
-            BINARY_ASSET_WHITELIST.fold(binaryAsset.name, { assetName, extension -> assetName.replace(extension, "") })
+            BINARY_ASSET_WHITELIST.fold(binaryAsset.name) { assetName, extension -> assetName.replace(extension, "") }
 
         val installer = fullAssetList
             .filter { it.name.startsWith(nameWithoutExtension) }
@@ -171,10 +172,10 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
     }
 
     private fun removeExtensionFromName(binary_name: String): String {
-        return BINARY_ASSET_WHITELIST.foldRight(binary_name, { extension, name -> name.removeSuffix(extension) })
+        return BINARY_ASSET_WHITELIST.foldRight(binary_name) { extension, name -> name.removeSuffix(extension) }
     }
 
-    private fun isBinaryAsset(asset: GHAsset) = ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } || ( asset.name.endsWith(".json") && asset.name.contains("-sbom_") )
+    private fun isBinaryAsset(asset: GHAsset) = ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } || (asset.name.endsWith(".json") && asset.name.contains("-sbom_"))
 
     private fun binaryFromName(
         asset: GHAsset,
@@ -186,11 +187,11 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         cLib: CLib?
     ): Binary {
         val scmRef = null
-        val os = getEnumFromFileName(asset.name, OperatingSystem.values())
-        val architecture = getEnumFromFileName(asset.name, Architecture.values())
-        val binaryType = getEnumFromFileName(asset.name, ImageType.values(), ImageType.jdk)
-        val jvmImpl = getEnumFromFileName(asset.name, JvmImpl.values(), JvmImpl.hotspot)
-        val project = getEnumFromFileName(asset.name, Project.values(), Project.jdk)
+        val os = getEnumFromFileName(asset.name, OperatingSystem.entries.toTypedArray())
+        val architecture = getEnumFromFileName(asset.name, Architecture.entries.toTypedArray())
+        val binaryType = getEnumFromFileName(asset.name, ImageType.entries.toTypedArray(), ImageType.jdk)
+        val jvmImpl = getEnumFromFileName(asset.name, JvmImpl.entries.toTypedArray(), JvmImpl.hotspot)
+        val project = getEnumFromFileName(asset.name, Project.entries.toTypedArray(), Project.jdk)
 
         return Binary(
             pack,
@@ -242,7 +243,7 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
 
     private fun getImageType(asset: GHAsset, binaryMetadata: GHMetaData): ImageType {
         // static-libs incorrectly labeled as JDK, if the name tells us it's a static-lib, trust that over the metadata file
-        val binaryTypeFromName = getEnumFromFileName(asset.name, ImageType.values(), ImageType.jdk)
+        val binaryTypeFromName = getEnumFromFileName(asset.name, ImageType.entries.toTypedArray(), ImageType.jdk)
         return if (binaryTypeFromName == ImageType.staticlibs) {
             ImageType.staticlibs
         } else {
@@ -271,7 +272,7 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
 
     private suspend fun getChecksum(binary_checksum_link: String?): String? {
         try {
-            if (!(binary_checksum_link == null || binary_checksum_link.isEmpty())) {
+            if (!binary_checksum_link.isNullOrEmpty()) {
                 LOGGER.debug("Pulling checksum for $binary_checksum_link")
                 val checksum = gitHubHtmlClient.getUrl(binary_checksum_link)
                 if (checksum != null) {

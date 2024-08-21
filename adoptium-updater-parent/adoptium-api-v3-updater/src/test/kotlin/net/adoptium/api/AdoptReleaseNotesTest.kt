@@ -1,6 +1,6 @@
 package net.adoptium.api
 
-import ReleaseIncludeFilter
+import net.adoptium.api.v3.ReleaseIncludeFilter
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.v3.AdoptRepository
@@ -57,7 +57,7 @@ class AdoptReleaseNotesTest : BaseTest() {
                                 ]
                             """.trimIndent()
             } else {
-                return null;
+                return null
             }
         }
 

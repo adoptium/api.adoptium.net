@@ -1,11 +1,13 @@
 package net.adoptium.api.v3.dataSources.mongo
 
 import com.mongodb.client.model.IndexOptions
-import com.mongodb.client.model.UpdateOptions
+import com.mongodb.client.model.ReplaceOptions
+import com.mongodb.kotlin.client.coroutine.MongoCollection
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.dataSources.persitence.mongo.MongoClient
@@ -13,7 +15,6 @@ import net.adoptium.api.v3.dataSources.persitence.mongo.MongoInterface
 import org.bson.BsonDateTime
 import org.bson.BsonDocument
 import org.bson.Document
-import org.litote.kmongo.coroutine.CoroutineCollection
 import java.time.ZonedDateTime
 
 interface InternalDbStore {
@@ -24,27 +25,26 @@ interface InternalDbStore {
 
 @ApplicationScoped
 open class InternalDbStoreImpl @Inject constructor(mongoClient: MongoClient) : MongoInterface(), InternalDbStore {
-    private val webCache: CoroutineCollection<CacheDbEntry> = createCollection(mongoClient.database, "web-cache")
+    private val webCache: MongoCollection<CacheDbEntry> = createCollection(mongoClient.getDatabase(), "web-cache")
 
     init {
         runBlocking {
-            webCache.createIndex("""{"url":1}""", IndexOptions().background(true))
+            webCache.createIndex(Document.parse("""{"url":1}"""), IndexOptions().background(true))
         }
     }
 
     override fun putCachedWebpage(url: String, lastModified: String?, date: ZonedDateTime, data: String?): Job {
         return GlobalScope.launch {
-            webCache.updateOne(
+            webCache.replaceOne(
                 Document("url", url),
                 CacheDbEntry(url, lastModified, date, data),
-                UpdateOptions().upsert(true),
-                false
+                ReplaceOptions().upsert(true)
             )
         }
     }
 
     override suspend fun getCachedWebpage(url: String): CacheDbEntry? {
-        return webCache.findOne(Document("url", url))
+        return webCache.find(Document("url", url)).firstOrNull()
     }
 
     override suspend fun updateCheckedTime(url: String, dateTime: ZonedDateTime) {

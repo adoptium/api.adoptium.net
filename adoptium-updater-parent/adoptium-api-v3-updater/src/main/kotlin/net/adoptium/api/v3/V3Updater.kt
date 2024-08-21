@@ -1,7 +1,5 @@
 package net.adoptium.api.v3
 
-import ReleaseFilterType
-import ReleaseIncludeFilter
 import io.quarkus.arc.profile.UnlessBuildProfile
 import io.quarkus.runtime.Startup
 import jakarta.enterprise.context.ApplicationScoped
@@ -76,10 +74,6 @@ class V3Updater @Inject constructor(
                 .toList())
     }
 
-    init {
-        //AppInsightsTelemetry.start()
-    }
-
     override fun addToUpdate(toUpdate: String): List<Release> {
         val repo = apiDataStore.loadDataFromDb(true)
         val toUpdateList = repo
@@ -145,10 +139,10 @@ class V3Updater @Inject constructor(
             .forEach { releaseA ->
                 val releaseB = repoB.allReleases.getReleaseById(releaseA.id)
                 if (releaseB == null) {
-                    LOGGER.debug("Release disapeared ${releaseA.id} ${releaseA.version_data.semver}")
+                    LOGGER.debug("Release disappeared ${releaseA.id} ${releaseA.version_data.semver}")
                 } else if (releaseA != releaseB) {
-                    LOGGER.debug("Release changedA $releaseA")
-                    LOGGER.debug("Release changedB $releaseB")
+                    LOGGER.debug("Release changedA {}", releaseA)
+                    LOGGER.debug("Release changedB {}", releaseB)
                     releaseA
                         .binaries
                         .forEach { binaryA ->
@@ -242,7 +236,7 @@ class V3Updater @Inject constructor(
         )
     }
 
-    fun fullUpdate(currentRepo: AdoptRepos, releasesOnly: Boolean): AdoptRepos? {
+    private fun fullUpdate(currentRepo: AdoptRepos, releasesOnly: Boolean): AdoptRepos? {
         // Must catch errors or may kill the scheduler
         try {
             return runBlocking {

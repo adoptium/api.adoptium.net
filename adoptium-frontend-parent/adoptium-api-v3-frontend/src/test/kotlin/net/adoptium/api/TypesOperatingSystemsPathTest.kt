@@ -18,7 +18,7 @@ class TypesOperatingSystemsPathTest : FrontendTest() {
 
     @Test
     fun getOperatingSystemsAreCorrect() {
-        var body = RestAssured.given()
+        val body = RestAssured.given()
             .`when`()
             .get("/v3/types/operating_systems")
             .body
@@ -26,7 +26,7 @@ class TypesOperatingSystemsPathTest : FrontendTest() {
         val operatingSystems = parseOperatingSystems(body.asString())
 
         assert(operatingSystems.contains(OperatingSystem.linux.name))
-        assert(operatingSystems.size == OperatingSystem.values().size)
+        assert(operatingSystems.size == OperatingSystem.entries.size)
     }
 
     private fun parseOperatingSystems(json: String?): List<String> =

@@ -15,11 +15,10 @@ import java.net.URL
 open class GraphQLRequestImpl : GraphQLRequest {
 
     private val client: GraphQLKtorClient
-    private val httpClient: HttpClient
+    private val httpClient: HttpClient = HttpClient()
     val BASE_URL = "https://api.github.com/graphql"
 
     init {
-        httpClient = HttpClient()
         client = GraphQLKtorClient(
             url = URL(BASE_URL),
             httpClient = httpClient,

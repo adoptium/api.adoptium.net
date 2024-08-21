@@ -97,9 +97,7 @@ class Releases {
 
         other as Releases
 
-        if (nodes != other.nodes) return false
-
-        return true
+        return nodes == other.nodes
     }
 
     override fun hashCode(): Int {

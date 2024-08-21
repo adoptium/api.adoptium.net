@@ -1,7 +1,7 @@
 package net.adoptium.api.v3.mapping.adopt
 
 import jakarta.enterprise.context.ApplicationScoped
-import jakarta.enterprise.inject.Model
+import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.adoptium.api.v3.ReleaseResult
@@ -29,8 +29,6 @@ import java.security.MessageDigest
 import java.time.ZonedDateTime
 import java.util.*
 import java.util.regex.Pattern
-import jakarta.inject.Inject
-import jakarta.inject.Singleton
 
 @ApplicationScoped
 open class AdoptReleaseMapperFactory @Inject constructor(
@@ -50,7 +48,7 @@ open class AdoptReleaseMapperFactory @Inject constructor(
     }
 }
 
-private class AdoptReleaseMapper constructor(
+private class AdoptReleaseMapper(
     val adoptBinaryMapper: AdoptBinaryMapper,
     val htmlClient: GitHubHtmlClient,
     val vendor: Vendor
@@ -196,7 +194,7 @@ private class AdoptReleaseMapper constructor(
             .filter { asset ->
                 BinaryMapper.BINARY_EXTENSIONS.any { asset.name.endsWith(it) }
             }
-            .map { it.downloadCount }.sum()
+            .sumOf { it.downloadCount }
 
         return Release(
             id,

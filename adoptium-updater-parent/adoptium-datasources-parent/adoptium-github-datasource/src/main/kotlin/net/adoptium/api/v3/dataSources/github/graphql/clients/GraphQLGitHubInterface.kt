@@ -188,7 +188,7 @@ open class GraphQLGitHubInterface @Inject constructor(
                 }
 
             } catch (e: MismatchedInputException) {
-                return null;
+                return null
             } catch (e: Exception) {
                 LOGGER.error("Query failed", e)
                 throw e

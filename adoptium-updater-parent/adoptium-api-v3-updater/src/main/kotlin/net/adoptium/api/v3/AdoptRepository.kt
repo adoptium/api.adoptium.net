@@ -1,6 +1,5 @@
 package net.adoptium.api.v3
 
-import ReleaseIncludeFilter
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import kotlinx.coroutines.Deferred
@@ -76,7 +75,7 @@ open class AdoptRepositoryImpl @Inject constructor(
     override suspend fun getReleaseById(gitHubId: GitHubId): ReleaseResult? {
         val release = client.getReleaseById(gitHubId)
 
-        if (release == null) return null;
+        if (release == null) return null
 
         return getMapperForRepo(release.url)
             .toAdoptRelease(release)
@@ -147,7 +146,7 @@ open class AdoptRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun <E> getDataForEachRepo(
+    private fun <E> getDataForEachRepo(
         version: Int,
         filter: ReleaseIncludeFilter,
         getFun: suspend (Vendor, String, String) -> E

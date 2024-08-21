@@ -1,4 +1,4 @@
-package api;
+package net.adoptium.api
 
 import net.adoptium.api.v3.models.VersionData
 import net.adoptium.api.v3.parser.VersionParser

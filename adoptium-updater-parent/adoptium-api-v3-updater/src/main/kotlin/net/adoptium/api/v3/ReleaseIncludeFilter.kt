@@ -1,4 +1,5 @@
-import net.adoptium.api.v3.TimeSource
+package net.adoptium.api.v3
+
 import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.mapping.ReleaseMapper
 import net.adoptium.api.v3.models.Vendor
@@ -24,10 +25,10 @@ class ReleaseIncludeFilter(
     }
 
     fun filterVendor(vendor: Vendor): Boolean {
-        if (includeAll || APIConfig.UPDATE_ADOPTOPENJDK) {
-            return true // include all vendors
+        return if (includeAll || APIConfig.UPDATE_ADOPTOPENJDK) {
+            true // include all vendors
         } else {
-            return !excludedVendors.contains(vendor)
+            !excludedVendors.contains(vendor)
         }
     }
 

@@ -236,7 +236,7 @@ class BinaryResource @Inject constructor(private val packageEndpoint: PackageEnd
         return formResponse(if (release == null) emptyList() else listOf(release))
     }
 
-    protected fun formResponse(
+    private fun formResponse(
         releases: List<Release>,
         createResponse: (Package) -> Response = packageEndpoint.redirectToAsset()
     ): Response {

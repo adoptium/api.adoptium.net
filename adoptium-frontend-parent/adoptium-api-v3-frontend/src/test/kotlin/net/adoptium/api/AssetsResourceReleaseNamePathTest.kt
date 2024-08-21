@@ -9,7 +9,6 @@ import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.SortMethod
 import net.adoptium.api.v3.dataSources.SortOrder
 import net.adoptium.api.v3.filters.BinaryFilter
-import net.adoptium.api.v3.filters.ReleaseFilterFactory
 import net.adoptium.api.v3.models.Architecture
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
@@ -34,8 +33,7 @@ class AssetsResourceReleaseNamePathTest : FrontendTest() {
 
     @TestFactory
     fun filtersByReleaseNameCorrectly(): Stream<DynamicTest> {
-        return Vendor
-            .values()
+        return Vendor.entries
             .flatMap { vendor ->
                 apiDataStore
                     .getAdoptRepos()
@@ -43,8 +41,7 @@ class AssetsResourceReleaseNamePathTest : FrontendTest() {
                     .getReleases(releaseFilterFactory.createFilter(vendor = vendor), SortOrder.DESC, SortMethod.DEFAULT)
                     .take(3)
                     .flatMap { release ->
-                        ReleaseType
-                            .values()
+                        ReleaseType.entries
                             .map { "/v3/assets/release_name/$vendor/${release.release_name}" }
                             .map {
                                 DynamicTest.dynamicTest(it) {
@@ -103,8 +100,8 @@ class AssetsResourceReleaseNamePathTest : FrontendTest() {
 
                 override fun matchesSafely(p0: String?): Boolean {
                     val returnedRelease = JsonMapper.mapper.readValue(p0, Release::class.java)
-                    return returnedRelease.binaries.filter { it.architecture == Architecture.x32 }.size > 0 &&
-                        returnedRelease.binaries.filter { it.architecture != Architecture.x32 }.size == 0
+                    return returnedRelease.binaries.filter { it.architecture == Architecture.x32 }.isNotEmpty() &&
+                        returnedRelease.binaries.filter { it.architecture != Architecture.x32 }.isEmpty()
                 }
             })
     }

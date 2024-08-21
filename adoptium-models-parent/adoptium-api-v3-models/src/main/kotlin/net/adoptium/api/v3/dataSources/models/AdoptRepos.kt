@@ -27,7 +27,6 @@ class AdoptRepos {
 
         val releases = repos
             .asSequence()
-            .filterNotNull()
             .map { it.value.releases }
             .flatMap { it.getReleases() }
             .toList()
@@ -40,9 +39,7 @@ class AdoptRepos {
     }
 
     constructor(list: List<FeatureRelease>) : this(
-        list
-            .map { Pair(it.featureVersion, it) }
-            .toMap()
+        list.associateBy { it.featureVersion }
     )
 
     fun getReleases(
@@ -99,9 +96,7 @@ class AdoptRepos {
 
         other as AdoptRepos
 
-        if (repos != other.repos) return false
-
-        return true
+        return repos == other.repos
     }
 
     override fun hashCode(): Int {

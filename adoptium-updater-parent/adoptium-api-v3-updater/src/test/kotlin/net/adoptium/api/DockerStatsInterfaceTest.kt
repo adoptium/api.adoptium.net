@@ -34,7 +34,7 @@ class DockerStatsInterfaceTest : BaseTest() {
             dockerStatsInterface.updateDb()
 
             val stats = apiPersistence.getLatestAllDockerStats()
-            Assertions.assertTrue(stats.size > 0)
+            Assertions.assertTrue(stats.isNotEmpty())
         }
     }
 

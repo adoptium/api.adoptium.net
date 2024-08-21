@@ -35,7 +35,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
             .repos
             .keys
             .flatMap { version ->
-                ReleaseType.values()
+                ReleaseType.entries
                     .map { "/v3/assets/feature_releases/$version/$it" }
                     .map {
                         DynamicTest.dynamicTest(it) {
@@ -58,7 +58,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
             .repos
             .keys
             .flatMap { version ->
-                ReleaseType.values()
+                ReleaseType.entries
                     .map { "/v3/assets/feature_releases/$version/$it?PAGE_SIZE=100" }
                     .map { request ->
                         DynamicTest.dynamicTest(request) {
@@ -140,7 +140,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
     }
 
     override fun <T> runFilterTest(filterParamName: String, values: Array<T>, customiseQuery: (T, String) -> String): Stream<DynamicTest> {
-        return ReleaseType.values()
+        return ReleaseType.entries
             .flatMap { releaseType ->
                 // test the ltses and 1 non-lts
                 listOf(8, 11, 12)

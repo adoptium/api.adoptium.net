@@ -11,7 +11,7 @@ class ReleaseVersionResolver @Inject constructor(
     private val versionSupplier: VersionSupplier
 ) {
 
-    suspend fun formReleaseInfo(repo: AdoptRepos): ReleaseInfo {
+    fun formReleaseInfo(repo: AdoptRepos): ReleaseInfo {
         val gaReleases = repo
             .allReleases
             .getReleases()
@@ -26,7 +26,7 @@ class ReleaseVersionResolver @Inject constructor(
             .toTypedArray()
         val mostRecentFeatureRelease: Int = availableReleases.lastOrNull() ?: 0
 
-        val ltsVersions = versionSupplier.getLtsVersions();
+        val ltsVersions = versionSupplier.getLtsVersions()
 
         val availableLtsReleases: Array<Int> = gaReleases
             .asSequence()

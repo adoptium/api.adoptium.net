@@ -1,10 +1,13 @@
 package net.adoptium.api.v3.dataSources.persitence.mongo
 
 import com.mongodb.client.model.InsertManyOptions
-import com.mongodb.client.model.UpdateOptions
+import com.mongodb.client.model.ReplaceOptions
+import com.mongodb.kotlin.client.coroutine.MongoCollection
 import jakarta.enterprise.context.ApplicationScoped
-import jakarta.enterprise.inject.Model
 import jakarta.inject.Inject
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.toList
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
@@ -24,19 +27,18 @@ import org.bson.BsonDateTime
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.bson.Document
-import org.litote.kmongo.coroutine.CoroutineCollection
 import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
 
 @ApplicationScoped
 open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : MongoInterface(), ApiPersistence {
-    private val githubReleaseMetadataCollection: CoroutineCollection<GHReleaseMetadata> = createCollection(mongoClient.database, GH_RELEASE_METADATA)
-    private val releasesCollection: CoroutineCollection<Release> = createCollection(mongoClient.database, RELEASE_DB)
-    private val gitHubStatsCollection: CoroutineCollection<GitHubDownloadStatsDbEntry> = createCollection(mongoClient.database, GITHUB_STATS_DB)
-    private val dockerStatsCollection: CoroutineCollection<DockerDownloadStatsDbEntry> = createCollection(mongoClient.database, DOCKER_STATS_DB)
-    private val releaseInfoCollection: CoroutineCollection<ReleaseInfo> = createCollection(mongoClient.database, RELEASE_INFO_DB)
-    private val updateTimeCollection: CoroutineCollection<UpdatedInfo> = createCollection(mongoClient.database, UPDATE_TIME_DB)
-    private val githubReleaseNotesCollection: CoroutineCollection<ReleaseNotes> = createCollection(mongoClient.database, GH_RELEASE_NOTES)
+    private val githubReleaseMetadataCollection: MongoCollection<GHReleaseMetadata> = createCollection(mongoClient.getDatabase(), GH_RELEASE_METADATA)
+    private val releasesCollection: MongoCollection<Release> = createCollection(mongoClient.getDatabase(), RELEASE_DB)
+    private val gitHubStatsCollection: MongoCollection<GitHubDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), GITHUB_STATS_DB)
+    private val dockerStatsCollection: MongoCollection<DockerDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), DOCKER_STATS_DB)
+    private val releaseInfoCollection: MongoCollection<ReleaseInfo> = createCollection(mongoClient.getDatabase(), RELEASE_INFO_DB)
+    private val updateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), UPDATE_TIME_DB)
+    private val githubReleaseNotesCollection: MongoCollection<ReleaseNotes> = createCollection(mongoClient.getDatabase(), GH_RELEASE_NOTES)
 
     companion object {
         @JvmStatic
@@ -119,7 +121,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         val repoNames = dockerStatsCollection.distinct<String>("repo").toList()
 
         return repoNames
-            .mapNotNull {
+            .map {
                 dockerStatsCollection
                     .find(Document("repo", it))
                     .sort(Document("date", -1))
@@ -137,31 +139,31 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
 
     override suspend fun setReleaseInfo(releaseInfo: ReleaseInfo) {
         releaseInfoCollection.deleteMany(releaseVersionDbEntryMatcher())
-        releaseInfoCollection.updateOne(
+        releaseInfoCollection.replaceOne(
             releaseVersionDbEntryMatcher(),
             releaseInfo,
-            UpdateOptions().upsert(true)
+            ReplaceOptions().upsert(true)
         )
     }
 
     // visible for testing
     open suspend fun updateUpdatedTime(dateTime: ZonedDateTime, checksum: String, hashCode: Int) {
-        updateTimeCollection.updateOne(
+        updateTimeCollection.replaceOne(
             Document(),
             UpdatedInfo(dateTime, checksum, hashCode),
-            UpdateOptions().upsert(true)
+            ReplaceOptions().upsert(true)
         )
         updateTimeCollection.deleteMany(Document("time", BsonDocument("\$lt", BsonDateTime(dateTime.toInstant().toEpochMilli()))))
     }
 
     override suspend fun getUpdatedAt(): UpdatedInfo {
-        val info = updateTimeCollection.findOne()
+        val info = updateTimeCollection.find().firstOrNull()
         // if we have no existing time, make it 5 mins ago, should only happen on first time the db is used
         return info ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
     }
 
     override suspend fun getReleaseInfo(): ReleaseInfo? {
-        return releaseInfoCollection.findOne(releaseVersionDbEntryMatcher())
+        return releaseInfoCollection.find(releaseVersionDbEntryMatcher()).firstOrNull()
     }
 
     private fun releaseVersionDbEntryMatcher() = Document("tip_version", BsonDocument("\$exists", BsonBoolean(true)))
@@ -181,20 +183,20 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     private fun majorVersionMatcher(featureVersion: Int) = Document("version_data.major", featureVersion)
 
     override suspend fun getGhReleaseMetadata(gitHubId: GitHubId): GHReleaseMetadata? {
-        return githubReleaseMetadataCollection.findOne(matchGithubId(gitHubId))
+        return githubReleaseMetadataCollection.find(matchGithubId(gitHubId)).firstOrNull()
     }
 
     override suspend fun setGhReleaseMetadata(ghReleaseMetadata: GHReleaseMetadata) {
         githubReleaseMetadataCollection
-            .updateOne(
+            .replaceOne(
                 matchGithubId(ghReleaseMetadata.gitHubId),
                 ghReleaseMetadata,
-                UpdateOptions().upsert(true)
+                ReplaceOptions().upsert(true)
             )
     }
 
     override suspend fun hasReleaseNotesForGithubId(gitHubId: GitHubId): Boolean {
-        return githubReleaseNotesCollection.findOne(Document("id", gitHubId.id)) != null
+        return githubReleaseNotesCollection.find(Document("id", gitHubId.id)).firstOrNull() != null
     }
 
     override suspend fun putReleaseNote(releaseNotes: ReleaseNotes) {
@@ -203,7 +205,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     }
 
     override suspend fun getReleaseNotes(vendor: Vendor, releaseName: String): ReleaseNotes? {
-        return githubReleaseNotesCollection.findOne(Document(
+        return githubReleaseNotesCollection.find(Document(
             "\$and",
             BsonArray(
                 listOf(
@@ -213,6 +215,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
             )
         )
         )
+            .firstOrNull()
     }
 
     private fun matchGithubId(gitHubId: GitHubId) = Document("gitHubId.id", gitHubId.id)
