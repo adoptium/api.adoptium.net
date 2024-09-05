@@ -394,7 +394,7 @@
             <dependency>
                 <groupId>com.expediagroup</groupId>
                 <artifactId>graphql-kotlin-client-jackson</artifactId>
-                <version>7.1.4</version>
+                <version>8.0.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
