@@ -34,7 +34,7 @@ runs:
       password: ${{ inputs.AZURE_CLIENT_SECRET }}
 
   - name: Set the target Azure Kubernetes Service (AKS) cluster.
-    uses: azure/aks-set-context@37037e33d3a2fc08abe40c887d81c3f6e1eb93b9 # v4.0.0
+    uses: azure/aks-set-context@1cf43fa609aaef0617c6a12deda238b920e926b0 # v4.0.1
     with:
       resource-group: adopt-api
       cluster-name: aksff92
