@@ -60,7 +60,7 @@
         <maven.openapi-generator-maven-plugin.version>7.8.0</maven.openapi-generator-maven-plugin.version>
         <maven.pitest-plugin.version>1.16.3</maven.pitest-plugin.version>
         <maven.pmd-plugin.version>3.25.0</maven.pmd-plugin.version>
-        <maven.project-info-reports-plugin.version>3.6.2</maven.project-info-reports-plugin.version>
+        <maven.project-info-reports-plugin.version>3.7.0</maven.project-info-reports-plugin.version>
         <maven.rat-plugin.version>0.16.1</maven.rat-plugin.version>
         <maven.release-plugin.version>3.1.1</maven.release-plugin.version>
         <maven.resources-plugin.version>3.3.1</maven.resources-plugin.version>
