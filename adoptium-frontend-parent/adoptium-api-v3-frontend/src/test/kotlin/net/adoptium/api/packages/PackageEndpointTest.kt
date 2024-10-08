@@ -107,7 +107,7 @@ abstract class PackageEndpointTest : FrontendTest() {
         performRequest(path)
             .then()
             .statusCode(307)
-            .header("Location", Matchers.startsWith(binary.`package`.link))
+            .header("location", Matchers.startsWith(binary.`package`.link))
     }
 
     protected fun requestSignatureExpecting307(
@@ -121,7 +121,7 @@ abstract class PackageEndpointTest : FrontendTest() {
         performRequest(path)
             .then()
             .statusCode(307)
-            .header("Location", Matchers.startsWith(binary.`package`.signature_link))
+            .header("location", Matchers.startsWith(binary.`package`.signature_link))
     }
 
     protected fun requestChecksumExpecting307(
@@ -135,6 +135,6 @@ abstract class PackageEndpointTest : FrontendTest() {
         performRequest(path)
             .then()
             .statusCode(307)
-            .header("Location", Matchers.startsWith(binary.`package`.checksum_link))
+            .header("location", Matchers.startsWith(binary.`package`.checksum_link))
     }
 }
