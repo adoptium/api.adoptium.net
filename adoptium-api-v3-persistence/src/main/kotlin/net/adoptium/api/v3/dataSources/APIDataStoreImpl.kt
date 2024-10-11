@@ -188,6 +188,10 @@ open class APIDataStoreImpl : APIDataStore {
 
     }
 
+    override fun getUpdateInfo(): UpdatedInfo {
+        return updatedAt
+    }
+
     // open for
     override fun getAdoptRepos(): AdoptRepos {
         return binaryRepos
