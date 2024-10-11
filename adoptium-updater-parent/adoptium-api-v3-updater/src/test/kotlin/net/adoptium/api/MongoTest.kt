@@ -1,5 +1,6 @@
 package net.adoptium.api
 
+import de.flapdoodle.embed.mongo.config.ImmutableNet
 import de.flapdoodle.embed.mongo.config.Net
 import de.flapdoodle.embed.mongo.distribution.Version
 import de.flapdoodle.embed.mongo.transitions.Mongod
@@ -34,9 +35,9 @@ abstract class MongoTest {
         fun startFongo() {
             val bindIp = "localhost"
 
-            val port = de.flapdoodle.net.Net.freeServerPort()
+            val net = ImmutableNet.defaults()
 
-            val net = Net.builder().bindIp(bindIp).port(port).isIpv6(false).build()
+            val port = net.port
 
             val mongodbTestConnectionString = "mongodb://$bindIp:$port"
 

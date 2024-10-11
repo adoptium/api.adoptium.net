@@ -26,6 +26,10 @@ class CacheControlService @Inject constructor(private var apiDataStore: APIDataS
                 val etag = apiDataStore.getUpdateInfo().hexChecksum
                 val lastModified = apiDataStore.getUpdateInfo().lastModified
 
+                if (lastModified == null || etag == null) {
+                    return
+                }
+
                 val builder =
                     requestContext
                         .request
@@ -42,6 +46,11 @@ class CacheControlService @Inject constructor(private var apiDataStore: APIDataS
     fun responseFilter(responseContext: ContainerResponseContext?) {
         val ecc = ExtendedCacheControl();
         ecc.isPublic = true
+
+        if (apiDataStore.getUpdateInfo().hexChecksum == null ||
+            apiDataStore.getUpdateInfo().lastModifiedFormatted == null) {
+            return
+        }
 
         responseContext?.headers?.add("ETag", apiDataStore.getUpdateInfo().hexChecksum)
         responseContext?.headers?.add("Last-Modified", apiDataStore.getUpdateInfo().lastModifiedFormatted)

@@ -6,6 +6,7 @@ import net.adoptium.api.v3.JsonMapper
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.persitence.mongo.MongoClient
 import net.adoptium.api.v3.models.DateTime
+import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
 import org.bson.Document
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -57,6 +58,28 @@ class DateTimeMigrationTest : MongoTest() {
                 mongoClient.getDatabase().getCollection<Any>(collectionName).drop()
             }
         }
+    }
+
+    @Test
+    fun `github stats`(mongoClient: MongoClient) {
+        runBlocking {
+            val collectionName = UUID.randomUUID().toString()
+            val client1 = mongoClient.getDatabase().getCollection<GitHubDownloadStatsDbEntry>(collectionName)
+
+            client1.insertOne(
+                GitHubDownloadStatsDbEntry(
+                    TimeSource.now(),
+                    1,
+                    mapOf(),
+                    1
+                )
+            )
+
+            client1.find().firstOrNull()?.let {
+                assertEquals(1, it.downloads)
+            }
+        }
+
     }
 
     @Test
