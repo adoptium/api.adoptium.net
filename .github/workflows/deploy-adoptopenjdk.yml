@@ -43,15 +43,3 @@ jobs:
         uses: ./.github/actions/kubectl-redeploy
         with:
           NAMESPACE: ${{ env.NAMESPACE }}
-
-      # if the branch is production, redeploy the k8s service on digitalocean too
-      - name: Login to DigitalOcean
-        uses: ./.github/actions/do-login
-        with:
-          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-
-      - name: Redeploy Kubernetes Updater and Frontend
-        if: startsWith(github.ref, 'refs/heads/production')
-        uses: ./.github/actions/kubectl-redeploy
-        with:
-          NAMESPACE: adoptopenjdk-do
