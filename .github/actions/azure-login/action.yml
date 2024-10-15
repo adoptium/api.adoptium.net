@@ -27,6 +27,7 @@ runs:
       subscription-id: ${{ inputs.AZURE_SUBSCRIPTION_ID }}
 
   - name: Login to Azure Container Registry
+    shell: bash
     run: az acr login --name adoptopenjdkacr
 
   - name: Set the target Azure Kubernetes Service (AKS) cluster.
