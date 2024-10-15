@@ -96,7 +96,6 @@ class AssetsResourceVersionPathTest : AssetsPathTest() {
             .stream()
     }
 
-
     @TestFactory
     fun `semver does not match out of range`(): Stream<DynamicTest> {
         return listOf(
@@ -184,4 +183,5 @@ class AssetsResourceVersionPathTest : AssetsPathTest() {
             element == OperatingSystem.`alpine-linux` ||
             (element == JvmImpl.dragonwell).xor(versionRange.equals(JAVA8_212) || versionRange.equals(JAVA11))
     }
+
 }

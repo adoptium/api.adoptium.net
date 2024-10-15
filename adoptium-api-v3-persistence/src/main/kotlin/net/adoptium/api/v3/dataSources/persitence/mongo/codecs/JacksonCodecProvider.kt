@@ -16,6 +16,7 @@ import org.bson.codecs.configuration.CodecRegistry
 import java.io.IOException
 import java.io.UncheckedIOException
 import java.time.ZonedDateTime
+import java.util.*
 
 class JacksonCodecProvider : CodecProvider {
     companion object {
@@ -25,7 +26,10 @@ class JacksonCodecProvider : CodecProvider {
             .registerModule(JavaTimeModule())
             .registerModule(object : SimpleModule() {
                 init {
-                    addDeserializer(ZonedDateTime::class.java, ZonedDateTimeDeserializer())
+                    addDeserializer(ZonedDateTime::class.java, ZonedDateTimeCodecs.ZonedDateTimeDeserializer())
+                    addSerializer(ZonedDateTime::class.java, ZonedDateTimeCodecs.ZonedDateTimeSerializer())
+                    addDeserializer(Date::class.java, DateCodecs.DateDeserializer())
+                    addSerializer(Date::class.java, DateCodecs.DateSerializer())
                 }
             })
     }
@@ -38,7 +42,8 @@ class JacksonCodecProvider : CodecProvider {
     }
 }
 
-class JacksonCodec<T>(private val objectMapper: ObjectMapper, private val registry: CodecRegistry, val type: Class<T>) : Codec<T> {
+class JacksonCodec<T>(private val objectMapper: ObjectMapper, private val registry: CodecRegistry, val type: Class<T>) :
+    Codec<T> {
 
     private var rawBsonDocumentCodec: Codec<RawBsonDocument> = registry.get(RawBsonDocument::class.java)
 

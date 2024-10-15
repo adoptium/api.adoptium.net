@@ -22,6 +22,8 @@ import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.extension.ExtendWith
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.stream.Stream
 
 @QuarkusTest
@@ -238,4 +240,60 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
             }
             .stream()
     }
+
+    @Test
+    fun `cache control headers are present`() {
+        RestAssured.given()
+            .`when`()
+            .get("/v3/assets/feature_releases/8/ga")
+            .then()
+            .statusCode(200)
+            .assertThat()
+            .header("Cache-Control", Matchers.equalTo("public, no-transform"))
+            .header("ETag", Matchers.equalTo("d76df8e7aefcf7"))
+            .header("Last-Modified", Matchers.notNullValue())
+    }
+
+    @Test
+    fun `if none match applied`() {
+        RestAssured.given()
+            .`when`()
+            .header("If-None-Match", "d76df8e7aefcf7")
+            .get("/v3/assets/feature_releases/8/ga")
+            .then()
+            .statusCode(304)
+    }
+
+    @Test
+    fun `etag applied match applied`() {
+        RestAssured.given()
+            .`when`()
+            .header("If-Match", "d76df8e7aefcf7")
+            .get("/v3/assets/feature_releases/8/ga")
+            .then()
+            .statusCode(200)
+    }
+
+    @Test
+    fun `modified match applied`() {
+        RestAssured.given()
+            .`when`()
+            .header("If-Modified-Since", ZonedDateTime.now().plusDays(1).format(DateTimeFormatter.RFC_1123_DATE_TIME))
+            .get("/v3/assets/feature_releases/8/ga")
+            .then()
+            .statusCode(304)
+    }
+
+    @Test
+    fun `modified match applied2`() {
+        RestAssured.given()
+            .`when`()
+            .header("If-Modified-Since", ZonedDateTime.now().minusYears(100)
+                .format(DateTimeFormatter.RFC_1123_DATE_TIME)
+            )
+            .get("/v3/assets/feature_releases/8/ga")
+            .then()
+            .statusCode(200)
+    }
+
 }
