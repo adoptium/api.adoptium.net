@@ -27,11 +27,7 @@ runs:
       subscription-id: ${{ inputs.AZURE_SUBSCRIPTION_ID }}
 
   - name: Login to Azure Container Registry
-    uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
-    with:
-      registry: adoptopenjdkacr.azurecr.io
-      username: ${{ inputs.AZURE_CLIENT_ID }}
-      password: ${{ inputs.AZURE_CLIENT_SECRET }}
+    run: az acr login --name adoptopenjdkacr
 
   - name: Set the target Azure Kubernetes Service (AKS) cluster.
     uses: azure/aks-set-context@1cf43fa609aaef0617c6a12deda238b920e926b0 # v4.0.1
