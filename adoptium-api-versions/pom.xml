@@ -16,11 +16,11 @@
         <kotlin.version>2.0.20</kotlin.version>
         <logback.version>1.5.8</logback.version>
         <maven.compiler.release>17</maven.compiler.release>
-        <maven.version>3.9.8</maven.version>
+        <maven.version>3.9.9</maven.version>
         <maven.project-info-reports-plugin.version>3.7.0</maven.project-info-reports-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.13.3</quarkus.version>
+        <quarkus.version>3.16.0</quarkus.version>
         <rest-assured.version>5.5.0</rest-assured.version>
     </properties>
 
@@ -301,7 +301,7 @@
             </dependency>
             <dependency>
                 <groupId>io.quarkus</groupId>
-                <artifactId>quarkus-resteasy-reactive</artifactId>
+                <artifactId>quarkus-rest</artifactId>
                 <version>${quarkus.version}</version>
             </dependency>
 
@@ -383,7 +383,7 @@
             <dependency>
                 <groupId>com.expediagroup</groupId>
                 <artifactId>graphql-kotlin-ktor-client</artifactId>
-                <version>7.1.4</version>
+                <version>8.2.0</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.jetbrains.kotlinx</groupId>
@@ -394,7 +394,7 @@
             <dependency>
                 <groupId>com.expediagroup</groupId>
                 <artifactId>graphql-kotlin-client-jackson</artifactId>
-                <version>7.1.4</version>
+                <version>8.2.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

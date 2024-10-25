@@ -10,7 +10,7 @@
 
     <!-- This throws a warning, but the versions plugin does actually require it if you're checking plugin versions -->
     <prerequisites>
-        <maven>3.9.8</maven>
+        <maven>3.9.9</maven>
     </prerequisites>
 
     <!-- Keep all these in sync with adoptium-api-versions -->
@@ -82,7 +82,7 @@
         <spotbugs.version>4.7.3</spotbugs.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.14.1</quarkus.version>
+        <quarkus.version>3.16.0</quarkus.version>
     </properties>
 
     <modules>
