@@ -249,7 +249,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
             .then()
             .statusCode(200)
             .assertThat()
-            .header("Cache-Control", Matchers.equalTo("public, no-transform"))
+            .header("Cache-Control", Matchers.equalTo("public, no-transform, s-maxage=120, max-age=120"))
             .header("ETag", Matchers.equalTo("d76df8e7aefcf7"))
             .header("Last-Modified", Matchers.notNullValue())
     }
