@@ -42,7 +42,7 @@ open class AdoptRepositoryImpl @Inject constructor(
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
 
-        private val EXCLUDED = listOf("jdk17u-2022-05-27-19-32-beta")
+        private val EXCLUDED = listOf("jdk17u-2022-05-27-19-32-beta", "jdk-11.0.13'+8")
     }
 
     private val mappers = mapOf(

@@ -6,7 +6,6 @@ import jakarta.ws.rs.container.ContainerRequestContext
 import jakarta.ws.rs.container.ContainerRequestFilter
 import jakarta.ws.rs.container.ContainerResponseContext
 import jakarta.ws.rs.core.EntityTag
-import jakarta.ws.rs.core.Request
 import jakarta.ws.rs.ext.Provider
 import net.adoptium.api.v3.dataSources.APIDataStore
 import org.jboss.resteasy.reactive.common.headers.CacheControlDelegate
