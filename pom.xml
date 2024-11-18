@@ -39,7 +39,7 @@
         <maven.enforcer-plugin.version>3.5.0</maven.enforcer-plugin.version>
         <maven.exec-plugin.version>3.5.0</maven.exec-plugin.version>
         <maven.filtering-plugin.version>3.4.0</maven.filtering-plugin.version>
-        <maven.help-plugin.version>3.5.0</maven.help-plugin.version>
+        <maven.help-plugin.version>3.5.1</maven.help-plugin.version>
         <!--
              TODO Moving to 3.1.1 created a multi-module packaging issue:
 
