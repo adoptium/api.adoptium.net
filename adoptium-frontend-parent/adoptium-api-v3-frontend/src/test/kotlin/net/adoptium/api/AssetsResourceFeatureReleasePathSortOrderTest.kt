@@ -33,7 +33,7 @@ import java.time.ZonedDateTime
 class AssetsResourceFeatureReleasePathSortOrderTest : FrontendTest() {
 
     val apiDataStore = ApiDataStoreStub(createRepo())
-    var assetResource: AssetsResource = AssetsResource(apiDataStore, ReleaseEndpoint(apiDataStore))
+    var assetResource: AssetsResource = AssetsResource(apiDataStore, ReleaseEndpoint(apiDataStore, releaseFilterFactory), releaseFilterFactory)
 
     companion object {
         fun createRepo(): AdoptRepos {

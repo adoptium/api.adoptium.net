@@ -1,10 +1,10 @@
 package net.adoptium.api.v3
 
 import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
-import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.github.GitHubApi
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
@@ -20,17 +20,13 @@ import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
 import org.slf4j.LoggerFactory
-import jakarta.inject.Inject
 
 interface AdoptRepository {
-    suspend fun getRelease(version: Int): FeatureRelease?
+    suspend fun getRelease(version: Int, filter: ReleaseIncludeFilter): FeatureRelease?
     suspend fun getSummary(version: Int): GHRepositorySummary
     suspend fun getReleaseById(gitHubId: GitHubId): ReleaseResult?
     suspend fun getReleaseFilesForId(gitHubId: GitHubId): List<GHAsset>?
 
-    companion object {
-        val VENDORS_EXCLUDED_FROM_FULL_UPDATE = setOf(Vendor.adoptopenjdk)
-    }
 }
 
 @ApplicationScoped
@@ -46,7 +42,7 @@ open class AdoptRepositoryImpl @Inject constructor(
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
 
-        private val EXCLUDED = listOf("jdk17u-2022-05-27-19-32-beta")
+        private val EXCLUDED = listOf("jdk17u-2022-05-27-19-32-beta", "jdk-11.0.13'+8")
     }
 
     private val mappers = mapOf(
@@ -79,7 +75,7 @@ open class AdoptRepositoryImpl @Inject constructor(
     override suspend fun getReleaseById(gitHubId: GitHubId): ReleaseResult? {
         val release = client.getReleaseById(gitHubId)
 
-        if (release == null) return null;
+        if (release == null) return null
 
         return getMapperForRepo(release.url)
             .toAdoptRelease(release)
@@ -92,31 +88,25 @@ open class AdoptRepositoryImpl @Inject constructor(
             ?.assets
     }
 
-    override suspend fun getRelease(version: Int): FeatureRelease {
+    override suspend fun getRelease(version: Int, filter: ReleaseIncludeFilter): FeatureRelease {
+
         val repo = getDataForEachRepo(
             version,
-            ::getRepository,
-            getFullUpdateFilter()
+            filter,
+            getRepository(filter)
         )
             .await()
             .filterNotNull()
             .map { AdoptRepo(it) }
-        return FeatureRelease(version, repo)
-    }
 
-    // If not explicitly updating AdoptOpenJDK exclude them
-    private fun getFullUpdateFilter(): (Vendor) -> Boolean = if (APIConfig.UPDATE_ADOPTOPENJDK) {
-        { true } // include all vendors
-    } else {
-        { vendor -> !AdoptRepository.VENDORS_EXCLUDED_FROM_FULL_UPDATE.contains(vendor) } // exclude AdoptOpenjdk
+        return FeatureRelease(version, repo)
     }
 
     override suspend fun getSummary(version: Int): GHRepositorySummary {
         val releaseSummaries = getDataForEachRepo(
             version,
-            { owner: String, repoName: String -> client.getRepositorySummary(owner, repoName) },
-            { true } // include all vendors in summary update
-        )
+            ReleaseIncludeFilter.INCLUDE_ALL
+        ) { _: Vendor, owner: String, repoName: String -> client.getRepositorySummary(owner, repoName) }
             .await()
             .filterNotNull()
             .flatMap { it.releases.releases }
@@ -124,9 +114,13 @@ open class AdoptRepositoryImpl @Inject constructor(
         return GHRepositorySummary(GHReleasesSummary(releaseSummaries, PageInfo(false, "")))
     }
 
-    private suspend fun getRepository(owner: String, repoName: String): List<Release> {
+    private fun getRepository(filter: ReleaseIncludeFilter): suspend (Vendor, String, String) -> List<Release> {
+        return { vendor: Vendor, owner: String, repoName: String -> getRepository(filter, vendor, owner, repoName) }
+    }
+
+    private suspend fun getRepository(filter: ReleaseIncludeFilter, vendor: Vendor, owner: String, repoName: String): List<Release> {
         return client
-            .getRepository(owner, repoName)
+            .getRepository(owner, repoName) { updatedAt, isPrerelease -> filter.filter(vendor, updatedAt, isPrerelease) }
             .getReleases()
             .flatMap {
                 try {
@@ -152,10 +146,10 @@ open class AdoptRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun <E> getDataForEachRepo(
+    private fun <E> getDataForEachRepo(
         version: Int,
-        getFun: suspend (String, String) -> E,
-        filter: (Vendor) -> Boolean
+        filter: ReleaseIncludeFilter,
+        getFun: suspend (Vendor, String, String) -> E
     ): Deferred<List<E?>> {
         LOGGER.info("getting $version")
         return GlobalScope.async {
@@ -182,15 +176,15 @@ open class AdoptRepositoryImpl @Inject constructor(
         owner: String,
         vendor: Vendor,
         repoName: String,
-        getFun: suspend (String, String) -> E,
-        filter: (Vendor) -> Boolean
+        getFun: suspend (Vendor, String, String) -> E,
+        filter: ReleaseIncludeFilter
     ): Deferred<E?> {
         return GlobalScope.async {
-            if (!Vendor.validVendor(vendor) || !filter.invoke(vendor)) {
+            if (!Vendor.validVendor(vendor) || !filter.filterVendor(vendor)) {
                 return@async null
             }
             LOGGER.info("getting $owner $repoName")
-            val releases = getFun(owner, repoName)
+            val releases = getFun(vendor, owner, repoName)
             LOGGER.info("Done getting $owner $repoName")
             return@async releases
         }

@@ -14,7 +14,7 @@ jobs:
     if: startsWith(github.repository, 'adoptium/')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Login to Azure
         uses: ./.github/actions/azure-login
@@ -22,8 +22,6 @@ jobs:
           AZURE_CLIENT_ID_OIDC: ${{ secrets.AZURE_CLIENT_ID_OIDC }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
 
       - name: Detect Branch
         run: |
@@ -43,15 +41,3 @@ jobs:
         uses: ./.github/actions/kubectl-redeploy
         with:
           NAMESPACE: ${{ env.NAMESPACE }}
-
-      # if the branch is production, redeploy the k8s service on digitalocean too
-      - name: Login to DigitalOcean
-        uses: ./.github/actions/do-login
-        with:
-          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-
-      - name: Redeploy Kubernetes Updater and Frontend
-        if: startsWith(github.ref, 'refs/heads/production')
-        uses: ./.github/actions/kubectl-redeploy
-        with:
-          NAMESPACE: adoptopenjdk-do

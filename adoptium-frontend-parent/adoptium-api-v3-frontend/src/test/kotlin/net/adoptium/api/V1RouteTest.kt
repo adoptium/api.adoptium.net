@@ -17,12 +17,12 @@ class V1RouteTest : FrontendTest() {
             "/v1/foo",
             "/v1/foo/bar"
         )
-            .forEach({ route ->
+            .forEach { route ->
                 RestAssured.given()
                     .`when`()
                     .get(route)
                     .then()
                     .statusCode(Response.Status.GONE.statusCode)
-            })
+            }
     }
 }

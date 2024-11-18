@@ -13,10 +13,11 @@ import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.ReleaseVersionResolver
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
+import net.adoptium.api.v3.dataSources.UpdatableVersionSupplier
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.Release
-import net.adoptium.api.v3.models.Versions
+import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.releaseNotes.AdoptReleaseNotes
 import net.adoptium.api.v3.stats.StatsInterface
 import org.slf4j.LoggerFactory
@@ -26,6 +27,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.timerTask
 
 @UnlessBuildProfile("test")
@@ -41,7 +43,8 @@ class V3Updater @Inject constructor(
     private val database: ApiPersistence,
     private val statsInterface: StatsInterface,
     private val releaseVersionResolver: ReleaseVersionResolver,
-    private val adoptReleaseNotes: AdoptReleaseNotes
+    private val adoptReleaseNotes: AdoptReleaseNotes,
+    private val updatableVersionSupplier: UpdatableVersionSupplier
 ) : Updater {
 
     private val mutex = Mutex()
@@ -63,16 +66,12 @@ class V3Updater @Inject constructor(
             return String(Base64.getEncoder().encode(md.digest()))
         }
 
-        fun copyOldReleasesIntoNewRepo(currentRepo: AdoptRepos, newRepoData: AdoptRepos) = newRepoData
+        fun copyOldReleasesIntoNewRepo(currentRepo: AdoptRepos, newRepoData: AdoptRepos, filter: ReleaseIncludeFilter) = newRepoData
             .addAll(currentRepo
                 .allReleases
                 .getReleases()
-                .filter { AdoptRepository.VENDORS_EXCLUDED_FROM_FULL_UPDATE.contains(it.vendor) }
+                .filter { !filter.filter(it.vendor, it.updated_at.dateTime, it.release_type == ReleaseType.ea) }
                 .toList())
-    }
-
-    init {
-        //AppInsightsTelemetry.start()
     }
 
     override fun addToUpdate(toUpdate: String): List<Release> {
@@ -140,10 +139,10 @@ class V3Updater @Inject constructor(
             .forEach { releaseA ->
                 val releaseB = repoB.allReleases.getReleaseById(releaseA.id)
                 if (releaseB == null) {
-                    LOGGER.debug("Release disapeared ${releaseA.id} ${releaseA.version_data.semver}")
+                    LOGGER.debug("Release disappeared ${releaseA.id} ${releaseA.version_data.semver}")
                 } else if (releaseA != releaseB) {
-                    LOGGER.debug("Release changedA $releaseA")
-                    LOGGER.debug("Release changedB $releaseB")
+                    LOGGER.debug("Release changedA {}", releaseA)
+                    LOGGER.debug("Release changedB {}", releaseB)
                     releaseA
                         .binaries
                         .forEach { binaryA ->
@@ -208,6 +207,7 @@ class V3Updater @Inject constructor(
     fun run(instantFullUpdate: Boolean) {
         val executor = Executors.newScheduledThreadPool(2)
 
+
         val delay = if (instantFullUpdate) 0L else 1L
 
         var repo: AdoptRepos = try {
@@ -217,30 +217,44 @@ class V3Updater @Inject constructor(
             AdoptRepos(emptyList())
         }
 
+        val incrementalUpdateScheduled = AtomicBoolean(false)
+
         executor.scheduleWithFixedDelay(
             timerTask {
-                repo = fullUpdate(repo) ?: repo
+                repo = fullUpdate(repo, true) ?: repo
+                if (!incrementalUpdateScheduled.getAndSet(true)) {
+                    executor.scheduleWithFixedDelay(
+                        timerTask {
+                            repo = incrementalUpdate(repo) ?: repo
+                        },
+                        1, 6, TimeUnit.MINUTES
+                    )
+                }
+                repo = fullUpdate(repo, false) ?: repo
             },
             delay, 1, TimeUnit.DAYS
         )
-
-        executor.scheduleWithFixedDelay(
-            timerTask {
-                repo = incrementalUpdate(repo) ?: repo
-            },
-            1, 6, TimeUnit.MINUTES
-        )
     }
 
-    fun fullUpdate(currentRepo: AdoptRepos): AdoptRepos? {
+    private fun fullUpdate(currentRepo: AdoptRepos, releasesOnly: Boolean): AdoptRepos? {
         // Must catch errors or may kill the scheduler
         try {
             return runBlocking {
-                LOGGER.info("Starting Full update")
+                LOGGER.info("Starting Full update {}", releasesOnly)
 
-                val newRepoData = adoptReposBuilder.build(Versions.versions)
+                updatableVersionSupplier.updateVersions()
 
-                val repo = carryOverExcludedReleases(currentRepo, newRepoData)
+                val filterType: ReleaseFilterType = if (releasesOnly) {
+                    ReleaseFilterType.RELEASES_ONLY
+                } else {
+                    ReleaseFilterType.ALL
+                }
+
+                val filter = ReleaseIncludeFilter(TimeSource.now(), filterType)
+
+                val newRepoData = adoptReposBuilder.build(filter)
+
+                val repo = copyOldReleasesIntoNewRepo(currentRepo, newRepoData, filter)
 
                 val checksum = calculateChecksum(repo)
 
@@ -267,14 +281,5 @@ class V3Updater @Inject constructor(
         }
         return null
     }
-
-    // Releases that were excluded from the update due to being archived, copy them over from existing data
-    private fun carryOverExcludedReleases(currentRepo: AdoptRepos, newRepoData: AdoptRepos) = if (!APIConfig.UPDATE_ADOPTOPENJDK) {
-        // AdoptOpenJdk were excluded from full update so copy them from previous
-        copyOldReleasesIntoNewRepo(currentRepo, newRepoData)
-    } else {
-        newRepoData
-    }
-
 
 }

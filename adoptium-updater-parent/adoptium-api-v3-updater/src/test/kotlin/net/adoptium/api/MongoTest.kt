@@ -1,11 +1,12 @@
 package net.adoptium.api
 
+import de.flapdoodle.embed.mongo.config.ImmutableNet
 import de.flapdoodle.embed.mongo.config.Net
 import de.flapdoodle.embed.mongo.distribution.Version
 import de.flapdoodle.embed.mongo.transitions.Mongod
 import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess
-import de.flapdoodle.embed.process.runtime.Network
 import de.flapdoodle.reverse.transitions.Start
+import net.adoptium.api.testDoubles.UpdatableVersionSupplierStub
 import net.adoptium.api.v3.dataSources.APIDataStoreImpl
 import org.jboss.weld.junit5.auto.AddPackages
 import org.jboss.weld.junit5.auto.EnableAutoWeld
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.slf4j.LoggerFactory
 
 @EnableAutoWeld
-@AddPackages(value = [APIDataStoreImpl::class])
+@AddPackages(value = [APIDataStoreImpl::class, UpdatableVersionSupplierStub::class])
 abstract class MongoTest {
 
     companion object {
@@ -33,12 +34,13 @@ abstract class MongoTest {
         @JvmStatic
         fun startFongo() {
             val bindIp = "localhost"
-            val net = Net.of("localhost",
-                Network.freeServerPort(Network.getLocalHost()),
-                Network.localhostIsIPv6()
-            )
 
-            val mongodbTestConnectionString = "mongodb://$bindIp:${net.port}"
+            val net = ImmutableNet.defaults()
+
+            val port = net.port
+
+            val mongodbTestConnectionString = "mongodb://$bindIp:$port"
+
             LOGGER.info("Mongo test connection string - $mongodbTestConnectionString")
             System.setProperty("MONGODB_TEST_CONNECTION_STRING", mongodbTestConnectionString)
 

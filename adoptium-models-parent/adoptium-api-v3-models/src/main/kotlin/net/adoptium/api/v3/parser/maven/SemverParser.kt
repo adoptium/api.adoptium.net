@@ -1,14 +1,14 @@
-package net.adoptium.api.v3.parser.maven;
+package net.adoptium.api.v3.parser.maven
 
 import net.adoptium.api.v3.models.VersionData
 import net.adoptium.api.v3.parser.FailedToParse
 import java.util.regex.Pattern
 
 object SemverParser {
-    val PRE = """(\-(?<pre>[\.A-Za-z0-9]+))?"""
-    val BUILD = """(\+(?<build>[\.A-Za-z0-9]+))?"""
-    val VERSION_CORE = """(?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)$PRE$BUILD"""
-    val MATCHER = Pattern.compile("^$VERSION_CORE$")
+    private const val PRE = """(\-(?<pre>[\.A-Za-z0-9]+))?"""
+    private const val BUILD = """(\+(?<build>[\.A-Za-z0-9]+))?"""
+    private const val VERSION_CORE = """(?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)$PRE$BUILD"""
+    private val MATCHER = Pattern.compile("^$VERSION_CORE$")
 
     fun parseAdoptSemverNonNull(version: String): VersionData {
         return parseAdoptSemver(version) ?: throw FailedToParse("Failed to parse $version")
@@ -49,7 +49,7 @@ object SemverParser {
 
                         optional = if (parts.size > 2) parts[2] else null
                         adoptBuildNum = if (parts.size > 1) parts[1].toInt() else null
-                        build = if (parts.size > 0) parts[0].toInt() else null
+                        build = if (parts.isNotEmpty()) parts[0].toInt() else null
 
                         if (build != null) {
                             patch = build / 100

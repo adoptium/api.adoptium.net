@@ -5,12 +5,12 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema
 class SourcePackage(
     name: String,
     link: String,
-    size: Long) : FileAsset(name, link, size);
+    size: Long) : FileAsset(name, link, size)
 
 class ReleaseNotesPackage(
     name: String,
     link: String,
-    size: Long) : FileAsset(name, link, size);
+    size: Long) : FileAsset(name, link, size)
 
 open class FileAsset {
 

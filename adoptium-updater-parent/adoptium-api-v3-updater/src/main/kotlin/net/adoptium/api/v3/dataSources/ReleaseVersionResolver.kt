@@ -1,31 +1,17 @@
 package net.adoptium.api.v3.dataSources
 
 import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.models.ReleaseInfo
 import net.adoptium.api.v3.models.ReleaseType
-import net.adoptium.api.v3.models.Versions
-import jakarta.inject.Inject
 
 @ApplicationScoped
 class ReleaseVersionResolver @Inject constructor(
-    private val updaterHtmlClient: UpdaterHtmlClient
+    private val versionSupplier: VersionSupplier
 ) {
 
-    private val VERSION_FILE_URL = "https://raw.githubusercontent.com/openjdk/jdk/master/make/conf/version-numbers.conf"
-
-    private suspend fun getTipVersion(): Int? {
-        val versionFile = updaterHtmlClient.get(VERSION_FILE_URL)
-
-        return if (versionFile != null) {
-            Regex(""".*DEFAULT_VERSION_FEATURE=(?<num>\d+).*""", setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL))
-                .matchEntire(versionFile)?.groups?.get("num")?.value?.toInt()
-        } else {
-            null
-        }
-    }
-
-    suspend fun formReleaseInfo(repo: AdoptRepos): ReleaseInfo {
+    fun formReleaseInfo(repo: AdoptRepos): ReleaseInfo {
         val gaReleases = repo
             .allReleases
             .getReleases()
@@ -40,9 +26,11 @@ class ReleaseVersionResolver @Inject constructor(
             .toTypedArray()
         val mostRecentFeatureRelease: Int = availableReleases.lastOrNull() ?: 0
 
+        val ltsVersions = versionSupplier.getLtsVersions()
+
         val availableLtsReleases: Array<Int> = gaReleases
             .asSequence()
-            .filter { Versions.ltsVersions.contains(it.version_data.major) }
+            .filter { ltsVersions.contains(it.version_data.major) }
             .map { it.version_data.major }
             .distinct()
             .sorted()
@@ -58,7 +46,7 @@ class ReleaseVersionResolver @Inject constructor(
             .sorted()
             .lastOrNull() ?: 0
 
-        val tip = getTipVersion() ?: mostRecentFeatureVersion
+        val tip = versionSupplier.getTipVersion() ?: mostRecentFeatureVersion
 
         return ReleaseInfo(
             availableReleases,

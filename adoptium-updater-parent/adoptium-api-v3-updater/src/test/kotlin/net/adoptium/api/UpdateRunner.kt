@@ -3,6 +3,7 @@ package net.adoptium.api
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryInternalDbStore
 import net.adoptium.api.v3.AdoptRepositoryImpl
+import net.adoptium.api.v3.ReleaseIncludeFilter
 import net.adoptium.api.v3.V3Updater
 import net.adoptium.api.v3.dataSources.DefaultUpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.HttpClientFactory
@@ -35,7 +36,7 @@ class UpdateRunner {
     fun run(updater: V3Updater) {
         System.clearProperty("GITHUB_TOKEN")
         updater.run(false)
-        Awaitility.await().atMost(Long.MAX_VALUE, TimeUnit.NANOSECONDS).until({ 4 == 5 })
+        Awaitility.await().atMost(Long.MAX_VALUE, TimeUnit.NANOSECONDS).until { 4 == 5 }
     }
 
     @Test
@@ -76,7 +77,7 @@ class UpdateRunner {
             )
 
             val repo = AdoptRepositoryImpl(client, AdoptReleaseMapperFactory(AdoptBinaryMapper(gitHubHtmlClient), gitHubHtmlClient))
-            repo.getRelease(8)
+            repo.getRelease(8, ReleaseIncludeFilter.INCLUDE_ALL)
         }
     }
 }

@@ -18,7 +18,7 @@ class TypesArchitecturesPathTest : FrontendTest() {
 
     @Test
     fun getArchitecturesAreCorrect() {
-        var body = RestAssured.given()
+        val body = RestAssured.given()
             .`when`()
             .get("/v3/types/architectures")
             .body
@@ -26,7 +26,7 @@ class TypesArchitecturesPathTest : FrontendTest() {
         val architectures = parseArchitectures(body.asString())
 
         assert(architectures.contains(Architecture.x64.name))
-        assert(architectures.size == Architecture.values().size)
+        assert(architectures.size == Architecture.entries.size)
     }
 
     private fun parseArchitectures(json: String?): List<String> =

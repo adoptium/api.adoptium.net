@@ -23,14 +23,17 @@ open class GraphQLGitHubRepositoryClient @Inject constructor(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    open suspend fun getRepository(owner: String, repoName: String): GHRepository {
+    open suspend fun getRepository(
+        owner: String,
+        repoName: String,
+        filter: (updateTime: String, isPrerelease: Boolean) -> Boolean): GHRepository {
         val query = GetQueryData(owner, repoName)
 
         LOGGER.info("Getting repo $repoName")
 
         val releases = graphQLGitHubInterface.getAll(
             query::withCursor,
-            { request -> getAllAssets(request) },
+            { request -> getAllAssets(request, filter) },
             { it.repository!!.releases.pageInfo.hasNextPage },
             { it.repository!!.releases.pageInfo.endCursor }
         )
@@ -40,11 +43,18 @@ open class GraphQLGitHubRepositoryClient @Inject constructor(
         return GHRepository(GHReleases(releases, PageInfo(false, null)))
     }
 
-    private suspend fun getAllAssets(request: QueryData): List<GHRelease> {
+    private suspend fun getAllAssets(request: QueryData, filter: (updateTime: String, isPrerelease: Boolean) -> Boolean): List<GHRelease> {
         if (request.repository == null) return listOf()
 
         // nested releases based on how we deserialise githubs data
         return request.repository.releases.releases
+            .filter {
+                val include = filter(it.updatedAt, it.isPrerelease)
+                if (!include) {
+                    LOGGER.debug("Excluding " + it.url)
+                }
+                return@filter include
+            }
             .map { release ->
                 if (release.releaseAssets.pageInfo.hasNextPage) {
                     graphQLGitHubReleaseRequest.getAllReleaseAssets(release)
@@ -54,7 +64,7 @@ open class GraphQLGitHubRepositoryClient @Inject constructor(
             }
     }
 
-    private class GetQueryData(private val owner: String, private val repoName: String, override val variables: Any = mapOf<String, String>()) :
+    class GetQueryData(val owner: String, val repoName: String, override val variables: Any = mapOf<String, String>()) :
         GraphQLClientRequest<QueryData> {
 
         fun withCursor(cursor: String?): GetQueryData {
@@ -75,7 +85,7 @@ open class GraphQLGitHubRepositoryClient @Inject constructor(
                                         updatedAt,
                                         isPrerelease,
                                         resourcePath,
-                                        releaseAssets(first:50) {
+                                        releaseAssets(first:1) {
                                             totalCount,
                                             nodes {
                                                 downloadCount,

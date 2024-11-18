@@ -1,6 +1,5 @@
 package net.adoptium.api
 
-import io.mockk.Called
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.confirmVerified
@@ -15,14 +14,14 @@ import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.UrlRequest
 import net.adoptium.api.v3.dataSources.github.CachedGitHubHtmlClient
 import net.adoptium.api.v3.dataSources.mongo.CacheDbEntry
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.ZonedDateTime
 import java.util.stream.Stream
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 
 @ExtendWith(MockKExtension::class)
 class CachedGitHubHtmlClientTest {
@@ -115,9 +114,11 @@ class CachedGitHubHtmlClientTest {
                 while (client.getQueueLength() > 0) {
                     delay(1000)
                 }
-                coVerify(timeout = 3000) {
-                    updaterHtmlClient.getFullResponse(request)?.wasNot(Called)
+
+                coVerify(timeout = 3000, exactly = 0) {
+                    updaterHtmlClient.getFullResponse(request)
                 }
+
                 confirmVerified(updaterHtmlClient)
             }
         }

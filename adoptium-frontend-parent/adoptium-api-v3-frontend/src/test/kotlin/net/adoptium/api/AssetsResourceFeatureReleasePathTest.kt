@@ -22,6 +22,8 @@ import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.extension.ExtendWith
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.stream.Stream
 
 @QuarkusTest
@@ -35,7 +37,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
             .repos
             .keys
             .flatMap { version ->
-                ReleaseType.values()
+                ReleaseType.entries
                     .map { "/v3/assets/feature_releases/$version/$it" }
                     .map {
                         DynamicTest.dynamicTest(it) {
@@ -58,7 +60,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
             .repos
             .keys
             .flatMap { version ->
-                ReleaseType.values()
+                ReleaseType.entries
                     .map { "/v3/assets/feature_releases/$version/$it?PAGE_SIZE=100" }
                     .map { request ->
                         DynamicTest.dynamicTest(request) {
@@ -140,7 +142,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
     }
 
     override fun <T> runFilterTest(filterParamName: String, values: Array<T>, customiseQuery: (T, String) -> String): Stream<DynamicTest> {
-        return ReleaseType.values()
+        return ReleaseType.entries
             .flatMap { releaseType ->
                 // test the ltses and 1 non-lts
                 listOf(8, 11, 12)
@@ -238,4 +240,60 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
             }
             .stream()
     }
+
+    @Test
+    fun `cache control headers are present`() {
+        RestAssured.given()
+            .`when`()
+            .get("/v3/assets/feature_releases/8/ga")
+            .then()
+            .statusCode(200)
+            .assertThat()
+            .header("Cache-Control", Matchers.equalTo("public, no-transform, s-maxage=120, max-age=120"))
+            .header("ETag", Matchers.equalTo("d76df8e7aefcf7"))
+            .header("Last-Modified", Matchers.notNullValue())
+    }
+
+    @Test
+    fun `if none match applied`() {
+        RestAssured.given()
+            .`when`()
+            .header("If-None-Match", "d76df8e7aefcf7")
+            .get("/v3/assets/feature_releases/8/ga")
+            .then()
+            .statusCode(304)
+    }
+
+    @Test
+    fun `etag applied match applied`() {
+        RestAssured.given()
+            .`when`()
+            .header("If-Match", "d76df8e7aefcf7")
+            .get("/v3/assets/feature_releases/8/ga")
+            .then()
+            .statusCode(200)
+    }
+
+    @Test
+    fun `modified match applied`() {
+        RestAssured.given()
+            .`when`()
+            .header("If-Modified-Since", ZonedDateTime.now().plusDays(1).format(DateTimeFormatter.RFC_1123_DATE_TIME))
+            .get("/v3/assets/feature_releases/8/ga")
+            .then()
+            .statusCode(304)
+    }
+
+    @Test
+    fun `modified match applied2`() {
+        RestAssured.given()
+            .`when`()
+            .header("If-Modified-Since", ZonedDateTime.now().minusYears(100)
+                .format(DateTimeFormatter.RFC_1123_DATE_TIME)
+            )
+            .get("/v3/assets/feature_releases/8/ga")
+            .then()
+            .statusCode(200)
+    }
+
 }

@@ -10,31 +10,22 @@ inputs:
     AZURE_SUBSCRIPTION_ID:
       description: 'Azure Subscription ID'
       required: true
-    AZURE_CLIENT_ID:
-      description: 'Azure Client ID'
-      required: true
-    AZURE_CLIENT_SECRET:
-      description: 'Azure Client Secret'
-      required: true
 runs:
   using: composite
   steps:
   - name: Login to our Azure subscription.
-    uses: azure/login@6b2456866fc08b011acb422a92a4aa20e2c4de32 # v2.1.0
+    uses: azure/login@a65d910e8af852a8061c627c456678983e180302 # v2.2.0
     with:
       client-id: ${{ inputs.AZURE_CLIENT_ID_OIDC }}
       tenant-id: ${{ inputs.AZURE_TENANT_ID }}
       subscription-id: ${{ inputs.AZURE_SUBSCRIPTION_ID }}
 
   - name: Login to Azure Container Registry
-    uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
-    with:
-      registry: adoptopenjdkacr.azurecr.io
-      username: ${{ inputs.AZURE_CLIENT_ID }}
-      password: ${{ inputs.AZURE_CLIENT_SECRET }}
+    shell: bash
+    run: az acr login --name adoptopenjdkacr
 
   - name: Set the target Azure Kubernetes Service (AKS) cluster.
-    uses: azure/aks-set-context@37037e33d3a2fc08abe40c887d81c3f6e1eb93b9 # v4.0.0
+    uses: azure/aks-set-context@1cf43fa609aaef0617c6a12deda238b920e926b0 # v4.0.1
     with:
-      resource-group: adopt-api
-      cluster-name: aksff92
+      resource-group: adoptium-api
+      cluster-name: adoptium-api

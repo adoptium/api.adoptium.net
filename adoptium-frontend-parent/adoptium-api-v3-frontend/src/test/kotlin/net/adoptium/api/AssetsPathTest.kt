@@ -12,6 +12,7 @@ import net.adoptium.api.v3.models.Vendor
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
+import java.util.*
 import java.util.stream.Stream
 
 abstract class AssetsPathTest : FrontendTest() {
@@ -24,22 +25,22 @@ abstract class AssetsPathTest : FrontendTest() {
 
     @TestFactory
     fun filtersOs(): Stream<DynamicTest> {
-        return runFilterTest("os", OperatingSystem.values())
+        return runFilterTest("os", OperatingSystem.entries.toTypedArray())
     }
 
     @TestFactory
     fun filtersArchitecture(): Stream<DynamicTest> {
-        return runFilterTest("architecture", Architecture.values())
+        return runFilterTest("architecture", Architecture.entries.toTypedArray())
     }
 
     @TestFactory
     fun filtersImageType(): Stream<DynamicTest> {
-        return runFilterTest("image_type", ImageType.values())
+        return runFilterTest("image_type", ImageType.entries.toTypedArray())
     }
 
     @TestFactory
     fun `filters c_lib`(): Stream<DynamicTest> {
-        return runFilterTest("c_lib", CLib.values()) { _, query ->
+        return runFilterTest("c_lib", CLib.entries.toTypedArray()) { _, query ->
             "$query&image_type=staticlibs"
         }
     }
@@ -48,7 +49,7 @@ abstract class AssetsPathTest : FrontendTest() {
     fun filtersJvmImpl(): Stream<DynamicTest> {
         return runFilterTest(
             "jvm_impl",
-            JvmImpl.values().filter { JvmImpl.validJvmImpl(it) }.toTypedArray()
+            JvmImpl.entries.filter { JvmImpl.validJvmImpl(it) }.toTypedArray()
         ) { value, query ->
             if (value == JvmImpl.dragonwell) {
                 "$query&vendor=${Vendor.alibaba.name}"
@@ -60,7 +61,7 @@ abstract class AssetsPathTest : FrontendTest() {
 
     @TestFactory
     fun filtersHeapSize(): Stream<DynamicTest> {
-        return runFilterTest("heap_size", HeapSize.values())
+        return runFilterTest("heap_size", HeapSize.entries.toTypedArray())
     }
 
     @TestFactory
@@ -78,7 +79,7 @@ abstract class AssetsPathTest : FrontendTest() {
         return values
             .filter { !exclude(it) }
             .map { value ->
-                val path2 = customiseQuery(value, "$path?$filterParamName=${value.toString().toLowerCase()}")
+                val path2 = customiseQuery(value, "$path?$filterParamName=${value.toString().lowercase(Locale.getDefault())}")
                 DynamicTest.dynamicTest(path2) {
                     RestAssured.given()
                         .`when`()

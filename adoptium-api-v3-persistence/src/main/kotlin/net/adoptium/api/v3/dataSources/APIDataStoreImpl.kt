@@ -11,7 +11,6 @@ import net.adoptium.api.v3.dataSources.persitence.mongo.UpdatedInfo
 import net.adoptium.api.v3.models.JvmImpl
 import net.adoptium.api.v3.models.ReleaseInfo
 import net.adoptium.api.v3.models.Vendor
-import net.adoptium.api.v3.models.Versions
 import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
 import java.util.concurrent.Executors
@@ -25,34 +24,112 @@ open class APIDataStoreImpl : APIDataStore {
     private var updatedAt: UpdatedInfo
     private var binaryRepos: AdoptRepos
     private var releaseInfo: ReleaseInfo
-    open var schedule: ScheduledFuture<*>?
+    private var schedule: ScheduledFuture<*>?
+
+    // required as injection objects to the final field
+    open fun getSchedule() = schedule
 
     companion object {
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
+        private val MAX_VERSION_TO_LOAD = (System.getenv("MAX_VERSION_TO_LOAD") ?: "100").toInt()
+
+
+        fun loadDataFromDb(
+            dataStore: ApiPersistence,
+            previousUpdateInfo: UpdatedInfo,
+            forceUpdate: Boolean,
+            previousRepo: AdoptRepos?,
+            versions: List<Int>): Pair<AdoptRepos, UpdatedInfo> {
+
+            return runBlocking {
+                val updated = dataStore.getUpdatedAt()
+
+                if (previousRepo == null || forceUpdate || updated != previousUpdateInfo) {
+                    val data = versions
+                        .map { version ->
+                            dataStore.readReleaseData(version)
+                        }
+                        .filter { it.releases.nodes.isNotEmpty() }
+                        .toList()
+                    val updatedAt = dataStore.getUpdatedAt()
+
+                    LOGGER.info("Loaded Version: $updatedAt")
+                    val newData = filterValidAssets(data)
+
+                    showStats(previousRepo, newData)
+                    Pair(newData, updatedAt)
+                } else {
+                    Pair(previousRepo, previousUpdateInfo)
+                }
+            }
+        }
+
+        private fun filterValidAssets(data: List<FeatureRelease>): AdoptRepos {
+            // Ensure that we filter out valid releases/binaries for this ecosystem
+            val filtered = AdoptRepos(data)
+                .getFilteredReleases(
+                    { release ->
+                        Vendor.validVendor(release.vendor)
+                    },
+                    { binary ->
+                        JvmImpl.validJvmImpl(binary.jvm_impl)
+                    },
+                    SortOrder.ASC,
+                    SortMethod.DEFAULT
+                )
+                .groupBy { it.version_data.major }
+                .map { FeatureRelease(it.key, Releases(it.value)) }
+
+            return AdoptRepos(filtered)
+        }
+
+        private fun showStats(binaryRepos: AdoptRepos?, newData: AdoptRepos) {
+            newData.allReleases.getReleases()
+                .forEach { release ->
+                    val oldRelease = binaryRepos?.allReleases?.nodes?.get(release.id)
+                    if (oldRelease == null) {
+                        LOGGER.info("New release: ${release.release_name} ${release.binaries.size}")
+                    } else if (oldRelease.binaries.size != release.binaries.size) {
+                        LOGGER.info("Binary count changed ${release.release_name} ${oldRelease.binaries.size} -> ${release.binaries.size}")
+                    }
+                }
+
+            binaryRepos?.allReleases?.getReleases()
+                ?.forEach { oldRelease ->
+                    val newRelease = binaryRepos.allReleases.nodes[oldRelease.id]
+                    if (newRelease == null) {
+                        LOGGER.info("Removed release: ${oldRelease.release_name} ${oldRelease.binaries.size}")
+                    }
+                }
+        }
+
+
     }
 
     @Inject
     constructor(dataStore: ApiPersistence) {
         this.dataStore = dataStore
+
         updatedAt = UpdatedInfo(ZonedDateTime.now().minusYears(10), "111", 0)
         schedule = null
+
         binaryRepos = try {
-            loadDataFromDb(true)
+            val update = loadDataFromDb(
+                dataStore,
+                updatedAt,
+                true,
+                null,
+                (8..MAX_VERSION_TO_LOAD).toList()
+            )
+            updatedAt = update.second
+            update.first
         } catch (e: Exception) {
             LOGGER.error("Failed to read db", e)
             AdoptRepos(listOf())
         }
 
         releaseInfo = loadReleaseInfo()
-    }
-
-    constructor(binaryRepos: AdoptRepos, dataStore: ApiPersistence) {
-        this.dataStore = dataStore
-        updatedAt = UpdatedInfo(ZonedDateTime.now().minusYears(10), "111", 0)
-        schedule = null
-        this.binaryRepos = binaryRepos
-        this.releaseInfo = loadReleaseInfo()
     }
 
     override fun schedulePeriodicUpdates() {
@@ -91,51 +168,28 @@ open class APIDataStoreImpl : APIDataStore {
     }
 
     override fun loadDataFromDb(forceUpdate: Boolean): AdoptRepos {
-        val previousRepo: AdoptRepos = binaryRepos
+        // Scan the currently available versions plus 5
+        val versions = releaseInfo.available_releases.toList()
+            .plus((releaseInfo.available_releases.last()..releaseInfo.available_releases.last() + 5))
+            .filter { it <= MAX_VERSION_TO_LOAD }
 
-        binaryRepos = runBlocking {
-            val updated = dataStore.getUpdatedAt()
+        val update = loadDataFromDb(
+            dataStore,
+            updatedAt,
+            forceUpdate,
+            binaryRepos,
+            versions
+        )
 
-            if (forceUpdate || updated != updatedAt) {
-                val data = Versions
-                    .versions
-                    .map { version ->
-                        dataStore.readReleaseData(version)
-                    }
-                    .filter { it.releases.nodes.isNotEmpty() }
-                    .toList()
-                updatedAt = dataStore.getUpdatedAt()
-
-                LOGGER.info("Loaded Version: $updatedAt")
-                val newData = filterValidAssets(data)
-
-                showStats(previousRepo, newData)
-                newData
-            } else {
-                binaryRepos
-            }
-        }
+        this.updatedAt = update.second
+        this.binaryRepos = update.first
 
         return binaryRepos
+
     }
 
-    private fun filterValidAssets(data: List<FeatureRelease>): AdoptRepos {
-        // Ensure that we filter out valid releases/binaries for this ecosystem
-        val filtered = AdoptRepos(data)
-            .getFilteredReleases(
-                { release ->
-                    Vendor.validVendor(release.vendor)
-                },
-                { binary ->
-                    JvmImpl.validJvmImpl(binary.jvm_impl)
-                },
-                SortOrder.ASC,
-                SortMethod.DEFAULT
-            )
-            .groupBy { it.version_data.major }
-            .map { FeatureRelease(it.key, Releases(it.value)) }
-
-        return AdoptRepos(filtered)
+    override fun getUpdateInfo(): UpdatedInfo {
+        return updatedAt
     }
 
     // open for
@@ -155,26 +209,6 @@ open class APIDataStoreImpl : APIDataStore {
         } catch (e: Exception) {
             LOGGER.error("Failed to load db", e)
         }
-    }
-
-    private fun showStats(binaryRepos: AdoptRepos?, newData: AdoptRepos) {
-        newData.allReleases.getReleases()
-            .forEach { release ->
-                val oldRelease = binaryRepos?.allReleases?.nodes?.get(release.id)
-                if (oldRelease == null) {
-                    LOGGER.info("New release: ${release.release_name} ${release.binaries.size}")
-                } else if (oldRelease.binaries.size != release.binaries.size) {
-                    LOGGER.info("Binary count changed ${release.release_name} ${oldRelease.binaries.size} -> ${release.binaries.size}")
-                }
-            }
-
-        binaryRepos?.allReleases?.getReleases()
-            ?.forEach { oldRelease ->
-                val newRelease = binaryRepos.allReleases.nodes[oldRelease.id]
-                if (newRelease == null) {
-                    LOGGER.info("Removed release: ${oldRelease.release_name} ${oldRelease.binaries.size}")
-                }
-            }
     }
 
     override fun getReleaseInfo(): ReleaseInfo {

@@ -1,10 +1,9 @@
 package net.adoptium.api.v3.parser
 
+/* ktlint-disable no-wildcard-imports */
+/* ktlint-enable no-wildcard-imports */
 import net.adoptium.api.v3.models.VersionData
 import org.slf4j.LoggerFactory
-/* ktlint-disable no-wildcard-imports */
-import java.util.*
-/* ktlint-enable no-wildcard-imports */
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -52,7 +51,7 @@ object VersionParser {
     private fun jep223WithAdoptBuildNum(): List<String> {
         val buildRegex = "(?<build>[0-9]+)(\\.(?<adoptBuild>[0-9]+))?"
 
-        return Arrays.asList(
+        return listOf(
             "(?:jdk\\-)?(?<version>$VNUM_REGEX(\\-$PRE_REGEX)?\\+$buildRegex(\\-$OPT_REGEX)?)",
             "(?:jdk\\-)?(?<version>$VNUM_REGEX\\-$PRE_REGEX(\\-$OPT_REGEX)?)",
             "(?:jdk\\-)?(?<version>$VNUM_REGEX(\\+\\-$OPT_REGEX)?)"
@@ -60,7 +59,7 @@ object VersionParser {
     }
 
     private fun jep223(): List<String> {
-        return Arrays.asList(
+        return listOf(
             "(?:jdk\\-)?(?<version>$VNUM_REGEX(\\-$PRE_REGEX)?\\+$BUILD_REGEX(\\-$OPT_REGEX)?)",
             "(?:jdk\\-)?(?<version>$VNUM_REGEX\\-$PRE_REGEX(\\-$OPT_REGEX)?)",
             "(?:jdk\\-)?(?<version>$VNUM_REGEX(\\+\\-$OPT_REGEX)?)"
@@ -104,7 +103,7 @@ object VersionParser {
             if (version != null) {
                 return version
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
         }
         throw FailedToParse("Failed to parse $publishName")
     }
@@ -126,7 +125,7 @@ object VersionParser {
             if (!sanityCheck || sanityCheck(parsed)) {
                 return parsed
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
         }
         return null
     }
@@ -185,7 +184,7 @@ object VersionParser {
 
     private fun sanityCheck(parsed: VersionData): Boolean {
 
-        if (!(parsed.major in 101 downTo 7)) {
+        if (parsed.major !in 101 downTo 7) {
             // Sanity check as javas parser can match a single number
             // sane range is 8 to 100
             // TODO update me before 2062 and java 100 is released

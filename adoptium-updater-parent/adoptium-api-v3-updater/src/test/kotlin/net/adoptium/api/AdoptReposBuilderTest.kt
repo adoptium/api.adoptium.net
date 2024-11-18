@@ -5,15 +5,16 @@ import io.mockk.coVerify
 import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.AdoptRepositoryStub
+import net.adoptium.api.testDoubles.UpdatableVersionSupplierStub
 import net.adoptium.api.v3.AdoptReposBuilder
 import net.adoptium.api.v3.AdoptRepository
 import net.adoptium.api.v3.ReleaseResult
+import net.adoptium.api.v3.dataSources.VersionSupplier
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.models.GHReleaseMetadata
 import org.jboss.weld.junit5.auto.EnableAutoWeld
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 @EnableAutoWeld
@@ -21,7 +22,7 @@ class AdoptReposBuilderTest : BaseTest() {
 
     companion object {
         private val stub = AdoptRepositoryStub()
-        private val adoptReposBuilder: AdoptReposBuilder = AdoptReposBuilder(stub)
+        private val adoptReposBuilder: AdoptReposBuilder = AdoptReposBuilder(stub, UpdatableVersionSupplierStub())
         private var before: AdoptRepos = stub.repo
         private var updated: AdoptRepos = runBlocking {
             adoptReposBuilder.incrementalUpdate(emptySet(), before) { null }
@@ -29,11 +30,11 @@ class AdoptReposBuilderTest : BaseTest() {
     }
 
     @Test
-    @Disabled("FIX ME, pending spyk fix from mockk")
-    fun addReleaseIsUpdatedExplicitly(adoptRepository: AdoptRepository) {
+    fun addReleaseIsUpdatedExplicitly() {
         runBlocking {
+            val adoptRepository = AdoptRepositoryStub()
             val adoptRepo = spyk(adoptRepository)
-            val adoptReposBuilder = AdoptReposBuilder(adoptRepo)
+            val adoptReposBuilder = AdoptReposBuilder(adoptRepo, UpdatableVersionSupplierStub())
 
             adoptReposBuilder.incrementalUpdate(setOf(before.repos[8]?.releases?.nodeList?.first()?.release_name!!), before) { null }
 
@@ -83,12 +84,9 @@ class AdoptReposBuilderTest : BaseTest() {
     fun updatedReleaseIsNotUpdatedWhenThingsDontChange() {
         runBlocking {
 
-            val updated2 = runBlocking {
-                adoptReposBuilder.incrementalUpdate(emptySet(), before) { null }
-            }
-            val updated3 = runBlocking {
-                adoptReposBuilder.incrementalUpdate(emptySet(), before) { null }
-            }
+            val updated2 = adoptReposBuilder.incrementalUpdate(emptySet(), before) { null }
+
+            val updated3 = adoptReposBuilder.incrementalUpdate(emptySet(), before) { null }
 
             assertTrue { updated == updated2 }
             assertTrue { updated2 == updated3 }
@@ -96,11 +94,12 @@ class AdoptReposBuilderTest : BaseTest() {
     }
 
     @Test
-    @Disabled("FIX ME, pending spyk fix from mockk")
-    fun `young releases continue to be pulled`(repo: AdoptRepos, adoptRepository: AdoptRepository) {
+    fun `young releases continue to be pulled`() {
         runBlocking {
+            val repo = stub.repo
+            val adoptRepository = AdoptRepositoryStub()
             val adoptRepo = spyk(adoptRepository)
-            val adoptReposBuilder = AdoptReposBuilder(adoptRepo)
+            val adoptReposBuilder = AdoptReposBuilder(adoptRepo, UpdatableVersionSupplierStub())
 
             coEvery { adoptRepo.getReleaseById(GitHubId(AdoptRepositoryStub.toAddSemiYoungRelease.id)) } returns ReleaseResult(listOf(AdoptRepositoryStub.toAddSemiYoungRelease))
 
@@ -112,11 +111,11 @@ class AdoptReposBuilderTest : BaseTest() {
     }
 
     @Test
-    @Disabled("FIX ME, pending spyk fix from mockk")
-    fun `release is updated when binary count changes`(adoptRepository: AdoptRepository) {
+    fun `release is updated when binary count changes`() {
         runBlocking {
+            val adoptRepository = AdoptRepositoryStub()
             val adoptRepo = spyk(adoptRepository)
-            val adoptReposBuilder = AdoptReposBuilder(adoptRepo)
+            val adoptReposBuilder = AdoptReposBuilder(adoptRepo, UpdatableVersionSupplierStub())
 
             adoptReposBuilder.incrementalUpdate(emptySet(), before) {
                 if (before.repos[11]?.releases?.nodeList?.first()?.id == it.id) {
@@ -137,10 +136,10 @@ class AdoptReposBuilderTest : BaseTest() {
     }
 
     @Test
-    fun `release is not updated when binary count does not change`(adoptRepository: AdoptRepository) {
+    fun `release is not updated when binary count does not change`(adoptRepository: AdoptRepository, versionSupplier: VersionSupplier) {
         runBlocking {
             val adoptRepo = spyk(adoptRepository)
-            val adoptReposBuilder = AdoptReposBuilder(adoptRepo)
+            val adoptReposBuilder = AdoptReposBuilder(adoptRepo, versionSupplier)
 
             adoptReposBuilder.incrementalUpdate(emptySet(), before) {
                 GHReleaseMetadata(

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.skyscreamer.jsonassert.JSONAssert
 import org.slf4j.LoggerFactory
+import java.util.*
 
 class APIDataStoreTest : MongoTest() {
 
@@ -27,7 +28,7 @@ class APIDataStoreTest : MongoTest() {
     fun reposHasElements() {
         runBlocking {
             val repo = BaseTest.adoptRepos
-            assert(repo.getFeatureRelease(8)!!.releases.getReleases().toList().size > 0)
+            assert(repo.getFeatureRelease(8)!!.releases.getReleases().toList().isNotEmpty())
         }
     }
 
@@ -63,20 +64,20 @@ class APIDataStoreTest : MongoTest() {
     @Test
     fun `updated at is set`(apiPersistence: ApiPersistence) {
         runBlocking {
-            apiPersistence.updateAllRepos(BaseTest.adoptRepos, "")
+            apiPersistence.updateAllRepos(BaseTest.adoptRepos, Base64.getEncoder().encodeToString("1234".toByteArray()))
             val time = TimeSource.now()
             delay(1000)
-            apiPersistence.updateAllRepos(BaseTest.adoptRepos, "a-checksum")
+            apiPersistence.updateAllRepos(BaseTest.adoptRepos, Base64.getEncoder().encodeToString("a-checksum".toByteArray()))
 
             val updatedTime = apiPersistence.getUpdatedAt()
 
             assertTrue(updatedTime.time.isAfter(time))
-            assertEquals("a-checksum", updatedTime.checksum)
+            assertEquals(Base64.getEncoder().encodeToString("a-checksum".toByteArray()), updatedTime.checksum)
         }
     }
 
     @Test
     fun `update is not scheduled by default`(apiDataStore: APIDataStoreImpl) {
-        assertNull(apiDataStore.schedule)
+        assertNull(apiDataStore.getSchedule())
     }
 }

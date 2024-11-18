@@ -1,23 +1,29 @@
 package net.adoptium.api
 
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.JsonMapper
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.persitence.mongo.MongoClient
 import net.adoptium.api.v3.models.DateTime
+import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
+import org.bson.Document
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.TimeUnit
+
+data class HasZonedDateTime(
+    val zdt: ZonedDateTime)
+
+data class HasDateTime(
+    val zdt: DateTime)
 
 class DateTimeMigrationTest : MongoTest() {
 
-    class HasZonedDateTime(val zdt: ZonedDateTime)
-
-    class HasDateTime(val zdt: DateTime)
 
     @Test
     fun `can serialize as zdt and deserialize as DateTime`() {
@@ -39,19 +45,41 @@ class DateTimeMigrationTest : MongoTest() {
                     .minus(1, TimeUnit.MILLISECONDS.toChronoUnit())
 
                 val hzdt = HasZonedDateTime(date)
-                val client1 = mongoClient.database.getCollection<HasZonedDateTime>(collectionName)
+                val client1 = mongoClient.getDatabase().getCollection<HasZonedDateTime>(collectionName)
                 client1.insertOne(hzdt)
 
-                val hzdt2 = client1.findOne()
+                val hzdt2 = client1.find().firstOrNull()
                 assertEquals(hzdt.zdt, hzdt2?.zdt)
 
-                val client2 = mongoClient.database.getCollection<HasDateTime>(collectionName)
-                val fromDb = client2.findOne("{}")
-                assertEquals(hzdt.zdt, fromDb?.zdt?.dateTime)
+                val client2 = mongoClient.getDatabase().getCollection<HasZonedDateTime>(collectionName)
+                val fromDb = client2.find().firstOrNull()
+                assertEquals(hzdt.zdt, fromDb?.zdt)
             } finally {
-                mongoClient.database.dropCollection(collectionName)
+                mongoClient.getDatabase().getCollection<Any>(collectionName).drop()
             }
         }
+    }
+
+    @Test
+    fun `github stats`(mongoClient: MongoClient) {
+        runBlocking {
+            val collectionName = UUID.randomUUID().toString()
+            val client1 = mongoClient.getDatabase().getCollection<GitHubDownloadStatsDbEntry>(collectionName)
+
+            client1.insertOne(
+                GitHubDownloadStatsDbEntry(
+                    TimeSource.now(),
+                    1,
+                    mapOf(),
+                    1
+                )
+            )
+
+            client1.find().firstOrNull()?.let {
+                assertEquals(1, it.downloads)
+            }
+        }
+
     }
 
     @Test
@@ -67,22 +95,22 @@ class DateTimeMigrationTest : MongoTest() {
         runBlocking {
             try {
                 val hzdt = HasZonedDateTime(TimeSource.now())
-                val client1 = mongoClient.database.getCollection<HasZonedDateTime>(collectionName)
+                val client1 = mongoClient.getDatabase().getCollection<HasZonedDateTime>(collectionName)
                 client1.insertOne(hzdt)
 
-                val hzdt2 = client1.findOne()
+                val hzdt2 = client1.find().firstOrNull()
                 assertEquals(hzdt.zdt, hzdt2?.zdt)
 
-                val client2 = mongoClient.database.getCollection<HasDateTime>(collectionName)
-                val fromDb = client2.findOne("{}")
-                assertEquals(hzdt.zdt, fromDb?.zdt?.dateTime)
+                val client2 = mongoClient.getDatabase().getCollection<HasZonedDateTime>(collectionName)
+                val fromDb = client2.find(Document.parse("{}")).firstOrNull()
+                assertEquals(hzdt.zdt, fromDb?.zdt)
 
-                client2.deleteMany()
+                client2.deleteMany(Document.parse("{}"))
                 client2.insertOne(fromDb!!)
-                val fromDb2 = client2.findOne("{}")
-                assertEquals(fromDb.zdt.dateTime, fromDb2?.zdt?.dateTime)
+                val fromDb2 = client2.find(Document.parse("{}")).firstOrNull()
+                assertEquals(fromDb.zdt, fromDb2?.zdt)
             } finally {
-                mongoClient.database.dropCollection(collectionName)
+                mongoClient.getDatabase().getCollection<Any>(collectionName).drop()
             }
         }
     }

@@ -1,6 +1,8 @@
 package net.adoptium.api.v3
 
 import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
+import net.adoptium.api.v3.dataSources.VersionSupplier
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleaseSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
@@ -12,11 +14,13 @@ import net.adoptium.api.v3.models.GHReleaseMetadata
 import net.adoptium.api.v3.models.Release
 import org.slf4j.LoggerFactory
 import java.time.temporal.ChronoUnit
-import jakarta.inject.Inject
 import kotlin.math.absoluteValue
 
 @ApplicationScoped
-class AdoptReposBuilder @Inject constructor(private var adoptRepository: AdoptRepository) {
+class AdoptReposBuilder @Inject constructor(
+    private var adoptRepository: AdoptRepository,
+    private var versionSupplier: VersionSupplier
+    ) {
 
     companion object {
         @JvmStatic
@@ -156,13 +160,14 @@ class AdoptReposBuilder @Inject constructor(private var adoptRepository: AdoptRe
         }
     }
 
-    suspend fun build(versions: Array<Int>): AdoptRepos {
+    suspend fun build(filter: ReleaseIncludeFilter): AdoptRepos {
         excluded.clear()
         // Fetch repos in parallel
-        val reposMap = versions
+        val reposMap = versionSupplier
+            .getAllVersions()
             .reversed()
             .mapNotNull { version ->
-                adoptRepository.getRelease(version)
+                adoptRepository.getRelease(version, filter)
             }
             .associateBy { it.featureVersion }
         LOGGER.info("DONE")

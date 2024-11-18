@@ -55,7 +55,7 @@ class MetadataSerializationTest {
         val metadata = generateMetadata()
 
         val serialized = UpdaterJsonMapper.mapper.writeValueAsString(metadata)
-        var json = UpdaterJsonMapper.mapper.readValue(serialized, ObjectNode::class.java)
+        val json = UpdaterJsonMapper.mapper.readValue(serialized, ObjectNode::class.java)
         json.remove("WARNING")
 
         val noWarning = GHMetaData(null, metadata.os, metadata.arch, metadata.variant, metadata.version, metadata.scmRef, metadata.version_data, metadata.binary_type, metadata.sha256)

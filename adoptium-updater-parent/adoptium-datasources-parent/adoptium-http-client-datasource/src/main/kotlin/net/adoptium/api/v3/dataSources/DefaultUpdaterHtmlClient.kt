@@ -141,7 +141,7 @@ open class DefaultUpdaterHtmlClient @Inject constructor(
             try {
                 LOGGER.debug("Getting ${request.url} ${request.lastModified}")
                 val response: HttpResponse = withTimeout(REQUEST_TIMEOUT) {
-                    suspendCoroutine<HttpResponse> { continuation ->
+                    suspendCoroutine { continuation ->
                         getData(request, continuation, authInfo?.token)
                     }
                 }

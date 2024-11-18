@@ -31,7 +31,7 @@ object UpstreamReleaseMapper : ReleaseMapper() {
             .filter { asset ->
                 BinaryMapper.BINARY_EXTENSIONS.any { asset.name.endsWith(it) }
             }
-            .map { it.downloadCount }.sum()
+            .sumOf { it.downloadCount }
 
         val vendor = Vendor.openjdk
 

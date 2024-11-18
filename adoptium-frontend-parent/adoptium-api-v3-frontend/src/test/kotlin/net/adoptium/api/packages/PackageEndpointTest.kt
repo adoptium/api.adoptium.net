@@ -3,8 +3,9 @@ package net.adoptium.api.packages
 import io.restassured.RestAssured
 import io.restassured.response.Response
 import net.adoptium.api.FrontendTest
+import net.adoptium.api.testDoubles.UpdatableVersionSupplierStub
 import net.adoptium.api.v3.filters.BinaryFilter
-import net.adoptium.api.v3.filters.ReleaseFilter
+import net.adoptium.api.v3.filters.ReleaseFilterFactory
 import net.adoptium.api.v3.models.Architecture
 import net.adoptium.api.v3.models.Binary
 import net.adoptium.api.v3.models.CLib
@@ -79,7 +80,7 @@ abstract class PackageEndpointTest : FrontendTest() {
     }
 
     protected fun getClibBinary() = getRandomBinary(
-        ReleaseFilter(
+        ReleaseFilterFactory(UpdatableVersionSupplierStub()).createFilter(
             featureVersion = 11,
             releaseType = ReleaseType.ea,
             vendor = Vendor.getDefault(),
@@ -106,7 +107,7 @@ abstract class PackageEndpointTest : FrontendTest() {
         performRequest(path)
             .then()
             .statusCode(307)
-            .header("Location", Matchers.startsWith(binary.`package`.link))
+            .header("location", Matchers.startsWith(binary.`package`.link))
     }
 
     protected fun requestSignatureExpecting307(
@@ -120,7 +121,7 @@ abstract class PackageEndpointTest : FrontendTest() {
         performRequest(path)
             .then()
             .statusCode(307)
-            .header("Location", Matchers.startsWith(binary.`package`.signature_link))
+            .header("location", Matchers.startsWith(binary.`package`.signature_link))
     }
 
     protected fun requestChecksumExpecting307(
@@ -134,6 +135,6 @@ abstract class PackageEndpointTest : FrontendTest() {
         performRequest(path)
             .then()
             .statusCode(307)
-            .header("Location", Matchers.startsWith(binary.`package`.checksum_link))
+            .header("location", Matchers.startsWith(binary.`package`.checksum_link))
     }
 }

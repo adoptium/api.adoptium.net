@@ -31,9 +31,7 @@ enum class Architecture : FileNameMatcher {
         @JvmStatic
         @JsonCreator
         fun forValue(value: String): Architecture {
-            return values()
-                .filter { it.names.contains(value) }
-                .first()
+            return entries.first { it.names.contains(value) }
         }
 
         fun getValue(value: String): Architecture {

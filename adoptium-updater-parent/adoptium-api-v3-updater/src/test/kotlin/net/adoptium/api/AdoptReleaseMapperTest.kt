@@ -197,11 +197,11 @@ class AdoptReleaseMapperTest : BaseTest() {
 
     private fun buildGhAssets(assetNames: List<Pair<String, String>>) =
         GHAssets(assetNames
-            .map { it ->
+            .map {
                 GHAsset(
                     it.first,
                     1L,
-                    "${it.second}",
+                    it.second,
                     1L,
                     "2013-02-27T19:35:32Z"
                 )

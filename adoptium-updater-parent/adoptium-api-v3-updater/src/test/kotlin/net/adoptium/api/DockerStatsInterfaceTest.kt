@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
+import net.adoptium.api.testDoubles.UpdatableVersionSupplierStub
 import net.adoptium.api.v3.DownloadStatsInterface
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.DefaultUpdaterHtmlClient
@@ -33,7 +34,7 @@ class DockerStatsInterfaceTest : BaseTest() {
             dockerStatsInterface.updateDb()
 
             val stats = apiPersistence.getLatestAllDockerStats()
-            Assertions.assertTrue(stats.size > 0)
+            Assertions.assertTrue(stats.isNotEmpty())
         }
     }
 
@@ -61,7 +62,7 @@ class DockerStatsInterfaceTest : BaseTest() {
                 DockerDownloadStatsDbEntry(baseTime, 100, "a-stats-repo", 8, JvmImpl.hotspot)
             )
 
-            val downloadStatsInterface = DownloadStatsInterface(apiPersistanceMock)
+            val downloadStatsInterface = DownloadStatsInterface(apiPersistanceMock, UpdatableVersionSupplierStub())
 
             var stats = downloadStatsInterface.getTrackingStats(10, source = StatsSource.github, featureVersion = 8)
             assertEquals(70, stats[0].total)

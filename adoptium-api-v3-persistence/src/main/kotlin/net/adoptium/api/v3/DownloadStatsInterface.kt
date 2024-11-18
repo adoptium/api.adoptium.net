@@ -3,6 +3,7 @@ package net.adoptium.api.v3
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import net.adoptium.api.v3.config.APIConfig
+import net.adoptium.api.v3.dataSources.VersionSupplier
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.DbStatsEntry
 import net.adoptium.api.v3.models.DockerDownloadStatsDbEntry
@@ -13,7 +14,6 @@ import net.adoptium.api.v3.models.JvmImpl
 import net.adoptium.api.v3.models.MonthlyDownloadDiff
 import net.adoptium.api.v3.models.StatsSource
 import net.adoptium.api.v3.models.TotalStats
-import net.adoptium.api.v3.models.Versions
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -30,11 +30,15 @@ class StatEntry(
 class DownloadStatsInterface {
 
     @Schema(hidden = true)
+    private var versionSupplier: VersionSupplier
+
+    @Schema(hidden = true)
     private val dataStore: ApiPersistence
 
     @Inject
-    constructor(dataStore: ApiPersistence) {
+    constructor(dataStore: ApiPersistence, versionSupplier: VersionSupplier) {
         this.dataStore = dataStore
+        this.versionSupplier = versionSupplier
     }
 
     suspend fun getTrackingStats(
@@ -115,8 +119,8 @@ class DownloadStatsInterface {
         return stats.groupBy { it.dateTime.toLocalDate() }
             .map { grouped ->
                 StatEntry(
-                    grouped.value.map { it.dateTime }.maxOrNull()!!,
-                    grouped.value.map { it.count }.sum()
+                    grouped.value.maxOf { it.dateTime },
+                    grouped.value.sumOf { it.count }
                 )
             }
             .sortedBy { it.dateTime }
@@ -157,7 +161,7 @@ class DownloadStatsInterface {
     private fun calculateMonthlyDiff(
         stats: Collection<StatEntry>
     ): List<MonthlyDownloadDiff> {
-        val toTwoChar = { value: Int -> if (value < 10) "0" + value else value.toString() } // Returns in MM format
+        val toTwoChar = { value: Int -> if (value < 10) "0$value" else value.toString() } // Returns in MM format
 
         return stats
             .windowed(2, 1, false) {
@@ -240,16 +244,14 @@ class DownloadStatsInterface {
         return stats
             .groupBy { it.getId() }
             .map { grouped -> grouped.value.maxByOrNull { it.date } }
-            .map { it!!.getMetric() }
-            .sum()
+            .sumOf { it!!.getMetric() }
     }
 
     private fun formTotalDownloads(stats: List<GitHubDownloadStatsDbEntry>, jvmImpl: JvmImpl): Long {
         return stats
             .groupBy { it.getId() }
             .map { grouped -> grouped.value.maxByOrNull { it.date } }
-            .map { (it!!.jvmImplDownloads?.get(jvmImpl) ?: 0) }
-            .sum()
+            .sumOf { (it!!.jvmImplDownloads?.get(jvmImpl) ?: 0) }
     }
 
     suspend fun getTotalDownloadStats(): DownloadStats {
@@ -257,21 +259,13 @@ class DownloadStatsInterface {
 
         val githubStats = getGithubStats()
 
-        val dockerPulls = dockerStats
-            .map { it.pulls }
-            .sum()
+        val dockerPulls = dockerStats.sumOf { it.pulls }
 
-        val githubDownloads = githubStats
-            .map { it.downloads }
-            .sum()
+        val githubDownloads = githubStats.sumOf { it.downloads }
 
-        val dockerBreakdown = dockerStats
-            .map { Pair(it.repo, it.pulls) }
-            .toMap()
+        val dockerBreakdown = dockerStats.associate { Pair(it.repo, it.pulls) }
 
-        val githubBreakdown = githubStats
-            .map { Pair(it.feature_version, it.downloads) }
-            .toMap()
+        val githubBreakdown = githubStats.associate { Pair(it.feature_version, it.downloads) }
 
         val totalStats = TotalStats(dockerPulls, githubDownloads, dockerPulls + githubDownloads)
         return DownloadStats(TimeSource.now(), totalStats, githubBreakdown, dockerBreakdown)
@@ -284,7 +278,7 @@ class DownloadStatsInterface {
     }
 
     private suspend fun getGithubStats(): List<GitHubDownloadStatsDbEntry> {
-        return Versions.versions
+        return versionSupplier.getAllVersions()
             .mapNotNull { featureVersion ->
                 dataStore.getLatestGithubStatsForFeatureVersion(featureVersion)
             }
