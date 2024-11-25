@@ -64,6 +64,7 @@ class CacheControlService @Inject constructor(private var apiDataStore: APIDataS
     @ServerResponseFilter
     fun responseFilter(requestContext: ContainerRequestContext?, responseContext: ContainerResponseContext?) {
         if (isCacheControlledPath(requestContext)) {
+
             val ecc = ExtendedCacheControl();
             ecc.isPublic = true
             ecc.maxAge = MAX_CACHE_AGE_IN_SEC
@@ -74,7 +75,9 @@ class CacheControlService @Inject constructor(private var apiDataStore: APIDataS
                 return
             }
 
-            responseContext?.headers?.add("ETag", apiDataStore.getUpdateInfo().hexChecksum)
+            val etag = calculateEtag(requestContext!!)
+
+            responseContext?.headers?.add("ETag", etag)
             responseContext?.headers?.add("Last-Modified", apiDataStore.getUpdateInfo().lastModifiedFormatted)
             responseContext?.headers?.add("Cache-Control", CacheControlDelegate.INSTANCE.toString(ecc))
         }
