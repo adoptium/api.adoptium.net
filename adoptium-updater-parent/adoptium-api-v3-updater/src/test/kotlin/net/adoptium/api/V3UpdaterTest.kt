@@ -25,7 +25,7 @@ class V3UpdaterTest {
     fun `checksum works`() {
         runBlocking {
             val checksum = V3Updater.calculateChecksum(BaseTest.adoptRepos)
-            assertTrue(checksum.length == 24)
+            assertTrue(checksum.length == 44)
         }
     }
 

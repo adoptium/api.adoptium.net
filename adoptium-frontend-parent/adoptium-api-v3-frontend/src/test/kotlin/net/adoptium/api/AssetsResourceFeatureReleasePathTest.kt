@@ -258,7 +258,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
     fun `if none match applied`() {
         RestAssured.given()
             .`when`()
-            .header("If-None-Match", "d76df8e7aefcf7")
+            .header("If-None-Match", "808bc9e876e1dd5e15b8eb3377618e1c1b313a1e")
             .get("/v3/assets/feature_releases/8/ga")
             .then()
             .statusCode(304)
@@ -268,7 +268,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
     fun `etag applied match applied`() {
         RestAssured.given()
             .`when`()
-            .header("If-Match", "d76df8e7aefcf7")
+            .header("If-Match", "808bc9e876e1dd5e15b8eb3377618e1c1b313a1e")
             .get("/v3/assets/feature_releases/8/ga")
             .then()
             .statusCode(200)
