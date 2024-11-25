@@ -11,6 +11,9 @@ import net.adoptium.api.v3.dataSources.APIDataStore
 import org.jboss.resteasy.reactive.common.headers.CacheControlDelegate
 import org.jboss.resteasy.reactive.common.util.ExtendedCacheControl
 import org.jboss.resteasy.reactive.server.ServerResponseFilter
+import java.math.BigInteger
+import java.security.MessageDigest
+import java.util.*
 
 
 @Provider
@@ -28,9 +31,19 @@ class CacheControlService @Inject constructor(private var apiDataStore: APIDataS
         return CACHE_CONTROLLED_PATHS.any { path.startsWith(it) }
     }
 
+    private fun calculateEtag(requestContext: ContainerRequestContext): String {
+        val md = MessageDigest.getInstance("SHA1")
+        if (apiDataStore.getUpdateInfo().hexChecksum != null) {
+            md.update(HexFormat.of().parseHex(apiDataStore.getUpdateInfo().hexChecksum))
+        }
+        md.update(requestContext.uriInfo.requestUri.toString().toByteArray())
+        return BigInteger(1, md.digest()).toString(16)
+    }
+
     override fun filter(requestContext: ContainerRequestContext?) {
         if (isCacheControlledPath(requestContext)) {
-            val etag = apiDataStore.getUpdateInfo().hexChecksum
+            val etag = calculateEtag(requestContext!!)
+
             val lastModified = apiDataStore.getUpdateInfo().lastModified
 
             if (lastModified == null || etag == null) {
