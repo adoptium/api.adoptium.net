@@ -55,7 +55,7 @@ class V3Updater @Inject constructor(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
 
         fun calculateChecksum(repo: AdoptRepos): String {
-            val md = MessageDigest.getInstance("MD5")
+            val md = MessageDigest.getInstance("SHA256")
             val outputStream = object : OutputStream() {
                 override fun write(b: Int) {
                     md.update(b.toByte())
@@ -268,6 +268,8 @@ class V3Updater @Inject constructor(
 
                 LOGGER.info("Updating Release Notes")
                 adoptReleaseNotes.updateReleaseNotes(repo)
+
+                printRepoDebugInfo(currentRepo, repo, repo)
 
                 LOGGER.info("Full update done")
                 return@runBlocking repo
