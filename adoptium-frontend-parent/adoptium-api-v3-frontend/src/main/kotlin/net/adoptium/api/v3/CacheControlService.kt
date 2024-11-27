@@ -33,8 +33,11 @@ class CacheControlService @Inject constructor(private var apiDataStore: APIDataS
 
     private fun calculateEtag(requestContext: ContainerRequestContext): String {
         val md = MessageDigest.getInstance("SHA1")
-        if (apiDataStore.getUpdateInfo().hexChecksum != null) {
-            md.update(HexFormat.of().parseHex(apiDataStore.getUpdateInfo().hexChecksum))
+        try {
+            md.update(Base64.getDecoder().decode(apiDataStore.getUpdateInfo().checksum))
+        } catch (e: Exception) {
+            // Should not happen as the hex checksum should always be a valid Base64 string
+            md.update(apiDataStore.getUpdateInfo().checksum.toByteArray())
         }
         md.update(requestContext.uriInfo.requestUri.toString().toByteArray())
         return BigInteger(1, md.digest()).toString(16)
@@ -46,12 +49,12 @@ class CacheControlService @Inject constructor(private var apiDataStore: APIDataS
 
             val lastModified = apiDataStore.getUpdateInfo().lastModified
 
-            if (lastModified == null || etag == null) {
+            if (lastModified == null) {
                 return
             }
 
             val builder =
-                requestContext!!
+                requestContext
                     .request
                     .evaluatePreconditions(lastModified, EntityTag(etag))
 
@@ -70,8 +73,7 @@ class CacheControlService @Inject constructor(private var apiDataStore: APIDataS
             ecc.maxAge = MAX_CACHE_AGE_IN_SEC
             ecc.sMaxAge = MAX_CACHE_AGE_IN_SEC
 
-            if (apiDataStore.getUpdateInfo().hexChecksum == null ||
-                apiDataStore.getUpdateInfo().lastModifiedFormatted == null) {
+            if (apiDataStore.getUpdateInfo().lastModifiedFormatted == null) {
                 return
             }
 
