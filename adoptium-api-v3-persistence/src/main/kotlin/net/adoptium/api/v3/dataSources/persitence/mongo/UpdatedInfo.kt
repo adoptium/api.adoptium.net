@@ -1,16 +1,16 @@
 package net.adoptium.api.v3.dataSources.persitence.mongo
 
-import java.math.BigInteger
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class UpdatedInfo(
     val time: ZonedDateTime,
     val checksum: String,
     val hashCode: Int,
-    val hexChecksum: String? = BigInteger(1, Base64.getDecoder().decode(checksum)).toString(16),
     val lastModified: Date? = Date.from(time.toInstant()),
     val lastModifiedFormatted: String? = lastModified
         ?.toInstant()
