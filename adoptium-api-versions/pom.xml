@@ -224,7 +224,7 @@
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq</artifactId>
-                <version>3.19.15</version>
+                <version>3.19.16</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
