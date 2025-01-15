@@ -192,6 +192,10 @@ open class APIDataStoreImpl : APIDataStore {
         return updatedAt
     }
 
+    override suspend fun isConnectedToDb(): Boolean {
+        return dataStore.isConnected()
+    }
+
     // open for
     override fun getAdoptRepos(): AdoptRepos {
         return binaryRepos
