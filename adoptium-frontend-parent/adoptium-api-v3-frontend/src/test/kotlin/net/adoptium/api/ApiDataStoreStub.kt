@@ -66,4 +66,8 @@ open class ApiDataStoreStub : APIDataStore {
             123
         )
     }
+
+    override suspend fun isConnectedToDb(): Boolean {
+        return true
+    }
 }

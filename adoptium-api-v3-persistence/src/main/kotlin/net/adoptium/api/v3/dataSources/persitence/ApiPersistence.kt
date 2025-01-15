@@ -32,4 +32,5 @@ interface ApiPersistence {
     suspend fun hasReleaseNotesForGithubId(gitHubId: GitHubId): Boolean
     suspend fun putReleaseNote(releaseNotes: ReleaseNotes)
     suspend fun getReleaseNotes(vendor: Vendor, releaseName: String): ReleaseNotes?
+    suspend fun isConnected(): Boolean
 }

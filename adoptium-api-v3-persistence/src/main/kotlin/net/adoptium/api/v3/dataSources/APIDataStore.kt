@@ -11,4 +11,5 @@ interface APIDataStore {
     fun getReleaseInfo(): ReleaseInfo
     fun loadDataFromDb(forceUpdate: Boolean): AdoptRepos
     fun getUpdateInfo(): UpdatedInfo
+    suspend fun isConnectedToDb(): Boolean
 }

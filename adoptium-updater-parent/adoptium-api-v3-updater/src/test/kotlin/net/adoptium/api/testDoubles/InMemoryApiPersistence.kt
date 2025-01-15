@@ -116,4 +116,8 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos) : A
             .filter { it.vendor == vendor }
             .firstOrNull { it.release_name == releaseName }
     }
+
+    override suspend fun isConnected(): Boolean {
+        return true
+    }
 }

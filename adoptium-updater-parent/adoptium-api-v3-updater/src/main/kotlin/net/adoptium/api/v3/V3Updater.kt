@@ -1,6 +1,8 @@
 package net.adoptium.api.v3
 
+import com.mongodb.MongoException
 import io.quarkus.arc.profile.UnlessBuildProfile
+import io.quarkus.runtime.Quarkus
 import io.quarkus.runtime.Startup
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
@@ -12,8 +14,8 @@ import kotlinx.coroutines.sync.withLock
 import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.ReleaseVersionResolver
-import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.UpdatableVersionSupplier
+import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.Release
@@ -29,6 +31,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.timerTask
+import kotlin.system.exitProcess
 
 @UnlessBuildProfile("test")
 @ApplicationScoped
@@ -205,8 +208,9 @@ class V3Updater @Inject constructor(
     }
 
     fun run(instantFullUpdate: Boolean) {
-        val executor = Executors.newScheduledThreadPool(2)
+        assertConnectedToDb()
 
+        val executor = Executors.newScheduledThreadPool(2)
 
         val delay = if (instantFullUpdate) 0L else 1L
 
@@ -214,6 +218,11 @@ class V3Updater @Inject constructor(
             apiDataStore.loadDataFromDb(true)
         } catch (e: java.lang.Exception) {
             LOGGER.error("Failed to load db", e)
+            if (e is MongoException) {
+                LOGGER.error("Failed to connect to db, exiting")
+                Quarkus.asyncExit(2)
+                Quarkus.waitForExit()
+            }
             AdoptRepos(emptyList())
         }
 
@@ -234,6 +243,23 @@ class V3Updater @Inject constructor(
             },
             delay, 1, TimeUnit.DAYS
         )
+    }
+
+    private fun assertConnectedToDb() {
+        val connected = try {
+            runBlocking {
+                return@runBlocking apiDataStore.isConnectedToDb()
+            }
+        } catch (e: java.lang.Exception) {
+            LOGGER.error("Failed to load db", e)
+            false
+        }
+
+        if (!connected) {
+            LOGGER.error("Failed to connect to db, exiting process")
+            Quarkus.asyncExit(2)
+            Quarkus.waitForExit()
+        }
     }
 
     private fun fullUpdate(currentRepo: AdoptRepos, releasesOnly: Boolean): AdoptRepos? {
