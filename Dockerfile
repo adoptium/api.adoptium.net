@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21 as build
+FROM eclipse-temurin:23 as build
 
 RUN mkdir /tmp/build
 
@@ -8,7 +8,7 @@ COPY . /tmp/build
 
 RUN ./mvnw clean install -Padoptium
 
-FROM eclipse-temurin:21
+FROM eclipse-temurin:23
 
 RUN mkdir -p /deployments
 
