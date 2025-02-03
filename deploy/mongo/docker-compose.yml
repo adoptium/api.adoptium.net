@@ -1,0 +1,16 @@
+version: '3.6'
+services:
+  mongodb:
+    image: "api-mongodb"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:27017:27017"
+    environment:
+      MONGODB_UPDATER_PASSWORD: "test-updater-password"
+      MONGODB_FRONTEND_PASSWORD: "test-frontend-password"
+      MONGODB_ADMIN_PASSWORD: "test-admin-password"
+    volumes:
+      - ./test-certs:/mongo
+

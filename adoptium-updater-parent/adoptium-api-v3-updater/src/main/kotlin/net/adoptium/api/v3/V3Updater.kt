@@ -31,7 +31,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.timerTask
-import kotlin.system.exitProcess
 
 @UnlessBuildProfile("test")
 @ApplicationScoped
@@ -69,8 +68,8 @@ class V3Updater @Inject constructor(
             return String(Base64.getEncoder().encode(md.digest()))
         }
 
-        fun copyOldReleasesIntoNewRepo(currentRepo: AdoptRepos, newRepoData: AdoptRepos, filter: ReleaseIncludeFilter) = newRepoData
-            .addAll(currentRepo
+        fun copyOldReleasesIntoNewRepo(currentRepo: AdoptRepos, newRepoData: AdoptRepos, filter: ReleaseIncludeFilter) = currentRepo
+            .addAll(newRepoData
                 .allReleases
                 .getReleases()
                 .filter { !filter.filter(it.vendor, it.updated_at.dateTime, it.release_type == ReleaseType.ea) }
@@ -110,7 +109,7 @@ class V3Updater @Inject constructor(
 
                 if (updatedRepo != oldRepo) {
                     val after = writeIncrementalUpdate(updatedRepo, oldRepo)
-                    printRepoDebugInfo(oldRepo, updatedRepo, after)
+                    printRepoDebugInfo(oldRepo, updatedRepo, after, null)
                     return@runBlocking after
                 }
             } catch (e: Exception) {
@@ -120,18 +119,27 @@ class V3Updater @Inject constructor(
         }
     }
 
-    private fun printRepoDebugInfo(oldRepo: AdoptRepos, updatedRepo: AdoptRepos, after: AdoptRepos) {
+    private fun printRepoDebugInfo(
+        oldRepo: AdoptRepos,
+        updatedRepo: AdoptRepos,
+        afterInMemory: AdoptRepos,
+        afterInDb: AdoptRepos?) {
         if (APIConfig.DEBUG) {
-            LOGGER.debug("Updated and db version comparison {} {} {} {} {} {}", calculateChecksum(oldRepo), oldRepo.hashCode(), calculateChecksum(updatedRepo), updatedRepo.hashCode(), calculateChecksum(after), after.hashCode())
+            LOGGER.debug("Updated and db version comparison {} {} {} {} {} {}", calculateChecksum(oldRepo), oldRepo.hashCode(), calculateChecksum(updatedRepo), updatedRepo.hashCode(), calculateChecksum(afterInMemory), afterInMemory.hashCode())
 
             LOGGER.debug("Compare db and updated")
-            deepDiffDebugPrint(after, updatedRepo)
+            deepDiffDebugPrint(afterInMemory, updatedRepo)
 
             LOGGER.debug("Compare Old and updated")
             deepDiffDebugPrint(oldRepo, updatedRepo)
 
             LOGGER.debug("Compare db and old")
-            deepDiffDebugPrint(after, oldRepo)
+            deepDiffDebugPrint(afterInMemory, oldRepo)
+
+            if (afterInDb != null) {
+                LOGGER.debug("Compare in memory and in db")
+                deepDiffDebugPrint(afterInMemory, afterInDb)
+            }
         }
     }
 
@@ -284,18 +292,20 @@ class V3Updater @Inject constructor(
 
                 val checksum = calculateChecksum(repo)
 
-                mutex.withLock {
+                val dataInDb = mutex.withLock {
                     runBlocking {
                         database.updateAllRepos(repo, checksum)
                         statsInterface.update(repo)
                         database.setReleaseInfo(releaseVersionResolver.formReleaseInfo(repo))
+
+                        apiDataStore.loadDataFromDb(forceUpdate = true, logEntries = false)
                     }
                 }
 
                 LOGGER.info("Updating Release Notes")
                 adoptReleaseNotes.updateReleaseNotes(repo)
 
-                printRepoDebugInfo(currentRepo, repo, repo)
+                printRepoDebugInfo(currentRepo, newRepoData, repo, dataInDb)
 
                 LOGGER.info("Full update done")
                 return@runBlocking repo

@@ -9,7 +9,7 @@ interface APIDataStore {
     fun getAdoptRepos(): AdoptRepos
     fun setAdoptRepos(binaryRepos: AdoptRepos)
     fun getReleaseInfo(): ReleaseInfo
-    fun loadDataFromDb(forceUpdate: Boolean): AdoptRepos
+    fun loadDataFromDb(forceUpdate: Boolean, logEntries: Boolean = true): AdoptRepos
     fun getUpdateInfo(): UpdatedInfo
     suspend fun isConnectedToDb(): Boolean
 }

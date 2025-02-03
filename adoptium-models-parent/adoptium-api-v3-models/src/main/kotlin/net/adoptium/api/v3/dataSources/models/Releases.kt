@@ -10,7 +10,7 @@ import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.VersionData
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
-import java.util.TreeSet
+import java.util.*
 import java.util.function.Predicate
 
 class Releases {
