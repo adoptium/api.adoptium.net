@@ -79,7 +79,7 @@ class AdoptRepos {
             return this
         }
         return releases
-            .fold(this) { repoAcc, oldRelease -> repoAcc.addRelease(oldRelease.version_data.major, oldRelease) }
+            .fold(this) { repoAcc, newRelease -> repoAcc.addRelease(newRelease.version_data.major, newRelease) }
     }
 
     fun addRelease(i: Int, r: Release): AdoptRepos {

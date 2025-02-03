@@ -34,13 +34,13 @@ open class APIDataStoreImpl : APIDataStore {
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
         private val MAX_VERSION_TO_LOAD = (System.getenv("MAX_VERSION_TO_LOAD") ?: "100").toInt()
 
-
         fun loadDataFromDb(
             dataStore: ApiPersistence,
             previousUpdateInfo: UpdatedInfo,
             forceUpdate: Boolean,
             previousRepo: AdoptRepos?,
-            versions: List<Int>): Pair<AdoptRepos, UpdatedInfo> {
+            versions: List<Int>,
+            logEntries: Boolean = true): Pair<AdoptRepos, UpdatedInfo> {
 
             return runBlocking {
                 val updated = dataStore.getUpdatedAt()
@@ -54,10 +54,12 @@ open class APIDataStoreImpl : APIDataStore {
                         .toList()
                     val updatedAt = dataStore.getUpdatedAt()
 
-                    LOGGER.info("Loaded Version: $updatedAt")
                     val newData = filterValidAssets(data)
 
-                    showStats(previousRepo, newData)
+                    if (logEntries) {
+                        LOGGER.info("Loaded Version: $updatedAt")
+                        showStats(previousRepo, newData)
+                    }
                     Pair(newData, updatedAt)
                 } else {
                     Pair(previousRepo, previousUpdateInfo)
@@ -167,7 +169,10 @@ open class APIDataStoreImpl : APIDataStore {
         return releaseInfo
     }
 
-    override fun loadDataFromDb(forceUpdate: Boolean): AdoptRepos {
+    override fun loadDataFromDb(
+        forceUpdate: Boolean,
+        logEntries: Boolean
+    ): AdoptRepos {
         // Scan the currently available versions plus 5
         val versions = releaseInfo.available_releases.toList()
             .plus((releaseInfo.available_releases.last()..releaseInfo.available_releases.last() + 5))
@@ -178,7 +183,8 @@ open class APIDataStoreImpl : APIDataStore {
             updatedAt,
             forceUpdate,
             binaryRepos,
-            versions
+            versions,
+            logEntries
         )
 
         this.updatedAt = update.second

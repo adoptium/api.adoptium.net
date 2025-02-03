@@ -37,6 +37,12 @@ jobs:
           DOCKER_FILE: ./deploy/Dockerfile
           BUILD_ARGS: MAVEN_FLAGS="-Padoptopenjdk,-adoptium"
 
+      - name: Build mongo container image and push to Azure
+        uses: ./.github/actions/docker-build
+        with:
+          DOCKER_REPO: adoptopenjdkacr.azurecr.io/azure-mongodb-${{ env.NAMESPACE }}
+          DOCKER_FILE: ./deploy/mongo/Dockerfile
+
       - name: Redeploy Kubernetes Updater and Frontend
         uses: ./.github/actions/kubectl-redeploy
         with:
