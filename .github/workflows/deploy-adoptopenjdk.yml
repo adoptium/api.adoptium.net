@@ -41,7 +41,7 @@ jobs:
         uses: ./.github/actions/docker-build
         with:
           DOCKER_REPO: adoptopenjdkacr.azurecr.io/azure-mongodb-${{ env.NAMESPACE }}
-          DOCKER_FILE: Dockerfile
+          DOCKER_FILE: ./deploy/mongo/Dockerfile
 
       - name: Redeploy Kubernetes Updater and Frontend
         uses: ./.github/actions/kubectl-redeploy
