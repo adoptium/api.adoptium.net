@@ -10,16 +10,11 @@ inputs:
     BUILD_ARGS:
       description: 'Build arguments'
       required: false
-    BUILD_DIRECTORY:
-      description: 'Build directory'
-      required: false
-      default: '.'
 runs:
   using: composite
   steps:
   - name: Build container image and push to Azure
     uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
-    working-directory: ${{ inputs.BUILD_DIRECTORY }}
     with:
       file: ${{ inputs.DOCKER_FILE }}
       tags: ${{ inputs.DOCKER_REPO }}:latest
