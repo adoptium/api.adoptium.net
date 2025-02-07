@@ -17,7 +17,7 @@ class DockerStatsInterfaceAdoptium @Inject constructor(
         return emptyList()
     }
 
-    override fun pullOfficalStats(): DockerDownloadStatsDbEntry {
+    override fun pullOfficialStats(): DockerDownloadStatsDbEntry {
         val result = getStatsForUrl(officialStatsUrl)
         val now = TimeSource.now()
 

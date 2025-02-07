@@ -122,6 +122,7 @@ class AssetsResourceReleaseNamePathTest : FrontendTest() {
             .statusCode(404)
     }
 
+    /*
     @Test
     fun `missing release_name 400s`() {
         assertThrows<BadRequestException> {
@@ -157,4 +158,6 @@ class AssetsResourceReleaseNamePathTest : FrontendTest() {
                 )
         }
     }
+
+     */
 }

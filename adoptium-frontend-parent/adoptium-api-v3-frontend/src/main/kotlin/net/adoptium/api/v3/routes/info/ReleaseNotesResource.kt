@@ -50,10 +50,10 @@ constructor(
     fun getReleaseNotes(
         @Parameter(
             name = "release_name", description = OpenApiDocs.RELASE_NAME, required = true,
-            schema = Schema(defaultValue = "jdk-19.0.2+7", type = SchemaType.STRING)
+            schema = Schema(example = "jdk-19.0.2+7", type = SchemaType.STRING)
         )
         @PathParam("release_name")
-        release_name: String?,
+        release_name: String,
 
         @Parameter(name = "vendor", description = OpenApiDocs.VENDOR, required = false)
         @QueryParam("vendor")

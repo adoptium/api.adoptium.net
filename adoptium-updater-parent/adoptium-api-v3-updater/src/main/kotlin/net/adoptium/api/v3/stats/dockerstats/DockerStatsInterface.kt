@@ -51,14 +51,14 @@ abstract class DockerStats @Inject constructor(
     }
 
     abstract fun getDownloadStats(): List<DockerDownloadStatsDbEntry>
-    abstract fun pullOfficalStats(): DockerDownloadStatsDbEntry
+    abstract fun pullOfficialStats(): DockerDownloadStatsDbEntry
 
     override suspend fun updateDb() {
         try {
             val stats = mutableListOf<DockerDownloadStatsDbEntry>()
 
             stats.addAll(getDownloadStats())
-            stats.add(pullOfficalStats())
+            stats.add(pullOfficialStats())
 
             database.addDockerDownloadStatsEntries(stats)
         } catch (e: Exception) {

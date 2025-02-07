@@ -43,7 +43,7 @@ class VersionResource {
     fun parseVersion(
         @Parameter(name = "version", description = "Version", required = true)
         @PathParam("version")
-        version: String?
+        version: String
     ): VersionData {
         try {
             return VersionParser.parse(version, sanityCheck = false, exactMatch = true)
