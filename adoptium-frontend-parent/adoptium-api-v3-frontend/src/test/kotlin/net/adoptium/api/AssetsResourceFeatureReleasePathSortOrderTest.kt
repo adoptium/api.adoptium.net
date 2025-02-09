@@ -114,7 +114,7 @@ class AssetsResourceFeatureReleasePathSortOrderTest : FrontendTest() {
 
         return assetResource.get(
             version = 8, release_type = ReleaseType.ga, sortOrder = sortOrder, sortMethod = sortMethod,
-            arch = null, heap_size = null, jvm_impl = null, image_type = null, os = null, page = null, pageSize = null, project = null, vendor = null, before = null, cLib = null,
+            arch = null, heap_size = null, jvm_impl = null, image_type = null, os = null, page = 0, pageSize = 50, project = null, vendor = null, before = null, cLib = null,
             showPageCount = false,
             uriInfo = uriInfo
         ).entity as List<Release>

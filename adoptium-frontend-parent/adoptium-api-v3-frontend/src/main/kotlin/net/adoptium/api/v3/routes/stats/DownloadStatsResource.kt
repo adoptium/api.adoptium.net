@@ -29,6 +29,7 @@ import jakarta.ws.rs.Produces
 import jakarta.ws.rs.QueryParam
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
+import net.adoptium.api.v3.Pagination.defaultPageSize
 
 @Path("/v3/stats/downloads")
 @Schema(hidden = true)
@@ -149,17 +150,19 @@ class DownloadStatsResource {
     fun tracking(
         @Parameter(name = "days", description = "Number of days to display, if used in conjunction with from/to then this will limit the request to x days before the end of the given period", schema = Schema(defaultValue = "30", type = SchemaType.INTEGER), required = false)
         @QueryParam("days")
+        @DefaultValue("30")
         days: Int?,
         @Parameter(name = "source", description = "Stats data source", schema = Schema(defaultValue = "all"), required = false)
         @QueryParam("source")
+        @DefaultValue("all")
         source: StatsSource?,
-        @Parameter(name = "feature_version", description = "Feature version (i.e 8, 9, 10...). Does not use offical docker repo stats", required = false)
+        @Parameter(name = "feature_version", description = "Feature version (i.e 8, 9, 10...). Does not use official docker repo stats", required = false)
         @QueryParam("feature_version")
         featureVersion: Int?,
         @Parameter(name = "docker_repo", description = "Docker repo to filter stats by", required = false)
         @QueryParam("docker_repo")
         dockerRepo: String?,
-        @Parameter(name = "jvm_impl", description = "JVM Implementation to filter stats by. Does not use offical docker repo stats", required = false)
+        @Parameter(name = "jvm_impl", description = "JVM Implementation to filter stats by. Does not use official docker repo stats", required = false)
         @QueryParam("jvm_impl")
         jvmImplStr: String?,
         @Parameter(name = "from", description = "Date from which to calculate stats (inclusive)", schema = Schema(example = "YYYY-MM-dd"), required = false)
@@ -189,14 +192,15 @@ class DownloadStatsResource {
     fun monthly(
         @Parameter(name = "source", description = "Stats data source", schema = Schema(defaultValue = "all"), required = false)
         @QueryParam("source")
+        @DefaultValue("all")
         source: StatsSource?,
-        @Parameter(name = "feature_version", description = "Feature version (i.e 8, 9, 10...). Does not use offical docker repo stats", required = false)
+        @Parameter(name = "feature_version", description = "Feature version (i.e 8, 9, 10...). Does not use official docker repo stats", required = false)
         @QueryParam("feature_version")
         featureVersion: Int?,
         @Parameter(name = "docker_repo", description = "Docker repo to filter stats by", required = false)
         @QueryParam("docker_repo")
         dockerRepo: String?,
-        @Parameter(name = "jvm_impl", description = "JVM Implementation to filter stats by. Does not use offical docker repo stats", required = false)
+        @Parameter(name = "jvm_impl", description = "JVM Implementation to filter stats by. Does not use official docker repo stats", required = false)
         @QueryParam("jvm_impl")
         jvmImplStr: String?,
         @Parameter(name = "to", description = "Month from which to calculate stats (inclusive)", schema = Schema(example = "YYYY-MM-dd"), required = false)

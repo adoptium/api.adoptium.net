@@ -22,6 +22,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import jakarta.ws.rs.DefaultValue
 import jakarta.ws.rs.GET
 import jakarta.ws.rs.Path
 import jakarta.ws.rs.PathParam
@@ -29,6 +30,7 @@ import jakarta.ws.rs.Produces
 import jakarta.ws.rs.QueryParam
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
+import net.adoptium.api.v3.Pagination.defaultPageSize
 
 @Tag(name = "Installer")
 @Path("/v3/installer/")
@@ -54,22 +56,22 @@ class InstallerResource @Inject constructor(private val packageEndpoint: Package
     fun returnInstallerByVersion(
         @Parameter(name = "os", description = "Operating System", required = true)
         @PathParam("os")
-        os: OperatingSystem?,
+        os: OperatingSystem,
 
         @Parameter(name = "arch", description = "Architecture", required = true)
         @PathParam("arch")
-        arch: Architecture?,
+        arch: Architecture,
 
         @Parameter(
             name = "release_name", description = OpenApiDocs.RELASE_NAME, required = true,
-            schema = Schema(defaultValue = "jdk-11.0.6+10", type = SchemaType.STRING)
+            schema = Schema(example = "jdk-11.0.6+10", type = SchemaType.STRING)
         )
         @PathParam("release_name")
-        release_name: String?,
+        release_name: String,
 
         @Parameter(name = "image_type", description = "Image Type", required = true)
         @PathParam("image_type")
-        image_type: ImageType?,
+        image_type: ImageType,
 
         @Parameter(name = "c_lib", description = OpenApiDocs.CLIB_TYPE, required = false)
         @QueryParam("c_lib")
@@ -77,15 +79,15 @@ class InstallerResource @Inject constructor(private val packageEndpoint: Package
 
         @Parameter(name = "jvm_impl", description = "JVM Implementation", required = true)
         @PathParam("jvm_impl")
-        jvm_impl: JvmImpl?,
+        jvm_impl: JvmImpl,
 
         @Parameter(name = "heap_size", description = "Heap Size", required = true)
         @PathParam("heap_size")
-        heap_size: HeapSize?,
+        heap_size: HeapSize,
 
         @Parameter(name = "vendor", description = OpenApiDocs.VENDOR, required = true)
         @PathParam("vendor")
-        vendor: Vendor?,
+        vendor: Vendor,
 
         @Parameter(name = "project", description = "Project", required = false)
         @QueryParam("project")
@@ -113,26 +115,26 @@ class InstallerResource @Inject constructor(private val packageEndpoint: Package
     fun returnInstaller(
         @Parameter(
             name = "feature_version", description = OpenApiDocs.FEATURE_RELEASE, required = true,
-            schema = Schema(defaultValue = "8", type = SchemaType.INTEGER)
+            schema = Schema(example = "8", type = SchemaType.INTEGER)
         )
         @PathParam("feature_version")
-        version: Int?,
+        version: Int,
 
         @Parameter(name = "release_type", description = OpenApiDocs.RELEASE_TYPE, required = true)
         @PathParam("release_type")
-        release_type: ReleaseType?,
+        release_type: ReleaseType,
 
         @Parameter(name = "os", description = "Operating System", required = true)
         @PathParam("os")
-        os: OperatingSystem?,
+        os: OperatingSystem,
 
         @Parameter(name = "arch", description = "Architecture", required = true)
         @PathParam("arch")
-        arch: Architecture?,
+        arch: Architecture,
 
         @Parameter(name = "image_type", description = "Image Type", required = true)
         @PathParam("image_type")
-        image_type: ImageType?,
+        image_type: ImageType,
 
         @Parameter(name = "c_lib", description = OpenApiDocs.CLIB_TYPE, required = false)
         @QueryParam("c_lib")
@@ -140,15 +142,15 @@ class InstallerResource @Inject constructor(private val packageEndpoint: Package
 
         @Parameter(name = "jvm_impl", description = "JVM Implementation", required = true)
         @PathParam("jvm_impl")
-        jvm_impl: JvmImpl?,
+        jvm_impl: JvmImpl,
 
         @Parameter(name = "heap_size", description = "Heap Size", required = true)
         @PathParam("heap_size")
-        heap_size: HeapSize?,
+        heap_size: HeapSize,
 
         @Parameter(name = "vendor", description = OpenApiDocs.VENDOR, required = true)
         @PathParam("vendor")
-        vendor: Vendor?,
+        vendor: Vendor,
 
         @Parameter(name = "project", description = "Project", required = false)
         @QueryParam("project")
