@@ -96,7 +96,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
             .find(Document("feature_version", featureVersion))
             .sort(Document("date", -1))
             .limit(1)
-            .first()
+            .firstOrNull()
     }
 
     override suspend fun getGithubStats(start: ZonedDateTime, end: ZonedDateTime): List<GitHubDownloadStatsDbEntry> {
