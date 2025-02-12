@@ -19,7 +19,6 @@ import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.Release
-import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.releaseNotes.AdoptReleaseNotes
 import net.adoptium.api.v3.stats.GitHubDownloadStatsCalculator
 import net.adoptium.api.v3.stats.StatsInterface
@@ -70,11 +69,12 @@ class V3Updater @Inject constructor(
         }
 
         fun copyOldReleasesIntoNewRepo(currentRepo: AdoptRepos, newRepoData: AdoptRepos, filter: ReleaseIncludeFilter) = currentRepo
+            .removeReleases { vendor, startTime, isPrerelease -> filter.filter(vendor, startTime, isPrerelease) }
             .addAll(newRepoData
                 .allReleases
                 .getReleases()
-                .filter { !filter.filter(it.vendor, it.updated_at.dateTime, it.release_type == ReleaseType.ea) }
-                .toList())
+                .toList()
+            )
     }
 
     override fun addToUpdate(toUpdate: String): List<Release> {
@@ -235,6 +235,7 @@ class V3Updater @Inject constructor(
             timerTask {
                 try {
                     repo = fullUpdate(repo, true) ?: repo
+                    repo = incrementalUpdate(repo) ?: repo
                     if (!incrementalUpdateScheduled.getAndSet(true)) {
                         executor.scheduleWithFixedDelay(
                             timerTask {
