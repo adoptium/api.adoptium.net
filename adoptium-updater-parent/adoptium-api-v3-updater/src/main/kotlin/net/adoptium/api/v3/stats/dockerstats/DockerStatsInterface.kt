@@ -11,9 +11,10 @@ import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.DockerDownloadStatsDbEntry
 import org.slf4j.LoggerFactory
 import jakarta.json.JsonObject
+import net.adoptium.api.v3.stats.StatsInterface
 
 @ApplicationScoped
-class DockerStatsInterfaceFactory @Inject constructor(
+open class DockerStatsInterfaceFactory @Inject constructor(
     private var database: ApiPersistence,
     private val updaterHtmlClient: UpdaterHtmlClient
 ) {
@@ -30,6 +31,10 @@ class DockerStatsInterfaceFactory @Inject constructor(
         }
 
         return cached!!
+    }
+
+    open fun getDockerStatsInterface(): StatsInterface {
+        TODO("Not yet implemented")
     }
 }
 

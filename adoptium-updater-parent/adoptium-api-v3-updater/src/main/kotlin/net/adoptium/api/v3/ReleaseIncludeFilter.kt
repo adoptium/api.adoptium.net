@@ -52,7 +52,9 @@ class ReleaseIncludeFilter(
                 include = isPrerelease
             }
 
-            return include && Duration.between(startTime, now).toDays() < APIConfig.UPDATE_DAY_CUTOFF
+            val isOldPrerelease = isPrerelease && Duration.between(startTime, now).toDays() > APIConfig.UPDATE_DAY_CUTOFF
+
+            return include && !isOldPrerelease
             // exclude AdoptOpenjdk
             // Don't Update releases more than a year old
         }
