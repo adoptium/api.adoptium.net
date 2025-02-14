@@ -111,15 +111,20 @@ class AdoptRepos {
 
     fun removeReleases(filter: (vendor: Vendor, startTime: ZonedDateTime, isPrerelease: Boolean) -> Boolean): AdoptRepos {
         val filtered = repos
-            .map { repo ->
-                return@map FeatureRelease(
+            .mapNotNull { repo ->
+                val releases = repo.value
+                    .releases
+                    .nodeList
+                    .filter { !filter(it.vendor, it.updated_at.dateTime, it.release_type == ReleaseType.ea) }
+
+                if (releases.isEmpty()) {
+                    return@mapNotNull null
+                }
+
+                return@mapNotNull FeatureRelease(
                     repo.key,
-                    Releases(
-                        repo.value
-                            .releases
-                            .nodeList
-                            .filter { filter(it.vendor, it.updated_at.dateTime, it.release_type == ReleaseType.ea) }
-                    ))
+                    Releases(releases)
+                )
             }
 
         return AdoptRepos(filtered)

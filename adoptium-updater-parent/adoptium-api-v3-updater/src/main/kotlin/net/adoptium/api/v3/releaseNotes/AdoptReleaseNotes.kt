@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory
 import jakarta.inject.Inject
 
 @ApplicationScoped
-class AdoptReleaseNotes @Inject constructor(
+open class AdoptReleaseNotes @Inject constructor(
     private var adoptRepository: AdoptRepository,
     private val database: ApiPersistence,
     private val gitHubHtmlClient: GitHubHtmlClient
@@ -31,7 +31,7 @@ class AdoptReleaseNotes @Inject constructor(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    suspend fun updateReleaseNotes(
+    open suspend fun updateReleaseNotes(
         adoptRepos: AdoptRepos
     ) {
         adoptRepos
