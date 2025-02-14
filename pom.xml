@@ -19,7 +19,7 @@
         <jacoco.version>0.8.12</jacoco.version>
         <jdk.version>17</jdk.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <kotlin.version>2.0.21</kotlin.version>
+        <kotlin.version>2.1.10</kotlin.version>
         <maven.antrun-plugin.version>3.1.0</maven.antrun-plugin.version>
         <maven.assembly-plugin.version>3.7.1</maven.assembly-plugin.version>
         <maven.build-helper-plugin.version>3.6.0</maven.build-helper-plugin.version>
@@ -82,7 +82,7 @@
         <spotbugs.version>4.7.3</spotbugs.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.18.0</quarkus.version>
+        <quarkus.version>3.18.3</quarkus.version>
     </properties>
 
     <modules>

@@ -13,7 +13,7 @@ class UpdatableVersionSupplierStub : UpdatableVersionSupplier {
         // NOP
     }
 
-    override fun getTipVersion(): Int {
+    override fun getTipVersion(): Int? {
         return 15
     }
 

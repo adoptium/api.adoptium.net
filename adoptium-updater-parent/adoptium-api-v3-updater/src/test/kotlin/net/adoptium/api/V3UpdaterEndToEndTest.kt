@@ -43,11 +43,7 @@ class V3UpdaterEndToEndTest {
         runBlocking {
             var repo = AdoptReposTestDataGenerator.generate()
 
-            repo = repo.addAll(listOf(Release("11", ReleaseType.ga, "a-link", "jdk-8.0.9999+7", DateTime("2013-02-27T19:35:32Z"), DateTime("2013-02-27T19:35:32Z"), emptyArray(), 1, Vendor.eclipse, VersionData(8, 0, 9999, null, 1, 7, null, ""
-            )
-            )
-            )
-            )
+            repo = repo.addAll(listOf(Release("11", ReleaseType.ga, "a-link", "jdk-8.0.9999+7", DateTime("2013-02-27T19:35:32Z"), DateTime("2013-02-27T19:35:32Z"), emptyArray(), 1, Vendor.eclipse, VersionData(8, 0, 9999, null, 1, 7, null, ""))))
 
             val getById: (GitHubId) -> GHRelease? = { null }
 
@@ -56,10 +52,7 @@ class V3UpdaterEndToEndTest {
                 val (version) = match.destructured
                 val majorVersion = Integer.parseInt(version)
 
-                val releases = GHSummaryTestDataGenerator.generateGHRepository(AdoptRepos(listOf(repo.repos[majorVersion]!!
-                )
-                )
-                ).releases.releases
+                val releases = GHSummaryTestDataGenerator.generateGHRepository(AdoptRepos(listOf(repo.repos[majorVersion]!!))).releases.releases
 
                 GHRepository(GHReleases(releases, PageInfo(false, null)))
             }
@@ -76,11 +69,7 @@ class V3UpdaterEndToEndTest {
         runBlocking {
             var repo = AdoptReposTestDataGenerator.generate()
 
-            repo = repo.addAll(listOf(Release("11", ReleaseType.ea, "a-link", "jdk-8.0.9999+7", DateTime("2013-02-27T19:35:32Z"), DateTime("2013-02-27T19:35:32Z"), emptyArray(), 1, Vendor.eclipse, VersionData(8, 0, 9999, null, 1, 7, null, ""
-            )
-            )
-            )
-            )
+            repo = repo.addAll(listOf(Release("11", ReleaseType.ea, "a-link", "jdk-8.0.9999+7", DateTime("2013-02-27T19:35:32Z"), DateTime("2013-02-27T19:35:32Z"), emptyArray(), 1, Vendor.eclipse, VersionData(8, 0, 9999, null, 1, 7, null, ""))))
 
             val getById: (GitHubId) -> GHRelease? = { null }
 
@@ -89,10 +78,7 @@ class V3UpdaterEndToEndTest {
                 val (version) = match.destructured
                 val majorVersion = Integer.parseInt(version)
 
-                val releases = GHSummaryTestDataGenerator.generateGHRepository(AdoptRepos(listOf(repo.repos[majorVersion]!!
-                )
-                )
-                ).releases.releases
+                val releases = GHSummaryTestDataGenerator.generateGHRepository(AdoptRepos(listOf(repo.repos[majorVersion]!!))).releases.releases
 
                 GHRepository(GHReleases(releases, PageInfo(false, null)))
             }
@@ -115,10 +101,7 @@ class V3UpdaterEndToEndTest {
                 val (version) = match.destructured
                 val majorVersion = Integer.parseInt(version)
 
-                val releases = GHSummaryTestDataGenerator.generateGHRepository(AdoptRepos(listOf(repo.repos[majorVersion]!!
-                )
-                )
-                ).releases.releases
+                val releases = GHSummaryTestDataGenerator.generateGHRepository(AdoptRepos(listOf(repo.repos[majorVersion]!!))).releases.releases
 
                 GHRepository(GHReleases(releases, PageInfo(false, null)))
             }
@@ -137,10 +120,17 @@ class V3UpdaterEndToEndTest {
 
             val getById: (GitHubId) -> GHRelease? = { id ->
                 if (id.id == "1") {
-                    GHRelease(GitHubId("1"), "jdk-11.0.9999+7", true, "2013-02-27T19:35:32Z", "2013-02-27T19:35:32Z", GHAssets(listOf(GHAsset("OpenJDK11U-jdk_x64_linux_hotspot_11.0.2_7.tar.gz", 1L, "the-source-link", 1L, "2013-02-27T19:35:32Z"
-                    )
-                    ), PageInfo(false, ""), 1
-                    ), "1", "/AdoptOpenJDK/openjdk11-binaries/releases/tag/jdk9u-2018-09-27-08-50"
+                    GHRelease(
+                        GitHubId("1"),
+                        "jdk-11.0.9999+7",
+                        true,
+                        "2013-02-27T19:35:32Z",
+                        "2013-02-27T19:35:32Z",
+                        GHAssets(
+                            listOf(GHAsset("OpenJDK11U-jdk_x64_linux_hotspot_11.0.2_7.tar.gz", 1L, "the-source-link", 1L, "2013-02-27T19:35:32Z")),
+                            PageInfo(false, ""),
+                            1
+                        ), "1", "/AdoptOpenJDK/openjdk11-binaries/releases/tag/jdk9u-2018-09-27-08-50"
                     )
                 } else {
                     null
@@ -220,7 +210,7 @@ class V3UpdaterEndToEndTest {
             override suspend fun updateVersions() {
             }
 
-            override fun getTipVersion(): Int {
+            override fun getTipVersion(): Int? {
                 return 25
             }
 
@@ -239,52 +229,61 @@ class V3UpdaterEndToEndTest {
             }
         }
 
-        val updater = V3Updater(AdoptReposBuilder(AdoptRepositoryImpl(object : GitHubApi {
-            override suspend fun getRepository(owner: String, repoName: String, filter: (updatedAt: String, isPrerelease: Boolean) -> Boolean): GHRepository {
-                return getRepository(owner, repoName, filter)
-            }
+        val updater = V3Updater(
+            AdoptReposBuilder(
+                AdoptRepositoryImpl(
+                    object : GitHubApi {
+                        override suspend fun getRepository(owner: String, repoName: String, filter: (updatedAt: String, isPrerelease: Boolean) -> Boolean): GHRepository {
+                            return getRepository(owner, repoName, filter)
+                        }
 
-            override suspend fun getRepositorySummary(owner: String, repoName: String): GHRepositorySummary {
-                return GHSummaryTestDataGenerator.generateGHRepositorySummary(getRepository(owner, repoName) { _, _ -> true })
-            }
+                        override suspend fun getRepositorySummary(owner: String, repoName: String): GHRepositorySummary {
+                            return GHSummaryTestDataGenerator.generateGHRepositorySummary(getRepository(owner, repoName) { _, _ -> true })
+                        }
 
-            override suspend fun getReleaseById(id: GitHubId): GHRelease? {
+                        override suspend fun getReleaseById(id: GitHubId): GHRelease? {
 
-                val result = getById(id)
-                if (result != null) {
-                    return result
+                            val result = getById(id)
+                            if (result != null) {
+                                return result
+                            }
+
+                            return repo.allReleases.nodeList.firstOrNull { it.id == id.id }?.let {
+                                return GHRelease(GitHubId(it.id), it.release_name, it.release_type == ReleaseType.ea, it.timestamp.dateTime.toString(), it.updated_at.dateTime.toString(), GHAssets(it.binaries.map { binary ->
+                                    GHAsset(binary.`package`.name, binary.`package`.size, binary.`package`.link, binary.`package`.download_count, binary.updated_at.dateTime.toString()
+                                    )
+                                }, PageInfo(false, null), it.binaries.size
+                                ), it.id, "/AdoptOpenJDK/openjdk${it.version_data.major}-binaries/releases/tag/jdk8u-2020-01-09-03-36"
+                                )
+                            }
+                        }
+                    },
+                    AdoptReleaseMapperFactory(AdoptBinaryMapper(ghClient), ghClient)
+                ),
+                vs
+            ),
+            apiDataStore,
+            memoryDb,
+            object : StatsInterface(mockk(), object : DockerStatsInterfaceFactory(mockk(), mockk()) {
+                override fun getDockerStatsInterface(): StatsInterface {
+                    return mockk()
+                }
+            }) {
+                override suspend fun updateStats() {
                 }
 
-                return repo.allReleases.nodeList.firstOrNull { it.id == id.id }?.let {
-                    return GHRelease(GitHubId(it.id), it.release_name, it.release_type == ReleaseType.ea, it.timestamp.dateTime.toString(), it.updated_at.dateTime.toString(), GHAssets(it.binaries.map { binary ->
-                        GHAsset(binary.`package`.name, binary.`package`.size, binary.`package`.link, binary.`package`.download_count, binary.updated_at.dateTime.toString()
-                        )
-                    }, PageInfo(false, null), it.binaries.size
-                    ), it.id, "/AdoptOpenJDK/openjdk${it.version_data.major}-binaries/releases/tag/jdk8u-2020-01-09-03-36"
-                    )
+                override suspend fun update(repos: AdoptRepos) {
                 }
-            }
-        }, AdoptReleaseMapperFactory(AdoptBinaryMapper(ghClient), ghClient
-        )
-        ), vs
-        ), apiDataStore, memoryDb, object : StatsInterface(mockk(), object : DockerStatsInterfaceFactory(mockk(), mockk()) {
-            override fun getDockerStatsInterface(): StatsInterface {
-                return mockk()
-            }
-        }) {
-            override suspend fun updateStats() {
-            }
-
-            override suspend fun update(repos: AdoptRepos) {
-            }
-        }, ReleaseVersionResolver(vs), object : AdoptReleaseNotes(
-            mockk(),
-            mockk(),
-            mockk(),
-        ) {
-            override suspend fun updateReleaseNotes(adoptRepos: AdoptRepos) {
-            }
-        }, vs
+            },
+            ReleaseVersionResolver(vs),
+            object : AdoptReleaseNotes(
+                mockk(),
+                mockk(),
+                mockk(),
+            ) {
+                override suspend fun updateReleaseNotes(adoptRepos: AdoptRepos) {}
+            },
+            vs
         )
 
         val updatedRepo = updater.runUpdate(repo, AtomicBoolean(true), mockk())

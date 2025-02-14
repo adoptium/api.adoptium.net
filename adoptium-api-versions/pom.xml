@@ -13,14 +13,14 @@
         <jdk.version>17</jdk.version>
         <mongo.version>5.1.2</mongo.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <kotlin.version>2.0.21</kotlin.version>
+        <kotlin.version>2.1.10</kotlin.version>
         <logback.version>1.5.16</logback.version>
         <maven.compiler.release>17</maven.compiler.release>
         <maven.version>3.9.9</maven.version>
         <maven.project-info-reports-plugin.version>3.8.0</maven.project-info-reports-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.18.2</quarkus.version>
+        <quarkus.version>3.18.3</quarkus.version>
         <rest-assured.version>5.5.0</rest-assured.version>
     </properties>
 
@@ -371,7 +371,7 @@
             <dependency>
                 <groupId>com.expediagroup</groupId>
                 <artifactId>graphql-kotlin-ktor-client</artifactId>
-                <version>8.2.1</version>
+                <version>8.3.0</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.jetbrains.kotlinx</groupId>
@@ -382,7 +382,7 @@
             <dependency>
                 <groupId>com.expediagroup</groupId>
                 <artifactId>graphql-kotlin-client-jackson</artifactId>
-                <version>8.2.1</version>
+                <version>8.3.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
