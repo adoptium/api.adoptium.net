@@ -10,7 +10,7 @@ object VendorSchemaRef {
     }
 
     fun applyVendorMapping(vendor: String): String {
-        return if (AdoptVendor.VENDOR_MAPPING.containsKey(vendor.toLowerCase())) {
+        return if (AdoptVendor.VENDOR_MAPPING.containsKey(vendor.lowercase())) {
             AdoptVendor.VENDOR_MAPPING[vendor]!!
         } else {
             vendor

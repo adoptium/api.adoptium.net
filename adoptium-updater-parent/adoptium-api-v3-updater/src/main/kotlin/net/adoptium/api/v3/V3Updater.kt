@@ -28,6 +28,7 @@ import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.timerTask
@@ -234,23 +235,33 @@ class V3Updater @Inject constructor(
         executor.scheduleWithFixedDelay(
             timerTask {
                 try {
-                    repo = fullUpdate(repo, true) ?: repo
-                    repo = incrementalUpdate(repo) ?: repo
-                    if (!incrementalUpdateScheduled.getAndSet(true)) {
-                        executor.scheduleWithFixedDelay(
-                            timerTask {
-                                repo = incrementalUpdate(repo) ?: repo
-                            },
-                            1, 6, TimeUnit.MINUTES
-                        )
-                    }
-                    repo = fullUpdate(repo, false) ?: repo
+                    runUpdate(repo, incrementalUpdateScheduled, executor)
                 } catch (e: InvalidUpdateException) {
                     LOGGER.error("Failed to perform update", e)
                 }
             },
             delay, 1, TimeUnit.DAYS
         )
+    }
+
+    fun runUpdate(
+        repo: AdoptRepos,
+        incrementalUpdateScheduled: AtomicBoolean,
+        executor: ScheduledExecutorService
+    ): AdoptRepos {
+        var repo1 = repo
+        repo1 = fullUpdate(repo1, true) ?: repo1
+        repo1 = incrementalUpdate(repo1) ?: repo1
+        if (!incrementalUpdateScheduled.getAndSet(true)) {
+            executor.scheduleWithFixedDelay(
+                timerTask {
+                    repo1 = incrementalUpdate(repo1) ?: repo1
+                },
+                1, 6, TimeUnit.MINUTES
+            )
+        }
+        repo1 = fullUpdate(repo1, false) ?: repo1
+        return repo1
     }
 
     private fun assertConnectedToDb() {
@@ -290,6 +301,8 @@ class V3Updater @Inject constructor(
                 val newRepoData = adoptReposBuilder.build(filter)
 
                 val repo = copyOldReleasesIntoNewRepo(currentRepo, newRepoData, filter)
+
+                printRepoDebugInfo(currentRepo, repo, null)
 
                 val checksum = calculateChecksum(repo)
 

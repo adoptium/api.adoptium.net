@@ -154,7 +154,7 @@ class AdoptReposBuilder @Inject constructor(
         return if (result != null && result.succeeded()) {
             result.result!!
         } else {
-            LOGGER.info("Excluding ${it.id} from update")
+            LOGGER.info("Excluding ${it.id.id} from update")
             excluded.add(it.id)
             emptyList()
         }
