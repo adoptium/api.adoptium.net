@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepo
+import net.adoptium.api.v3.dataSources.models.AttestationRepoSummary
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.ReleaseNotes
@@ -21,6 +23,7 @@ import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseInfo
 import net.adoptium.api.v3.models.Vendor
+import net.adoptium.api.v3.models.Attestation
 import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDateTime
@@ -34,6 +37,7 @@ import java.time.ZonedDateTime
 open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : MongoInterface(), ApiPersistence {
     private val githubReleaseMetadataCollection: MongoCollection<GHReleaseMetadata> = createCollection(mongoClient.getDatabase(), GH_RELEASE_METADATA)
     private val releasesCollection: MongoCollection<Release> = createCollection(mongoClient.getDatabase(), RELEASE_DB)
+    private var attestationsCollection: MongoCollection<Attestation> = createCollection(mongoClient.getDatabase(), ATTESTATIONS_DB)
     private val gitHubStatsCollection: MongoCollection<GitHubDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), GITHUB_STATS_DB)
     private val dockerStatsCollection: MongoCollection<DockerDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), DOCKER_STATS_DB)
     private val releaseInfoCollection: MongoCollection<ReleaseInfo> = createCollection(mongoClient.getDatabase(), RELEASE_INFO_DB)
@@ -46,6 +50,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
         const val GH_RELEASE_METADATA = "githubReleaseMetadata"
         const val RELEASE_DB = "release"
+        const val ATTESTATIONS_DB = "attestations"
         const val GITHUB_STATS_DB = "githubStats"
         const val DOCKER_STATS_DB = "dockerStats"
         const val RELEASE_INFO_DB = "releaseInfo"
@@ -66,11 +71,30 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         }
     }
 
+//    override suspend fun updateAttestationRepo(repo: AdoptAttestationRepo, checksum: String) {
+//
+//        try {
+//            writeAttestations(repo.attestations)
+//        } finally {
+//            updateUpdatedTime(TimeSource.now(), checksum, repo.hashCode())
+//        }
+//    }
+
     private suspend fun writeReleases(featureVersion: Int, value: FeatureRelease) {
         val toAdd = value.releases.getReleases().toList()
         if (toAdd.isNotEmpty()) {
             releasesCollection.deleteMany(majorVersionMatcher(featureVersion))
             releasesCollection.insertMany(toAdd, InsertManyOptions())
+        }
+    }
+
+    private suspend fun writeAttestations(attestations: List<Attestation>) {
+        if (attestations.isNotEmpty()) {
+            // Delete all existing
+            attestationsCollection.drop()
+            attestationsCollection = createCollection(client.getDatabase(), ATTESTATIONS_DB)
+
+            attestationsCollection.insertMany(attestations, InsertManyOptions())
         }
     }
 
@@ -80,6 +104,12 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
             .toList()
 
         return FeatureRelease(featureVersion, Releases(releases))
+    }
+
+    override suspend fun readAttestationData(): List<Attestation> {
+        return attestationsCollection
+            .find(Document())
+            .toList()
     }
 
     override suspend fun addGithubDownloadStatsEntries(stats: List<GitHubDownloadStatsDbEntry>) {
@@ -182,6 +212,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     }
 
     private fun majorVersionMatcher(featureVersion: Int) = Document("version_data.major", featureVersion)
+    private fun attestationMajorVersionMatcher(featureVersion: Int) = Document("featureVersion", featureVersion)
 
     override suspend fun getGhReleaseMetadata(gitHubId: GitHubId): GHReleaseMetadata? {
         return githubReleaseMetadataCollection.find(matchGithubId(gitHubId)).firstOrNull()

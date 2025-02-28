@@ -1,6 +1,7 @@
 package net.adoptium.api.v3.dataSources.persitence
 
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepo
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.ReleaseNotes
@@ -10,11 +11,14 @@ import net.adoptium.api.v3.models.GHReleaseMetadata
 import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
 import net.adoptium.api.v3.models.ReleaseInfo
 import net.adoptium.api.v3.models.Vendor
+import net.adoptium.api.v3.models.Attestation
 import java.time.ZonedDateTime
 
 interface ApiPersistence {
     suspend fun updateAllRepos(repos: AdoptRepos, checksum: String)
+    //suspend fun updateAttestationRepo(repos: AdoptAttestationRepo, checksum: String)
     suspend fun readReleaseData(featureVersion: Int): FeatureRelease
+    suspend fun readAttestationData(): List<Attestation>
 
     suspend fun addGithubDownloadStatsEntries(stats: List<GitHubDownloadStatsDbEntry>)
     suspend fun getStatsForFeatureVersion(featureVersion: Int): List<GitHubDownloadStatsDbEntry>

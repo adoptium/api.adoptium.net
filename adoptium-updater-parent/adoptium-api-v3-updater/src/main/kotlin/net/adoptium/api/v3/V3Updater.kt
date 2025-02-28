@@ -42,6 +42,7 @@ class V3UpdaterApp : Application()
 @ApplicationScoped
 class V3Updater @Inject constructor(
     private val adoptReposBuilder: AdoptReposBuilder,
+    private val adoptAttestationRepoBuilder: AdoptAttestationRepoBuilder,
     private val apiDataStore: APIDataStore,
     private val database: ApiPersistence,
     private val statsInterface: StatsInterface,
@@ -58,6 +59,18 @@ class V3Updater @Inject constructor(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
 
         fun calculateChecksum(repo: AdoptRepos): String {
+            val md = MessageDigest.getInstance("SHA256")
+            val outputStream = object : OutputStream() {
+                override fun write(b: Int) {
+                    md.update(b.toByte())
+                }
+            }
+            UpdaterJsonMapper.mapper.writeValue(outputStream, repo)
+
+            return String(Base64.getEncoder().encode(md.digest()))
+        }
+
+        fun calculateAttestationChecksum(repo: AdoptAttestationRepo): String {
             val md = MessageDigest.getInstance("SHA256")
             val outputStream = object : OutputStream() {
                 override fun write(b: Int) {
@@ -121,6 +134,23 @@ class V3Updater @Inject constructor(
         }
     }
 
+    private fun incrementalAttestationUpdate(oldRepo: AdoptAttestationRepo): AdoptAttestationRepo? {
+        return runBlocking {
+            // Must catch errors or may kill the scheduler
+            try {
+                LOGGER.info("Starting Incremental attestations update")
+
+                // Just do a full update for Attestations repo
+                val after = fullAttestationUpdate(oldRepo)
+                printAttestationRepoDebugInfo(oldRepo, after, null)
+                return@runBlocking after
+            } catch (e: Exception) {
+                LOGGER.error("Failed to perform incremental attestations update", e)
+            }       
+            return@runBlocking null
+        }       
+    } 
+
     private fun printRepoDebugInfo(
         oldRepo: AdoptRepos,
         afterInMemory: AdoptRepos,
@@ -136,6 +166,16 @@ class V3Updater @Inject constructor(
                 LOGGER.debug("Compare in memory and in db")
                 deepDiffDebugPrint(afterInMemory, afterInDb)
             }
+        }
+    }
+
+    private fun printAttestationRepoDebugInfo(
+        oldRepo: AdoptAttestationRepo,
+        afterInMemory: AdoptAttestationRepo,
+        afterInDb: AdoptAttestationRepo?) {
+
+        if (APIConfig.DEBUG) {
+            LOGGER.debug("Attestation updated and db version comparison {} {} {} {}", calculateAttestationChecksum(oldRepo), oldRepo.hashCode(), calculateAttestationChecksum(afterInMemory), afterInMemory.hashCode())
         }
     }
 
@@ -230,12 +270,25 @@ class V3Updater @Inject constructor(
             AdoptRepos(emptyList())
         }
 
+        var attestationRepo: AdoptAttestationRepo = try {
+            apiDataStore.loadAttestationDataFromDb(true)
+        } catch (e: java.lang.Exception) {
+            LOGGER.error("Failed to load attestation db", e)
+            if (e is MongoException) {
+                LOGGER.error("Failed to connect to attestation db, exiting")
+                Quarkus.asyncExit(2)
+                Quarkus.waitForExit()
+            }   
+            AdoptAttestationRepo(emptyList())
+        } 
+
         val incrementalUpdateScheduled = AtomicBoolean(false)
 
         executor.scheduleWithFixedDelay(
             timerTask {
                 try {
                     runUpdate(repo, incrementalUpdateScheduled, executor)
+                    runAttestationUpdate(attestationRepo, incrementalUpdateScheduled, executor)
                 } catch (e: InvalidUpdateException) {
                     LOGGER.error("Failed to perform update", e)
                 }
@@ -261,6 +314,25 @@ class V3Updater @Inject constructor(
             )
         }
         repo1 = fullUpdate(repo1, false) ?: repo1
+        return repo1
+    }
+
+    fun runAttestationUpdate(
+        repo: AdoptAttestationRepo,
+        incrementalUpdateScheduled: AtomicBoolean,
+        executor: ScheduledExecutorService
+    ): AdoptRepos {
+        var repo1 = repo
+        repo1 = fullAttestationUpdate(repo1) ?: repo1
+        repo1 = incrementalAttestationUpdate(repo1) ?: repo1
+        if (!incrementalUpdateScheduled.getAndSet(true)) {
+            executor.scheduleWithFixedDelay(
+                timerTask {
+                    repo1 = incrementalAttestationUpdate(repo1) ?: repo1
+                },
+                1, 6, TimeUnit.MINUTES
+            )
+        }
         return repo1
     }
 
@@ -325,6 +397,47 @@ class V3Updater @Inject constructor(
                 adoptReleaseNotes.updateReleaseNotes(repo)
 
                 printRepoDebugInfo(currentRepo, repo, dataInDb)
+
+                LOGGER.info("Full update done")
+                return@runBlocking repo
+            }
+        } catch (e: Exception) {
+            LOGGER.error("Failed to perform full update", e)
+        } catch (e: Throwable) {
+            // Log and rethrow, may be unrecoverable error such as OutOfMemoryError
+            LOGGER.error("Error during full update", e)
+            throw e
+        }
+        return null
+    }
+
+    @Throws(InvalidUpdateException::class)
+    private fun fullAttestationUpdate(currentRepo: AdoptAttestationRepo): AdoptAttestationRepo? {
+        // Must catch errors or may kill the scheduler
+        try {
+            return runBlocking {
+                LOGGER.info("Starting Full Attestation update")
+
+                updatableVersionSupplier.updateVersions()
+
+                val repo = adoptAttestationRepoBuilder.build()
+
+                printAttestationRepoDebugInfo(currentRepo, repo, null)
+
+                val checksum = calculateAttestationChecksum(repo)
+
+                val dataInDb = mutex.withLock {
+                    runBlocking {
+                        database.updateAttestationRepo(repo, checksum)
+
+                        apiDataStore.loadAttestationDataFromDb(forceUpdate = true, logEntries = false)
+                    }
+                }
+
+                LOGGER.info("Updating Release Notes")
+                adoptReleaseNotes.updateReleaseNotes(repo)
+
+                printAttestationRepoDebugInfo(currentRepo, repo, dataInDb)
 
                 LOGGER.info("Full update done")
                 return@runBlocking repo
