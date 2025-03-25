@@ -275,6 +275,21 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
     }
 
     @Test
+    fun `duplicate etags not returned`() {
+        val headers = RestAssured.given()
+            .`when`()
+            .header("If-Match", "\"anything\"")
+            .get("/v3/assets/feature_releases/8/ga")
+            .then()
+            .statusCode(412)
+            .extract()
+            .headers()
+
+        assertEquals(1, headers.getValues("ETag").size)
+    }
+
+
+    @Test
     fun `modified match applied`() {
         RestAssured.given()
             .`when`()
