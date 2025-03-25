@@ -80,7 +80,9 @@ class CacheControlService @Inject constructor(private var apiDataStore: APIDataS
 
             val etag = calculateEtag(requestContext!!)
 
-            responseContext?.headers?.add("ETag", etag)
+            if (responseContext?.headers?.containsKey("ETag") == false) {
+                responseContext.headers?.add("ETag", etag)
+            }
             responseContext?.headers?.add("Last-Modified", apiDataStore.getUpdateInfo().lastModifiedFormatted)
             responseContext?.headers?.add("Cache-Control", CacheControlDelegate.INSTANCE.toString(ecc))
         }
