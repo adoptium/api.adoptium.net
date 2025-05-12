@@ -31,7 +31,7 @@ class StatsCalculatorTest : BaseTest() {
     @Test
     fun testGithubStatsCalculator() {
         val adoptRepos = AdoptRepos(listOf(generateFeatureRelease()))
-        val result: List<GitHubDownloadStatsDbEntry> = gitHubDownloadStatsCalculator().getStats(adoptRepos)
+        val result: List<GitHubDownloadStatsDbEntry> = GitHubDownloadStatsCalculator.getStats(adoptRepos)
 
         assert(result[0].feature_version == 8)
         assert(result[0].downloads == 895L)

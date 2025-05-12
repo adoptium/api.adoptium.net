@@ -3,6 +3,7 @@ package net.adoptium.api.v3.routes
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.BadRequestException
+import jakarta.ws.rs.DefaultValue
 import jakarta.ws.rs.GET
 import jakarta.ws.rs.NotFoundException
 import jakarta.ws.rs.Path
@@ -16,6 +17,7 @@ import jakarta.ws.rs.core.Response
 import jakarta.ws.rs.core.UriInfo
 import net.adoptium.api.v3.OpenApiDocs
 import net.adoptium.api.v3.Pagination.defaultPageSize
+import net.adoptium.api.v3.Pagination.defaultPageSizeNum
 import net.adoptium.api.v3.Pagination.getResponseForPage
 import net.adoptium.api.v3.Pagination.maxPageSize
 import net.adoptium.api.v3.dataSources.APIDataStore
@@ -75,14 +77,14 @@ constructor(
     fun get(
         @Parameter(name = "release_type", description = OpenApiDocs.RELEASE_TYPE, required = true)
         @PathParam("release_type")
-        release_type: ReleaseType?,
+        release_type: ReleaseType,
 
         @Parameter(
             name = "feature_version", description = OpenApiDocs.FEATURE_RELEASE, required = true,
-            schema = Schema(defaultValue = "8", type = SchemaType.INTEGER)
+            schema = Schema(example = "8", type = SchemaType.INTEGER)
         )
         @PathParam("feature_version")
-        version: Int?,
+        version: Int,
 
         @Parameter(name = "os", description = "Operating System", required = false)
         @QueryParam("os")
@@ -129,14 +131,16 @@ constructor(
             schema = Schema(defaultValue = defaultPageSize, maximum = maxPageSize, type = SchemaType.INTEGER), required = false
         )
         @QueryParam("page_size")
-        pageSize: Int?,
+        @DefaultValue(defaultPageSize)
+        pageSize: Int,
 
         @Parameter(
             name = "page", description = "Pagination page number",
             schema = Schema(defaultValue = "0", type = SchemaType.INTEGER), required = false
         )
         @QueryParam("page")
-        page: Int?,
+        @DefaultValue("0")
+        page: Int,
 
         @Parameter(name = "sort_order", description = "Result sort order", required = false)
         @QueryParam("sort_order")
@@ -190,13 +194,13 @@ constructor(
         ]
     )
     fun get(
-        @Parameter(name = "vendor", description = OpenApiDocs.VENDOR, required = false)
+        @Parameter(name = "vendor", description = OpenApiDocs.VENDOR, required = true)
         @PathParam("vendor")
-        vendor: Vendor?,
+        vendor: Vendor,
 
         @Parameter(name = "release_name", description = "Name of the release i.e ", required = true)
         @PathParam("release_name")
-        releaseName: String?,
+        releaseName: String,
 
         @Parameter(name = "os", description = "Operating System", required = false)
         @QueryParam("os")
@@ -328,6 +332,7 @@ constructor(
             schema = Schema(defaultValue = defaultPageSize, maximum = maxPageSize, type = SchemaType.INTEGER), required = false
         )
         @QueryParam("page_size")
+        @DefaultValue(defaultPageSize)
         pageSize: Int?,
 
         @Parameter(
@@ -335,6 +340,7 @@ constructor(
             schema = Schema(defaultValue = "0", type = SchemaType.INTEGER), required = false
         )
         @QueryParam("page")
+        @DefaultValue("0")
         page: Int?,
 
         @Parameter(name = "sort_order", description = "Result sort order", required = false)
@@ -355,7 +361,8 @@ constructor(
             schema = Schema(defaultValue = "false", type = SchemaType.BOOLEAN)
         )
         @QueryParam("semver")
-        semver: Boolean?,
+        @DefaultValue("false")
+        semver: Boolean,
 
         @Context
         uriInfo: UriInfo,
@@ -393,7 +400,7 @@ constructor(
 
         @Parameter(
             name = "feature_version", description = OpenApiDocs.FEATURE_RELEASE, required = true,
-            schema = Schema(defaultValue = "8", type = SchemaType.INTEGER)
+            schema = Schema(example = "8", type = SchemaType.INTEGER)
         )
         @PathParam("feature_version")
         version: Int,

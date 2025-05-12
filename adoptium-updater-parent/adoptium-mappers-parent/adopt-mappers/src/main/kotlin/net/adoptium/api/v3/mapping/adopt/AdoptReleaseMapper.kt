@@ -274,7 +274,7 @@ private class AdoptReleaseMapper(
                     return@withContext Pair(binaryAsset, metadata)
                 }
             } catch (e: Exception) {
-                LOGGER.error("Failed to read metadata", e)
+                LOGGER.error("Failed to read metadata for asset ${metadataAsset.name} ${metadataAsset.downloadUrl}", e)
             }
         }
         return null

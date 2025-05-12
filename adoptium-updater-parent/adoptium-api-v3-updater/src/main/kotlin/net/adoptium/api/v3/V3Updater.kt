@@ -1,6 +1,8 @@
 package net.adoptium.api.v3
 
+import com.mongodb.MongoException
 import io.quarkus.arc.profile.UnlessBuildProfile
+import io.quarkus.runtime.Quarkus
 import io.quarkus.runtime.Startup
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
@@ -12,13 +14,13 @@ import kotlinx.coroutines.sync.withLock
 import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.ReleaseVersionResolver
-import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.UpdatableVersionSupplier
+import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.Release
-import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.releaseNotes.AdoptReleaseNotes
+import net.adoptium.api.v3.stats.GitHubDownloadStatsCalculator
 import net.adoptium.api.v3.stats.StatsInterface
 import org.slf4j.LoggerFactory
 import java.io.OutputStream
@@ -26,6 +28,7 @@ import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.timerTask
@@ -66,12 +69,13 @@ class V3Updater @Inject constructor(
             return String(Base64.getEncoder().encode(md.digest()))
         }
 
-        fun copyOldReleasesIntoNewRepo(currentRepo: AdoptRepos, newRepoData: AdoptRepos, filter: ReleaseIncludeFilter) = newRepoData
-            .addAll(currentRepo
+        fun copyOldReleasesIntoNewRepo(currentRepo: AdoptRepos, newRepoData: AdoptRepos, filter: ReleaseIncludeFilter) = currentRepo
+            .removeReleases { vendor, startTime, isPrerelease -> filter.filter(vendor, startTime, isPrerelease) }
+            .addAll(newRepoData
                 .allReleases
                 .getReleases()
-                .filter { !filter.filter(it.vendor, it.updated_at.dateTime, it.release_type == ReleaseType.ea) }
-                .toList())
+                .toList()
+            )
     }
 
     override fun addToUpdate(toUpdate: String): List<Release> {
@@ -107,7 +111,7 @@ class V3Updater @Inject constructor(
 
                 if (updatedRepo != oldRepo) {
                     val after = writeIncrementalUpdate(updatedRepo, oldRepo)
-                    printRepoDebugInfo(oldRepo, updatedRepo, after)
+                    printRepoDebugInfo(oldRepo, after, null)
                     return@runBlocking after
                 }
             } catch (e: Exception) {
@@ -117,18 +121,21 @@ class V3Updater @Inject constructor(
         }
     }
 
-    private fun printRepoDebugInfo(oldRepo: AdoptRepos, updatedRepo: AdoptRepos, after: AdoptRepos) {
+    private fun printRepoDebugInfo(
+        oldRepo: AdoptRepos,
+        afterInMemory: AdoptRepos,
+        afterInDb: AdoptRepos?) {
+
         if (APIConfig.DEBUG) {
-            LOGGER.debug("Updated and db version comparison {} {} {} {} {} {}", calculateChecksum(oldRepo), oldRepo.hashCode(), calculateChecksum(updatedRepo), updatedRepo.hashCode(), calculateChecksum(after), after.hashCode())
+            LOGGER.debug("Updated and db version comparison {} {} {} {}", calculateChecksum(oldRepo), oldRepo.hashCode(), calculateChecksum(afterInMemory), afterInMemory.hashCode())
 
             LOGGER.debug("Compare db and updated")
-            deepDiffDebugPrint(after, updatedRepo)
+            deepDiffDebugPrint(oldRepo, afterInMemory)
 
-            LOGGER.debug("Compare Old and updated")
-            deepDiffDebugPrint(oldRepo, updatedRepo)
-
-            LOGGER.debug("Compare db and old")
-            deepDiffDebugPrint(after, oldRepo)
+            if (afterInDb != null) {
+                LOGGER.debug("Compare in memory and in db")
+                deepDiffDebugPrint(afterInMemory, afterInDb)
+            }
         }
     }
 
@@ -205,8 +212,9 @@ class V3Updater @Inject constructor(
     }
 
     fun run(instantFullUpdate: Boolean) {
-        val executor = Executors.newScheduledThreadPool(2)
+        assertConnectedToDb()
 
+        val executor = Executors.newScheduledThreadPool(2)
 
         val delay = if (instantFullUpdate) 0L else 1L
 
@@ -214,6 +222,11 @@ class V3Updater @Inject constructor(
             apiDataStore.loadDataFromDb(true)
         } catch (e: java.lang.Exception) {
             LOGGER.error("Failed to load db", e)
+            if (e is MongoException) {
+                LOGGER.error("Failed to connect to db, exiting")
+                Quarkus.asyncExit(2)
+                Quarkus.waitForExit()
+            }
             AdoptRepos(emptyList())
         }
 
@@ -221,21 +234,54 @@ class V3Updater @Inject constructor(
 
         executor.scheduleWithFixedDelay(
             timerTask {
-                repo = fullUpdate(repo, true) ?: repo
-                if (!incrementalUpdateScheduled.getAndSet(true)) {
-                    executor.scheduleWithFixedDelay(
-                        timerTask {
-                            repo = incrementalUpdate(repo) ?: repo
-                        },
-                        1, 6, TimeUnit.MINUTES
-                    )
+                try {
+                    runUpdate(repo, incrementalUpdateScheduled, executor)
+                } catch (e: InvalidUpdateException) {
+                    LOGGER.error("Failed to perform update", e)
                 }
-                repo = fullUpdate(repo, false) ?: repo
             },
             delay, 1, TimeUnit.DAYS
         )
     }
 
+    fun runUpdate(
+        repo: AdoptRepos,
+        incrementalUpdateScheduled: AtomicBoolean,
+        executor: ScheduledExecutorService
+    ): AdoptRepos {
+        var repo1 = repo
+        repo1 = fullUpdate(repo1, true) ?: repo1
+        repo1 = incrementalUpdate(repo1) ?: repo1
+        if (!incrementalUpdateScheduled.getAndSet(true)) {
+            executor.scheduleWithFixedDelay(
+                timerTask {
+                    repo1 = incrementalUpdate(repo1) ?: repo1
+                },
+                1, 6, TimeUnit.MINUTES
+            )
+        }
+        repo1 = fullUpdate(repo1, false) ?: repo1
+        return repo1
+    }
+
+    private fun assertConnectedToDb() {
+        val connected = try {
+            runBlocking {
+                return@runBlocking apiDataStore.isConnectedToDb()
+            }
+        } catch (e: java.lang.Exception) {
+            LOGGER.error("Failed to load db", e)
+            false
+        }
+
+        if (!connected) {
+            LOGGER.error("Failed to connect to db, exiting process")
+            Quarkus.asyncExit(2)
+            Quarkus.waitForExit()
+        }
+    }
+
+    @Throws(InvalidUpdateException::class)
     private fun fullUpdate(currentRepo: AdoptRepos, releasesOnly: Boolean): AdoptRepos? {
         // Must catch errors or may kill the scheduler
         try {
@@ -256,20 +302,29 @@ class V3Updater @Inject constructor(
 
                 val repo = copyOldReleasesIntoNewRepo(currentRepo, newRepoData, filter)
 
+                printRepoDebugInfo(currentRepo, repo, null)
+
                 val checksum = calculateChecksum(repo)
 
-                mutex.withLock {
+                val dataInDb = mutex.withLock {
                     runBlocking {
+                        if (!validateStats(repo)) {
+                            LOGGER.error("Stats do not look correct, not saving update")
+                            throw InvalidUpdateException("Stats are not sane")
+                        }
+
                         database.updateAllRepos(repo, checksum)
                         statsInterface.update(repo)
                         database.setReleaseInfo(releaseVersionResolver.formReleaseInfo(repo))
+
+                        apiDataStore.loadDataFromDb(forceUpdate = true, logEntries = false)
                     }
                 }
 
                 LOGGER.info("Updating Release Notes")
                 adoptReleaseNotes.updateReleaseNotes(repo)
 
-                printRepoDebugInfo(currentRepo, repo, repo)
+                printRepoDebugInfo(currentRepo, repo, dataInDb)
 
                 LOGGER.info("Full update done")
                 return@runBlocking repo
@@ -282,6 +337,22 @@ class V3Updater @Inject constructor(
             throw e
         }
         return null
+    }
+
+    class InvalidUpdateException(message: String) : Exception(message)
+
+    private suspend fun validateStats(repo: AdoptRepos): Boolean {
+        return GitHubDownloadStatsCalculator
+            .getStats(repo)
+            .filter { newEntry ->
+                val lastDownloads = database.getLatestGithubStatsForFeatureVersion(newEntry.feature_version)?.downloads ?: 0
+
+                if (lastDownloads > newEntry.downloads) {
+                    LOGGER.error("Stats for ${newEntry.feature_version} are lower than the latest in the db $lastDownloads > ${newEntry.downloads}")
+                }
+                return@filter lastDownloads > newEntry.downloads
+            }
+            .isEmpty()
     }
 
 }

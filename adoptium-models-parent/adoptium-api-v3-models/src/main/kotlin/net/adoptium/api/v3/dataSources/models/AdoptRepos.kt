@@ -8,6 +8,9 @@ import net.adoptium.api.v3.dataSources.SortMethod
 import net.adoptium.api.v3.dataSources.SortOrder
 import net.adoptium.api.v3.models.Binary
 import net.adoptium.api.v3.models.Release
+import net.adoptium.api.v3.models.ReleaseType
+import net.adoptium.api.v3.models.Vendor
+import java.time.ZonedDateTime
 import java.util.function.Predicate
 
 class AdoptRepos {
@@ -79,11 +82,14 @@ class AdoptRepos {
             return this
         }
         return releases
-            .fold(this) { repoAcc, oldRelease -> repoAcc.addRelease(oldRelease.version_data.major, oldRelease) }
+            .fold(this) { repoAcc, newRelease -> repoAcc.addRelease(newRelease.version_data.major, newRelease) }
     }
 
     fun addRelease(i: Int, r: Release): AdoptRepos {
-        return AdoptRepos(repos.plus(Pair(i, repos.getOrDefault(i, FeatureRelease(i, emptyList())).add(listOf(r)))))
+        val existingFeatureRelease = repos.getOrDefault(i, FeatureRelease(i, emptyList()))
+        val withNewRelease = existingFeatureRelease.add(listOf(r))
+        val newMap = repos.plus(Pair(i, withNewRelease))
+        return AdoptRepos(newMap)
     }
 
     fun removeRelease(i: Int, r: Release): AdoptRepos {
@@ -101,5 +107,27 @@ class AdoptRepos {
 
     override fun hashCode(): Int {
         return repos.hashCode()
+    }
+
+    fun removeReleases(filter: (vendor: Vendor, startTime: ZonedDateTime, isPrerelease: Boolean) -> Boolean): AdoptRepos {
+        val filtered = repos
+            .mapNotNull { repo ->
+                val releases = repo.value
+                    .releases
+                    .nodeList
+                    .filter { !filter(it.vendor, it.updated_at.dateTime, it.release_type == ReleaseType.ea) }
+
+                if (releases.isEmpty()) {
+                    return@mapNotNull null
+                }
+
+                return@mapNotNull FeatureRelease(
+                    repo.key,
+                    Releases(releases)
+                )
+            }
+
+        return AdoptRepos(filtered)
+
     }
 }

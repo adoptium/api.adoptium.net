@@ -250,7 +250,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
             .statusCode(200)
             .assertThat()
             .header("Cache-Control", Matchers.equalTo("public, no-transform, s-maxage=120, max-age=120"))
-            .header("ETag", Matchers.equalTo("808bc9e876e1dd5e15b8eb3377618e1c1b313a1e"))
+            .header("ETag", Matchers.equalTo("\"808bc9e876e1dd5e15b8eb3377618e1c1b313a1e\""))
             .header("Last-Modified", Matchers.notNullValue())
     }
 
@@ -258,7 +258,7 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
     fun `if none match applied`() {
         RestAssured.given()
             .`when`()
-            .header("If-None-Match", "808bc9e876e1dd5e15b8eb3377618e1c1b313a1e")
+            .header("If-None-Match", "\"808bc9e876e1dd5e15b8eb3377618e1c1b313a1e\"")
             .get("/v3/assets/feature_releases/8/ga")
             .then()
             .statusCode(304)
@@ -268,11 +268,26 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
     fun `etag applied match applied`() {
         RestAssured.given()
             .`when`()
-            .header("If-Match", "808bc9e876e1dd5e15b8eb3377618e1c1b313a1e")
+            .header("If-Match", "\"808bc9e876e1dd5e15b8eb3377618e1c1b313a1e\"")
             .get("/v3/assets/feature_releases/8/ga")
             .then()
             .statusCode(200)
     }
+
+    @Test
+    fun `duplicate etags not returned`() {
+        val headers = RestAssured.given()
+            .`when`()
+            .header("If-Match", "\"anything\"")
+            .get("/v3/assets/feature_releases/8/ga")
+            .then()
+            .statusCode(412)
+            .extract()
+            .headers()
+
+        assertEquals(1, headers.getValues("ETag").size)
+    }
+
 
     @Test
     fun `modified match applied`() {

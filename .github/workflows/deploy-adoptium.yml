@@ -36,6 +36,12 @@ jobs:
           DOCKER_REPO: adoptopenjdkacr.azurecr.io/adoptopenjdk-${{ env.NAMESPACE }}
           DOCKER_FILE: ./deploy/Dockerfile
 
+      - name: Build mongo container image and push to Azure
+        uses: ./.github/actions/docker-build
+        with:
+          DOCKER_REPO: adoptopenjdkacr.azurecr.io/api-mongodb-${{ env.NAMESPACE }}
+          DOCKER_FILE: ./deploy/mongo/Dockerfile
+
       - name: Redeploy Kubernetes Updater and Frontend
         uses: ./.github/actions/kubectl-redeploy
         with:

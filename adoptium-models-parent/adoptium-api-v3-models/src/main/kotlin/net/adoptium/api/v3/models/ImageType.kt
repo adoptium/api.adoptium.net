@@ -3,7 +3,7 @@ package net.adoptium.api.v3.models
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 
-@Schema(type = SchemaType.STRING, enumeration = ["jdk", "jre", "testimage", "debugimage", "staticlibs", "sources", "sbom"], example = "jdk")
+@Schema(type = SchemaType.STRING, enumeration = ["jdk", "jre", "testimage", "debugimage", "staticlibs", "sources", "sbom", "jmods"], example = "jdk")
 enum class ImageType : FileNameMatcher {
     jdk,
     jre(1),
@@ -11,7 +11,8 @@ enum class ImageType : FileNameMatcher {
     debugimage(1),
     staticlibs(1, "static-libs"),
     sources(1, "sources"),
-    sbom(1);
+    sbom(1),
+    jmods(1);
 
     override lateinit var names: List<String>
     override var priority: Int = 0

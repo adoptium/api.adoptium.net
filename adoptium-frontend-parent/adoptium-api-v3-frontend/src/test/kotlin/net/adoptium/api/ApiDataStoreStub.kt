@@ -54,7 +54,7 @@ open class ApiDataStoreStub : APIDataStore {
         )
     }
 
-    override fun loadDataFromDb(forceUpdate: Boolean): AdoptRepos {
+    override fun loadDataFromDb(forceUpdate: Boolean, log:Boolean): AdoptRepos {
         // nop
         return adoptRepo
     }
@@ -65,5 +65,9 @@ open class ApiDataStoreStub : APIDataStore {
             "1234567890",
             123
         )
+    }
+
+    override suspend fun isConnectedToDb(): Boolean {
+        return true
     }
 }

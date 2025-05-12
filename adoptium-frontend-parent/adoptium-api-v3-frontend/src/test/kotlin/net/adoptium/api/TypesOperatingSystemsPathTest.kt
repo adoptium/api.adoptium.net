@@ -1,10 +1,14 @@
 package net.adoptium.api
 
+import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured
 import net.adoptium.api.v3.JsonMapper
 import net.adoptium.api.v3.models.OperatingSystem
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
+@QuarkusTest
+@ExtendWith(value = [DbExtension::class])
 class TypesOperatingSystemsPathTest : FrontendTest() {
 
     @Test

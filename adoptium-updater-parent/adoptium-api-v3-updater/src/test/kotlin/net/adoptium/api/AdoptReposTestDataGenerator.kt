@@ -118,7 +118,7 @@ object AdoptReposTestDataGenerator {
         "a",
         ReleaseType.ea,
         "b",
-        "c",
+        "jdk-18.0.2+101",
         randomDate(),
         randomDate(),
         arrayListOf(
@@ -191,7 +191,7 @@ object AdoptReposTestDataGenerator {
                             randomString("release id"),
                             releaseType,
                             randomString("release lin"),
-                            randomString("release name"),
+                            randomString("release name " + versionData.semver + " "),
                             randomDate(),
                             randomDate(),
                             getBinaries(),

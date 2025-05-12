@@ -39,6 +39,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     private val releaseInfoCollection: MongoCollection<ReleaseInfo> = createCollection(mongoClient.getDatabase(), RELEASE_INFO_DB)
     private val updateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), UPDATE_TIME_DB)
     private val githubReleaseNotesCollection: MongoCollection<ReleaseNotes> = createCollection(mongoClient.getDatabase(), GH_RELEASE_NOTES)
+    private val client: MongoClient = mongoClient
 
     companion object {
         @JvmStatic
@@ -95,7 +96,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
             .find(Document("feature_version", featureVersion))
             .sort(Document("date", -1))
             .limit(1)
-            .first()
+            .firstOrNull()
     }
 
     override suspend fun getGithubStats(start: ZonedDateTime, end: ZonedDateTime): List<GitHubDownloadStatsDbEntry> {
@@ -216,6 +217,10 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         )
         )
             .firstOrNull()
+    }
+
+    override suspend fun isConnected(): Boolean {
+        return client.getDatabase().runCommand(Document("serverStatus", 1)).getDouble("uptime") >= 0
     }
 
     private fun matchGithubId(gitHubId: GitHubId) = Document("gitHubId.id", gitHubId.id)

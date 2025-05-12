@@ -2,6 +2,7 @@ package net.adoptium.api.v3.routes.info
 
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import jakarta.ws.rs.DefaultValue
 import jakarta.ws.rs.GET
 import jakarta.ws.rs.Path
 import jakarta.ws.rs.Produces
@@ -12,6 +13,7 @@ import jakarta.ws.rs.core.Response
 import jakarta.ws.rs.core.UriInfo
 import net.adoptium.api.v3.OpenApiDocs
 import net.adoptium.api.v3.Pagination
+import net.adoptium.api.v3.Pagination.defaultPageSize
 import net.adoptium.api.v3.Pagination.formPagedResponse
 import net.adoptium.api.v3.Pagination.getPage
 import net.adoptium.api.v3.dataSources.SortMethod
@@ -103,13 +105,15 @@ constructor(
         @QueryParam("lts")
         lts: Boolean?,
 
-        @Parameter(name = "page_size", description = "Pagination page size", schema = Schema(defaultValue = Pagination.defaultPageSize, maximum = Pagination.maxPageSize, type = SchemaType.INTEGER), required = false)
+        @Parameter(name = "page_size", description = "Pagination page size", schema = Schema(defaultValue = defaultPageSize, maximum = Pagination.maxPageSize, type = SchemaType.INTEGER), required = false)
         @QueryParam("page_size")
-        pageSize: Int?,
+        @DefaultValue(defaultPageSize)
+        pageSize: Int,
 
         @Parameter(name = "page", description = "Pagination page number", schema = Schema(defaultValue = "0", type = SchemaType.INTEGER), required = false)
         @QueryParam("page")
-        page: Int?,
+        @DefaultValue("0")
+        page: Int,
 
         @Parameter(name = "sort_order", description = "Result sort order", required = false)
         @QueryParam("sort_order")
@@ -129,6 +133,7 @@ constructor(
             schema = Schema(defaultValue = "false", type = SchemaType.BOOLEAN)
         )
         @QueryParam("semver")
+        @DefaultValue("false")
         semver: Boolean?,
 
         @Context
@@ -214,12 +219,14 @@ constructor(
         @QueryParam("lts")
         lts: Boolean?,
 
-        @Parameter(name = "page_size", description = "Pagination page size", schema = Schema(defaultValue = Pagination.defaultPageSize, maximum = Pagination.largerPageSize, type = SchemaType.INTEGER), required = false)
+        @Parameter(name = "page_size", description = "Pagination page size", schema = Schema(defaultValue = defaultPageSize, maximum = Pagination.largerPageSize, type = SchemaType.INTEGER), required = false)
         @QueryParam("page_size")
+        @DefaultValue(defaultPageSize)
         pageSize: Int?,
 
         @Parameter(name = "page", description = "Pagination page number", schema = Schema(defaultValue = "0", type = SchemaType.INTEGER), required = false)
         @QueryParam("page")
+        @DefaultValue("0")
         page: Int?,
 
         @Parameter(name = "sort_order", description = "Result sort order", required = false)

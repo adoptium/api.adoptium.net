@@ -17,6 +17,47 @@ open class GitHubDownloadStatsCalculator @Inject constructor(private val databas
     companion object {
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
+
+        fun getStats(repos: AdoptRepos): List<GitHubDownloadStatsDbEntry> {
+            val date: ZonedDateTime = TimeSource.now()
+            return repos
+                .repos
+                .values
+                .map { featureRelease ->
+                    val total = featureRelease
+                        .releases
+                        .getReleases()
+                        .filter { it.vendor == Vendor.getDefault() }
+                        .sumOf {
+                            it.download_count.toInt()
+                        }
+
+                    // Tally up jvmImpl download stats
+                    val jvmImplMap: Map<JvmImpl, Long> = JvmImpl.entries
+                        .associateWith { jvmImpl ->
+                            featureRelease
+                                .releases
+                                .getReleases()
+                                .filter { it.vendor == Vendor.getDefault() }
+                                .sumOf {
+                                    it.binaries
+                                        .filter { binary -> binary.jvm_impl == jvmImpl }
+                                        .sumOf { binary ->
+                                            binary.download_count.toInt()
+                                        }
+                                }
+                                .toLong()
+                        }
+
+                    GitHubDownloadStatsDbEntry(
+                        date,
+                        total.toLong(),
+                        jvmImplMap,
+                        featureRelease.featureVersion
+                    )
+                }
+                .toList()
+        }
     }
 
     suspend fun saveStats(repos: AdoptRepos) {
@@ -51,44 +92,4 @@ open class GitHubDownloadStatsCalculator @Inject constructor(private val databas
         LOGGER.info("Stats total $stats")
     }
 
-    fun getStats(repos: AdoptRepos): List<GitHubDownloadStatsDbEntry> {
-        val date: ZonedDateTime = TimeSource.now()
-        return repos
-            .repos
-            .values
-            .map { featureRelease ->
-                val total = featureRelease
-                    .releases
-                    .getReleases()
-                    .filter { it.vendor == Vendor.getDefault() }
-                    .sumOf {
-                        it.download_count.toInt()
-                    }
-
-                // Tally up jvmImpl download stats
-                val jvmImplMap: Map<JvmImpl, Long> = JvmImpl.entries
-                    .associateWith { jvmImpl ->
-                        featureRelease
-                            .releases
-                            .getReleases()
-                            .filter { it.vendor == Vendor.getDefault() }
-                            .sumOf {
-                                it.binaries
-                                    .filter { binary -> binary.jvm_impl == jvmImpl }
-                                    .sumOf { binary ->
-                                        binary.download_count.toInt()
-                                    }
-                            }
-                            .toLong()
-                    }
-
-                GitHubDownloadStatsDbEntry(
-                    date,
-                    total.toLong(),
-                    jvmImplMap,
-                    featureRelease.featureVersion
-                )
-            }
-            .toList()
-    }
 }
