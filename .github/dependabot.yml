@@ -22,6 +22,10 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    groups:
+      graphql-kotlin:
+        patterns:
+          - "com.expediagroup:graphql-kotlin-*"
   - package-ecosystem: docker
     directory: "/"
     schedule:
