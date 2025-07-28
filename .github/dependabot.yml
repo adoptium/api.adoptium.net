@@ -26,6 +26,9 @@ updates:
       graphql-kotlin:
         patterns:
           - "com.expediagroup:graphql-kotlin-*"
+      maven-core:
+        patterns:
+          - "org.apache.maven:maven-*"
       jackson:
         patterns:
           - "com.fasterxml.jackson.*:jackson-*"
