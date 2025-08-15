@@ -19,7 +19,7 @@
         <jacoco.version>0.8.13</jacoco.version>
         <jdk.version>17</jdk.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <kotlin.version>2.2.0</kotlin.version>
+        <kotlin.version>2.2.10</kotlin.version>
         <maven.antrun-plugin.version>3.1.0</maven.antrun-plugin.version>
         <maven.assembly-plugin.version>3.7.1</maven.assembly-plugin.version>
         <maven.build-helper-plugin.version>3.6.1</maven.build-helper-plugin.version>
