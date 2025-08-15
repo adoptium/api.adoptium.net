@@ -13,7 +13,7 @@
         <jdk.version>17</jdk.version>
         <mongo.version>5.1.2</mongo.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <kotlin.version>2.2.0</kotlin.version>
+        <kotlin.version>2.2.10</kotlin.version>
         <logback.version>1.5.18</logback.version>
         <maven.compiler.release>17</maven.compiler.release>
         <maven.version>3.9.11</maven.version>
