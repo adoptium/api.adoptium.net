@@ -67,7 +67,7 @@
         <maven.scm-plugin.version>2.1.0</maven.scm-plugin.version>
         <maven.site-plugin.version>4.0.0-M16</maven.site-plugin.version>
         <maven.source-plugin.version>3.3.1</maven.source-plugin.version>
-        <maven.spotbugs-plugin.version>4.9.3.2</maven.spotbugs-plugin.version>
+        <maven.spotbugs-plugin.version>4.9.4.0</maven.spotbugs-plugin.version>
         <maven.surefire-plugin.version>3.5.3</maven.surefire-plugin.version>
         <maven.swaggerhub-maven-plugin.version>1.0.10</maven.swaggerhub-maven-plugin.version>
         <maven.tidy-plugin.version>1.4.0</maven.tidy-plugin.version>
