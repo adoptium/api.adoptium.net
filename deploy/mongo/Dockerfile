@@ -8,5 +8,5 @@ RUN chmod +x /docker-entrypoint-initdb.d/*.sh /usr/local/bin/run.sh /usr/local/b
 
 ENTRYPOINT ["run.sh"]
 
-CMD ["mongod", "--tlsMode", "requireTLS", "--tlsCertificateKeyFile", "/tmp/mongodb.pem", "--tlsCAFile", "/mongo/tls.crt", "--tlsAllowConnectionsWithoutCertificates"]
+CMD ["mongod", "--tlsMode", "requireTLS", "--tlsCertificateKeyFile", "/tmp/mongodb.pem", "--tlsCAFile", "/mongo/tls.crt", "--tlsAllowConnectionsWithoutCertificates", "--wiredTigerCacheSizeGB", "1"]
 
