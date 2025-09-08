@@ -6,6 +6,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement
+import net.adoptium.api.v3.dataSources.models.GitHubId
 
 data class Organization(
         @JacksonXmlProperty(localName = "name")
@@ -160,6 +161,9 @@ data class Declarations(
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JacksonXmlRootElement(localName = "bom")
 data class GHAttestation @JsonCreator constructor(
+        var id: GitHubId?,
+        var commitResourcePath: String?,
+
         @JacksonXmlProperty(localName = "declarations")
         var declarations: Declarations,
 

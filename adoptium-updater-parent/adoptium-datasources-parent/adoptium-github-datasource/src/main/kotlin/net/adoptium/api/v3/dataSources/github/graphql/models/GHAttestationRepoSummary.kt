@@ -1,4 +1,4 @@
-package net.adoptium.api.v3.dataSources.models
+package net.adoptium.api.v3.dataSources.github.graphql.models
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -84,31 +84,32 @@ Response:
 
 */
 
-data class AttestationRepoSummary @JsonCreator constructor(
-    @JsonProperty("data") val data: AttestationRepoSummaryData?
+data class GHAttestationRepoSummary @JsonCreator constructor(
+    @JsonProperty("data") val data: GHAttestationRepoSummaryData,
+    @JsonProperty("rateLimit") override val rateLimit: RateLimit
+) : HasRateLimit(rateLimit) {
+}
+
+data class GHAttestationRepoSummaryData @JsonCreator constructor(
+    @JsonProperty("repository") val repository: GHAttestationRepoSummaryRepository?
 ) {
 }
 
-data class AttestationRepoSummaryData @JsonCreator constructor(
-    @JsonProperty("repository") val repository: AttestationRepoSummaryRepository?
+data class GHAttestationRepoSummaryRepository @JsonCreator constructor(
+    @JsonProperty("object") val att_object: GHAttestationRepoSummaryObject?
 ) {
 }
 
-data class AttestationRepoSummaryRepository @JsonCreator constructor(
-    @JsonProperty("object") val att_object: AttestationRepoSummaryObject?
-) {
-}
-
-data class AttestationRepoSummaryObject @JsonCreator constructor(
+data class GHAttestationRepoSummaryObject @JsonCreator constructor(
     @JsonProperty("commitResourcePath") val commitResourcePath: String?,
-    @JsonProperty("entries")            val entries: List<AttestationRepoSummaryEntry>?
+    @JsonProperty("entries")            val entries: List<GHAttestationRepoSummaryEntry>?
 ) { 
 }
 
-data class AttestationRepoSummaryEntry @JsonCreator constructor(
+data class GHAttestationRepoSummaryEntry @JsonCreator constructor(
     @JsonProperty("name")   val name: String,
     @JsonProperty("type")   val type: String,
-    @JsonProperty("object") val att_object: AttestationRepoSummaryObject?
+    @JsonProperty("object") val att_object: GHAttestationRepoSummaryObject?
 ) { 
 }
 

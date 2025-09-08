@@ -5,9 +5,9 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema
 
 class Attestation {
 
-    val id: String
+    val id: String?
 
-    val commitResourcePath: String
+    val commitResourcePath: String?
 
     val featureVersion: Int
 
@@ -44,8 +44,8 @@ class Attestation {
 
     @JsonCreator
     constructor(
-        id: String,
-        commitResourcePath: String,
+        id: String?,
+        commitResourcePath: String?,
         featureVersion: Int,
         release_name: String,
         os: OperatingSystem,

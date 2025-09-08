@@ -43,17 +43,21 @@ private class AdoptAttestationMapper(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    override suspend fun toAttestationList(ghAttestationAssets: List<GHAttestation>): List<Attestation> {
+    override suspend fun toAttestationList(vendor: Vendor, ghAttestationAssets: List<GHAttestation>): List<Attestation> {
         return ghAttestationAssets
-            .map { asset -> assetToAttestationAsync(asset) }
+            .map { asset -> assetToAttestationAsync(vendor, asset) }
             .mapNotNull { it.await() }
     }
 
+    override suspend fun toAttestation(vendor: Vendor, ghAttestation: GHAttestation): Attestation {
+        return assetToAttestationAsync(vendor, ghAttestation).await()
+    }
+
     private fun assetToAttestationAsync(
+        vendor: Vendor,
         ghAttestationAsset: GHAttestation
-    ): Deferred<Attestation?> {
+    ): Deferred<Attestation> {
         return GlobalScope.async {
-            try {
                 // Temurin Attestations (https://github.com/adoptium/temurin-attestations/blob/main/.github/workflows/validate-cdxa.yml) have:
                 //   ONE attestation
                 //   ONE target component
@@ -64,7 +68,7 @@ private class AdoptAttestationMapper(
                 
                 val releaseName: String = ghAttestationAsset.declarations.targets.components.component[0].version
                 // featureVersion derived from releaseName
-                val featureVersion: Int = releaseName.split("[-\\+\\.]")[1].toInt()
+                val featureVersion: Int = releaseName.split("-","+",".")[1].toInt()
 
                 val assessor_org: String = ghAttestationAsset.declarations.assessors.assessor[0].organization.name
                 val assessor_affirmation: String = ghAttestationAsset.declarations.affirmation.statement
@@ -86,13 +90,10 @@ private class AdoptAttestationMapper(
                 val arch: Architecture  = Architecture.valueOf(archStr)  //by lazy { Architecture.valueOf(archStr) }
                 val os: OperatingSystem = OperatingSystem.valueOf(osStr) //by lazy { OperatingSystem.valueOf(osStr) }
  
-                return@async Attestation(featureVersion, releaseName, os, arch, ImageType.jdk, JvmImpl.hotspot,
-                                         target_checksum, assessor_org, assessor_affirmation, assessor_claim_predicate,
+                return@async Attestation(ghAttestationAsset.id.toString(), ghAttestationAsset.commitResourcePath,
+                                         featureVersion, releaseName, os, arch, ImageType.jdk, JvmImpl.hotspot,
+                                         vendor, target_checksum, assessor_org, assessor_affirmation, assessor_claim_predicate,
                                          "attestation_link", "attestation_public_signing_key_link")
-            } catch (e: Exception) {
-                LOGGER.error("Failed to fetch attestation ${ghAttestationAsset}", e)
-                return@async null
-            }
         }
     }
 }

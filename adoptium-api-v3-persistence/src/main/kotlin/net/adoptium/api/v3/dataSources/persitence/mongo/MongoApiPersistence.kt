@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.toList
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepo
-import net.adoptium.api.v3.dataSources.models.AttestationRepoSummary
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.ReleaseNotes
@@ -71,14 +70,14 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         }
     }
 
-//    override suspend fun updateAttestationRepo(repo: AdoptAttestationRepo, checksum: String) {
-//
-//        try {
-//            writeAttestations(repo.attestations)
-//        } finally {
-//            updateUpdatedTime(TimeSource.now(), checksum, repo.hashCode())
-//        }
-//    }
+    override suspend fun updateAttestationRepo(repo: AdoptAttestationRepo, checksum: String) {
+
+        try {
+            writeAttestations(repo.attestations)
+        } finally {
+            updateUpdatedTime(TimeSource.now(), checksum, repo.hashCode())
+        }
+    }
 
     private suspend fun writeReleases(featureVersion: Int, value: FeatureRelease) {
         val toAdd = value.releases.getReleases().toList()

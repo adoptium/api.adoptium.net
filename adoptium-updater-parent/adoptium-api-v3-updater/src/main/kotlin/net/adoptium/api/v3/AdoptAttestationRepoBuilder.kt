@@ -16,8 +16,7 @@ import kotlin.math.absoluteValue
 
 @ApplicationScoped
 class AdoptAttestationRepoBuilder @Inject constructor(
-    private var adoptAttestationRepository: AdoptAttestationRepository,
-    private var versionSupplier: VersionSupplier
+    private var adoptAttestationRepository: AdoptAttestationRepository
     ) {
 
     companion object {
@@ -27,14 +26,8 @@ class AdoptAttestationRepoBuilder @Inject constructor(
 
     suspend fun build(): AdoptAttestationRepo {
         // Fetch attestations in parallel
-        val attestationMap = versionSupplier
-            .getAllVersions()
-            .reversed()
-            .mapNotNull { version ->
-                adoptAttestationRepository.getAttestations(version)
-            }
-            .associateBy { it.featureVersion }
+        val attestations = adoptAttestationRepository.getAttestations()
         LOGGER.info("DONE")
-        return AdoptAttestationRepo(attestationMap)
+        return AdoptAttestationRepo(attestations)
     }
 }

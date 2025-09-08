@@ -6,11 +6,13 @@ import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.XmlMapper
 import net.adoptium.api.v3.dataSources.github.GitHubHtmlClient
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestation
-import net.adoptium.api.v3.mapping.adopt.AdoptAttestationMapper
+import net.adoptium.api.v3.mapping.AttestationMapper
+import net.adoptium.api.v3.mapping.adopt.AdoptAttestationMapperFactory
 import net.adoptium.api.v3.models.Architecture
 import net.adoptium.api.v3.models.ImageType
 import net.adoptium.api.v3.models.JvmImpl
 import net.adoptium.api.v3.models.OperatingSystem
+import net.adoptium.api.v3.models.Vendor
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -24,7 +26,8 @@ class AttestationMapperTest {
     private val LOGGER = LoggerFactory.getLogger(AttestationMapperTest::class.java)
 
     private val fakeGithubHtmlClient = mockk<GitHubHtmlClient>()
-    private val adoptAttestationMapper = AdoptAttestationMapper(fakeGithubHtmlClient)
+    private val adoptAttestationMapperFactory = AdoptAttestationMapperFactory(fakeGithubHtmlClient)
+    private val adoptAttestationMapper = adoptAttestationMapperFactory.get(Vendor.eclipse)
 
     companion object {
         val ghAttestation = XmlMapper.mapper.readValue(
@@ -96,8 +99,9 @@ class AttestationMapperTest {
     fun `Test Attestation xml mapper parsing`() {
 
         runBlocking {
-            val parsed = adoptAttestationMapper.toAttestationList(listOf(ghAttestation))
+            val parsed = adoptAttestationMapper.toAttestationList(Vendor.eclipse, listOf(ghAttestation))
             LOGGER.info("Parsed Attestation: ${parsed[0]}")
+            assertEquals(Vendor.eclipse, parsed[0].vendor)
             assertEquals("jdk-21.0.5+11", parsed[0].release_name)
             assertEquals(OperatingSystem.linux, parsed[0].os)
             assertEquals(Architecture.aarch64, parsed[0].architecture)

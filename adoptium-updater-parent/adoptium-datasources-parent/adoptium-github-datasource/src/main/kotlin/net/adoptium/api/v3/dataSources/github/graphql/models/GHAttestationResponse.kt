@@ -3,6 +3,7 @@ package net.adoptium.api.v3.dataSources.github.graphql.models
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import net.adoptium.api.v3.dataSources.models.GitHubId
 
 /* Format example:
 Query:
@@ -32,7 +33,8 @@ Response:
 */
 
 data class GHAttestationResponse @JsonCreator constructor(
-    @JsonProperty("data") val data: GHAttestationResponseData
+    @JsonProperty("data") val data: GHAttestationResponseData,
+    @JsonProperty("rateLimit") override val rateLimit: RateLimit
 ) : HasRateLimit(rateLimit) {
 }
 
@@ -50,7 +52,7 @@ data class GHAttestationResponseObject @JsonCreator constructor(
     @JsonProperty("id")
     @JsonDeserialize(using = GitHubIdDeserializer::class)
     val id: GitHubId,
-    @JsonProperty("commitResourcePath")   val type: String,
+    @JsonProperty("commitResourcePath") val commitResourcePath: String,
     @JsonProperty("text")   val text: String
 ) { 
 }

@@ -26,27 +26,32 @@ open class GraphQLGitHubAttestationClient @Inject constructor(
 
         val query = RequestAttestationByName(org, repo, name)
 
-        val result: GHAttestationResponse = graphQLGitHubInterface.queryApi(query::withCursor, null)
-        if (result == null) {
-            return result
+        val result = graphQLGitHubInterface.queryApi(query::withCursor, null)
+
+        val ghAttestationResponse: GHAttestationResponse? = if (result?.data == null) {
+            return null
+        } else {
+            result.data
         }
 
-        val ghAttestation = XmlMapper.mapper.readValue(result.text, GHAttestation::class.java)
+        val ghAttestation = XmlMapper.mapper.readValue(ghAttestationResponse?.data?.repository?.repository?.text, GHAttestation::class.java)
+        ghAttestation.id = ghAttestationResponse?.data?.repository?.repository?.id
+        ghAttestation.commitResourcePath = ghAttestationResponse?.data?.repository?.repository?.commitResourcePath
 
         return ghAttestation
     }
 
-    class RequestAttestationByName(org: String, repo: String, name: String) : GraphQLClientRequest<GHAttestationResponse> {
+    class RequestAttestationByName(val org: String, val repo: String, val name: String, override val variables: Any = mapOf<String, String>()) : GraphQLClientRequest<GHAttestationResponse> {
+
         fun withCursor(cursor: String?): RequestAttestationByName {
-            this
+            return if (cursor != null) RequestAttestationByName(org, repo, name, mapOf("cursorPointer" to cursor))
+            else this
         }
 
         override val query: String
-            get() =
-                """
-    query {
-      repository(owner: $org, name: $repo) {
-        object(expression: HEAD:$name) {
+            get() = """query {
+                          repository(owner: "${org}", name: "${repo}") {
+        object(expression: "HEAD:${name}") {
             ... on Blob {
               id
               commitResourcePath

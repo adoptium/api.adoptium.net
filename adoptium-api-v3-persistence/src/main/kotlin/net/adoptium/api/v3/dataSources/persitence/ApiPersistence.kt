@@ -16,7 +16,7 @@ import java.time.ZonedDateTime
 
 interface ApiPersistence {
     suspend fun updateAllRepos(repos: AdoptRepos, checksum: String)
-    //suspend fun updateAttestationRepo(repos: AdoptAttestationRepo, checksum: String)
+    suspend fun updateAttestationRepo(repos: AdoptAttestationRepo, checksum: String)
     suspend fun readReleaseData(featureVersion: Int): FeatureRelease
     suspend fun readAttestationData(): List<Attestation>
 

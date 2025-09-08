@@ -17,6 +17,7 @@ import net.adoptium.api.v3.dataSources.ReleaseVersionResolver
 import net.adoptium.api.v3.dataSources.UpdatableVersionSupplier
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepo
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.releaseNotes.AdoptReleaseNotes
@@ -70,7 +71,11 @@ class V3Updater @Inject constructor(
             return String(Base64.getEncoder().encode(md.digest()))
         }
 
-        fun calculateAttestationChecksum(repo: AdoptAttestationRepo): String {
+        fun calculateAttestationChecksum(repo: AdoptAttestationRepo?): String {
+            if (repo == null) {
+                return "null"
+            }
+
             val md = MessageDigest.getInstance("SHA256")
             val outputStream = object : OutputStream() {
                 override fun write(b: Int) {
@@ -142,7 +147,9 @@ class V3Updater @Inject constructor(
 
                 // Just do a full update for Attestations repo
                 val after = fullAttestationUpdate(oldRepo)
-                printAttestationRepoDebugInfo(oldRepo, after, null)
+                if (after != null) {
+                    printAttestationRepoDebugInfo(oldRepo, after, null)
+                }
                 return@runBlocking after
             } catch (e: Exception) {
                 LOGGER.error("Failed to perform incremental attestations update", e)
@@ -171,7 +178,7 @@ class V3Updater @Inject constructor(
 
     private fun printAttestationRepoDebugInfo(
         oldRepo: AdoptAttestationRepo,
-        afterInMemory: AdoptAttestationRepo,
+        afterInMemory: AdoptAttestationRepo?,
         afterInDb: AdoptAttestationRepo?) {
 
         if (APIConfig.DEBUG) {
@@ -321,7 +328,7 @@ class V3Updater @Inject constructor(
         repo: AdoptAttestationRepo,
         incrementalUpdateScheduled: AtomicBoolean,
         executor: ScheduledExecutorService
-    ): AdoptRepos {
+    ): AdoptAttestationRepo {
         var repo1 = repo
         repo1 = fullAttestationUpdate(repo1) ?: repo1
         repo1 = incrementalAttestationUpdate(repo1) ?: repo1
@@ -433,9 +440,6 @@ class V3Updater @Inject constructor(
                         apiDataStore.loadAttestationDataFromDb(forceUpdate = true, logEntries = false)
                     }
                 }
-
-                LOGGER.info("Updating Release Notes")
-                adoptReleaseNotes.updateReleaseNotes(repo)
 
                 printAttestationRepoDebugInfo(currentRepo, repo, dataInDb)
 

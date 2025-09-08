@@ -3,6 +3,7 @@ package net.adoptium.api.testDoubles
 import jakarta.enterprise.context.ApplicationScoped
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepo
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.ReleaseNotes
@@ -13,6 +14,7 @@ import net.adoptium.api.v3.models.GHReleaseMetadata
 import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
 import net.adoptium.api.v3.models.ReleaseInfo
 import net.adoptium.api.v3.models.Vendor
+import net.adoptium.api.v3.models.Attestation
 import java.time.ZonedDateTime
 import jakarta.annotation.Priority
 import jakarta.enterprise.inject.Alternative
@@ -33,6 +35,13 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos) : A
     override suspend fun updateAllRepos(repos: AdoptRepos, checksum: String) {
         this.repos = repos
         this.updatedAtInfo = UpdatedInfo(TimeSource.now(), checksum, repos.hashCode())
+    }
+
+    override suspend fun updateAttestationRepo(repos: AdoptAttestationRepo, checksum: String) {
+    }
+
+    override suspend fun readAttestationData(): List<Attestation> {
+        return ArrayList<Attestation>()
     }
 
     override suspend fun readReleaseData(featureVersion: Int): FeatureRelease {

@@ -5,6 +5,9 @@ import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.v3.AdoptReposBuilder
 import net.adoptium.api.v3.AdoptRepositoryImpl
+import net.adoptium.api.v3.AdoptAttestationRepoBuilder
+import net.adoptium.api.v3.AdoptAttestationRepository
+import net.adoptium.api.v3.AdoptAttestationRepositoryImpl
 import net.adoptium.api.v3.V3Updater
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.APIDataStoreImpl
@@ -17,12 +20,15 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHReleases
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRepository
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummary
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestation
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.mapping.adopt.AdoptBinaryMapper
 import net.adoptium.api.v3.mapping.adopt.AdoptReleaseMapperFactory
+import net.adoptium.api.v3.mapping.adopt.AdoptAttestationMapperFactory
 import net.adoptium.api.v3.models.DateTime
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
@@ -257,10 +263,55 @@ class V3UpdaterEndToEndTest {
                                 )
                             }
                         }
+
+                        override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummary? {
+                            return null
+                        }
+                        override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
+                            return null
+                        }
                     },
                     AdoptReleaseMapperFactory(AdoptBinaryMapper(ghClient), ghClient)
                 ),
                 vs
+            ),
+            AdoptAttestationRepoBuilder(
+                AdoptAttestationRepositoryImpl(
+                    object : GitHubApi {
+                        override suspend fun getRepository(owner: String, repoName: String, filter: (updatedAt: String, isPrerelease: Boolean) -> Boolean): GHRepository {
+                            return getRepository(owner, repoName, filter)
+                        }
+
+                        override suspend fun getRepositorySummary(owner: String, repoName: String): GHRepositorySummary {
+                            return GHSummaryTestDataGenerator.generateGHRepositorySummary(getRepository(owner, repoName) { _, _ -> true })
+                        }
+
+                        override suspend fun getReleaseById(id: GitHubId): GHRelease? {
+
+                            val result = getById(id)
+                            if (result != null) {
+                                return result
+                            }
+
+                            return repo.allReleases.nodeList.firstOrNull { it.id == id.id }?.let {
+                                return GHRelease(GitHubId(it.id), it.release_name, it.release_type == ReleaseType.ea, it.timestamp.dateTime.toString(), it.updated_at.dateTime.toString(), GHAssets(it.binaries.map { binary ->
+                                    GHAsset(binary.`package`.name, binary.`package`.size, binary.`package`.link, binary.`package`.download_count, binary.updated_at.dateTime.toString()
+                                    )
+                                }, PageInfo(false, null), it.binaries.size
+                                ), it.id, "/AdoptOpenJDK/openjdk${it.version_data.major}-binaries/releases/tag/jdk8u-2020-01-09-03-36"
+                                )
+                            }
+                        }
+
+                        override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummary? {
+                            return null
+                        }
+                        override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
+                            return null
+                        }
+                    },
+                    AdoptAttestationMapperFactory(ghClient)
+                )
             ),
             apiDataStore,
             memoryDb,
