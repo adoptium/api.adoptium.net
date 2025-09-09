@@ -73,7 +73,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     override suspend fun updateAttestationRepos(repo: AdoptAttestationRepos, checksum: String) {
 
         try {
-            writeAttestations(repo.attestations)
+            writeAttestations(repo.repos)
         } finally {
             updateUpdatedTime(TimeSource.now(), checksum, repo.hashCode())
         }
