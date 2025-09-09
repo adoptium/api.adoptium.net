@@ -18,7 +18,6 @@ class AdoptAttestationRepos {
     @JsonCreator
     constructor(
         @JsonProperty("repos")
-        @JsonDeserialize(keyAs = Int::class)
         repos: List<Attestation>
     ) {
         this.repos = repos

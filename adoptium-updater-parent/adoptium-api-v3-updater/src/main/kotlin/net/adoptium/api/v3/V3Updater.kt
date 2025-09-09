@@ -393,9 +393,10 @@ class V3Updater @Inject constructor(
                         }
 
                         database.updateAllRepos(repo, checksum)
+                        LOGGER.info("DEBUG1")
                         statsInterface.update(repo)
+                        LOGGER.info("DEBUG2")
                         database.setReleaseInfo(releaseVersionResolver.formReleaseInfo(repo))
-
                         apiDataStore.loadDataFromDb(forceUpdate = true, logEntries = false)
                     }
                 }
@@ -443,11 +444,11 @@ class V3Updater @Inject constructor(
 
                 printAttestationReposDebugInfo(currentRepo, repo, dataInDb)
 
-                LOGGER.info("Full update done")
+                LOGGER.info("Full Attestation update done")
                 return@runBlocking repo
             }
         } catch (e: Exception) {
-            LOGGER.error("Failed to perform full update", e)
+            LOGGER.error("Failed to perform full Attestation update", e)
         } catch (e: Throwable) {
             // Log and rethrow, may be unrecoverable error such as OutOfMemoryError
             LOGGER.error("Error during full update", e)

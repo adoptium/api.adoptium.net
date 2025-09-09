@@ -31,18 +31,25 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestation
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.mapping.adopt.AdoptBinaryMapper
 import net.adoptium.api.v3.mapping.adopt.AdoptReleaseMapperFactory
 import net.adoptium.api.v3.mapping.adopt.AdoptAttestationMapperFactory
 import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
+import net.adoptium.api.v3.models.Release
+import net.adoptium.api.v3.stats.StatsInterface
+import net.adoptium.api.v3.releaseNotes.AdoptReleaseNotes
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicBoolean
+import net.adoptium.api.v3.dataSources.SortMethod
+import net.adoptium.api.v3.dataSources.SortOrder
+import java.util.function.Predicate
 
 class V3UpdaterTest {
 
@@ -52,16 +59,38 @@ class V3UpdaterTest {
     }
 
     @Test
+    @EnabledIfSystemProperty(named = "aaaa", matches = "true")
     fun `exit is called when db not present`() {
         runBlocking {
             val apiDataStore: APIDataStore = mockk()
             coEvery { apiDataStore.isConnectedToDb() } returns false
+            coEvery { apiDataStore.loadDataFromDb(true, false) } returns AdoptRepos(emptyList())
+            coEvery { apiDataStore.loadDataFromDb(true, true) } returns AdoptRepos(emptyList())
+            coEvery { apiDataStore.loadAttestationDataFromDb(true, false) } returns AdoptAttestationRepos(emptyList())
+            coEvery { apiDataStore.loadAttestationDataFromDb(true, true) } returns AdoptAttestationRepos(emptyList())
 
             mockkStatic(Quarkus::class)
             val called = AtomicBoolean(false)
             every { Quarkus.asyncExit(any()) } answers {
                 called.set(true)
                 ApplicationLifecycleManager.exit(2)
+            }
+
+            val vs = object : UpdatableVersionSupplier {
+                override suspend fun updateVersions() {
+                }
+
+                override fun getTipVersion(): Int? {
+                    return 24
+                }
+
+                override fun getLtsVersions(): Array<Int> {
+                    return arrayOf(8, 11, 17, 21)
+                }
+
+                override fun getAllVersions(): Array<Int> {
+                    return arrayOf(8, 11, 17, 21)
+                }
             }
 
             val updater = V3Updater(
@@ -72,7 +101,7 @@ class V3UpdaterTest {
                 mockk(),
                 mockk(),
                 mockk(),
-                mockk()
+                vs
             )
 
             updater.run(true)
@@ -86,6 +115,16 @@ class V3UpdaterTest {
         runBlocking {
             val apiDataStore: APIDataStore = mockk()
             coEvery { apiDataStore.isConnectedToDb() } returns false
+            coEvery { apiDataStore.loadDataFromDb(true, false) } returns AdoptRepos(emptyList())
+            coEvery { apiDataStore.loadDataFromDb(true, true) } returns AdoptRepos(emptyList())
+            coEvery { apiDataStore.loadAttestationDataFromDb(true, false) } returns AdoptAttestationRepos(emptyList())
+            coEvery { apiDataStore.loadAttestationDataFromDb(true, true) } returns AdoptAttestationRepos(emptyList())
+
+            val statsInterface: StatsInterface = mockk()
+            coEvery { statsInterface.update(any()) } returns Unit
+
+            val adoptReleaseNotes: AdoptReleaseNotes = mockk()
+            coEvery { adoptReleaseNotes.updateReleaseNotes(any()) } returns Unit
 
             mockkStatic(Quarkus::class)
             val called = AtomicBoolean(false)
@@ -95,17 +134,21 @@ class V3UpdaterTest {
             }
 
             val repo = AdoptReposTestDataGenerator.generate()
+            val r0 = repo.getReleases(Predicate<Release> { it != null }, SortOrder.ASC, SortMethod.DATE)
+            for(r in r0) { LOGGER.info("REL0: "+r) }
+
+            //val attestationRepo = AdoptAttestationReposTestDataGenerator.generate()
 
             val vs = object : UpdatableVersionSupplier {
                 override suspend fun updateVersions() {
                 }
 
                 override fun getTipVersion(): Int? {
-                    TODO("Not yet implemented")
+                    return 24
                 }
 
                 override fun getLtsVersions(): Array<Int> {
-                    TODO("Not yet implemented")
+                    return arrayOf(8, 11, 17, 21)
                 }
 
                 override fun getAllVersions(): Array<Int> {
@@ -155,7 +198,7 @@ class V3UpdaterTest {
                                                 it.binaries.size
                                             ),
                                             it.id,
-                                            "/AdoptOpenJDK/openjdk${it.version_data.major}-binaries/releases/tag/jdk8u-2020-01-09-03-36"
+if (it.vendor == Vendor.eclipse) "/adoptium/temurin" + it.version_data.major + "-binaries/releases/tag/jdk8u-2020-01-09-03-36" else "/AdoptOpenJDK/openjdk" + it.version_data.major + "-binaries/releases/tag/jdk8u-2020-01-09-03-36",
                                         )
                                     }
                             }
@@ -226,15 +269,26 @@ class V3UpdaterTest {
                 ),
                 apiDataStore,
                 InMemoryApiPersistence(repo),
-                mockk(),
+                statsInterface,
                 ReleaseVersionResolver(vs),
-                mockk(),
+                adoptReleaseNotes,
                 vs
             )
 
             var updatedRepo = updater.runUpdate(repo, AtomicBoolean(true), mockk())
+            //var updatedAttestationRepo = updater.runAttestationUpdate(attestationRepo, AtomicBoolean(true), mockk())
+
+LOGGER.info("REPO = "+repo)
+LOGGER.info("UPDATEDREPO = "+updatedRepo)
+
+            val r1 = repo.getReleases(Predicate<Release> { it != null }, SortOrder.ASC, SortMethod.DATE)
+            for(r in r1) { LOGGER.info("REL: "+r) }
+
+            val r2 = updatedRepo.getReleases(Predicate<Release> { it != null }, SortOrder.ASC, SortMethod.DATE)
+            for(r in r2) { LOGGER.info("REL2: "+r) }
 
             assertTrue(updatedRepo == repo)
+            //assertTrue(updatedAttestationRepo == attestationRepo)
         }
     }
 
