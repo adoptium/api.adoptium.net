@@ -3,7 +3,7 @@ package net.adoptium.api.v3
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import net.adoptium.api.v3.dataSources.VersionSupplier
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepo
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.Releases
@@ -15,7 +15,7 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.absoluteValue
 
 @ApplicationScoped
-class AdoptAttestationRepoBuilder @Inject constructor(
+class AdoptAttestationReposBuilder @Inject constructor(
     private var adoptAttestationRepository: AdoptAttestationRepository
     ) {
 
@@ -24,10 +24,10 @@ class AdoptAttestationRepoBuilder @Inject constructor(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    suspend fun build(): AdoptAttestationRepo {
+    suspend fun build(): AdoptAttestationRepos {
         // Fetch attestations in parallel
         val attestations = adoptAttestationRepository.getAttestations()
         LOGGER.info("DONE")
-        return AdoptAttestationRepo(attestations)
+        return AdoptAttestationRepos(attestations)
     }
 }

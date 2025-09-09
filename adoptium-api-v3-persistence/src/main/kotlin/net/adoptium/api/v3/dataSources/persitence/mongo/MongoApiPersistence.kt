@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepo
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.ReleaseNotes
@@ -70,7 +70,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         }
     }
 
-    override suspend fun updateAttestationRepo(repo: AdoptAttestationRepo, checksum: String) {
+    override suspend fun updateAttestationRepos(repo: AdoptAttestationRepos, checksum: String) {
 
         try {
             writeAttestations(repo.attestations)

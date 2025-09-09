@@ -9,7 +9,7 @@ import net.adoptium.api.v3.dataSources.github.GitHubApi
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestation
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepo
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.mapping.AttestationMapper
 import net.adoptium.api.v3.mapping.adopt.AdoptAttestationMapperFactory

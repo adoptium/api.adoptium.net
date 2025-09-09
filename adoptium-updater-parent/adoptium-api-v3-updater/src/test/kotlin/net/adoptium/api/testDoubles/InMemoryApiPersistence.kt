@@ -3,7 +3,7 @@ package net.adoptium.api.testDoubles
 import jakarta.enterprise.context.ApplicationScoped
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepo
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.ReleaseNotes
@@ -37,7 +37,7 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos) : A
         this.updatedAtInfo = UpdatedInfo(TimeSource.now(), checksum, repos.hashCode())
     }
 
-    override suspend fun updateAttestationRepo(repos: AdoptAttestationRepo, checksum: String) {
+    override suspend fun updateAttestationRepos(repos: AdoptAttestationRepos, checksum: String) {
     }
 
     override suspend fun readAttestationData(): List<Attestation> {

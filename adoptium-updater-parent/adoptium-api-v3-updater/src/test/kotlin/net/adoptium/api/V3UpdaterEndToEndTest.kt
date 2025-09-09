@@ -5,7 +5,7 @@ import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.v3.AdoptReposBuilder
 import net.adoptium.api.v3.AdoptRepositoryImpl
-import net.adoptium.api.v3.AdoptAttestationRepoBuilder
+import net.adoptium.api.v3.AdoptAttestationReposBuilder
 import net.adoptium.api.v3.AdoptAttestationRepository
 import net.adoptium.api.v3.AdoptAttestationRepositoryImpl
 import net.adoptium.api.v3.V3Updater
@@ -275,7 +275,7 @@ class V3UpdaterEndToEndTest {
                 ),
                 vs
             ),
-            AdoptAttestationRepoBuilder(
+            AdoptAttestationReposBuilder(
                 AdoptAttestationRepositoryImpl(
                     object : GitHubApi {
                         override suspend fun getRepository(owner: String, repoName: String, filter: (updatedAt: String, isPrerelease: Boolean) -> Boolean): GHRepository {

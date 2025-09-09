@@ -5,7 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped
 import jakarta.enterprise.inject.Alternative
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepo
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
 import net.adoptium.api.v3.dataSources.persitence.mongo.UpdatedInfo
 import net.adoptium.api.v3.models.ReleaseInfo
 import java.time.ZonedDateTime
@@ -17,7 +17,7 @@ open class ApiDataStoreStub : APIDataStore {
 
     open var scheduled: Boolean = false
     private lateinit var adoptRepo: AdoptRepos
-    private lateinit var attestationRepo: AdoptAttestationRepo
+    private lateinit var attestationRepo: AdoptAttestationRepos
 
     constructor() {
         reset()
@@ -45,11 +45,11 @@ open class ApiDataStoreStub : APIDataStore {
         this.adoptRepo = adoptRepo
     }
 
-    override fun getAdoptAttestationRepo(): AdoptAttestationRepo {
+    override fun getAdoptAttestationRepos(): AdoptAttestationRepos {
         return attestationRepo
     }
 
-    override fun setAdoptAttestationRepo(attestationRepo: AdoptAttestationRepo) {
+    override fun setAdoptAttestationRepos(attestationRepo: AdoptAttestationRepos) {
         this.attestationRepo = attestationRepo
     }
 
@@ -69,7 +69,7 @@ open class ApiDataStoreStub : APIDataStore {
         return adoptRepo
     }
 
-    override fun loadAttestationDataFromDb(forceUpdate: Boolean, log:Boolean): AdoptAttestationRepo {
+    override fun loadAttestationDataFromDb(forceUpdate: Boolean, log:Boolean): AdoptAttestationRepos {
         // nop
         return attestationRepo
     }

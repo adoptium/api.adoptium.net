@@ -1,7 +1,7 @@
 package net.adoptium.api.v3.dataSources.persitence
 
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepo
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.ReleaseNotes
@@ -16,7 +16,7 @@ import java.time.ZonedDateTime
 
 interface ApiPersistence {
     suspend fun updateAllRepos(repos: AdoptRepos, checksum: String)
-    suspend fun updateAttestationRepo(repos: AdoptAttestationRepo, checksum: String)
+    suspend fun updateAttestationRepos(repos: AdoptAttestationRepos, checksum: String)
     suspend fun readReleaseData(featureVersion: Int): FeatureRelease
     suspend fun readAttestationData(): List<Attestation>
 
