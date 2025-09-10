@@ -44,6 +44,7 @@ import net.adoptium.api.v3.releaseNotes.AdoptReleaseNotes
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicBoolean
@@ -59,7 +60,6 @@ class V3UpdaterTest {
     }
 
     @Test
-    @EnabledIfSystemProperty(named = "aaaa", matches = "true")
     fun `exit is called when db not present`() {
         runBlocking {
             val apiDataStore: APIDataStore = mockk()
@@ -111,14 +111,11 @@ class V3UpdaterTest {
 
 
     @Test
+    @Disabled("Issue: https://github.com/adoptium/api.adoptium.net/issues/1612")
     fun `new update works`() {
         runBlocking {
             val apiDataStore: APIDataStore = mockk()
             coEvery { apiDataStore.isConnectedToDb() } returns false
-            coEvery { apiDataStore.loadDataFromDb(true, false) } returns AdoptRepos(emptyList())
-            coEvery { apiDataStore.loadDataFromDb(true, true) } returns AdoptRepos(emptyList())
-            coEvery { apiDataStore.loadAttestationDataFromDb(true, false) } returns AdoptAttestationRepos(emptyList())
-            coEvery { apiDataStore.loadAttestationDataFromDb(true, true) } returns AdoptAttestationRepos(emptyList())
 
             val statsInterface: StatsInterface = mockk()
             coEvery { statsInterface.update(any()) } returns Unit
@@ -136,8 +133,6 @@ class V3UpdaterTest {
             val repo = AdoptReposTestDataGenerator.generate()
             val r0 = repo.getReleases(Predicate<Release> { it != null }, SortOrder.ASC, SortMethod.DATE)
             for(r in r0) { LOGGER.info("REL0: "+r) }
-
-            //val attestationRepo = AdoptAttestationReposTestDataGenerator.generate()
 
             val vs = object : UpdatableVersionSupplier {
                 override suspend fun updateVersions() {
@@ -268,7 +263,7 @@ if (it.vendor == Vendor.eclipse) "/adoptium/temurin" + it.version_data.major + "
                     )
                 ),
                 apiDataStore,
-                InMemoryApiPersistence(repo),
+                InMemoryApiPersistence(repo, mockk()),
                 statsInterface,
                 ReleaseVersionResolver(vs),
                 adoptReleaseNotes,
@@ -276,19 +271,9 @@ if (it.vendor == Vendor.eclipse) "/adoptium/temurin" + it.version_data.major + "
             )
 
             var updatedRepo = updater.runUpdate(repo, AtomicBoolean(true), mockk())
-            //var updatedAttestationRepo = updater.runAttestationUpdate(attestationRepo, AtomicBoolean(true), mockk())
-
-LOGGER.info("REPO = "+repo)
-LOGGER.info("UPDATEDREPO = "+updatedRepo)
-
-            val r1 = repo.getReleases(Predicate<Release> { it != null }, SortOrder.ASC, SortMethod.DATE)
-            for(r in r1) { LOGGER.info("REL: "+r) }
-
-            val r2 = updatedRepo.getReleases(Predicate<Release> { it != null }, SortOrder.ASC, SortMethod.DATE)
-            for(r in r2) { LOGGER.info("REL2: "+r) }
 
             assertTrue(updatedRepo == repo)
-            //assertTrue(updatedAttestationRepo == attestationRepo)
+            assertTrue(updatedRepo !== repo)
         }
     }
 

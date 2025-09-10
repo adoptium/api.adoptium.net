@@ -23,7 +23,7 @@ import jakarta.inject.Inject
 @Priority(1)
 @Alternative
 @ApplicationScoped
-open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos) : ApiPersistence {
+open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var attestationRepos: AdoptAttestationRepos) : ApiPersistence {
     private var updatedAtInfo: UpdatedInfo? = null
     private var releaseInfo: ReleaseInfo? = null
 
@@ -38,10 +38,11 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos) : A
     }
 
     override suspend fun updateAttestationRepos(repos: AdoptAttestationRepos, checksum: String) {
+        this.attestationRepos = attestationRepos
     }
 
     override suspend fun readAttestationData(): List<Attestation> {
-        return ArrayList<Attestation>()
+        return attestationRepos.getAttestations()
     }
 
     override suspend fun readReleaseData(featureVersion: Int): FeatureRelease {

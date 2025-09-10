@@ -36,6 +36,9 @@ abstract class BaseTest {
         val adoptRepos = AdoptReposTestDataGenerator.generate()
 
         @JvmStatic
+        val adoptAttestationRepos = AdoptAttestationReposTestDataGenerator.generate()
+
+        @JvmStatic
         @BeforeAll
         fun startDb() {
             System.setProperty("GITHUB_TOKEN", "stub-token")

@@ -23,6 +23,10 @@ class AdoptAttestationRepos {
         this.repos = repos
     }
 
+    fun getAttestations(): List<Attestation> {
+        return repos
+    }
+
     fun addAll(attestations: List<Attestation>): AdoptAttestationRepos {
         if (attestations.isEmpty()) {
             return this

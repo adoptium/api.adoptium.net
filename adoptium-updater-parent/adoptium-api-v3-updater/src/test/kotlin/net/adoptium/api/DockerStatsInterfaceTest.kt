@@ -28,7 +28,7 @@ class DockerStatsInterfaceTest : BaseTest() {
     @Test
     fun dbEntryIsCreated(defaultUpdaterHtmlClient: DefaultUpdaterHtmlClient) {
         runBlocking {
-            val apiPersistence = InMemoryApiPersistence(adoptRepos)
+            val apiPersistence = InMemoryApiPersistence(adoptRepos, mockk())
             val dockerStatsInterface = DockerStatsInterfaceFactory(apiPersistence, defaultUpdaterHtmlClient).get()
 
             dockerStatsInterface.updateDb()
