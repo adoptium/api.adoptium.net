@@ -5,6 +5,9 @@ import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.v3.AdoptReposBuilder
 import net.adoptium.api.v3.AdoptRepositoryImpl
+import net.adoptium.api.v3.AdoptAttestationReposBuilder
+import net.adoptium.api.v3.AdoptAttestationRepository
+import net.adoptium.api.v3.AdoptAttestationRepositoryImpl
 import net.adoptium.api.v3.V3Updater
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.APIDataStoreImpl
@@ -17,12 +20,16 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHReleases
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRepository
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummary
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestation
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.mapping.adopt.AdoptBinaryMapper
 import net.adoptium.api.v3.mapping.adopt.AdoptReleaseMapperFactory
+import net.adoptium.api.v3.mapping.adopt.AdoptAttestationMapperFactory
 import net.adoptium.api.v3.models.DateTime
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
@@ -202,7 +209,7 @@ class V3UpdaterEndToEndTest {
     }
 
     private fun runUpdateTest(repo: AdoptRepos, getRepository: (String, String, (updatedAt: String, isPrerelease: Boolean) -> Boolean) -> GHRepository, getById: (GitHubId) -> GHRelease?): AdoptRepos {
-        val memoryDb = InMemoryApiPersistence(repo)
+        val memoryDb = InMemoryApiPersistence(repo, mockk())
 
         val apiDataStore: APIDataStore = APIDataStoreImpl(memoryDb)
 
@@ -257,10 +264,42 @@ class V3UpdaterEndToEndTest {
                                 )
                             }
                         }
+
+                        override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummary? {
+                            return null
+                        }
+                        override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
+                            return null
+                        }
                     },
                     AdoptReleaseMapperFactory(AdoptBinaryMapper(ghClient), ghClient)
                 ),
                 vs
+            ),
+            AdoptAttestationReposBuilder(
+                AdoptAttestationRepositoryImpl(
+                    object : GitHubApi {
+                        override suspend fun getRepository(owner: String, repoName: String, filter: (updatedAt: String, isPrerelease: Boolean) -> Boolean): GHRepository {
+                            return mockk()
+                        }
+
+                        override suspend fun getRepositorySummary(owner: String, repoName: String): GHRepositorySummary {
+                            return mockk()
+                        }
+
+                        override suspend fun getReleaseById(id: GitHubId): GHRelease? {
+                            return null
+                        }
+
+                        override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummary? {
+                            return null
+                        }
+                        override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
+                            return null
+                        }
+                    },
+                    AdoptAttestationMapperFactory(ghClient)
+                )
             ),
             apiDataStore,
             memoryDb,
@@ -288,6 +327,114 @@ class V3UpdaterEndToEndTest {
 
         val updatedRepo = updater.runUpdate(repo, AtomicBoolean(true), mockk())
         return updatedRepo
+    }
+
+    private fun runAttestationUpdateTest(attestationRepo: AdoptAttestationRepos): AdoptAttestationRepos {
+        val memoryDb = InMemoryApiPersistence(mockk(), attestationRepo)
+
+        val apiDataStore: APIDataStore = APIDataStoreImpl(memoryDb)
+
+        val vs = object : UpdatableVersionSupplier {
+            override suspend fun updateVersions() {
+            }
+
+            override fun getTipVersion(): Int? {
+                return 25
+            }
+
+            override fun getLtsVersions(): Array<Int> {
+                return arrayOf(8, 11, 17, 21)
+            }
+
+            override fun getAllVersions(): Array<Int> {
+                return arrayOf(8, 11, 17, 21)
+            }
+        }
+
+        val ghClient = object : GitHubHtmlClient {
+            override suspend fun getUrl(url: String): String? {
+                TODO("Not yet implemented")
+            }
+        }
+
+        val updater = V3Updater(
+            AdoptReposBuilder(
+                AdoptRepositoryImpl(
+                    object : GitHubApi {
+                        override suspend fun getRepository(owner: String, repoName: String, filter: (updatedAt: String, isPrerelease: Boolean) -> Boolean): GHRepository {
+                            return mockk()
+                        }
+
+                        override suspend fun getRepositorySummary(owner: String, repoName: String): GHRepositorySummary {
+                            return mockk()
+                        }
+
+                        override suspend fun getReleaseById(id: GitHubId): GHRelease? {
+                            return null
+                        }
+
+                        override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummary? {
+                            return null
+                        }
+                        override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
+                            return null
+                        }
+                    },
+                    AdoptReleaseMapperFactory(AdoptBinaryMapper(ghClient), ghClient)
+                ),
+                vs
+            ),
+            AdoptAttestationReposBuilder(
+                AdoptAttestationRepositoryImpl(
+                    object : GitHubApi {
+                        override suspend fun getRepository(owner: String, repoName: String, filter: (updatedAt: String, isPrerelease: Boolean) -> Boolean): GHRepository {
+                            return mockk()
+                        }
+
+                        override suspend fun getRepositorySummary(owner: String, repoName: String): GHRepositorySummary {
+                            return mockk()
+                        }
+
+                        override suspend fun getReleaseById(id: GitHubId): GHRelease? {
+                            return null
+                        }
+
+                        override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummary? {
+                            return null
+                        }
+                        override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
+                            return null
+                        }
+                    },
+                    AdoptAttestationMapperFactory(ghClient)
+                )
+            ),
+            apiDataStore,
+            memoryDb,
+            object : StatsInterface(mockk(), object : DockerStatsInterfaceFactory(mockk(), mockk()) {
+                override fun getDockerStatsInterface(): StatsInterface {
+                    return mockk()
+                }
+            }) {
+                override suspend fun updateStats() {
+                }
+
+                override suspend fun update(repos: AdoptRepos) {
+                }
+            },
+            ReleaseVersionResolver(vs),
+            object : AdoptReleaseNotes(
+                mockk(),
+                mockk(),
+                mockk(),
+            ) {
+                override suspend fun updateReleaseNotes(adoptRepos: AdoptRepos) {}
+            },
+            vs
+        )
+
+        val updatedAttestationRepo = updater.runAttestationUpdate(attestationRepo, AtomicBoolean(true), mockk())
+        return updatedAttestationRepo
     }
 
 }
