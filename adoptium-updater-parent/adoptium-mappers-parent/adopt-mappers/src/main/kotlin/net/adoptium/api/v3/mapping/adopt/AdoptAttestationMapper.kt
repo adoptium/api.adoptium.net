@@ -43,18 +43,19 @@ private class AdoptAttestationMapper(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    override suspend fun toAttestationList(vendor: Vendor, ghAttestationAssets: List<GHAttestation>): List<Attestation> {
+    override suspend fun toAttestationList(vendor: Vendor, ghAttestationAssets: Map<String, GHAttestation>): List<Attestation> {
         return ghAttestationAssets
-            .map { asset -> assetToAttestationAsync(vendor, asset) }
-            .mapNotNull { it.await() }
+            .map { (key, value) -> assetToAttestationAsync(vendor, key, value) }
+            .map { it.await() }
     }
 
-    override suspend fun toAttestation(vendor: Vendor, ghAttestation: GHAttestation): Attestation {
-        return assetToAttestationAsync(vendor, ghAttestation).await()
+    override suspend fun toAttestation(vendor: Vendor, attestation_link: String, ghAttestation: GHAttestation): Attestation {
+        return assetToAttestationAsync(vendor, attestation_link, ghAttestation).await()
     }
 
     private fun assetToAttestationAsync(
         vendor: Vendor,
+        attestation_link: String,
         ghAttestationAsset: GHAttestation
     ): Deferred<Attestation> {
         return GlobalScope.async {
@@ -66,18 +67,18 @@ private class AdoptAttestationMapper(
                 //   ONE target component externalReferences reference with a single hash
                 //   target component version is of format jdk-$MAJOR_VERSION+$BUILD_NUM or jdk-$MAJOR_VERSION.0.$UPDATE_VERSION+$BUILD_NUM
                 
-                val releaseName: String = ghAttestationAsset.declarations.targets.components.component[0].version
+                val releaseName: String? = ghAttestationAsset?.declarations?.targets?.components?.component[0]?.version
                 // featureVersion derived from releaseName
-                val featureVersion: Int = releaseName.split("-","+",".")[1].toInt()
+                val featureVersion: Int? = releaseName?.split("-","+",".")[1]?.toInt()
 
-                val assessor_org: String = ghAttestationAsset.declarations.assessors.assessor[0].organization.name
-                val assessor_affirmation: String = ghAttestationAsset.declarations.affirmation.statement
-                val assessor_claim_predicate: String = ghAttestationAsset.declarations.claims.claim[0].predicate
-                val target_checksum: String? = ghAttestationAsset.declarations.targets.components.component[0].externalReferences.reference[0].hashes.hash[0].sha256
+                val assessor_org: String? = ghAttestationAsset?.declarations?.assessors?.assessor[0]?.organization?.name
+                val assessor_affirmation: String? = ghAttestationAsset?.declarations?.affirmation?.statement
+                val assessor_claim_predicate: String? = ghAttestationAsset?.declarations?.claims?.claim[0]?.predicate
+                val target_checksum: String? = ghAttestationAsset?.declarations?.targets?.components?.component[0]?.externalReferences?.reference[0]?.hashes?.hash[0]?.sha256
 
                 var archStr: String = ""
                 var osStr: String = ""
-                for (property in ghAttestationAsset.declarations.targets.components.component[0].properties.property) {
+                for (property in ghAttestationAsset?.declarations?.targets?.components?.component[0]?.properties?.property?: emptyList()) {
                     if (property.name == "platform") {
                         val split_platform: List<String>? = property.value?.split("_")
                         if (split_platform != null) {
@@ -90,10 +91,10 @@ private class AdoptAttestationMapper(
                 val arch: Architecture  = Architecture.valueOf(archStr)  //by lazy { Architecture.valueOf(archStr) }
                 val os: OperatingSystem = OperatingSystem.valueOf(osStr) //by lazy { OperatingSystem.valueOf(osStr) }
  
-                return@async Attestation(ghAttestationAsset.id.toString(), ghAttestationAsset.commitResourcePath,
+                return@async Attestation(ghAttestationAsset.id.toString()?:"", ghAttestationAsset.commitResourcePath?:"", ghAttestationAsset.filename?:"",
                                          featureVersion, releaseName, os, arch, ImageType.jdk, JvmImpl.hotspot,
                                          vendor, target_checksum, assessor_org, assessor_affirmation, assessor_claim_predicate,
-                                         "attestation_link", "attestation_public_signing_key_link")
+                                         attestation_link, attestation_link+".sign.pub")
         }
     }
 }

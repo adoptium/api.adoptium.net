@@ -24,8 +24,7 @@ open class GraphQLGitHubAttestationClient @Inject constructor(
 
         LOGGER.debug("Getting attestation $org/$repo/$name")
 
-        val query = RequestAttestationByName(org, repo, name)
-
+        val query = RequestAttestationFileByName(org, repo, name)
         val result = graphQLGitHubInterface.queryApi(query::withCursor, null)
 
         val ghAttestationResponse: GHAttestationResponse? = if (result?.data == null) {
@@ -34,17 +33,27 @@ open class GraphQLGitHubAttestationClient @Inject constructor(
             result.data
         }
 
+        // Each Attestation must have a public signing key file ".sign.pub"
+        val attestation_sign_file = name+".sign.pub"
+        val queryPubKey = RequestAttestationFileByName(org, repo, attestation_sign_file)
+        val resultPubKey = graphQLGitHubInterface.queryApi(query::withCursor, null)
+        if (resultPubKey?.data == null) {
+            // Not a valid Attestation if no .sign.pub file
+            return null
+        }
+
         val ghAttestation = XmlMapper.mapper.readValue(ghAttestationResponse?.data?.repository?.repository?.text, GHAttestation::class.java)
-        ghAttestation.id = ghAttestationResponse?.data?.repository?.repository?.id
-        ghAttestation.commitResourcePath = ghAttestationResponse?.data?.repository?.repository?.commitResourcePath
+        ghAttestation.id = ghAttestationResponse?.data?.repository?.repository?.id ?: GitHubId("0")
+        ghAttestation.commitResourcePath = ghAttestationResponse?.data?.repository?.repository?.commitResourcePath ?: ""
+        ghAttestation.filename = name
 
         return ghAttestation
     }
 
-    class RequestAttestationByName(val org: String, val repo: String, val name: String, override val variables: Any = mapOf<String, String>()) : GraphQLClientRequest<GHAttestationResponse> {
+    class RequestAttestationFileByName(val org: String, val repo: String, val name: String, override val variables: Any = mapOf<String, String>()) : GraphQLClientRequest<GHAttestationResponse> {
 
-        fun withCursor(cursor: String?): RequestAttestationByName {
-            return if (cursor != null) RequestAttestationByName(org, repo, name, mapOf("cursorPointer" to cursor))
+        fun withCursor(cursor: String?): RequestAttestationFileByName {
+            return if (cursor != null) RequestAttestationFileByName(org, repo, name, mapOf("cursorPointer" to cursor))
             else this
         }
 

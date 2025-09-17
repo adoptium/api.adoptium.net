@@ -1,6 +1,7 @@
 package net.adoptium.api
 
 import io.mockk.mockk
+import io.mockk.coEvery
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.v3.AdoptReposBuilder
@@ -21,7 +22,27 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHReleases
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRepository
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummary
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummaryData
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummaryRepository
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummaryEntry
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummaryObject
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestation
+import net.adoptium.api.v3.dataSources.github.graphql.models.Declarations
+import net.adoptium.api.v3.dataSources.github.graphql.models.Targets
+import net.adoptium.api.v3.dataSources.github.graphql.models.Components
+import net.adoptium.api.v3.dataSources.github.graphql.models.Component
+import net.adoptium.api.v3.dataSources.github.graphql.models.Assessors
+import net.adoptium.api.v3.dataSources.github.graphql.models.Assessor
+import net.adoptium.api.v3.dataSources.github.graphql.models.Claims
+import net.adoptium.api.v3.dataSources.github.graphql.models.Claim
+import net.adoptium.api.v3.dataSources.github.graphql.models.Organization
+import net.adoptium.api.v3.dataSources.github.graphql.models.Affirmation
+import net.adoptium.api.v3.dataSources.github.graphql.models.Hash
+import net.adoptium.api.v3.dataSources.github.graphql.models.Hashes
+import net.adoptium.api.v3.dataSources.github.graphql.models.Reference
+import net.adoptium.api.v3.dataSources.github.graphql.models.ExternalReferences
+import net.adoptium.api.v3.dataSources.github.graphql.models.Property
+import net.adoptium.api.v3.dataSources.github.graphql.models.Properties
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
@@ -41,8 +62,14 @@ import net.adoptium.api.v3.stats.dockerstats.DockerStatsInterfaceFactory
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicBoolean
+import org.slf4j.LoggerFactory
 
 class V3UpdaterEndToEndTest {
+
+    companion object {
+        @JvmStatic
+        private val LOGGER = LoggerFactory.getLogger(this::class.java)
+    }
 
     @Test
     fun `old release is copied over`() {
@@ -172,6 +199,92 @@ class V3UpdaterEndToEndTest {
 
             assertTrue(updatedRepo.allReleases.nodeList.size == repo.allReleases.nodeList.size + 1)
             assertTrue(updatedRepo.repos[11]!!.releases.nodeList.last().release_name == "jdk-11.0.9999+7")
+        }
+    }
+
+    @Test   
+    fun `new attestation is added`() {
+        runBlocking {
+            val attestationRepo = AdoptAttestationReposTestDataGenerator.generate()
+
+            val getAttestationSummary: ((String, String) -> GHAttestationRepoSummary?) = { org, repo ->
+                LOGGER.info("getAttestationSummary: "+org+" "+repo)
+
+                var attestationSummary = GHAttestationSummaryTestDataGenerator.generateGHAttestationRepoSummary(attestationRepo)
+
+                // Add a jdk-25 attestation file into the summary
+                if ( attestationSummary?.data?.repository?.att_object?.entries != null ) {
+                    attestationSummary?.data?.repository?.att_object?.entries = (attestationSummary?.data?.repository?.att_object?.entries ?: mutableListOf<GHAttestationRepoSummaryEntry>()) +
+                        GHAttestationRepoSummaryEntry("25", "tree",
+                                                      GHAttestationRepoSummaryObject(null,
+                                                                                     listOf(GHAttestationRepoSummaryEntry("jdk_25_36_x64_linux_Adoptium.xml",
+                                                                                                                          "blob",
+                                                                                                                          GHAttestationRepoSummaryObject("commitResPath1", null)
+                                                                                                                         )
+                                                                                     )
+                                                      )
+                                                     )
+                }
+
+                LOGGER.info("getAttestationSummary: "+attestationSummary)
+
+                attestationSummary
+            }
+            
+            val getAttestationByName: ((String, String, String) -> GHAttestation?) = { org, repo, name ->
+                            val existAtt = attestationRepo.repos.firstOrNull { it.filename == name }
+                            if (existAtt != null) {
+                                // Construct GHAttestation equivalent of existing Attestation
+                                var prop: Property = Property()
+                                prop.name = "platform"
+                                prop.value = existAtt.architecture.toString() + "_" + existAtt.os.toString()
+                                var props: Properties = Properties(listOf(prop))
+                                var hash: Hash = Hash()
+                                hash.sha256 = existAtt.target_checksum
+                                var hashes: Hashes = Hashes(listOf(hash))
+                                var er: Reference = Reference(null, hashes)
+                                var erl: ExternalReferences = ExternalReferences(listOf(er))
+                                var c: Component = Component("comp", existAtt.release_name, erl, props)
+                                var cs: Components = Components(listOf(c))
+                                var a: Assessor = Assessor(null, Organization(existAtt.assessor_org))
+                                var ass: Assessors = Assessors(listOf(a))
+                                var aff: Affirmation = Affirmation(existAtt.assessor_affirmation)
+                                var cl: Claim = Claim(null, existAtt.assessor_claim_predicate)
+                                var cls: Claims = Claims(listOf(cl))
+                                var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
+
+                                GHAttestation( GitHubId(existAtt.id), existAtt.commitResourcePath, existAtt.filename, d, null)
+                            } else if (name == "25/jdk_25_36_x64_linux_Adoptium.xml") {
+                                // Return the new attestation
+                                var prop: Property = Property()
+                                prop.name = "platform"
+                                prop.value = "x64_linux"
+                                var props: Properties = Properties(listOf(prop))
+                                var hash: Hash = Hash()
+                                hash.sha256 = "abcdefg0123456789"
+                                var hashes: Hashes = Hashes(listOf(hash))
+                                var er: Reference = Reference(null, hashes)
+                                var erl: ExternalReferences = ExternalReferences(listOf(er))
+                                var c: Component = Component("comp", "jdk-25+36", erl, props)
+                                var cs: Components = Components(listOf(c))
+                                var a: Assessor = Assessor(null, Organization("assessor_org_new"))
+                                var ass: Assessors = Assessors(listOf(a))
+                                var aff: Affirmation = Affirmation("assessor_affirmation_new")
+                                var cl: Claim = Claim(null, "assessor_claim_predicate_new")
+                                var cls: Claims = Claims(listOf(cl))
+                                var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
+
+                                GHAttestation( GitHubId("1"), "commitResPath1", name, d, null)
+                            } else {
+                                null
+                            }
+            }
+
+            val updatedRepo = runAttestationUpdateTest(attestationRepo, getAttestationSummary, getAttestationByName)
+
+            assertTrue(updatedRepo.repos.size == attestationRepo.repos.size + 1)
+            val addedAtt = updatedRepo.repos.firstOrNull { it.filename == "25/jdk_25_36_x64_linux_Adoptium.xml" }
+            assertTrue(addedAtt != null)
         }
     }
 
@@ -329,10 +442,21 @@ class V3UpdaterEndToEndTest {
         return updatedRepo
     }
 
-    private fun runAttestationUpdateTest(attestationRepo: AdoptAttestationRepos): AdoptAttestationRepos {
-        val memoryDb = InMemoryApiPersistence(mockk(), attestationRepo)
+    private fun runAttestationUpdateTest(attestationRepo: AdoptAttestationRepos,
+                   getAttestationSummary: (String, String) -> GHAttestationRepoSummary?,
+                   getAttestationByName: (String, String, String) -> GHAttestation? ): AdoptAttestationRepos {
+
+        val adoptRepos: AdoptRepos = mockk()
+
+        coEvery { adoptRepos.getFeatureRelease(any()) } returns null
+//            coEvery { apiDataStore.loadDataFromDb(true, false) } returns AdoptRepos(emptyList())
+
+
+        val memoryDb = InMemoryApiPersistence(adoptRepos, attestationRepo)
 
         val apiDataStore: APIDataStore = APIDataStoreImpl(memoryDb)
+        coEvery { apiDataStore.loadDataFromDb(true, false) } returns AdoptRepos(emptyList())
+        coEvery { apiDataStore.loadDataFromDb(true, true) } returns AdoptRepos(emptyList())
 
         val vs = object : UpdatableVersionSupplier {
             override suspend fun updateVersions() {
@@ -400,10 +524,11 @@ class V3UpdaterEndToEndTest {
                         }
 
                         override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummary? {
-                            return null
+                            return getAttestationSummary(org, repo)
                         }
+
                         override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
-                            return null
+                            return getAttestationByName(org, repo, name)
                         }
                     },
                     AdoptAttestationMapperFactory(ghClient)

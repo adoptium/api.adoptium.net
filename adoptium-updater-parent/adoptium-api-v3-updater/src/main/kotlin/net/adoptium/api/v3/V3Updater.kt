@@ -393,9 +393,7 @@ class V3Updater @Inject constructor(
                         }
 
                         database.updateAllRepos(repo, checksum)
-                        LOGGER.info("DEBUG1")
                         statsInterface.update(repo)
-                        LOGGER.info("DEBUG2")
                         database.setReleaseInfo(releaseVersionResolver.formReleaseInfo(repo))
                         apiDataStore.loadDataFromDb(forceUpdate = true, logEntries = false)
                     }

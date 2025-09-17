@@ -10,15 +10,15 @@ import net.adoptium.api.v3.dataSources.models.GitHubId
 
 data class Organization(
         @JacksonXmlProperty(localName = "name")
-        var name: String
+        var name: String? = null
 )
 
 data class Assessor(
         @JacksonXmlProperty(localName = "thirdParty")
-        var thirdParty: Boolean,
+        var thirdParty: Boolean? = null,
 
         @JacksonXmlProperty(localName = "organization")
-        var organization: Organization
+        var organization: Organization? = null
 )
 
 data class Assessors(
@@ -28,10 +28,10 @@ data class Assessors(
 
 data class Claim(
         @JacksonXmlProperty(localName = "target")
-        var target: String,
+        var target: String? = null,
 
         @JacksonXmlProperty(localName = "predicate")
-        var predicate: String
+        var predicate: String? = null
 )
 
 data class Claims(
@@ -41,7 +41,7 @@ data class Claims(
 
 data class Affirmation(
         @JacksonXmlProperty(localName = "statement")
-        var statement: String,
+        var statement: String? = null,
 )
 
 // Cannot use "data class" due to known bug: https://github.com/FasterXML/jackson-module-kotlin/issues/138
@@ -58,18 +58,18 @@ data class ClaimRefs(
 
 data class ClaimMap(
         @JacksonXmlProperty(localName = "claims")
-        var claims: ClaimRefs
+        var claims: ClaimRefs? = null
 )
 
 data class Attestation(
         @JacksonXmlProperty(localName = "summary")
-        var summary: String,
+        var summary: String? = null,
 
         @JacksonXmlProperty(localName = "assessor")
-        var assessor: String,
+        var assessor: String? = null,
 
         @JacksonXmlProperty(localName = "map")
-        var map: ClaimMap
+        var map: ClaimMap? = null
 )
 
 data class Attestations(
@@ -91,10 +91,10 @@ data class Hashes(
 
 data class Reference(
         @JacksonXmlProperty(localName = "url")
-        var url: String,
+        var url: String? = null,
 
         @JacksonXmlProperty(localName = "hashes")
-        var hashes: Hashes
+        var hashes: Hashes? = null
 )
 
 data class ExternalReferences(
@@ -119,16 +119,16 @@ data class Properties(
 
 data class Component(
         @JacksonXmlProperty(localName = "name")
-        var name: String,
+        var name: String? = null,
 
         @JacksonXmlProperty(localName = "version")
-        var version: String,
+        var version: String? = null,
 
         @JacksonXmlProperty(localName = "externalReferences")
-        var externalReferences: ExternalReferences,
+        var externalReferences: ExternalReferences? = null,
 
         @JacksonXmlProperty(localName = "properties")
-        var properties: Properties
+        var properties: Properties? = null
 )
 
 data class Components(
@@ -138,24 +138,24 @@ data class Components(
 
 data class Targets(
         @JacksonXmlProperty(localName = "components")
-        var components: Components
+        var components: Components? = null
 )
 
 data class Declarations(
         @JacksonXmlProperty(localName = "assessors")
-        var assessors: Assessors,
+        var assessors: Assessors? = null,
 
         @JacksonXmlProperty(localName = "claims")
-        var claims: Claims,
+        var claims: Claims? = null,
 
         @JacksonXmlProperty(localName = "attestations")
-        var attestations: Attestations,
+        var attestations: Attestations? = null,
 
         @JacksonXmlProperty(localName = "targets")
-        var targets: Targets,
+        var targets: Targets? = null,
 
         @JacksonXmlProperty(localName = "affirmation")
-        var affirmation: Affirmation
+        var affirmation: Affirmation? = null
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -163,9 +163,10 @@ data class Declarations(
 data class GHAttestation @JsonCreator constructor(
         var id: GitHubId?,
         var commitResourcePath: String?,
+        var filename: String?,
 
         @JacksonXmlProperty(localName = "declarations")
-        var declarations: Declarations,
+        var declarations: Declarations? = null,
 
         @JacksonXmlProperty(localName = "signature")
         var signature: String? = null

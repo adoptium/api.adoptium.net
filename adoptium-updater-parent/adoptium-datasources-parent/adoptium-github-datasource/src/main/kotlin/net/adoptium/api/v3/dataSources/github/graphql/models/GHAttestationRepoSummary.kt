@@ -102,7 +102,7 @@ data class GHAttestationRepoSummaryRepository @JsonCreator constructor(
 
 data class GHAttestationRepoSummaryObject @JsonCreator constructor(
     @JsonProperty("commitResourcePath") val commitResourcePath: String?,
-    @JsonProperty("entries")            val entries: List<GHAttestationRepoSummaryEntry>?
+    @JsonProperty("entries")            var entries: List<GHAttestationRepoSummaryEntry>?
 ) { 
 }
 

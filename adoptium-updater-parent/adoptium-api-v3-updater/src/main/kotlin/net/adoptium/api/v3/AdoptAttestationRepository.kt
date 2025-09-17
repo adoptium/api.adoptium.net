@@ -56,7 +56,9 @@ open class AdoptAttestationRepositoryImpl @Inject constructor(
         val attestation = client.getAttestationByName(owner, repoName, name)
 
         if ( attestation != null ) {
-            return getMapperForRepo(owner + "/" + repoName).toAttestation(vendor, attestation)
+            val attestation_link = "https://github.com/" + owner + "/" + repoName + "/" + name
+            LOGGER.info("Retrieved Attestation for: " + attestation_link)
+            return getMapperForRepo(attestation_link).toAttestation(vendor, attestation_link, attestation)
         } else {
             return null
         }
@@ -67,7 +69,9 @@ open class AdoptAttestationRepositoryImpl @Inject constructor(
     }
 
     private suspend fun getRepository(vendor: Vendor, owner: String, repoName: String): List<Attestation> {
-        var attestations = mutableListOf<GHAttestation>()
+        val attestations: MutableMap<String, GHAttestation> = mutableMapOf()
+
+        LOGGER.info("Attestation getRepository for: " + vendor + " " + owner + "/" + repoName)
 
         val attSummary = client.getAttestationSummary(owner, repoName)
 
@@ -85,7 +89,9 @@ open class AdoptAttestationRepositoryImpl @Inject constructor(
                         if ( attXml.type == "blob" && attXml.name.endsWith(".xml") ) {
                             val attestation = client.getAttestationByName(owner, repoName, dir.name + "/" + attXml.name)
                             if ( attestation != null ) {
-                                attestations.add(attestation)
+                                val attestation_link = "https://github.com/" + owner + "/" + repoName + "/" + dir.name + "/" + attXml.name
+                                LOGGER.info("Retrieved Attestation for: " + attestation_link)
+                                attestations[attestation_link] = attestation
                             }
                         }
                       }
@@ -95,7 +101,7 @@ open class AdoptAttestationRepositoryImpl @Inject constructor(
             }
         }
 
-        return getMapperForRepo(owner + "/" + repoName).toAttestationList(vendor, attestations)
+        return getMapperForRepo(owner + "/" + repoName + "/").toAttestationList(vendor, attestations)
     }
 
     override suspend fun getAttestations(): List<Attestation> {
