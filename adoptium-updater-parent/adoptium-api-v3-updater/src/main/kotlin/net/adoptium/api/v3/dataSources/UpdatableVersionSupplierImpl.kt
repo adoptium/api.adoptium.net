@@ -13,16 +13,39 @@ class UpdatableVersionSupplierImpl @Inject constructor(val updaterHtmlClient: Up
     }
 
     private val DEFAULT_LATEST_JAVA_VERSION = 24
+    private var DEFAULT_LTS_JAVA_VERSIONS: Array<Int> = arrayOf(8, 11, 17, 21, 25)
+
     private val LATEST_JAVA_VERSION_PROPERTY = "LATEST_JAVA_VERSION"
+    private val LTS_JAVA_VERSIONS_PROPERTY = "LTS_JAVA_VERSIONS"
 
     private val VERSION_FILE_URL = "https://raw.githubusercontent.com/openjdk/jdk/master/make/conf/version-numbers.conf"
 
     private var tipVersion: Int? = null
     private var latestJavaVersion: Int
     private var versions: Array<Int>
-    private var ltsVersions: Array<Int> = arrayOf(8, 11, 17, 21)
+    private var ltsVersions: Array<Int> = arrayOf(8, 11, 17, 21, 25)
 
     init {
+
+        var lts = System.getProperty(LTS_JAVA_VERSIONS_PROPERTY, null)
+
+        ltsVersions = if (lts != null) {
+            try {
+                val ltsList = lts.split(",").map { it.trim().toInt() }
+                if (ltsList.isEmpty()) {
+                    LOGGER.error("LTS versions must be non-empty")
+                    DEFAULT_LTS_JAVA_VERSIONS
+                } else {
+                    ltsList.toTypedArray()
+                }
+            } catch (e: NumberFormatException) {
+                LOGGER.warn("Invalid LTS_JAVA_VERSIONS property, using default LTS versions", e)
+                DEFAULT_LTS_JAVA_VERSIONS
+            }
+        } else {
+            DEFAULT_LTS_JAVA_VERSIONS
+        }
+
         latestJavaVersion = Integer.parseInt(System.getProperty(LATEST_JAVA_VERSION_PROPERTY, DEFAULT_LATEST_JAVA_VERSION.toString()))
         versions = (8..latestJavaVersion).toList().toTypedArray()
         runBlocking {
