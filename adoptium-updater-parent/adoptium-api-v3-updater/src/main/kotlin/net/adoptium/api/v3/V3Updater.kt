@@ -17,6 +17,7 @@ import net.adoptium.api.v3.dataSources.ReleaseVersionResolver
 import net.adoptium.api.v3.dataSources.UpdatableVersionSupplier
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.releaseNotes.AdoptReleaseNotes
@@ -42,6 +43,7 @@ class V3UpdaterApp : Application()
 @ApplicationScoped
 class V3Updater @Inject constructor(
     private val adoptReposBuilder: AdoptReposBuilder,
+    private val adoptAttestationReposBuilder: AdoptAttestationReposBuilder,
     private val apiDataStore: APIDataStore,
     private val database: ApiPersistence,
     private val statsInterface: StatsInterface,
@@ -58,6 +60,22 @@ class V3Updater @Inject constructor(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
 
         fun calculateChecksum(repo: AdoptRepos): String {
+            val md = MessageDigest.getInstance("SHA256")
+            val outputStream = object : OutputStream() {
+                override fun write(b: Int) {
+                    md.update(b.toByte())
+                }
+            }
+            UpdaterJsonMapper.mapper.writeValue(outputStream, repo)
+
+            return String(Base64.getEncoder().encode(md.digest()))
+        }
+
+        fun calculateAttestationChecksum(repo: AdoptAttestationRepos?): String {
+            if (repo == null) {
+                return "null"
+            }
+
             val md = MessageDigest.getInstance("SHA256")
             val outputStream = object : OutputStream() {
                 override fun write(b: Int) {
@@ -139,6 +157,24 @@ class V3Updater @Inject constructor(
         }
     }
 
+    private fun printAttestationReposDebugInfo(
+        oldRepo: AdoptAttestationRepos,
+        afterInMemory: AdoptAttestationRepos,
+        afterInDb: AdoptAttestationRepos?) {
+
+        if (APIConfig.DEBUG) {
+            LOGGER.debug("Attestation old and new in-memory CRC comparison oldRepoChecksum={} oldRepoHashCode={} newInMemoryChecksum={} newInMemoryHashCode={}", calculateAttestationChecksum(oldRepo), oldRepo.hashCode(), calculateAttestationChecksum(afterInMemory), afterInMemory.hashCode())
+
+            LOGGER.debug("Deep-compare Attestation old and new in-memory")
+            deepDiffAttestationDebugPrint(oldRepo, afterInMemory)
+
+            if (afterInDb != null) {
+                LOGGER.debug("Deep-compare Attestation new in memory and new in db")
+                deepDiffAttestationDebugPrint(afterInMemory, afterInDb)
+            }
+        }
+    }
+
     private fun deepDiffDebugPrint(repoA: AdoptRepos, repoB: AdoptRepos) {
         repoA
             .allReleases
@@ -174,6 +210,25 @@ class V3Updater @Inject constructor(
                 val releaseA = repoA.allReleases.getReleaseById(releaseB.id)
                 if (releaseA == null) {
                     LOGGER.info("Release Added ${releaseB.id} ${releaseB.version_data.semver}")
+                }
+            }
+    }
+
+    private fun deepDiffAttestationDebugPrint(repoA: AdoptAttestationRepos, repoB: AdoptAttestationRepos) {
+        repoA.repos.forEach { attA ->
+                val attB = repoB.repos.firstOrNull { it.id == attA.id }
+                if (attB == null) {
+                    LOGGER.debug("Attestation disappeared ${attA.id} ${attA.filename}")
+                } else if (attA != attB) {
+                    LOGGER.debug("Attestation changedA {}", attA)
+                    LOGGER.debug("Attestation changedB {}", attB)
+                }
+            }
+
+        repoB.repos.forEach { attB ->
+                val attA = repoA.repos.firstOrNull { it.id == attB.id }
+                if (attA == null) {
+                    LOGGER.info("Attestation Added ${attB.id} ${attB.filename}")
                 }
             }
     }
@@ -230,12 +285,26 @@ class V3Updater @Inject constructor(
             AdoptRepos(emptyList())
         }
 
+        var attestationRepo: AdoptAttestationRepos = try {
+            apiDataStore.loadAttestationDataFromDb(true)
+        } catch (e: java.lang.Exception) {
+            LOGGER.error("Failed to load attestation db", e)
+            if (e is MongoException) {
+                LOGGER.error("Failed to connect to attestation db, exiting")
+                Quarkus.asyncExit(2)
+                Quarkus.waitForExit()
+            }   
+            AdoptAttestationRepos(emptyList())
+        } 
+
         val incrementalUpdateScheduled = AtomicBoolean(false)
+        val incrementalAttestationUpdateScheduled = AtomicBoolean(false)
 
         executor.scheduleWithFixedDelay(
             timerTask {
                 try {
                     runUpdate(repo, incrementalUpdateScheduled, executor)
+                    runAttestationUpdate(attestationRepo, incrementalAttestationUpdateScheduled, executor)
                 } catch (e: InvalidUpdateException) {
                     LOGGER.error("Failed to perform update", e)
                 }
@@ -261,6 +330,25 @@ class V3Updater @Inject constructor(
             )
         }
         repo1 = fullUpdate(repo1, false) ?: repo1
+        return repo1
+    }
+
+    fun runAttestationUpdate(
+        repo: AdoptAttestationRepos,
+        incrementalAttestationUpdateScheduled: AtomicBoolean,
+        executor: ScheduledExecutorService
+    ): AdoptAttestationRepos {
+        var repo1 = repo
+        repo1 = fullAttestationUpdate(repo1) ?: repo1
+        if (!incrementalAttestationUpdateScheduled.getAndSet(true)) {
+            executor.scheduleWithFixedDelay(
+                timerTask {
+                    // For the moment Attestation incremental update is a "full" one, as low cost
+                    repo1 = fullAttestationUpdate(repo1) ?: repo1
+                },
+                1, 6, TimeUnit.MINUTES
+            )
+        }
         return repo1
     }
 
@@ -316,7 +404,6 @@ class V3Updater @Inject constructor(
                         database.updateAllRepos(repo, checksum)
                         statsInterface.update(repo)
                         database.setReleaseInfo(releaseVersionResolver.formReleaseInfo(repo))
-
                         apiDataStore.loadDataFromDb(forceUpdate = true, logEntries = false)
                     }
                 }
@@ -331,6 +418,44 @@ class V3Updater @Inject constructor(
             }
         } catch (e: Exception) {
             LOGGER.error("Failed to perform full update", e)
+        } catch (e: Throwable) {
+            // Log and rethrow, may be unrecoverable error such as OutOfMemoryError
+            LOGGER.error("Error during full update", e)
+            throw e
+        }
+        return null
+    }
+
+    @Throws(InvalidUpdateException::class)
+    private fun fullAttestationUpdate(currentRepo: AdoptAttestationRepos): AdoptAttestationRepos? {
+        // Must catch errors or may kill the scheduler
+        try {
+            return runBlocking {
+                LOGGER.info("Starting Full Attestation update")
+
+                updatableVersionSupplier.updateVersions()
+
+                val repo = adoptAttestationReposBuilder.build()
+
+                printAttestationReposDebugInfo(currentRepo, repo, null)
+
+                val checksum = calculateAttestationChecksum(repo)
+
+                val dataInDb = mutex.withLock {
+                    runBlocking {
+                        database.updateAttestationRepos(repo, checksum)
+
+                        apiDataStore.loadAttestationDataFromDb(forceUpdate = true, logEntries = true)
+                    }
+                }
+
+                printAttestationReposDebugInfo(currentRepo, repo, dataInDb)
+
+                LOGGER.info("Full Attestation update done")
+                return@runBlocking repo
+            }
+        } catch (e: Exception) {
+            LOGGER.error("Failed to perform full Attestation update", e)
         } catch (e: Throwable) {
             // Log and rethrow, may be unrecoverable error such as OutOfMemoryError
             LOGGER.error("Error during full update", e)

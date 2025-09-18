@@ -5,6 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped
 import jakarta.enterprise.inject.Alternative
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
 import net.adoptium.api.v3.dataSources.persitence.mongo.UpdatedInfo
 import net.adoptium.api.v3.models.ReleaseInfo
 import java.time.ZonedDateTime
@@ -16,6 +17,7 @@ open class ApiDataStoreStub : APIDataStore {
 
     open var scheduled: Boolean = false
     private lateinit var adoptRepo: AdoptRepos
+    private lateinit var attestationRepo: AdoptAttestationRepos
 
     constructor() {
         reset()
@@ -43,6 +45,14 @@ open class ApiDataStoreStub : APIDataStore {
         this.adoptRepo = adoptRepo
     }
 
+    override fun getAdoptAttestationRepos(): AdoptAttestationRepos {
+        return attestationRepo
+    }
+
+    override fun setAdoptAttestationRepos(attestationRepo: AdoptAttestationRepos) {
+        this.attestationRepo = attestationRepo
+    }
+
     override fun getReleaseInfo(): ReleaseInfo {
         return ReleaseInfo(
             arrayOf(8, 9, 10, 11, 12),
@@ -57,6 +67,11 @@ open class ApiDataStoreStub : APIDataStore {
     override fun loadDataFromDb(forceUpdate: Boolean, log:Boolean): AdoptRepos {
         // nop
         return adoptRepo
+    }
+
+    override fun loadAttestationDataFromDb(forceUpdate: Boolean, log:Boolean): AdoptAttestationRepos {
+        // nop
+        return attestationRepo
     }
 
     override fun getUpdateInfo(): UpdatedInfo {
