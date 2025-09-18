@@ -108,7 +108,7 @@ class AttestationMapperTest {
         runBlocking {
             val parsed = adoptAttestationMapper.toAttestation(Vendor.eclipse, "attestation_link", ghAttestation)
             LOGGER.info("Parsed Attestation: ${parsed}")
-            assertEquals(GitHubId("1").toString(), parsed.id)
+            assertEquals(GitHubId("1").id.toString(), parsed.id)
             assertEquals("filename", parsed.filename)
             assertEquals("commitResourcePath", parsed.commitResourcePath)
             assertEquals(Vendor.eclipse, parsed.vendor)

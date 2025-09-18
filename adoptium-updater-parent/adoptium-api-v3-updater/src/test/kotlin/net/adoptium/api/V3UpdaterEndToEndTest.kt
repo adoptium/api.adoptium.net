@@ -285,6 +285,117 @@ class V3UpdaterEndToEndTest {
             assertTrue(updatedRepo.repos.size == attestationRepo.repos.size + 1)
             val addedAtt = updatedRepo.repos.firstOrNull { it.filename == "25/jdk_25_36_x64_linux_Adoptium.xml" }
             assertTrue(addedAtt != null)
+            assertTrue(updatedRepo != attestationRepo)
+        }
+    }
+
+    @Test
+    fun `remove attestation is removed`() {
+        runBlocking {
+            val attestationRepo = AdoptAttestationReposTestDataGenerator.generate()
+
+            val getAttestationSummary: ((String, String) -> GHAttestationRepoSummary?) = { org, repo ->
+                LOGGER.info("getAttestationSummary: "+org+" "+repo)
+
+                var attestationSummary = GHAttestationSummaryTestDataGenerator.generateGHAttestationRepoSummary(attestationRepo)
+
+                // Remove the jdk-24 attestation file from the summary
+                if ( attestationSummary?.data?.repository?.att_object?.entries != null ) {
+                    var newEntries = attestationSummary?.data?.repository?.att_object?.entries?.toMutableList()
+                    newEntries?.removeIf { it.name == "24" }
+                    attestationSummary?.data?.repository?.att_object?.entries = newEntries
+                }
+
+                LOGGER.info("getAttestationSummary: "+attestationSummary)
+
+                attestationSummary
+            }
+
+            val getAttestationByName: ((String, String, String) -> GHAttestation?) = { org, repo, name ->
+                            val existAtt = attestationRepo.repos.firstOrNull { it.filename == name }
+                            if (existAtt != null) {
+                                // Construct GHAttestation equivalent of existing Attestation
+                                var prop: Property = Property()
+                                prop.name = "platform"
+                                prop.value = existAtt.architecture.toString() + "_" + existAtt.os.toString()
+                                var props: Properties = Properties(listOf(prop))
+                                var hash: Hash = Hash()
+                                hash.sha256 = existAtt.target_checksum
+                                var hashes: Hashes = Hashes(listOf(hash))
+                                var er: Reference = Reference(null, hashes)
+                                var erl: ExternalReferences = ExternalReferences(listOf(er))
+                                var c: Component = Component("comp", existAtt.release_name, erl, props)
+                                var cs: Components = Components(listOf(c))
+                                var a: Assessor = Assessor(null, Organization(existAtt.assessor_org))
+                                var ass: Assessors = Assessors(listOf(a))
+                                var aff: Affirmation = Affirmation(existAtt.assessor_affirmation)
+                                var cl: Claim = Claim(null, existAtt.assessor_claim_predicate)
+                                var cls: Claims = Claims(listOf(cl))
+                                var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
+
+                                GHAttestation( GitHubId(existAtt.id), existAtt.commitResourcePath, existAtt.filename, d, null)
+                            } else {
+                                null
+                            }
+            }
+
+            val updatedRepo = runAttestationUpdateTest(attestationRepo, getAttestationSummary, getAttestationByName)
+
+            assertTrue(updatedRepo.repos.size == attestationRepo.repos.size - 1)
+            val removedAtt = updatedRepo.repos.firstOrNull { it.featureVersion == 24 }
+            assertTrue(removedAtt == null)
+            assertTrue(updatedRepo != attestationRepo)
+        }
+    }
+
+    @Test
+    fun `unchanged attestation repo has no updates`() {
+        runBlocking {
+            val attestationRepo = AdoptAttestationReposTestDataGenerator.generate()
+
+            val getAttestationSummary: ((String, String) -> GHAttestationRepoSummary?) = { org, repo ->
+                LOGGER.info("getAttestationSummary: "+org+" "+repo)
+
+                var attestationSummary = GHAttestationSummaryTestDataGenerator.generateGHAttestationRepoSummary(attestationRepo)
+
+                LOGGER.info("getAttestationSummary: "+attestationSummary)
+
+                attestationSummary
+            }
+
+            val getAttestationByName: ((String, String, String) -> GHAttestation?) = { org, repo, name ->
+                            val existAtt = attestationRepo.repos.firstOrNull { it.filename == name }
+                            if (existAtt != null) {
+                                // Construct GHAttestation equivalent of existing Attestation
+                                var prop: Property = Property()
+                                prop.name = "platform"
+                                prop.value = existAtt.architecture.toString() + "_" + existAtt.os.toString()
+                                var props: Properties = Properties(listOf(prop))
+                                var hash: Hash = Hash()
+                                hash.sha256 = existAtt.target_checksum
+                                var hashes: Hashes = Hashes(listOf(hash))
+                                var er: Reference = Reference(null, hashes)
+                                var erl: ExternalReferences = ExternalReferences(listOf(er))
+                                var c: Component = Component("comp", existAtt.release_name, erl, props)
+                                var cs: Components = Components(listOf(c))
+                                var a: Assessor = Assessor(null, Organization(existAtt.assessor_org))
+                                var ass: Assessors = Assessors(listOf(a))
+                                var aff: Affirmation = Affirmation(existAtt.assessor_affirmation)
+                                var cl: Claim = Claim(null, existAtt.assessor_claim_predicate)
+                                var cls: Claims = Claims(listOf(cl))
+                                var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
+
+                                GHAttestation( GitHubId(existAtt.id), existAtt.commitResourcePath, existAtt.filename, d, null)
+                            } else {
+                                null
+                            }
+            }
+
+            val updatedRepo = runAttestationUpdateTest(attestationRepo, getAttestationSummary, getAttestationByName)
+
+            assertTrue(updatedRepo.repos.size == attestationRepo.repos.size)
+            assertTrue(updatedRepo == attestationRepo)
+            assertTrue(updatedRepo !== attestationRepo)
         }
     }
 
@@ -447,10 +558,7 @@ class V3UpdaterEndToEndTest {
                    getAttestationByName: (String, String, String) -> GHAttestation? ): AdoptAttestationRepos {
 
         val adoptRepos: AdoptRepos = mockk()
-
         coEvery { adoptRepos.getFeatureRelease(any()) } returns null
-//            coEvery { apiDataStore.loadDataFromDb(true, false) } returns AdoptRepos(emptyList())
-
 
         val memoryDb = InMemoryApiPersistence(adoptRepos, attestationRepo)
 

@@ -87,6 +87,7 @@ open class APIDataStoreImpl : APIDataStore {
 
                     if (logEntries) {
                         LOGGER.info("Loaded Attestations: $updatedAt")
+                        showAttestationStats(previousRepo, newData)
                     }
                     Pair(newData, updatedAt)
                 } else {
@@ -130,6 +131,27 @@ open class APIDataStoreImpl : APIDataStore {
                     val newRelease = binaryRepos.allReleases.nodes[oldRelease.id]
                     if (newRelease == null) {
                         LOGGER.info("Removed release: ${oldRelease.release_name} ${oldRelease.binaries.size}")
+                    }
+                }
+        }
+
+        private fun showAttestationStats(attRepos: AdoptAttestationRepos?, newData: AdoptAttestationRepos) {
+            newData.repos
+                .forEach { att ->
+                    val oldAtt = attRepos?.repos?.firstOrNull { it.id == att.id }
+
+                    if (oldAtt == null) {
+                        LOGGER.info("New Attestation: ${att.release_name} ${att.filename}")
+                    } else if (oldAtt != att) {
+                        LOGGER.info("Modified Attestation: ${att.release_name} ${att.filename}")
+                    }
+                }
+
+            attRepos?.repos
+                ?.forEach { oldAtt ->
+                    val newAtt = newData.repos.firstOrNull { it.id == oldAtt.id }
+                    if (newAtt == null) {
+                        LOGGER.info("Removed Attestation: ${oldAtt.release_name} ${oldAtt.filename}")
                     }
                 }
         }

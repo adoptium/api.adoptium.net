@@ -91,7 +91,7 @@ private class AdoptAttestationMapper(
                 val arch: Architecture  = Architecture.valueOf(archStr)  //by lazy { Architecture.valueOf(archStr) }
                 val os: OperatingSystem = OperatingSystem.valueOf(osStr) //by lazy { OperatingSystem.valueOf(osStr) }
  
-                return@async Attestation(ghAttestationAsset.id.toString()?:"", ghAttestationAsset.commitResourcePath?:"", ghAttestationAsset.filename?:"",
+                return@async Attestation(ghAttestationAsset?.id?.id?:"", ghAttestationAsset.commitResourcePath?:"", ghAttestationAsset.filename?:"",
                                          featureVersion, releaseName, os, arch, ImageType.jdk, JvmImpl.hotspot,
                                          vendor, target_checksum, assessor_org, assessor_affirmation, assessor_claim_predicate,
                                          attestation_link, attestation_link+".sign.pub")
