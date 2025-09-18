@@ -131,19 +131,17 @@ class V3UpdaterTest {
             }
 
             val repo = AdoptReposTestDataGenerator.generate()
-            val r0 = repo.getReleases(Predicate<Release> { it != null }, SortOrder.ASC, SortMethod.DATE)
-            for(r in r0) { LOGGER.info("REL0: "+r) }
 
             val vs = object : UpdatableVersionSupplier {
                 override suspend fun updateVersions() {
                 }
 
                 override fun getTipVersion(): Int? {
-                    return 24
+                    TODO("Not yet implemented")
                 }
 
                 override fun getLtsVersions(): Array<Int> {
-                    return arrayOf(8, 11, 17, 21)
+                    TODO("Not yet implemented")
                 }
 
                 override fun getAllVersions(): Array<Int> {
