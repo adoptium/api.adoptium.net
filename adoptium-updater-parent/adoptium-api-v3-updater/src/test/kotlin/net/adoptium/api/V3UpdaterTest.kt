@@ -191,7 +191,7 @@ class V3UpdaterTest {
                                                 it.binaries.size
                                             ),
                                             it.id,
-if (it.vendor == Vendor.eclipse) "/adoptium/temurin" + it.version_data.major + "-binaries/releases/tag/jdk8u-2020-01-09-03-36" else "/AdoptOpenJDK/openjdk" + it.version_data.major + "-binaries/releases/tag/jdk8u-2020-01-09-03-36",
+                                            "/AdoptOpenJDK/openjdk${it.version_data.major}-binaries/releases/tag/jdk8u-2020-01-09-03-36"
                                         )
                                     }
                             }
