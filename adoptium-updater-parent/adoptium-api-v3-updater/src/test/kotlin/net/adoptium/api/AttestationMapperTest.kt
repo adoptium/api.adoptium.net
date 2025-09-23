@@ -93,7 +93,8 @@ class AttestationMapperTest {
         init {
             ghAttestation.id = GitHubId("1")
             ghAttestation.filename = "filename"
-            ghAttestation.commitResourcePath = "commitResourcePath"
+            ghAttestation.linkUrl = "linkUrl"
+            ghAttestation.linkSignUrl = "linkSignUrl"
         }
     }
 
@@ -106,11 +107,10 @@ class AttestationMapperTest {
     fun `Test Attestation xml mapper parsing`() {
 
         runBlocking {
-            val parsed = adoptAttestationMapper.toAttestation(Vendor.eclipse, "attestation_link", ghAttestation)
+            val parsed = adoptAttestationMapper.toAttestation(Vendor.eclipse, ghAttestation)
             LOGGER.info("Parsed Attestation: ${parsed}")
             assertEquals(GitHubId("1").id.toString(), parsed.id)
             assertEquals("filename", parsed.filename)
-            assertEquals("commitResourcePath", parsed.commitResourcePath)
             assertEquals(Vendor.eclipse, parsed.vendor)
             assertEquals("jdk-21.0.5+11", parsed.release_name)
             assertEquals(OperatingSystem.linux, parsed.os)
@@ -121,8 +121,8 @@ class AttestationMapperTest {
             assertEquals("Acme confirms a verified reproducible build", parsed.assessor_affirmation)
             assertEquals("VERIFIED_REPRODUCIBLE_BUILD", parsed.assessor_claim_predicate)
             assertEquals("1234567890123456789012345678901234567890123456789012345678901234", parsed.target_checksum)
-            assertEquals("attestation_link", parsed.attestation_link)
-            assertEquals("attestation_link.sign.pub", parsed.attestation_public_signing_key_link)
+            assertEquals("linkUrl", parsed.attestation_link)
+            assertEquals("linkSignUrl", parsed.attestation_public_signing_key_link)
         }
     }
 }

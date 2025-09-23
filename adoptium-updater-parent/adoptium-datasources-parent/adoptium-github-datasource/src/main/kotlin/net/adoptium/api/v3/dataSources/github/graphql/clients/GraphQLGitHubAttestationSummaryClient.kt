@@ -3,7 +3,7 @@ package net.adoptium.api.v3.dataSources.github.graphql.clients
 import com.expediagroup.graphql.client.types.GraphQLClientRequest
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
-import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummary
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummaryData
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
@@ -18,7 +18,7 @@ open class GraphQLGitHubAttestationSummaryClient @Inject constructor(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    open suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummary? {
+    open suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummaryData? {
 
         LOGGER.debug("Getting tree file summary of attestations github repository $org/$repo")
 
@@ -26,7 +26,7 @@ open class GraphQLGitHubAttestationSummaryClient @Inject constructor(
 
         val result = graphQLGitHubInterface.queryApi(query::withCursor, null)
 
-        val ghAttestationRepoSummary: GHAttestationRepoSummary? = if (result?.data == null) {
+        val ghAttestationRepoSummary: GHAttestationRepoSummaryData? = if (result?.data == null) {
             return null
         } else {
             result.data
@@ -35,7 +35,7 @@ open class GraphQLGitHubAttestationSummaryClient @Inject constructor(
         return ghAttestationRepoSummary
     }
 
-    class RequestAttestationRepoSummary(val org: String, val repo: String, override val variables: Any = mapOf<String, String>()) : GraphQLClientRequest<GHAttestationRepoSummary> {
+    class RequestAttestationRepoSummary(val org: String, val repo: String, override val variables: Any = mapOf<String, String>()) : GraphQLClientRequest<GHAttestationRepoSummaryData> {
         fun withCursor(cursor: String?): RequestAttestationRepoSummary {
             return if (cursor != null) RequestAttestationRepoSummary(org, repo, mapOf("cursorPointer" to cursor))
             else this
@@ -46,7 +46,7 @@ open class GraphQLGitHubAttestationSummaryClient @Inject constructor(
                 """
     query {
       repository(owner: "${org}", name: "${repo}") {
-        object(expression: HEAD:) {
+        object(expression: "HEAD:") {
           ... on Tree {                         
             entries {                           
               name
@@ -70,8 +70,8 @@ open class GraphQLGitHubAttestationSummaryClient @Inject constructor(
     }
                     """
 
-        override fun responseType(): KClass<GHAttestationRepoSummary> {
-            return GHAttestationRepoSummary::class
+        override fun responseType(): KClass<GHAttestationRepoSummaryData> {
+            return GHAttestationRepoSummaryData::class
         }
     }
 }

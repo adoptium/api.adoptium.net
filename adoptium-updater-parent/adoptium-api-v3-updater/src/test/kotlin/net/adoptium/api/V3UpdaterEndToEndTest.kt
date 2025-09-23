@@ -207,19 +207,18 @@ class V3UpdaterEndToEndTest {
         runBlocking {
             val attestationRepo = AdoptAttestationReposTestDataGenerator.generate()
 
-            val getAttestationSummary: ((String, String) -> GHAttestationRepoSummary?) = { org, repo ->
+            val getAttestationSummary: ((String, String) -> GHAttestationRepoSummaryData?) = { org, repo ->
                 LOGGER.info("getAttestationSummary: "+org+" "+repo)
 
                 var attestationSummary = GHAttestationSummaryTestDataGenerator.generateGHAttestationRepoSummary(attestationRepo)
 
                 // Add a jdk-25 attestation file into the summary
-                if ( attestationSummary?.data?.repository?.att_object?.entries != null ) {
-                    attestationSummary?.data?.repository?.att_object?.entries = (attestationSummary?.data?.repository?.att_object?.entries ?: mutableListOf<GHAttestationRepoSummaryEntry>()) +
+                if ( attestationSummary?.repository?.att_object?.entries != null ) {
+                    attestationSummary?.repository?.att_object?.entries = (attestationSummary?.repository?.att_object?.entries ?: mutableListOf<GHAttestationRepoSummaryEntry>()) +
                         GHAttestationRepoSummaryEntry("25", "tree",
-                                                      GHAttestationRepoSummaryObject(null,
-                                                                                     listOf(GHAttestationRepoSummaryEntry("jdk_25_36_x64_linux_Adoptium.xml",
+                                                      GHAttestationRepoSummaryObject(listOf(GHAttestationRepoSummaryEntry("jdk_25_36_x64_linux_Adoptium.xml",
                                                                                                                           "blob",
-                                                                                                                          GHAttestationRepoSummaryObject("commitResPath1", null)
+                                                                                                                          null
                                                                                                                          )
                                                                                      )
                                                       )
@@ -253,7 +252,7 @@ class V3UpdaterEndToEndTest {
                                 var cls: Claims = Claims(listOf(cl))
                                 var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
 
-                                GHAttestation( GitHubId(existAtt.id), existAtt.commitResourcePath, existAtt.filename, d, null)
+                                GHAttestation( GitHubId(existAtt.id), existAtt.filename, existAtt.attestation_link, existAtt.attestation_public_signing_key_link, d, null)
                             } else if (name == "25/jdk_25_36_x64_linux_Adoptium.xml") {
                                 // Return the new attestation
                                 var prop: Property = Property()
@@ -274,7 +273,7 @@ class V3UpdaterEndToEndTest {
                                 var cls: Claims = Claims(listOf(cl))
                                 var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
 
-                                GHAttestation( GitHubId("1"), "commitResPath1", name, d, null)
+                                GHAttestation( GitHubId("1"), name, "https://github.com/"+org+"/"+repo+"/blob/main/"+name, "https://github.com/"+org+"/"+repo+"/blob/main/"+name+".sign.pub", d, null)
                             } else {
                                 null
                             }
@@ -294,16 +293,16 @@ class V3UpdaterEndToEndTest {
         runBlocking {
             val attestationRepo = AdoptAttestationReposTestDataGenerator.generate()
 
-            val getAttestationSummary: ((String, String) -> GHAttestationRepoSummary?) = { org, repo ->
+            val getAttestationSummary: ((String, String) -> GHAttestationRepoSummaryData?) = { org, repo ->
                 LOGGER.info("getAttestationSummary: "+org+" "+repo)
 
                 var attestationSummary = GHAttestationSummaryTestDataGenerator.generateGHAttestationRepoSummary(attestationRepo)
 
                 // Remove the jdk-24 attestation file from the summary
-                if ( attestationSummary?.data?.repository?.att_object?.entries != null ) {
-                    var newEntries = attestationSummary?.data?.repository?.att_object?.entries?.toMutableList()
+                if ( attestationSummary?.repository?.att_object?.entries != null ) {
+                    var newEntries = attestationSummary?.repository?.att_object?.entries?.toMutableList()
                     newEntries?.removeIf { it.name == "24" }
-                    attestationSummary?.data?.repository?.att_object?.entries = newEntries
+                    attestationSummary?.repository?.att_object?.entries = newEntries
                 }
 
                 LOGGER.info("getAttestationSummary: "+attestationSummary)
@@ -333,7 +332,7 @@ class V3UpdaterEndToEndTest {
                                 var cls: Claims = Claims(listOf(cl))
                                 var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
 
-                                GHAttestation( GitHubId(existAtt.id), existAtt.commitResourcePath, existAtt.filename, d, null)
+                                GHAttestation( GitHubId(existAtt.id), existAtt.filename, existAtt.attestation_link, existAtt.attestation_public_signing_key_link, d, null)
                             } else {
                                 null
                             }
@@ -353,7 +352,7 @@ class V3UpdaterEndToEndTest {
         runBlocking {
             val attestationRepo = AdoptAttestationReposTestDataGenerator.generate()
 
-            val getAttestationSummary: ((String, String) -> GHAttestationRepoSummary?) = { org, repo ->
+            val getAttestationSummary: ((String, String) -> GHAttestationRepoSummaryData?) = { org, repo ->
                 LOGGER.info("getAttestationSummary: "+org+" "+repo)
 
                 var attestationSummary = GHAttestationSummaryTestDataGenerator.generateGHAttestationRepoSummary(attestationRepo)
@@ -385,7 +384,7 @@ class V3UpdaterEndToEndTest {
                                 var cls: Claims = Claims(listOf(cl))
                                 var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
 
-                                GHAttestation( GitHubId(existAtt.id), existAtt.commitResourcePath, existAtt.filename, d, null)
+                                GHAttestation( GitHubId(existAtt.id), existAtt.filename, existAtt.attestation_link, existAtt.attestation_public_signing_key_link, d, null)
                             } else {
                                 null
                             }
@@ -489,7 +488,7 @@ class V3UpdaterEndToEndTest {
                             }
                         }
 
-                        override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummary? {
+                        override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummaryData? {
                             return null
                         }
                         override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
@@ -515,7 +514,7 @@ class V3UpdaterEndToEndTest {
                             return null
                         }
 
-                        override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummary? {
+                        override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummaryData? {
                             return null
                         }
                         override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
@@ -554,7 +553,7 @@ class V3UpdaterEndToEndTest {
     }
 
     private fun runAttestationUpdateTest(attestationRepo: AdoptAttestationRepos,
-                   getAttestationSummary: (String, String) -> GHAttestationRepoSummary?,
+                   getAttestationSummary: (String, String) -> GHAttestationRepoSummaryData?,
                    getAttestationByName: (String, String, String) -> GHAttestation? ): AdoptAttestationRepos {
 
         val adoptRepos: AdoptRepos = mockk()
@@ -605,7 +604,7 @@ class V3UpdaterEndToEndTest {
                             return null
                         }
 
-                        override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummary? {
+                        override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummaryData? {
                             return null
                         }
                         override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
@@ -631,7 +630,7 @@ class V3UpdaterEndToEndTest {
                             return null
                         }
 
-                        override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummary? {
+                        override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummaryData? {
                             return getAttestationSummary(org, repo)
                         }
 

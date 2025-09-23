@@ -7,8 +7,6 @@ class Attestation {
 
     val id: String
 
-    val commitResourcePath: String
-
     val filename: String
 
     val featureVersion: Int?
@@ -38,16 +36,15 @@ class Attestation {
     @Schema(example = "VERIFIED_REPRODUCIBLE_BUILD")
     val assessor_claim_predicate: String?
 
-    @Schema(example = "https://github.com/adoptium/temurin-attestations/21/jdk_21_0_6_7_x64-linux_MyOrgLtd.xml")
+    @Schema(example = "https://github.com/adoptium/temurin-attestations/blob/main/21/jdk_21_0_6_7_x64-linux_MyOrgLtd.xml")
     val attestation_link: String?
 
-    @Schema(example = "https://github.com/adoptium/temurin-attestations/21/jdk_21_0_6_7_x64-linux_MyOrgLtd.xml.sign.pub")
+    @Schema(example = "https://github.com/adoptium/temurin-attestations/blob/main/21/jdk_21_0_6_7_x64-linux_MyOrgLtd.xml.sign.pub")
     val attestation_public_signing_key_link: String?
 
     @JsonCreator
     constructor(
         id: String,
-        commitResourcePath: String,
         filename: String,
         featureVersion: Int?,
         release_name: String?,
@@ -64,7 +61,6 @@ class Attestation {
         attestation_public_signing_key_link: String?
     ) {
         this.id = id
-        this.commitResourcePath = commitResourcePath
         this.filename = filename
         this.featureVersion = featureVersion
         this.release_name = release_name
@@ -88,7 +84,6 @@ class Attestation {
         other as Attestation
 
         if (id != other.id) return false
-        if (commitResourcePath != other.commitResourcePath) return false
         if (filename != other.filename) return false
         if (featureVersion != other.featureVersion) return false
         if (release_name != other.release_name) return false
@@ -110,7 +105,6 @@ class Attestation {
     override fun hashCode(): Int {
         var result = featureVersion.hashCode()
         result = 31 * result + id.hashCode()
-        result = 31 * result + commitResourcePath.hashCode()
         result = 31 * result + filename.hashCode()
         result = 31 * result + release_name.hashCode()
         result = 31 * result + os.hashCode()
@@ -128,7 +122,7 @@ class Attestation {
     }
 
     override fun toString(): String {
-        return "Attestation(id='$id', commitResourcePath='$commitResourcePath', filename='$filename', featureVersion='$featureVersion', release_name='$release_name', os='$os', architecture='$architecture', image_type='$image_type', jvm_impl='$jvm_impl', vendor='$vendor'" +
+        return "Attestation(id='$id', filename='$filename', featureVersion='$featureVersion', release_name='$release_name', os='$os', architecture='$architecture', image_type='$image_type', jvm_impl='$jvm_impl', vendor='$vendor'" +
                            "assessor_org='$assessor_org', assessor_affirmation='$assessor_affirmation', assessor_claim_predicate.hashCode='$assessor_claim_predicate.hashCode', " +
                            "target_checksum='$target_checksum', "+
                            "attestation_link='$attestation_link', attestation_public_signing_key_link='$attestation_public_signing_key_link')"

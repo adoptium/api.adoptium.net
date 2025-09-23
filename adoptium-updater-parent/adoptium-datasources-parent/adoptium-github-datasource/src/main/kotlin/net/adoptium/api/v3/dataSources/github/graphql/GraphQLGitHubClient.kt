@@ -13,7 +13,7 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.GHRepository
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestation
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.GitHubId
-import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummary
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummaryData
 
 @ApplicationScoped
 open class GraphQLGitHubClient @Inject constructor(
@@ -36,7 +36,7 @@ open class GraphQLGitHubClient @Inject constructor(
         return repositoryClientClient.getRepository(owner, repoName, filter)
     }
 
-    override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummary? {
+    override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummaryData? {
         return attestationSummaryClient.getAttestationSummary(org, repo)
     }
 

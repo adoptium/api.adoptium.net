@@ -26,7 +26,7 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRepository
-import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummary
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummaryData
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestation
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
@@ -196,7 +196,7 @@ class V3UpdaterTest {
                                     }
                             }
 
-                            override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummary? {
+                            override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummaryData? {
                                 return null
                             }
                             override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
@@ -250,7 +250,7 @@ class V3UpdaterTest {
                                         }
                                 }
 
-                            override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummary? {
+                            override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummaryData? {
                                 return null
                             }
                             override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {

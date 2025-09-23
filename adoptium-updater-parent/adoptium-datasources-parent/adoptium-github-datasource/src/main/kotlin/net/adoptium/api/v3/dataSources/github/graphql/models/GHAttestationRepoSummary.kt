@@ -17,11 +17,6 @@ query RepoFiles($owner: String!, $name: String!, $expr: String!) {
               entries {
                 name
                 type
-                  object {
-                    ... on Blob {
-                      commitResourcePath
-                    }
-                  }
               }
             }
           }
@@ -37,47 +32,44 @@ Response:
       "object": {
         "entries": [
           {
-            "name": ".github",
-            "type": "tree",
+            "name":".github",
+            "type":"tree",
             "object": {
               "entries": [
                 {
-                  "name": "workflows",
-                  "type": "tree",
-                  "object": {}
+                  "name":"workflows",
+                  "type":"tree"
                 }
               ]
             }
           },
           {
-            "name": "21",
-            "type": "tree",
+            "name":"21",
+            "type":"tree",
             "object": {
               "entries": [
                 {
-                  "name": "jdk_21_0_5_11_x64_linux_Adoptium.xml",
-                  "type": "blob",
-                  "object": {
-                    "commitResourcePath": "/andrew-m-leonard/temurin-attestations/commit/97d84d270a34f66749e5e66b0a42996828bda4e1"
-                  }
+                  "name":"jdk_21_0_5_11_x64_linux_Adoptium.xml",
+                  "type":"blob",
                 },
                 {
-                  "name": "jdk_21_0_5_11_x64_linux_Adoptium.xml.sign.pub",
-                  "type": "blob",
-                  "object": {
-                    "commitResourcePath": "/andrew-m-leonard/temurin-attestations/commit/d65966533a06d90147e8f4ad963dcf7bb52e645e"
-                  }
+                  "name":"jdk_21_0_5_11_x64_linux_Adoptium.xml.sign.pub",
+                  "type":"blob",
                 }
               ]
             }
           },
           {
-            "name": "README.md",
-            "type": "blob",
-            "object": {}
+            "name":"README.md",
+            "type":"blob",
+            "object":{}
           }
         ]
       }
+    },
+    "rateLimit": {
+      "cost":1,
+      "remaining":4586
     }
   }
 }
@@ -85,14 +77,14 @@ Response:
 */
 
 data class GHAttestationRepoSummary @JsonCreator constructor(
-    @JsonProperty("data") val data: GHAttestationRepoSummaryData,
-    @JsonProperty("rateLimit") override val rateLimit: RateLimit
-) : HasRateLimit(rateLimit) {
+    @JsonProperty("data") val data: GHAttestationRepoSummaryData
+) {
 }
 
 data class GHAttestationRepoSummaryData @JsonCreator constructor(
-    @JsonProperty("repository") val repository: GHAttestationRepoSummaryRepository?
-) {
+    @JsonProperty("repository") val repository: GHAttestationRepoSummaryRepository?,
+    @JsonProperty("rateLimit") override val rateLimit: RateLimit
+) : HasRateLimit(rateLimit) {
 }
 
 data class GHAttestationRepoSummaryRepository @JsonCreator constructor(
@@ -101,7 +93,6 @@ data class GHAttestationRepoSummaryRepository @JsonCreator constructor(
 }
 
 data class GHAttestationRepoSummaryObject @JsonCreator constructor(
-    @JsonProperty("commitResourcePath") val commitResourcePath: String?,
     @JsonProperty("entries")            var entries: List<GHAttestationRepoSummaryEntry>?
 ) { 
 }

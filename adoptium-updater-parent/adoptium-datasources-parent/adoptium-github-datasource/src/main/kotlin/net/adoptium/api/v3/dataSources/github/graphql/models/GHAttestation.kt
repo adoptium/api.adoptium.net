@@ -162,8 +162,9 @@ data class Declarations(
 @JacksonXmlRootElement(localName = "bom")
 data class GHAttestation @JsonCreator constructor(
         var id: GitHubId?,
-        var commitResourcePath: String?,
         var filename: String?,
+        var linkUrl: String?,
+        var linkSignUrl: String?,
 
         @JacksonXmlProperty(localName = "declarations")
         var declarations: Declarations? = null,

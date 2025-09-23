@@ -15,7 +15,7 @@ object GHAttestationSummaryTestDataGenerator {
 
     private val LOGGER = LoggerFactory.getLogger(this::class.java)
 
-    fun generateGHAttestationRepoSummary(repo: AdoptAttestationRepos): GHAttestationRepoSummary {
+    fun generateGHAttestationRepoSummary(repo: AdoptAttestationRepos): GHAttestationRepoSummaryData {
         val attestations = repo.getAttestations()
         LOGGER.info("generateGHAttestationRepoSummary: "+attestations)
 
@@ -26,10 +26,9 @@ object GHAttestationSummaryTestDataGenerator {
                 // No "tree" entry for this featureVersion yet, add List..
                 summaries.add(
                         GHAttestationRepoSummaryEntry(attestation.featureVersion.toString(), "tree",
-                                                      GHAttestationRepoSummaryObject(null,
-                                                                                     listOf(GHAttestationRepoSummaryEntry(attestation.filename.substringAfter("/"),
+                                                      GHAttestationRepoSummaryObject(listOf(GHAttestationRepoSummaryEntry(attestation.filename.substringAfter("/"),
                                                                                                                           "blob",
-                                                                                                                          GHAttestationRepoSummaryObject(attestation.commitResourcePath, null)
+                                                                                                                          null
                                                                                                                          )
                                                                                      )
                                                       )
@@ -38,12 +37,12 @@ object GHAttestationSummaryTestDataGenerator {
                 // Add to existing "tree" for featureVersion
                 versionEntry.att_object?.entries = (versionEntry.att_object?.entries ?: mutableListOf<GHAttestationRepoSummaryEntry>()) + GHAttestationRepoSummaryEntry(attestation.filename.substringAfter("/"),
                                                                                                                     "blob",
-                                                                                                                    GHAttestationRepoSummaryObject(attestation.commitResourcePath, null)
+                                                                                                                    null
                                                                                                                    )
             }
         }
 
-        val attestationSummary = GHAttestationRepoSummary(GHAttestationRepoSummaryData(GHAttestationRepoSummaryRepository(GHAttestationRepoSummaryObject(null, summaries))), RateLimit(1,1))
+        val attestationSummary = GHAttestationRepoSummaryData(GHAttestationRepoSummaryRepository(GHAttestationRepoSummaryObject(summaries)), RateLimit(1,1000))
 
         return attestationSummary
     }

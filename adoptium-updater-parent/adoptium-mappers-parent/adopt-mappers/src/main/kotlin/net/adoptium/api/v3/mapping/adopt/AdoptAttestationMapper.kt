@@ -43,19 +43,18 @@ private class AdoptAttestationMapper(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    override suspend fun toAttestationList(vendor: Vendor, ghAttestationAssets: Map<String, GHAttestation>): List<Attestation> {
+    override suspend fun toAttestationList(vendor: Vendor, ghAttestationAssets: List<GHAttestation>): List<Attestation> {
         return ghAttestationAssets
-            .map { (key, value) -> assetToAttestationAsync(vendor, key, value) }
+            .map { it -> assetToAttestationAsync(vendor, it) }
             .map { it.await() }
     }
 
-    override suspend fun toAttestation(vendor: Vendor, attestation_link: String, ghAttestation: GHAttestation): Attestation {
-        return assetToAttestationAsync(vendor, attestation_link, ghAttestation).await()
+    override suspend fun toAttestation(vendor: Vendor, ghAttestation: GHAttestation): Attestation {
+        return assetToAttestationAsync(vendor, ghAttestation).await()
     }
 
     private fun assetToAttestationAsync(
         vendor: Vendor,
-        attestation_link: String,
         ghAttestationAsset: GHAttestation
     ): Deferred<Attestation> {
         return GlobalScope.async {
@@ -91,10 +90,10 @@ private class AdoptAttestationMapper(
                 val arch: Architecture  = Architecture.valueOf(archStr)  //by lazy { Architecture.valueOf(archStr) }
                 val os: OperatingSystem = OperatingSystem.valueOf(osStr) //by lazy { OperatingSystem.valueOf(osStr) }
  
-                return@async Attestation(ghAttestationAsset?.id?.id?:"", ghAttestationAsset.commitResourcePath?:"", ghAttestationAsset.filename?:"",
+                return@async Attestation(ghAttestationAsset?.id?.id?:"", ghAttestationAsset.filename?:"",
                                          featureVersion, releaseName, os, arch, ImageType.jdk, JvmImpl.hotspot,
                                          vendor, target_checksum, assessor_org, assessor_affirmation, assessor_claim_predicate,
-                                         attestation_link, attestation_link+".sign.pub")
+                                         ghAttestationAsset.linkUrl?:"", ghAttestationAsset.linkSignUrl?:"")
         }
     }
 }

@@ -15,6 +15,7 @@ import net.adoptium.api.v3.mapping.AttestationMapper
 import net.adoptium.api.v3.mapping.adopt.AdoptAttestationMapperFactory
 import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.models.Attestation
+import net.adoptium.api.v3.config.APIConfig
 import org.slf4j.LoggerFactory
 
 interface AdoptAttestationRepository {
@@ -56,9 +57,9 @@ open class AdoptAttestationRepositoryImpl @Inject constructor(
         val attestation = client.getAttestationByName(owner, repoName, name)
 
         if ( attestation != null ) {
-            val attestation_link = "https://github.com/" + owner + "/" + repoName + "/" + name
+            val attestation_link = owner + "/" + repoName + "/" + name
             LOGGER.info("Retrieved Attestation for: " + attestation_link)
-            return getMapperForRepo(attestation_link).toAttestation(vendor, attestation_link, attestation)
+            return getMapperForRepo(attestation_link).toAttestation(vendor, attestation)
         } else {
             return null
         }
@@ -69,14 +70,18 @@ open class AdoptAttestationRepositoryImpl @Inject constructor(
     }
 
     private suspend fun getRepository(vendor: Vendor, owner: String, repoName: String): List<Attestation> {
-        val attestations: MutableMap<String, GHAttestation> = mutableMapOf()
+        val attestations = mutableListOf<GHAttestation>()
 
         LOGGER.info("Attestation getRepository for: " + vendor + " " + owner + "/" + repoName)
 
         val attSummary = client.getAttestationSummary(owner, repoName)
 
         if ( attSummary != null ) {
-            val attSummaryEntries = attSummary?.data?.repository?.att_object?.entries //List<GHAttestationRepoSummaryEntry>?
+            if (APIConfig.DEBUG) {
+                LOGGER.debug("attSummary: "+attSummary)
+            }
+
+            val attSummaryEntries = attSummary?.repository?.att_object?.entries //List<GHAttestationRepoSummaryEntry>?
 
             if ( attSummaryEntries != null) {
               for( dir in attSummaryEntries ) {
@@ -89,15 +94,19 @@ open class AdoptAttestationRepositoryImpl @Inject constructor(
                         if ( attXml.type == "blob" && attXml.name.endsWith(".xml") ) {
                             val attestation = client.getAttestationByName(owner, repoName, dir.name + "/" + attXml.name)
                             if ( attestation != null ) {
-                                val attestation_link = "https://github.com/" + owner + "/" + repoName + "/" + dir.name + "/" + attXml.name
+                                val attestation_link = owner + "/" + repoName + "/" + dir.name + "/" + attXml.name
                                 LOGGER.info("Retrieved Attestation for: " + attestation_link)
-                                attestations[attestation_link] = attestation
+                                attestations.add(attestation)
                             }
                         }
                       }
                     }
                 }
               }
+            }
+        } else {
+            if (APIConfig.DEBUG) {
+                LOGGER.debug("attSummary: null")
             }
         }
 
