@@ -18,11 +18,11 @@ open class GraphQLGitHubAttestationSummaryClient @Inject constructor(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    open suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummaryData? {
+    open suspend fun getAttestationSummary(org: String, repo: String, directory: String): GHAttestationRepoSummaryData? {
 
-        LOGGER.debug("Getting tree file summary of attestations github repository $org/$repo")
+        LOGGER.debug("Getting tree file summary of attestations github repository $org/$repo/$directory")
 
-        val query = RequestAttestationRepoSummary(org, repo)
+        val query = RequestAttestationRepoSummary(org, repo, directory)
 
         val result = graphQLGitHubInterface.queryApi(query::withCursor, null)
 
@@ -35,9 +35,9 @@ open class GraphQLGitHubAttestationSummaryClient @Inject constructor(
         return ghAttestationRepoSummary
     }
 
-    class RequestAttestationRepoSummary(val org: String, val repo: String, override val variables: Any = mapOf<String, String>()) : GraphQLClientRequest<GHAttestationRepoSummaryData> {
+    class RequestAttestationRepoSummary(val org: String, val repo: String, val directory: String, override val variables: Any = mapOf<String, String>()) : GraphQLClientRequest<GHAttestationRepoSummaryData> {
         fun withCursor(cursor: String?): RequestAttestationRepoSummary {
-            return if (cursor != null) RequestAttestationRepoSummary(org, repo, mapOf("cursorPointer" to cursor))
+            return if (cursor != null) RequestAttestationRepoSummary(org, repo, directory, mapOf("cursorPointer" to cursor))
             else this
         }
 
@@ -46,7 +46,18 @@ open class GraphQLGitHubAttestationSummaryClient @Inject constructor(
                 """
     query {
       repository(owner: "${org}", name: "${repo}") {
-        object(expression: "HEAD:") {
+        defaultBranchRef {
+          target {
+            ... on Commit {
+              history(first: 1, path: "./${directory}") {
+                nodes {
+                  committedDate
+                }
+              }
+            }
+          }
+        }
+        object(expression: "HEAD:${directory}") {
           ... on Tree {                         
             entries {                           
               name

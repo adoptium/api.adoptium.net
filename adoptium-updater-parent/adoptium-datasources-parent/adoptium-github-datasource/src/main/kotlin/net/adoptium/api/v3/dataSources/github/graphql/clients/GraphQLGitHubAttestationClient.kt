@@ -10,6 +10,8 @@ import net.adoptium.api.v3.dataSources.models.GitHubId
 import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
 
+import java.time.Instant
+
 @ApplicationScoped
 open class GraphQLGitHubAttestationClient @Inject constructor(
     private val graphQLGitHubInterface: GraphQLGitHubInterface
@@ -33,6 +35,17 @@ open class GraphQLGitHubAttestationClient @Inject constructor(
             result.data
         }
 
+        var committedDate: Instant? = try {
+            if ( ghAttestationResponse?.repository?.defaultBranchRef?.target?.history?.nodes?.firstOrNull()?.committedDate != null ) {
+              Instant.parse(ghAttestationResponse?.repository?.defaultBranchRef?.target?.history?.nodes?.firstOrNull()?.committedDate)
+            } else {
+              null
+            }
+        } catch (e: java.lang.Exception) {
+            LOGGER.error("Cannot parse attestation $org/$repo/$name releaseTag committedDate string: "+ghAttestationResponse?.repository?.defaultBranchRef?.target?.history?.nodes?.firstOrNull()?.committedDate)
+            null
+        }
+
         // Each Attestation must have a public signing key file ".sign.pub"
         val attestation_sign_file = name+".sign.pub"
         val queryPubKey = RequestAttestationFileByName(org, repo, attestation_sign_file)
@@ -47,6 +60,7 @@ open class GraphQLGitHubAttestationClient @Inject constructor(
         ghAttestation.filename = name
         ghAttestation.linkUrl = "https://github.com/"+org+"/"+repo+"/blob/"+ghAttestationResponse?.repository?.defaultBranchRef?.name+"/"+name
         ghAttestation.linkSignUrl = "https://github.com/"+org+"/"+repo+"/blob/"+ghAttestationResponse?.repository?.defaultBranchRef?.name+"/"+attestation_sign_file
+        ghAttestation.committedDate = committedDate
 
         return ghAttestation
     }
@@ -63,6 +77,15 @@ query {
       repository(owner: "${org}", name: "${repo}") {
         defaultBranchRef {
             name
+            target {
+              ... on Commit {
+                history(first: 1, path: "${name}") {
+                  nodes {
+                    committedDate
+                  }
+                }
+              }
+            }
         }
         object(expression: "HEAD:${name}") {
             ... on Blob {

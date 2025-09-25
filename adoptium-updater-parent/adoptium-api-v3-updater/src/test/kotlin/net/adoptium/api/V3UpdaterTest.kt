@@ -196,7 +196,7 @@ class V3UpdaterTest {
                                     }
                             }
 
-                            override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummaryData? {
+                            override suspend fun getAttestationSummary(org: String, repo: String, directory: String): GHAttestationRepoSummaryData? {
                                 return null
                             }
                             override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
@@ -250,7 +250,7 @@ class V3UpdaterTest {
                                         }
                                 }
 
-                            override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummaryData? {
+                            override suspend fun getAttestationSummary(org: String, repo: String, directory: String): GHAttestationRepoSummaryData? {
                                 return null
                             }
                             override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {

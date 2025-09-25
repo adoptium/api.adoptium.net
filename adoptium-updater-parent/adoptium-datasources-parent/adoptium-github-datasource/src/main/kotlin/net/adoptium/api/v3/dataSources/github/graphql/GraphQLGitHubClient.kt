@@ -36,8 +36,8 @@ open class GraphQLGitHubClient @Inject constructor(
         return repositoryClientClient.getRepository(owner, repoName, filter)
     }
 
-    override suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummaryData? {
-        return attestationSummaryClient.getAttestationSummary(org, repo)
+    override suspend fun getAttestationSummary(org: String, repo: String, directory: String): GHAttestationRepoSummaryData? {
+        return attestationSummaryClient.getAttestationSummary(org, repo, directory)
     }
 
     override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {

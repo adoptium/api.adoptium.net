@@ -11,6 +11,15 @@ query RepoFiles($owner: String!, $name: String!, $expr: String!) {
   repository(owner: $owner, name: $name) {
     defaultBranchRef {
       name
+      target {
+              ... on Commit {
+                history(first: 1, path: 21/jdk_21_0_5_11_x64_linux_Adoptium.xml) {
+                  nodes {
+                    committedDate
+                  }
+                }
+              }
+      }
     },
     object(expression: HEAD:21/jdk_21_0_5_11_x64_linux_Adoptium.xml) {
             ... on Blob {
@@ -29,7 +38,16 @@ Response:
   "data": {
     "repository": {
       "defaultBranchRef": {
-        "name": "main"
+        "name": "main",
+        "target": {
+                  "history": {
+                    "nodes": [
+                      {
+                        "committedDate": "2025-09-24T13:58:12Z"
+                      }
+                    ]
+                  }
+        }
       },
       "object": {
         "id": "B_kwDONeZDk9oAKDk3ZDg0ZDI3MGEzNGY2Njc0OWU1ZTY2YjBhNDI5OTY4MjhiZGE0ZTE",
@@ -62,7 +80,23 @@ data class GHAttestationResponseRepository @JsonCreator constructor(
 }
 
 data class GHAttestationResponseDefaultBranchRef @JsonCreator constructor(
-    @JsonProperty("name")   val name: String
+    @JsonProperty("name")   val name: String,
+    @JsonProperty("target") val target: GHAttestationResponseDefaultBranchRefTarget?
+) {
+}
+
+data class GHAttestationResponseDefaultBranchRefTarget @JsonCreator constructor(
+    @JsonProperty("history")            var history: GHAttestationResponseDefaultBranchRefHistory?
+) {
+}
+
+data class GHAttestationResponseDefaultBranchRefHistory @JsonCreator constructor(
+    @JsonProperty("nodes")              var nodes: List<GHAttestationResponseDefaultBranchRefNode>?
+) {
+}
+
+data class GHAttestationResponseDefaultBranchRefNode @JsonCreator constructor(
+    @JsonProperty("committedDate")      var committedDate: String?
 ) {
 }
 

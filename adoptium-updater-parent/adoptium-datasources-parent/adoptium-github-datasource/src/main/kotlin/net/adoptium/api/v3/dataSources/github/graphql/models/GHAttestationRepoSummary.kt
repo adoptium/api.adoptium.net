@@ -5,71 +5,64 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 /* Format example:
 Query:
-query RepoFiles($owner: String!, $name: String!, $expr: String!) {
+query RepoFiles($owner: String!, $name: String!, $dir: String!) {
   repository(owner: $owner, name: $name) {
-    object(expression: $expr) {
-      ... on Tree {
-        entries {
-          name
-          type
-          object {
-            ... on Tree {
-              entries {
-                name
-                type
-              }
+    defaultBranchRef {
+      target {
+        ... on Commit {
+          history(first: 1, path: ./$dir) {
+            nodes {
+              committedDate
             }
           }
         }
       }
     }
+    object(expression: "HEAD:$dir") {
+          ... on Tree {
+            entries {
+              name
+              type
+            }
+          }
+        }
   }
-}
+  rateLimit {
+    cost,
+    remaining
+  }
+} 
 Response:
 {
   "data": {
     "repository": {
+      "defaultBranchRef": {
+        "target": {
+          "history": {
+            "nodes": [
+              {
+                "committedDate": "2025-09-24T13:58:12Z"
+              }
+            ]
+          }
+        }
+      },
       "object": {
         "entries": [
           {
-            "name":".github",
-            "type":"tree",
-            "object": {
-              "entries": [
-                {
-                  "name":"workflows",
-                  "type":"tree"
-                }
-              ]
-            }
+            "name": "jdk_21_0_5_11_x64_linux_Adoptium.xml",
+            "type": "blob"
           },
           {
-            "name":"21",
-            "type":"tree",
-            "object": {
-              "entries": [
-                {
-                  "name":"jdk_21_0_5_11_x64_linux_Adoptium.xml",
-                  "type":"blob",
-                },
-                {
-                  "name":"jdk_21_0_5_11_x64_linux_Adoptium.xml.sign.pub",
-                  "type":"blob",
-                }
-              ]
-            }
-          },
-          {
-            "name":"README.md",
-            "type":"blob",
-            "object":{}
+            "name": "jdk_21_0_5_11_x64_linux_Adoptium.xml.sign.pub",
+            "type": "blob"
           }
         ]
       }
     },
     "rateLimit": {
-      "cost":1,
-      "remaining":4586
+      "cost": 1,
+      "remaining": 4974
     }
   }
 }
@@ -88,7 +81,28 @@ data class GHAttestationRepoSummaryData @JsonCreator constructor(
 }
 
 data class GHAttestationRepoSummaryRepository @JsonCreator constructor(
+    @JsonProperty("defaultBranchRef") val defaultBranchRef: GHAttestationRepoSummaryDefaultBranchRef?,
     @JsonProperty("object") val att_object: GHAttestationRepoSummaryObject?
+) {
+}
+
+data class GHAttestationRepoSummaryDefaultBranchRef @JsonCreator constructor(
+    @JsonProperty("target")             var target: GHAttestationRepoSummaryDefaultBranchRefTarget?
+) {
+}
+
+data class GHAttestationRepoSummaryDefaultBranchRefTarget @JsonCreator constructor(
+    @JsonProperty("history")            var history: GHAttestationRepoSummaryDefaultBranchRefHistory?
+) {
+}
+
+data class GHAttestationRepoSummaryDefaultBranchRefHistory @JsonCreator constructor(
+    @JsonProperty("nodes")              var nodes: List<GHAttestationRepoSummaryDefaultBranchRefNode>?
+) {
+}
+
+data class GHAttestationRepoSummaryDefaultBranchRefNode @JsonCreator constructor(
+    @JsonProperty("committedDate")      var committedDate: String?
 ) {
 }
 
@@ -99,8 +113,7 @@ data class GHAttestationRepoSummaryObject @JsonCreator constructor(
 
 data class GHAttestationRepoSummaryEntry @JsonCreator constructor(
     @JsonProperty("name")   val name: String,
-    @JsonProperty("type")   val type: String,
-    @JsonProperty("object") val att_object: GHAttestationRepoSummaryObject?
+    @JsonProperty("type")   val type: String
 ) { 
 }
 

@@ -21,6 +21,8 @@ import org.junit.jupiter.api.TestInstance.Lifecycle
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.slf4j.LoggerFactory
 
+import java.time.Instant
+
 @TestInstance(Lifecycle.PER_CLASS)
 class AttestationMapperTest {
 
@@ -95,6 +97,7 @@ class AttestationMapperTest {
             ghAttestation.filename = "filename"
             ghAttestation.linkUrl = "linkUrl"
             ghAttestation.linkSignUrl = "linkSignUrl"
+            ghAttestation.committedDate = Instant.parse("2025-09-25T12:00:00Z")
         }
     }
 
@@ -123,6 +126,7 @@ class AttestationMapperTest {
             assertEquals("1234567890123456789012345678901234567890123456789012345678901234", parsed.target_checksum)
             assertEquals("linkUrl", parsed.attestation_link)
             assertEquals("linkSignUrl", parsed.attestation_public_signing_key_link)
+            assertEquals(Instant.parse("2025-09-25T12:00:00Z"), parsed.committedDate)
         }
     }
 }

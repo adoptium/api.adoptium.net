@@ -9,6 +9,7 @@ import net.adoptium.api.v3.dataSources.github.GitHubApi
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestation
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummaryEntry
 import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.mapping.AttestationMapper
@@ -74,40 +75,56 @@ open class AdoptAttestationRepositoryImpl @Inject constructor(
 
         LOGGER.info("Attestation getRepository for: " + vendor + " " + owner + "/" + repoName)
 
-        val attSummary = client.getAttestationSummary(owner, repoName)
+        // Repository structure:
+        //   <major-version>/<release-tag>/<Attestations.xml|xml.sign.pub>
 
-        if ( attSummary != null ) {
-            if (APIConfig.DEBUG) {
-                LOGGER.debug("attSummary: "+attSummary)
+        // Get the top major version list
+        var majorVersions = mutableListOf<String>()
+        val attSummaryTop = client.getAttestationSummary(owner, repoName, "")
+        if ( attSummaryTop != null ) {
+          // Determine major versions
+          val topDirs = attSummaryTop?.repository?.att_object?.entries //List<GHAttestationRepoSummaryEntry>?
+          if ( topDirs != null) {
+            for( dir in topDirs ) {
+              if ( dir.type == "tree" && dir.name.toIntOrNull() != null) {
+                majorVersions.add(dir.name)
+              }
             }
+          }
+        }
 
-            val attSummaryEntries = attSummary?.repository?.att_object?.entries //List<GHAttestationRepoSummaryEntry>?
+        // Get the release tags for each major version
+        for( majorVersion in majorVersions ) {
+          val attSummaryTags = client.getAttestationSummary(owner, repoName, majorVersion)
+          if ( attSummaryTags != null ) {
+            val tags = attSummaryTags?.repository?.att_object?.entries //List<GHAttestationRepoSummaryEntry>?
+            if ( tags != null) {
+              for( tag in tags ) {
+                if ( tag.type == "tree" ) {
+                  val releaseTag = tag.name
 
-            if ( attSummaryEntries != null) {
-              for( dir in attSummaryEntries ) {
-                // Attestations are within jdk "version" directories
-                if ( dir.type == "tree" && dir.name.toIntOrNull() != null) {
-                    val attVersionEntries = dir?.att_object?.entries
-                    if ( attVersionEntries != null ) {
-                      for( attXml in attVersionEntries ) {
-                        // Attestation documents are .xml blob files
-                        if ( attXml.type == "blob" && attXml.name.endsWith(".xml") ) {
-                            val attestation = client.getAttestationByName(owner, repoName, dir.name + "/" + attXml.name)
-                            if ( attestation != null ) {
-                                val attestation_link = owner + "/" + repoName + "/" + dir.name + "/" + attXml.name
-                                LOGGER.info("Retrieved Attestation for: " + attestation_link)
-                                attestations.add(attestation)
-                            }
+                  // Get Attestations for this release tag
+                  val attEntries = client.getAttestationSummary(owner, repoName, majorVersion+"/"+releaseTag)
+                  if ( attEntries?.repository?.att_object?.entries != null) {
+                    // Get last commit update date for this releaseTag
+                    val committedDate = attEntries?.repository?.defaultBranchRef?.target?.history?.nodes?.firstOrNull()?.committedDate
+
+                    for( attXml in attEntries?.repository?.att_object?.entries?: emptyList<GHAttestationRepoSummaryEntry>() ) {
+                      // Attestation documents are .xml blob files
+                      if ( attXml.type == "blob" && attXml.name.endsWith(".xml") ) {
+                        val attestation = client.getAttestationByName(owner, repoName, majorVersion + "/" + releaseTag + "/" + attXml.name)
+                        if ( attestation != null ) {
+                          val attestation_link = owner + "/" + repoName + "/" + majorVersion + "/" + releaseTag + "/" + attXml.name
+                          LOGGER.info("Retrieved Attestation for: " + attestation_link)
+                          attestations.add(attestation)
                         }
                       }
                     }
+                  }
                 }
               }
             }
-        } else {
-            if (APIConfig.DEBUG) {
-                LOGGER.debug("attSummary: null")
-            }
+          }
         }
 
         return getMapperForRepo(owner + "/" + repoName + "/").toAttestationList(vendor, attestations)

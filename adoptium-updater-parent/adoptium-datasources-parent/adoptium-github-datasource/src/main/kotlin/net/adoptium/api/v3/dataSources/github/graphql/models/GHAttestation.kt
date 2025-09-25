@@ -8,6 +8,8 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement
 import net.adoptium.api.v3.dataSources.models.GitHubId
 
+import java.time.Instant
+
 data class Organization(
         @JacksonXmlProperty(localName = "name")
         var name: String? = null
@@ -165,6 +167,7 @@ data class GHAttestation @JsonCreator constructor(
         var filename: String?,
         var linkUrl: String?,
         var linkSignUrl: String?,
+        var committedDate: Instant?,
 
         @JacksonXmlProperty(localName = "declarations")
         var declarations: Declarations? = null,

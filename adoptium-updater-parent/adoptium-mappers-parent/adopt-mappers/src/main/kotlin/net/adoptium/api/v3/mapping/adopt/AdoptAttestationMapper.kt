@@ -16,6 +16,7 @@ import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.mapping.AttestationMapper
 import org.slf4j.LoggerFactory
 import java.util.EnumMap
+import java.time.Instant
 
 
 @ApplicationScoped
@@ -93,7 +94,7 @@ private class AdoptAttestationMapper(
                 return@async Attestation(ghAttestationAsset?.id?.id?:"", ghAttestationAsset.filename?:"",
                                          featureVersion, releaseName, os, arch, ImageType.jdk, JvmImpl.hotspot,
                                          vendor, target_checksum, assessor_org, assessor_affirmation, assessor_claim_predicate,
-                                         ghAttestationAsset.linkUrl?:"", ghAttestationAsset.linkSignUrl?:"")
+                                         ghAttestationAsset.linkUrl?:"", ghAttestationAsset.linkSignUrl?:"", ghAttestationAsset.committedDate?: Instant.now())
         }
     }
 }

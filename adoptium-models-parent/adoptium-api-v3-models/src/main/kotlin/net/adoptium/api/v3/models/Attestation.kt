@@ -3,6 +3,8 @@ package net.adoptium.api.v3.models
 import com.fasterxml.jackson.annotation.JsonCreator
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 
+import java.time.Instant
+
 class Attestation {
 
     val id: String
@@ -23,6 +25,8 @@ class Attestation {
     val jvm_impl: JvmImpl
 
     val vendor: Vendor
+
+    val committedDate: Instant?
 
     @Schema(description = "Assessor checksum of attested target")
     val target_checksum: String?
@@ -58,7 +62,8 @@ class Attestation {
         assessor_affirmation: String?,
         assessor_claim_predicate: String?,
         attestation_link: String?,
-        attestation_public_signing_key_link: String?
+        attestation_public_signing_key_link: String?,
+        committedDate: Instant?
     ) {
         this.id = id
         this.filename = filename
@@ -75,6 +80,7 @@ class Attestation {
         this.assessor_claim_predicate = assessor_claim_predicate
         this.attestation_link = attestation_link
         this.attestation_public_signing_key_link = attestation_public_signing_key_link
+        this.committedDate = committedDate
     }
 
     override fun equals(other: Any?): Boolean {
@@ -98,6 +104,7 @@ class Attestation {
         if (assessor_claim_predicate != other.assessor_claim_predicate) return false
         if (attestation_link != other.attestation_link) return false
         if (attestation_public_signing_key_link != other.attestation_public_signing_key_link) return false
+        if (committedDate != other.committedDate) return false
 
         return true
     }
@@ -118,6 +125,7 @@ class Attestation {
         result = 31 * result + assessor_claim_predicate.hashCode()
         result = 31 * result + attestation_link.hashCode()
         result = 31 * result + attestation_public_signing_key_link.hashCode()
+        result = 31 * result + committedDate.hashCode()
         return result
     }
 
@@ -125,6 +133,6 @@ class Attestation {
         return "Attestation(id='$id', filename='$filename', featureVersion='$featureVersion', release_name='$release_name', os='$os', architecture='$architecture', image_type='$image_type', jvm_impl='$jvm_impl', vendor='$vendor'" +
                            "assessor_org='$assessor_org', assessor_affirmation='$assessor_affirmation', assessor_claim_predicate.hashCode='$assessor_claim_predicate.hashCode', " +
                            "target_checksum='$target_checksum', "+
-                           "attestation_link='$attestation_link', attestation_public_signing_key_link='$attestation_public_signing_key_link')"
+                           "attestation_link='$attestation_link', attestation_public_signing_key_link='$attestation_public_signing_key_link', committedDate='$committedDate')"
     }
 }

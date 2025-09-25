@@ -11,6 +11,6 @@ interface GitHubApi {
     suspend fun getRepository(owner: String, repoName: String, filter: (updatedAt: String, isPrerelease: Boolean) -> Boolean): GHRepository
     suspend fun getRepositorySummary(owner: String, repoName: String): GHRepositorySummary
     suspend fun getReleaseById(id: GitHubId): GHRelease?
-    suspend fun getAttestationSummary(org: String, repo: String): GHAttestationRepoSummaryData?
+    suspend fun getAttestationSummary(org: String, repo: String, directory: String): GHAttestationRepoSummaryData?
     suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation?
 }
