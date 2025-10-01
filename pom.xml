@@ -50,7 +50,7 @@
         <!-- <maven.install-plugin.version>3.1.1</maven.install-plugin.version> -->
         <maven.jacoco-plugin.version>0.8.10</maven.jacoco-plugin.version>
         <maven.jar-plugin.version>3.4.2</maven.jar-plugin.version>
-        <maven.javadoc-plugin.version>3.11.3</maven.javadoc-plugin.version>
+        <maven.javadoc-plugin.version>3.12.0</maven.javadoc-plugin.version>
         <!-- Disabled further below until we get 2.1 https://www.mail-archive.com/dev@maven.apache.org/msg127389.html -->
         <maven.jdepend-plugin.version>2.1</maven.jdepend-plugin.version>
         <maven.jdeprscan-plugin.version>3.0.0-alpha-1</maven.jdeprscan-plugin.version>
