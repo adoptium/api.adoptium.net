@@ -58,8 +58,8 @@ open class GraphQLGitHubAttestationSummaryClient @Inject constructor(
           }
         }
         object(expression: "HEAD:${directory}") {
-          ... on Tree {                         
-            entries {                           
+          ... on Tree {
+            entries {
               name
               type
             }
