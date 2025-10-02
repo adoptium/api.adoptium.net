@@ -25,6 +25,7 @@ import jakarta.inject.Inject
 @ApplicationScoped
 open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var attestationRepos: AdoptAttestationRepos) : ApiPersistence {
     private var updatedAtInfo: UpdatedInfo? = null
+    private var attestationUpdatedAtInfo: UpdatedInfo? = null
     private var releaseInfo: ReleaseInfo? = null
 
     private var githubStats = ArrayList<GitHubDownloadStatsDbEntry>()
@@ -39,6 +40,7 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var
 
     override suspend fun updateAttestationRepos(repos: AdoptAttestationRepos, checksum: String) {
         this.attestationRepos = attestationRepos
+        this.attestationUpdatedAtInfo = UpdatedInfo(TimeSource.now(), checksum, repos.hashCode())
     }
 
     override suspend fun readAttestationData(): List<Attestation> {
@@ -103,6 +105,10 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var
     override suspend fun getUpdatedAt(): UpdatedInfo {
         return updatedAtInfo ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
     }
+
+    override suspend fun getAttestationUpdatedAt(): UpdatedInfo {
+        return attestationUpdatedAtInfo ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
+    }  
 
     override suspend fun getGhReleaseMetadata(gitHubId: GitHubId): GHReleaseMetadata? {
         return ghReleaseMetadata[gitHubId]

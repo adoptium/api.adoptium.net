@@ -41,6 +41,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     private val dockerStatsCollection: MongoCollection<DockerDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), DOCKER_STATS_DB)
     private val releaseInfoCollection: MongoCollection<ReleaseInfo> = createCollection(mongoClient.getDatabase(), RELEASE_INFO_DB)
     private val updateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), UPDATE_TIME_DB)
+    private val attestationUpdateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), ATTESTATIONS_UPDATE_TIME_DB)
     private val githubReleaseNotesCollection: MongoCollection<ReleaseNotes> = createCollection(mongoClient.getDatabase(), GH_RELEASE_NOTES)
     private val client: MongoClient = mongoClient
 
@@ -50,6 +51,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         const val GH_RELEASE_METADATA = "githubReleaseMetadata"
         const val RELEASE_DB = "release"
         const val ATTESTATIONS_DB = "attestations"
+        const val ATTESTATIONS_UPDATE_TIME_DB = "attestationsUpdateTime"
         const val GITHUB_STATS_DB = "githubStats"
         const val DOCKER_STATS_DB = "dockerStats"
         const val RELEASE_INFO_DB = "releaseInfo"
@@ -75,7 +77,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         try {
             writeAttestations(repo.repos)
         } finally {
-            updateUpdatedTime(TimeSource.now(), checksum, repo.hashCode())
+            updateAttestationUpdatedTime(TimeSource.now(), checksum, repo.hashCode())
         }
     }
 
@@ -94,6 +96,11 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
             attestationsCollection = createCollection(client.getDatabase(), ATTESTATIONS_DB)
 
             attestationsCollection.insertMany(attestations, InsertManyOptions())
+        } else {
+            // No Attestations at all, clear DB
+            // Delete all existing
+            attestationsCollection.drop()
+            attestationsCollection = createCollection(client.getDatabase(), ATTESTATIONS_DB)
         }
     }
 
@@ -186,8 +193,23 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         updateTimeCollection.deleteMany(Document("time", BsonDocument("\$lt", BsonDateTime(dateTime.toInstant().toEpochMilli()))))
     }
 
+    open suspend fun updateAttestationUpdatedTime(dateTime: ZonedDateTime, checksum: String, hashCode: Int) {
+        attestationUpdateTimeCollection.replaceOne(
+            Document(),
+            UpdatedInfo(dateTime, checksum, hashCode),
+            ReplaceOptions().upsert(true)
+        )
+        attestationUpdateTimeCollection.deleteMany(Document("time", BsonDocument("\$lt", BsonDateTime(dateTime.toInstant().toEpochMilli()))))
+    }
+
     override suspend fun getUpdatedAt(): UpdatedInfo {
         val info = updateTimeCollection.find().firstOrNull()
+        // if we have no existing time, make it 5 mins ago, should only happen on first time the db is used
+        return info ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
+    }
+
+    override suspend fun getAttestationUpdatedAt(): UpdatedInfo {
+        val info = attestationUpdateTimeCollection.find().firstOrNull()
         // if we have no existing time, make it 5 mins ago, should only happen on first time the db is used
         return info ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
     }

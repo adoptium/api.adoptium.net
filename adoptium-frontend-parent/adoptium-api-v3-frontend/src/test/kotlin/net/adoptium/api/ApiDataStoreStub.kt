@@ -30,6 +30,7 @@ open class ApiDataStoreStub : APIDataStore {
     open fun reset() {
         BaseTest.startDb()
         this.adoptRepo = AdoptReposTestDataGenerator.generate()
+        this.attestationRepo = AdoptAttestationReposTestDataGenerator.generate()
     }
 
     override fun schedulePeriodicUpdates() {

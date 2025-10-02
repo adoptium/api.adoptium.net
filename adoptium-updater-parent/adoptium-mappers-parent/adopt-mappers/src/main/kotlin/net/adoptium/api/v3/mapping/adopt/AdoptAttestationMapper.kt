@@ -47,18 +47,19 @@ private class AdoptAttestationMapper(
     override suspend fun toAttestationList(vendor: Vendor, ghAttestationAssets: List<GHAttestation>): List<Attestation> {
         return ghAttestationAssets
             .map { it -> assetToAttestationAsync(vendor, it) }
-            .map { it.await() }
+            .mapNotNull { it.await() }
     }
 
-    override suspend fun toAttestation(vendor: Vendor, ghAttestation: GHAttestation): Attestation {
+    override suspend fun toAttestation(vendor: Vendor, ghAttestation: GHAttestation): Attestation? {
         return assetToAttestationAsync(vendor, ghAttestation).await()
     }
 
     private fun assetToAttestationAsync(
         vendor: Vendor,
         ghAttestationAsset: GHAttestation
-    ): Deferred<Attestation> {
+    ): Deferred<Attestation?> {
         return GlobalScope.async {
+            try {
                 // Temurin Attestations (https://github.com/adoptium/temurin-attestations/blob/main/.github/workflows/validate-cdxa.yml) have:
                 //   ONE attestation
                 //   ONE target component
@@ -78,6 +79,8 @@ private class AdoptAttestationMapper(
 
                 var archStr: String = ""
                 var osStr: String = ""
+                var imageTypeStr: String = ""
+                var jvmImplStr: String = ""
                 for (property in ghAttestationAsset?.declarations?.targets?.components?.component[0]?.properties?.property?: emptyList()) {
                     if (property.name == "platform") {
                         val split_platform: List<String>? = property.value?.split("_")
@@ -85,16 +88,30 @@ private class AdoptAttestationMapper(
                             archStr = split_platform[0]
                             osStr   = split_platform[1]
                         }
+                    } else if (property.name == "imageType") {
+                        if (property.value != null) {
+                            imageTypeStr = property.value?:""
+                        }
+                    } else if (property.name == "jvmImpl") {
+                        if (property.value != null) {
+                            jvmImplStr = property.value?:""
+                        }
                     }
                 }
 
-                val arch: Architecture  = Architecture.valueOf(archStr)  //by lazy { Architecture.valueOf(archStr) }
-                val os: OperatingSystem = OperatingSystem.valueOf(osStr) //by lazy { OperatingSystem.valueOf(osStr) }
+                val arch: Architecture  = Architecture.valueOf(archStr)
+                val os: OperatingSystem = OperatingSystem.valueOf(osStr)
+                val imageType: ImageType = ImageType.valueOf(imageTypeStr)
+                val jvmImpl: JvmImpl = JvmImpl.valueOf(jvmImplStr)
  
                 return@async Attestation(ghAttestationAsset?.id?.id?:"", ghAttestationAsset.filename?:"",
-                                         featureVersion, releaseName, os, arch, ImageType.jdk, JvmImpl.hotspot,
+                                         featureVersion, releaseName, os, arch, imageType, jvmImpl,
                                          vendor, target_checksum, assessor_org, assessor_affirmation, assessor_claim_predicate,
                                          ghAttestationAsset.linkUrl?:"", ghAttestationAsset.linkSignUrl?:"", ghAttestationAsset.committedDate?: Instant.now())
+            } catch (e: java.lang.Exception) {
+                LOGGER.error("Exception mapping attestation : "+e+" GHAttestation: "+ghAttestationAsset)
+                return@async null
+            }
         }
     }
 }

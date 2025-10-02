@@ -55,12 +55,18 @@ open class GraphQLGitHubAttestationClient @Inject constructor(
             return null
         }
 
-        val ghAttestation = XmlMapper.mapper.readValue(ghAttestationResponse?.repository?.res_object?.text, GHAttestation::class.java)
-        ghAttestation.id = ghAttestationResponse?.repository?.res_object?.id ?: GitHubId("0")
-        ghAttestation.filename = name
-        ghAttestation.linkUrl = "https://github.com/"+org+"/"+repo+"/blob/"+ghAttestationResponse?.repository?.defaultBranchRef?.name+"/"+name
-        ghAttestation.linkSignUrl = "https://github.com/"+org+"/"+repo+"/blob/"+ghAttestationResponse?.repository?.defaultBranchRef?.name+"/"+attestation_sign_file
-        ghAttestation.committedDate = committedDate
+        val ghAttestation: GHAttestation? = try {
+            val ghAtt = XmlMapper.mapper.readValue(ghAttestationResponse?.repository?.res_object?.text, GHAttestation::class.java)
+            ghAtt.id = ghAttestationResponse?.repository?.res_object?.id ?: GitHubId("0")
+            ghAtt.filename = name
+            ghAtt.linkUrl = "https://github.com/"+org+"/"+repo+"/blob/"+ghAttestationResponse?.repository?.defaultBranchRef?.name+"/"+name
+            ghAtt.linkSignUrl = "https://github.com/"+org+"/"+repo+"/blob/"+ghAttestationResponse?.repository?.defaultBranchRef?.name+"/"+attestation_sign_file
+            ghAtt.committedDate = committedDate
+            ghAtt
+        } catch (e: java.lang.Exception) {
+            LOGGER.error("Exception mapping attestation $org/$repo/$name :"+e+" ghAttestationResponse:"+ghAttestationResponse)
+            null
+        }
 
         return ghAttestation
     }

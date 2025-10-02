@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter
 
 abstract class AttestationMapper {
     abstract suspend fun toAttestationList(vendor: Vendor, ghAttestationAssets: List<GHAttestation>): List<Attestation>
-    abstract suspend fun toAttestation(vendor: Vendor, ghAttestation: GHAttestation): Attestation
+    abstract suspend fun toAttestation(vendor: Vendor, ghAttestation: GHAttestation): Attestation?
 
     companion object {
         fun parseDate(date: String): ZonedDateTime {

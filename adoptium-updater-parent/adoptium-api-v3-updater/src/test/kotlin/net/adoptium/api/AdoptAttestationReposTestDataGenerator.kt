@@ -25,7 +25,7 @@ object AdoptAttestationReposTestDataGenerator {
                     ImageType.jdk,
                     JvmImpl.hotspot,
                     Vendor.eclipse,
-                    randomString("target_checksum"),
+                    "123456abcdef",
                     randomString("assessor_org"),
                     randomString("assessor_affirmation"),
                     randomString("assessor_claim_predicate"),

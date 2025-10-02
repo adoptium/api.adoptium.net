@@ -215,11 +215,14 @@ class V3Updater @Inject constructor(
     }
 
     private fun deepDiffAttestationDebugPrint(repoA: AdoptAttestationRepos, repoB: AdoptAttestationRepos) {
+        var theSame = true
         repoA.repos.forEach { attA ->
                 val attB = repoB.repos.firstOrNull { it.id == attA.id }
                 if (attB == null) {
                     LOGGER.debug("Attestation disappeared ${attA.id} ${attA.filename}")
+                    theSame = false
                 } else if (attA != attB) {
+                    theSame = false
                     LOGGER.debug("Attestation changedA {}", attA)
                     LOGGER.debug("Attestation changedB {}", attB)
                 }
@@ -228,9 +231,15 @@ class V3Updater @Inject constructor(
         repoB.repos.forEach { attB ->
                 val attA = repoA.repos.firstOrNull { it.id == attB.id }
                 if (attA == null) {
+                    theSame = false
                     LOGGER.info("Attestation Added ${attB.id} ${attB.filename}")
                 }
             }
+        if ( theSame ) {
+            LOGGER.debug("deepDiffAttestationDebugPrint: Identical")
+        } else {
+            LOGGER.debug("deepDiffAttestationDebugPrint: Differences found")
+        }
     }
 
     private suspend fun writeIncrementalUpdate(updatedRepo: AdoptRepos, oldRepo: AdoptRepos): AdoptRepos {
@@ -344,6 +353,10 @@ class V3Updater @Inject constructor(
             executor.scheduleWithFixedDelay(
                 timerTask {
                     // For the moment Attestation incremental update is a "full" one, as low cost
+                    // TODO: "Incremental" attestation update can be implemented by doing a Attestation summary query
+                    //       on each release "tag" and comparing committedDate with DB Attestation.committedDate for all matching
+                    //       Attestations.release_name, and if "later" then implies an Attestation within that release has been
+                    //       updated/added/removed, and an update should be done on that tag...
                     repo1 = fullAttestationUpdate(repo1) ?: repo1
                 },
                 1, 6, TimeUnit.MINUTES

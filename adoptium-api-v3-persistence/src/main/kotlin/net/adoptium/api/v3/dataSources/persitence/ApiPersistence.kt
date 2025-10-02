@@ -31,6 +31,7 @@ interface ApiPersistence {
     suspend fun setReleaseInfo(releaseInfo: ReleaseInfo)
     suspend fun getReleaseInfo(): ReleaseInfo?
     suspend fun getUpdatedAt(): UpdatedInfo
+    suspend fun getAttestationUpdatedAt(): UpdatedInfo
     suspend fun getGhReleaseMetadata(gitHubId: GitHubId): GHReleaseMetadata?
     suspend fun setGhReleaseMetadata(ghReleaseMetadata: GHReleaseMetadata)
     suspend fun hasReleaseNotesForGithubId(gitHubId: GitHubId): Boolean

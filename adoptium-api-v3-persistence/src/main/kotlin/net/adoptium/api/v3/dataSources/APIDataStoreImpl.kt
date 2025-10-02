@@ -77,11 +77,11 @@ open class APIDataStoreImpl : APIDataStore {
             logEntries: Boolean = true): Pair<AdoptAttestationRepos, UpdatedInfo> {
 
             return runBlocking {
-                val updated = dataStore.getUpdatedAt()
+                val updated = dataStore.getAttestationUpdatedAt()
 
                 if (previousRepo == null || forceUpdate || updated != previousUpdateInfo) {
                     val data = dataStore.readAttestationData()
-                    val updatedAt = dataStore.getUpdatedAt()
+                    val updatedAt = dataStore.getAttestationUpdatedAt()
 
                     val newData = AdoptAttestationRepos(data)
 
@@ -200,6 +200,7 @@ open class APIDataStoreImpl : APIDataStore {
 
     override fun schedulePeriodicUpdates() {
         if (schedule == null) {
+            LOGGER.debug("schedulePeriodicUpdates")
             schedule = Executors
                 .newSingleThreadScheduledExecutor()
                 .scheduleWithFixedDelay(
@@ -305,7 +306,9 @@ open class APIDataStoreImpl : APIDataStore {
     private fun periodicUpdate() {
         // Must catch errors or may kill the scheduler
         try {
+            LOGGER.debug("periodicUpdate")
             binaryRepos = loadDataFromDb(false)
+            attestationRepos = loadAttestationDataFromDb(false)
             releaseInfo = loadReleaseInfo()
         } catch (e: Exception) {
             LOGGER.error("Failed to load db", e)

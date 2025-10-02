@@ -230,10 +230,16 @@ class V3UpdaterEndToEndTest {
                             val existAtt = attestationRepo.repos.firstOrNull { it.filename == name }
                             if (existAtt != null) {
                                 // Construct GHAttestation equivalent of existing Attestation
-                                var prop: Property = Property()
-                                prop.name = "platform"
-                                prop.value = existAtt.architecture.toString() + "_" + existAtt.os.toString()
-                                var props: Properties = Properties(listOf(prop))
+                                var propPlatform: Property = Property()
+                                propPlatform.name = "platform"
+                                propPlatform.value = existAtt.architecture.toString() + "_" + existAtt.os.toString()
+                                var propImageType: Property = Property()
+                                propImageType.name = "imageType"
+                                propImageType.value = existAtt.image_type.toString()
+                                var propJvmImpl: Property = Property()
+                                propJvmImpl.name = "jvmImpl"
+                                propJvmImpl.value = existAtt.jvm_impl.toString()
+                                var props: Properties = Properties(listOf(propPlatform, propImageType, propJvmImpl))
                                 var hash: Hash = Hash()
                                 hash.sha256 = existAtt.target_checksum
                                 var hashes: Hashes = Hashes(listOf(hash))
@@ -251,10 +257,16 @@ class V3UpdaterEndToEndTest {
                                 GHAttestation( GitHubId(existAtt.id), existAtt.filename, existAtt.attestation_link, existAtt.attestation_public_signing_key_link, existAtt.committedDate, d, null)
                             } else if (name == "24/jdk-24.0.2+12/jdk_25_36_x64_linux_Adoptium.xml") {
                                 // Return the new attestation
-                                var prop: Property = Property()
-                                prop.name = "platform"
-                                prop.value = "x64_linux"
-                                var props: Properties = Properties(listOf(prop))
+                                var propPlatform: Property = Property()
+                                propPlatform.name = "platform"
+                                propPlatform.value = "x64_linux"
+                                var propImageType: Property = Property()
+                                propImageType.name = "imageType"
+                                propImageType.value = "jdk"
+                                var propJvmImpl: Property = Property()
+                                propJvmImpl.name = "jvmImpl"
+                                propJvmImpl.value = "hotspot"
+                                var props: Properties = Properties(listOf(propPlatform, propImageType, propJvmImpl))
                                 var hash: Hash = Hash()
                                 hash.sha256 = "abcdefg0123456789"
                                 var hashes: Hashes = Hashes(listOf(hash))
@@ -310,10 +322,16 @@ class V3UpdaterEndToEndTest {
                             val existAtt = attestationRepo.repos.firstOrNull { it.filename == name }
                             if (existAtt != null) {
                                 // Construct GHAttestation equivalent of existing Attestation
-                                var prop: Property = Property()
-                                prop.name = "platform"
-                                prop.value = existAtt.architecture.toString() + "_" + existAtt.os.toString()
-                                var props: Properties = Properties(listOf(prop))
+                                var propPlatform: Property = Property()
+                                propPlatform.name = "platform"
+                                propPlatform.value = existAtt.architecture.toString() + "_" + existAtt.os.toString()
+                                var propImageType: Property = Property()
+                                propImageType.name = "imageType"
+                                propImageType.value = existAtt.image_type.toString()
+                                var propJvmImpl: Property = Property()
+                                propJvmImpl.name = "jvmImpl"
+                                propJvmImpl.value = existAtt.jvm_impl.toString()
+                                var props: Properties = Properties(listOf(propPlatform, propImageType, propJvmImpl))
                                 var hash: Hash = Hash()
                                 hash.sha256 = existAtt.target_checksum
                                 var hashes: Hashes = Hashes(listOf(hash))
@@ -362,10 +380,16 @@ class V3UpdaterEndToEndTest {
                             val existAtt = attestationRepo.repos.firstOrNull { it.filename == name }
                             if (existAtt != null) {
                                 // Construct GHAttestation equivalent of existing Attestation
-                                var prop: Property = Property()
-                                prop.name = "platform"
-                                prop.value = existAtt.architecture.toString() + "_" + existAtt.os.toString()
-                                var props: Properties = Properties(listOf(prop))
+                                var propPlatform: Property = Property()
+                                propPlatform.name = "platform"
+                                propPlatform.value = existAtt.architecture.toString() + "_" + existAtt.os.toString()
+                                var propImageType: Property = Property()
+                                propImageType.name = "imageType"
+                                propImageType.value = existAtt.image_type.toString()
+                                var propJvmImpl: Property = Property()
+                                propJvmImpl.name = "jvmImpl"
+                                propJvmImpl.value = existAtt.jvm_impl.toString()
+                                var props: Properties = Properties(listOf(propPlatform, propImageType, propJvmImpl))
                                 var hash: Hash = Hash()
                                 hash.sha256 = existAtt.target_checksum
                                 var hashes: Hashes = Hashes(listOf(hash))

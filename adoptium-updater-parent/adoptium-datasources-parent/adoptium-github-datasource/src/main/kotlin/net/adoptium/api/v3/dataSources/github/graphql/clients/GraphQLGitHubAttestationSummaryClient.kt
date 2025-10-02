@@ -62,14 +62,6 @@ open class GraphQLGitHubAttestationSummaryClient @Inject constructor(
             entries {                           
               name
               type
-              object { 
-                ... on Tree {                   
-                 entries {                  
-                  name                  
-                  type              
-                 }
-                }
-              }
             }
           }
         }
