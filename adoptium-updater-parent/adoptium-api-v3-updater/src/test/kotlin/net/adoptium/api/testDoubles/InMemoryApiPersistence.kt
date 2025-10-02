@@ -108,7 +108,7 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var
 
     override suspend fun getAttestationUpdatedAt(): UpdatedInfo {
         return attestationUpdatedAtInfo ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
-    }  
+    }
 
     override suspend fun getGhReleaseMetadata(gitHubId: GitHubId): GHReleaseMetadata? {
         return ghReleaseMetadata[gitHubId]
