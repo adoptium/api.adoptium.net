@@ -213,10 +213,10 @@ class V3UpdaterEndToEndTest {
 
                 var attestationSummary = GHAttestationSummaryTestDataGenerator.generateGHAttestationRepoSummary(attestationRepo, directory)
 
-                // Add a 24/jdk-24.0.2+12 x64_linux attestation file into the summary
+                // Add a 24/jdk-24.0.2+12 aarch64_linux attestation file into the summary
                 if ( directory == "24/jdk-24.0.2+12" && attestationSummary?.repository?.att_object?.entries != null ) {
                     attestationSummary?.repository?.att_object?.entries = (attestationSummary?.repository?.att_object?.entries ?: mutableListOf<GHAttestationRepoSummaryEntry>()) +
-                                                                                     GHAttestationRepoSummaryEntry("jdk_25_36_x64_linux_Adoptium.xml",
+                                                                                     GHAttestationRepoSummaryEntry("jdk_24_0_2_12_aarch64_linux_Adoptium.xml",
                                                                                                                    "blob"
                                                                                                                   )
                 }
@@ -255,11 +255,11 @@ class V3UpdaterEndToEndTest {
                                 var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
 
                                 GHAttestation( GitHubId(existAtt.id), existAtt.filename, existAtt.attestation_link, existAtt.attestation_public_signing_key_link, existAtt.committedDate, d, null)
-                            } else if (name == "24/jdk-24.0.2+12/jdk_25_36_x64_linux_Adoptium.xml") {
+                            } else if (name == "24/jdk-24.0.2+12/jdk_24_0_2_12_aarch64_linux_Adoptium.xml") {
                                 // Return the new attestation
                                 var propPlatform: Property = Property()
                                 propPlatform.name = "platform"
-                                propPlatform.value = "x64_linux"
+                                propPlatform.value = "aarch64_linux"
                                 var propImageType: Property = Property()
                                 propImageType.name = "imageType"
                                 propImageType.value = "jdk"
@@ -272,7 +272,7 @@ class V3UpdaterEndToEndTest {
                                 var hashes: Hashes = Hashes(listOf(hash))
                                 var er: Reference = Reference(null, hashes)
                                 var erl: ExternalReferences = ExternalReferences(listOf(er))
-                                var c: Component = Component("comp", "jdk-25+36", erl, props)
+                                var c: Component = Component("comp", "jdk-24.0.2+12", erl, props)
                                 var cs: Components = Components(listOf(c))
                                 var a: Assessor = Assessor(null, Organization("assessor_org_new"))
                                 var ass: Assessors = Assessors(listOf(a))
@@ -290,7 +290,7 @@ class V3UpdaterEndToEndTest {
             val updatedRepo = runAttestationUpdateTest(attestationRepo, getAttestationSummary, getAttestationByName)
 
             assertTrue(updatedRepo.repos.size == attestationRepo.repos.size + 1)
-            val addedAtt = updatedRepo.repos.firstOrNull { it.filename == "24/jdk-24.0.2+12/jdk_25_36_x64_linux_Adoptium.xml" }
+            val addedAtt = updatedRepo.repos.firstOrNull { it.filename == "24/jdk-24.0.2+12/jdk_24_0_2_12_aarch64_linux_Adoptium.xml" }
             assertTrue(addedAtt != null)
             assertTrue(updatedRepo != attestationRepo)
         }

@@ -83,6 +83,14 @@ open class ApiDataStoreStub : APIDataStore {
         )
     }
 
+    override fun getAttestationUpdateInfo(): UpdatedInfo {
+        return UpdatedInfo(
+            ZonedDateTime.now(),
+            "1234567890",
+            123
+        )
+    }
+
     override suspend fun isConnectedToDb(): Boolean {
         return true
     }

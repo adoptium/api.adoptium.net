@@ -24,12 +24,22 @@ open class GraphQLGitHubAttestationSummaryClient @Inject constructor(
 
         val query = RequestAttestationRepoSummary(org, repo, directory)
 
-        val result = graphQLGitHubInterface.queryApi(query::withCursor, null)
-
-        val ghAttestationRepoSummary: GHAttestationRepoSummaryData? = if (result?.data == null) {
+        val result = try {
+          graphQLGitHubInterface.queryApi(query::withCursor, null)
+        } catch (e: java.lang.Exception) {
+            LOGGER.error("Exception on attestation summary query $org/$repo/$directory :"+e)
             return null
-        } else {
+        }
+
+        val ghAttestationRepoSummary: GHAttestationRepoSummaryData? = try {
+          if (result == null || result?.data == null) {
+            return null
+          } else {
             result.data
+          }
+        } catch (e: java.lang.Exception) {
+            LOGGER.error("Exception mapping attestation summary query response $org/$repo/$directory :"+e+" query result: "+result)
+            return null
         }
 
         return ghAttestationRepoSummary

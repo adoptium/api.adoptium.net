@@ -70,7 +70,7 @@ private class AdoptAttestationMapper(
                 
                 val releaseName: String? = ghAttestationAsset?.declarations?.targets?.components?.component[0]?.version
                 // featureVersion derived from releaseName
-                val featureVersion: Int? = releaseName?.split("-","+",".")[1]?.toInt()
+                val featureVersion: Int = releaseName?.split("-","+",".")[1]?.toInt() ?: 0
 
                 val assessor_org: String? = ghAttestationAsset?.declarations?.assessors?.assessor[0]?.organization?.name
                 val assessor_affirmation: String? = ghAttestationAsset?.declarations?.affirmation?.statement

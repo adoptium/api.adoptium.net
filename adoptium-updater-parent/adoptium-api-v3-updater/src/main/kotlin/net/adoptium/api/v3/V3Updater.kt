@@ -139,6 +139,25 @@ class V3Updater @Inject constructor(
         }
     }
 
+    private fun incrementalAttestationUpdate(oldRepo: AdoptAttestationRepos): AdoptAttestationRepos? {
+        return runBlocking {
+            // Must catch errors or may kill the scheduler
+            try {
+                LOGGER.info("Starting Attestation Incremental update")
+                val updatedRepo = adoptAttestationReposBuilder.incrementalUpdate( oldRepo, database.getAttestationUpdatedAt() )
+
+                if (updatedRepo != oldRepo) {
+                    val after = writeIncrementalAttestationUpdate(updatedRepo, oldRepo)
+                    printAttestationReposDebugInfo(oldRepo, after, null)
+                    return@runBlocking after
+                }
+            } catch (e: Exception) {
+                LOGGER.error("Failed to perform incremental attestation update", e)
+            }
+            return@runBlocking null
+        }
+    }
+
     private fun printRepoDebugInfo(
         oldRepo: AdoptRepos,
         afterInMemory: AdoptRepos,
@@ -275,6 +294,38 @@ class V3Updater @Inject constructor(
         }
     }
 
+    private suspend fun writeIncrementalAttestationUpdate(updatedRepo: AdoptAttestationRepos, oldRepo: AdoptAttestationRepos): AdoptAttestationRepos {
+        val checksum = calculateAttestationChecksum(updatedRepo)
+        val oldChecksum = calculateAttestationChecksum(oldRepo)
+
+        if (checksum == oldChecksum) {
+            return updatedRepo
+        }
+
+        return mutex.withLock {
+            // Ensure that the database has not been updated since calculating the incremental update
+            if (database.getAttestationUpdatedAt().checksum == oldChecksum) {
+                database.updateAttestationRepos(updatedRepo, checksum)
+
+                LOGGER.info("Incremental attestation update done")
+                LOGGER.info("Saved attestation version: $checksum ${updatedRepo.hashCode()}")
+                return@withLock updatedRepo
+            } else {
+                LOGGER.info("Incremental attestation update done")
+                LOGGER.warn("Not applying incremental attestation update due to checksum miss $checksum ${updatedRepo.hashCode()} $oldChecksum ${oldRepo.hashCode()} ${database.getUpdatedAt().checksum}")
+
+                // re-calculate checksum in case of schema change
+                val dbVersion = apiDataStore.loadAttestationDataFromDb(true)
+                val dbChecksum = calculateAttestationChecksum(dbVersion)
+                if (dbChecksum != database.getAttestationUpdatedAt().checksum) {
+                    database.updateAttestationRepos(dbVersion, dbChecksum)
+                }
+
+                return@withLock dbVersion
+            }
+        }
+    }
+
     fun run(instantFullUpdate: Boolean) {
         assertConnectedToDb()
 
@@ -349,15 +400,11 @@ class V3Updater @Inject constructor(
     ): AdoptAttestationRepos {
         var repo1 = repo
         repo1 = fullAttestationUpdate(repo1) ?: repo1
+        repo1 = incrementalAttestationUpdate(repo1) ?: repo1
         if (!incrementalAttestationUpdateScheduled.getAndSet(true)) {
             executor.scheduleWithFixedDelay(
                 timerTask {
-                    // For the moment Attestation incremental update is a "full" one, as low cost
-                    // TODO: "Incremental" attestation update can be implemented by doing a Attestation summary query
-                    //       on each release "tag" and comparing committedDate with DB Attestation.committedDate for all matching
-                    //       Attestations.release_name, and if "later" then implies an Attestation within that release has been
-                    //       updated/added/removed, and an update should be done on that tag...
-                    repo1 = fullAttestationUpdate(repo1) ?: repo1
+                    repo1 = incrementalAttestationUpdate(repo1) ?: repo1
                 },
                 1, 6, TimeUnit.MINUTES
             )

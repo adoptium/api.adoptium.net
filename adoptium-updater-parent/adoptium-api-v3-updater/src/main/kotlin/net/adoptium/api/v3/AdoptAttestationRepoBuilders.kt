@@ -10,6 +10,7 @@ import net.adoptium.api.v3.dataSources.models.Releases
 import net.adoptium.api.v3.mapping.ReleaseMapper
 import net.adoptium.api.v3.models.GHReleaseMetadata
 import net.adoptium.api.v3.models.Release
+import net.adoptium.api.v3.dataSources.persitence.mongo.UpdatedInfo
 import org.slf4j.LoggerFactory
 import java.time.temporal.ChronoUnit
 import kotlin.math.absoluteValue
@@ -25,9 +26,17 @@ class AdoptAttestationReposBuilder @Inject constructor(
     }
 
     suspend fun build(): AdoptAttestationRepos {
-        // Fetch attestations in parallel
         val attestations = adoptAttestationRepository.getAttestations()
-        LOGGER.info("DONE")
+        LOGGER.info("DONE attestation build")
+        return AdoptAttestationRepos(attestations)
+    }
+
+    suspend fun incrementalUpdate(
+        oldRepo: AdoptAttestationRepos,
+        lastUpdatedAt: UpdatedInfo
+    ): AdoptAttestationRepos {
+        val attestations = adoptAttestationRepository.incrementalUpdate(oldRepo, lastUpdatedAt)
+        LOGGER.info("DONE attestation incrementalUpdate")
         return AdoptAttestationRepos(attestations)
     }
 }

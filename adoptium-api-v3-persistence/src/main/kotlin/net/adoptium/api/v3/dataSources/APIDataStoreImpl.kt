@@ -23,6 +23,7 @@ import kotlin.concurrent.timerTask
 open class APIDataStoreImpl : APIDataStore {
     private var dataStore: ApiPersistence
     private var updatedAt: UpdatedInfo
+    private var attestationUpdatedAt: UpdatedInfo
     private var binaryRepos: AdoptRepos
     private var attestationRepos: AdoptAttestationRepos
     private var releaseInfo: ReleaseInfo
@@ -164,6 +165,7 @@ open class APIDataStoreImpl : APIDataStore {
         this.dataStore = dataStore
 
         updatedAt = UpdatedInfo(ZonedDateTime.now().minusYears(10), "111", 0)
+        attestationUpdatedAt = UpdatedInfo(ZonedDateTime.now().minusYears(10), "111", 0)
         schedule = null
 
         binaryRepos = try {
@@ -184,11 +186,11 @@ open class APIDataStoreImpl : APIDataStore {
         attestationRepos = try {
             val update = loadAttestationDataFromDb(
                 dataStore,
-                updatedAt,
+                attestationUpdatedAt,
                 true,
                 null
             )
-            updatedAt = update.second
+            attestationUpdatedAt = update.second
             update.first
         } catch (e: Exception) {
             LOGGER.error("Failed to read attestation db", e)
@@ -265,13 +267,13 @@ open class APIDataStoreImpl : APIDataStore {
     ): AdoptAttestationRepos {
         val update = loadAttestationDataFromDb(
             dataStore,
-            updatedAt,
+            attestationUpdatedAt,
             forceUpdate,
             attestationRepos,
             logEntries
         )
 
-        this.updatedAt = update.second
+        this.attestationUpdatedAt = update.second
         this.attestationRepos = update.first
 
         return attestationRepos
@@ -280,6 +282,10 @@ open class APIDataStoreImpl : APIDataStore {
 
     override fun getUpdateInfo(): UpdatedInfo {
         return updatedAt
+    }
+
+    override fun getAttestationUpdateInfo(): UpdatedInfo {
+        return attestationUpdatedAt
     }
 
     override suspend fun isConnectedToDb(): Boolean {

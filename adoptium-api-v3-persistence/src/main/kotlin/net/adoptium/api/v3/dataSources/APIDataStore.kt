@@ -15,5 +15,6 @@ interface APIDataStore {
     fun loadDataFromDb(forceUpdate: Boolean, logEntries: Boolean = true): AdoptRepos
     fun loadAttestationDataFromDb(forceUpdate: Boolean, logEntries: Boolean = true): AdoptAttestationRepos
     fun getUpdateInfo(): UpdatedInfo
+    fun getAttestationUpdateInfo(): UpdatedInfo
     suspend fun isConnectedToDb(): Boolean
 }

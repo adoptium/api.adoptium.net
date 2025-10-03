@@ -75,7 +75,13 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     override suspend fun updateAttestationRepos(repo: AdoptAttestationRepos, checksum: String) {
 
         try {
-            writeAttestations(repo.repos)
+            val featureVersions = repo.repos.map { it.featureVersion }.toSet()
+
+            featureVersions.forEach { featureVersion ->
+                writeAttestations(featureVersion, repo.repos.filter { it.featureVersion == featureVersion })
+            }
+
+            removeAttestationsNotInFeatureVersions( featureVersions )
         } finally {
             updateAttestationUpdatedTime(TimeSource.now(), checksum, repo.hashCode())
         }
@@ -89,18 +95,23 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         }
     }
 
-    private suspend fun writeAttestations(attestations: List<Attestation>) {
+    private suspend fun writeAttestations(featureVersion: Int, attestations: List<Attestation>) {
+        // Delete all existing for featureVersion
+        attestationsCollection.deleteMany(attestationFeatureVersionMatcher(featureVersion))
         if (attestations.isNotEmpty()) {
-            // Delete all existing
-            attestationsCollection.drop()
-            attestationsCollection = createCollection(client.getDatabase(), ATTESTATIONS_DB)
-
             attestationsCollection.insertMany(attestations, InsertManyOptions())
-        } else {
-            // No Attestations at all, clear DB
-            // Delete all existing
-            attestationsCollection.drop()
-            attestationsCollection = createCollection(client.getDatabase(), ATTESTATIONS_DB)
+        }
+    }
+
+    private suspend fun removeAttestationsNotInFeatureVersions(featureVersions: Set<Int>) {
+        // Get existing featureVersions in DB
+        val dbFeatureVersions = attestationsCollection.distinct<Int>("featureVersion").toList()
+
+        // Delete feature versions that no longer exist
+        val toDelete = dbFeatureVersions.filterNot { it in featureVersions }
+        toDelete.forEach { featureVersionToDelete ->
+            // Delete all existing for featureVersionToDelete
+            attestationsCollection.deleteMany(attestationFeatureVersionMatcher(featureVersionToDelete))
         }
     }
 
@@ -233,7 +244,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     }
 
     private fun majorVersionMatcher(featureVersion: Int) = Document("version_data.major", featureVersion)
-    private fun attestationMajorVersionMatcher(featureVersion: Int) = Document("featureVersion", featureVersion)
+    private fun attestationFeatureVersionMatcher(featureVersion: Int) = Document("featureVersion", featureVersion)
 
     override suspend fun getGhReleaseMetadata(gitHubId: GitHubId): GHReleaseMetadata? {
         return githubReleaseMetadataCollection.find(matchGithubId(gitHubId)).firstOrNull()

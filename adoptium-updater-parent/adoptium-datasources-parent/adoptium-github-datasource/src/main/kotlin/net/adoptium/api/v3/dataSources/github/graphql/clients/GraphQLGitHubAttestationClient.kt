@@ -27,12 +27,22 @@ open class GraphQLGitHubAttestationClient @Inject constructor(
         LOGGER.debug("Getting attestation $org/$repo/$name")
 
         val query = RequestAttestationFileByName(org, repo, name)
-        val result = graphQLGitHubInterface.queryApi(query::withCursor, null)
-
-        val ghAttestationResponse: GHAttestationResponseData? = if (result?.data == null) {
+        val result = try {
+            graphQLGitHubInterface.queryApi(query::withCursor, null)
+        } catch (e: java.lang.Exception) {
+            LOGGER.error("Exception on attestation query $org/$repo/$name :"+e)
             return null
-        } else {
+        }
+
+        val ghAttestationResponse: GHAttestationResponseData? = try {
+          if (result == null || result?.data == null) {
+            return null
+          } else {
             result.data
+          }
+        } catch (e: java.lang.Exception) {
+            LOGGER.error("Exception mapping attestation query response $org/$repo/$name :"+e+" query result: "+result)
+            return null
         }
 
         var committedDate: Instant? = try {
@@ -49,9 +59,16 @@ open class GraphQLGitHubAttestationClient @Inject constructor(
         // Each Attestation must have a public signing key file ".sign.pub"
         val attestation_sign_file = name+".sign.pub"
         val queryPubKey = RequestAttestationFileByName(org, repo, attestation_sign_file)
-        val resultPubKey = graphQLGitHubInterface.queryApi(queryPubKey::withCursor, null)
-        if (resultPubKey?.data == null) {
+        val resultPubKey = try {
+            graphQLGitHubInterface.queryApi(queryPubKey::withCursor, null)
+        } catch (e: java.lang.Exception) {
+            LOGGER.error("Exception on attestation sign.pub file query $org/$repo/$attestation_sign_file :"+e)
+            return null
+        }
+
+        if (resultPubKey == null || resultPubKey?.data == null) {
             // Not a valid Attestation if no .sign.pub file
+            LOGGER.warn("WARNING: Attestation $org/$repo/$name is not valid as it does not have a valid associated sign.pub file: $attestation_sign_file")
             return null
         }
 
@@ -64,7 +81,7 @@ open class GraphQLGitHubAttestationClient @Inject constructor(
             ghAtt.committedDate = committedDate
             ghAtt
         } catch (e: java.lang.Exception) {
-            LOGGER.error("Exception mapping attestation $org/$repo/$name :"+e+" ghAttestationResponse:"+ghAttestationResponse)
+            LOGGER.error("Exception mapping attestation $org/$repo/$name :"+e+" ghAttestationResponse: "+ghAttestationResponse)
             null
         }
 

@@ -11,7 +11,7 @@ class Attestation {
 
     val filename: String
 
-    val featureVersion: Int?
+    val featureVersion: Int
 
     @Schema(example = "jdk-21.0.5+11")
     val release_name: String?
@@ -50,7 +50,7 @@ class Attestation {
     constructor(
         id: String,
         filename: String,
-        featureVersion: Int?,
+        featureVersion: Int,
         release_name: String?,
         os: OperatingSystem,
         architecture: Architecture,
