@@ -519,6 +519,24 @@ class AdoptBinaryMapperTest {
         }
     }
 
+    @Test
+    fun `identifies JMOD images`() {
+        runBlocking {
+            val assets = listOf(
+                GHAsset(
+                    "OpenJDK-jmods_x64_linux_hotspot_2020-11-23-03-35.tar.gz",
+                    1L,
+                    "",
+                    1L,
+                    "2025-02-27T19:35:32Z"
+                )
+            )
+            val binaryList = adoptBinaryMapper.toBinaryList(assets, assets, emptyMap())
+
+            assertEquals(ImageType.jmods, binaryList[0].image_type)
+        }
+    }
+
     private fun assertParsedHotspotJfr(binaryList: List<Binary>) {
         assertEquals(JvmImpl.hotspot, binaryList[0].jvm_impl)
         assertEquals(Project.jfr, binaryList[0].project)

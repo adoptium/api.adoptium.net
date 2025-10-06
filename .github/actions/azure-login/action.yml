@@ -14,7 +14,7 @@ runs:
   using: composite
   steps:
   - name: Login to our Azure subscription.
-    uses: azure/login@a65d910e8af852a8061c627c456678983e180302 # v2.2.0
+    uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
     with:
       client-id: ${{ inputs.AZURE_CLIENT_ID_OIDC }}
       tenant-id: ${{ inputs.AZURE_TENANT_ID }}
@@ -25,7 +25,7 @@ runs:
     run: az acr login --name adoptopenjdkacr
 
   - name: Set the target Azure Kubernetes Service (AKS) cluster.
-    uses: azure/aks-set-context@feeca6405be94202afcb1c395616ff29b1811b9f # v4.0.2
+    uses: azure/aks-set-context@c7eb093e5a5d47caa333f64974d5fd1cd4bf069d # v4.0.3
     with:
       resource-group: adoptium-api
       cluster-name: adoptium-api

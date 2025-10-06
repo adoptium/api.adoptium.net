@@ -31,7 +31,7 @@ class CacheControlService @Inject constructor(private var apiDataStore: APIDataS
         return CACHE_CONTROLLED_PATHS.any { path.startsWith(it) }
     }
 
-    private fun calculateEtag(requestContext: ContainerRequestContext): String {
+    private fun calculateEtag(requestContext: ContainerRequestContext): EntityTag {
         val md = MessageDigest.getInstance("SHA1")
         try {
             md.update(Base64.getDecoder().decode(apiDataStore.getUpdateInfo().checksum))
@@ -40,7 +40,8 @@ class CacheControlService @Inject constructor(private var apiDataStore: APIDataS
             md.update(apiDataStore.getUpdateInfo().checksum.toByteArray())
         }
         md.update(requestContext.uriInfo.requestUri.toString().toByteArray())
-        return BigInteger(1, md.digest()).toString(16)
+
+        return EntityTag(BigInteger(1, md.digest()).toString(16))
     }
 
     override fun filter(requestContext: ContainerRequestContext?) {
@@ -56,7 +57,7 @@ class CacheControlService @Inject constructor(private var apiDataStore: APIDataS
             val builder =
                 requestContext
                     .request
-                    .evaluatePreconditions(lastModified, EntityTag(etag))
+                    .evaluatePreconditions(lastModified, etag)
 
             if (builder != null) {
                 requestContext.abortWith(builder.build())
@@ -79,7 +80,9 @@ class CacheControlService @Inject constructor(private var apiDataStore: APIDataS
 
             val etag = calculateEtag(requestContext!!)
 
-            responseContext?.headers?.add("ETag", etag)
+            if (responseContext?.headers?.containsKey("ETag") == false) {
+                responseContext.headers?.add("ETag", etag)
+            }
             responseContext?.headers?.add("Last-Modified", apiDataStore.getUpdateInfo().lastModifiedFormatted)
             responseContext?.headers?.add("Cache-Control", CacheControlDelegate.INSTANCE.toString(ecc))
         }

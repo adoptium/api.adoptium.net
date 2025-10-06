@@ -22,6 +22,34 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    groups:
+      graphql-kotlin:
+        patterns:
+          - "com.expediagroup:graphql-kotlin-*"
+      maven-core:
+        patterns:
+          - "org.apache.maven:maven-*"
+      jackson:
+        patterns:
+          - "com.fasterxml.jackson.*:jackson-*"
+      jetty:
+        patterns:
+          - "org.eclipse.jetty:*"
+      jwt:
+        patterns:
+          - "io.jsonwebtoken:jjwt-*"
+      logback:
+        patterns:
+          - "ch.qos.logback:*"
+      jakarta-apis:
+        patterns:
+          - "jakarta.*:*"
+      rest-assured:
+        patterns:
+          - "io.rest-assured:*"
+      quarkus-logging:
+        patterns:
+          - "io.quarkiverse.logging.logback:*"
   - package-ecosystem: docker
     directory: "/"
     schedule:
