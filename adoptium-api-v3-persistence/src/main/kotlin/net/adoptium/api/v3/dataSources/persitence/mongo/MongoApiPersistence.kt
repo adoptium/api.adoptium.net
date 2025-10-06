@@ -96,9 +96,10 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     }
 
     private suspend fun writeAttestations(featureVersion: Int, attestations: List<Attestation>) {
-        // Delete all existing for featureVersion
+        // First delete all existing for featureVersion
         attestationsCollection.deleteMany(attestationFeatureVersionMatcher(featureVersion))
         if (attestations.isNotEmpty()) {
+            // Then add updated featureVersionAttestations...
             attestationsCollection.insertMany(attestations, InsertManyOptions())
         }
     }

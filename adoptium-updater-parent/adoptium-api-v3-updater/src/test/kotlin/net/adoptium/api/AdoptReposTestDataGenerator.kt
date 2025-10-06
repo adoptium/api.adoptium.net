@@ -190,12 +190,12 @@ object AdoptReposTestDataGenerator {
                         Release(
                             randomString("release id"),
                             releaseType,
-if (vendor == Vendor.eclipse) "/adoptium/temurin" + versionData.major + "-binaries/releases/tag/jdk8u-2020-01-09-03-36" else "/AdoptOpenJDK/openjdk" + versionData.major + "-binaries/releases/tag/jdk8u-2020-01-09-03-36",
+                            randomString("release lin"),
                             randomString("release name " + versionData.semver + " "),
                             randomDate(),
                             randomDate(),
                             getBinaries(),
-                            0,
+                            2,
                             vendor,
                             versionData,
                             sourcePackage()

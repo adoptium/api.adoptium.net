@@ -5,6 +5,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema
 
 import java.time.Instant
 
+// Model represents a summary of Attestation repository feature Version and containing releaseTags and their "committedDate"'s
 class AttestationRepoVersionSummary {
 
     val vendor: Vendor

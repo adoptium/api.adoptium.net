@@ -12,7 +12,7 @@ class UpdatableVersionSupplierImpl @Inject constructor(val updaterHtmlClient: Up
         private val LOGGER: Logger = LoggerFactory.getLogger(UpdatableVersionSupplierImpl::class.java)
     }
 
-    private val DEFAULT_LATEST_JAVA_VERSION = 21
+    private val DEFAULT_LATEST_JAVA_VERSION = 24
     private val LATEST_JAVA_VERSION_PROPERTY = "LATEST_JAVA_VERSION"
 
     private val VERSION_FILE_URL = "https://raw.githubusercontent.com/openjdk/jdk/master/make/conf/version-numbers.conf"
@@ -20,11 +20,11 @@ class UpdatableVersionSupplierImpl @Inject constructor(val updaterHtmlClient: Up
     private var tipVersion: Int? = null
     private var latestJavaVersion: Int
     private var versions: Array<Int>
-    private var ltsVersions: Array<Int> = arrayOf(21)
+    private var ltsVersions: Array<Int> = arrayOf(8, 11, 17, 21)
 
     init {
         latestJavaVersion = Integer.parseInt(System.getProperty(LATEST_JAVA_VERSION_PROPERTY, DEFAULT_LATEST_JAVA_VERSION.toString()))
-        versions = (21..latestJavaVersion).toList().toTypedArray()
+        versions = (8..latestJavaVersion).toList().toTypedArray()
         runBlocking {
             updateVersions()
         }
