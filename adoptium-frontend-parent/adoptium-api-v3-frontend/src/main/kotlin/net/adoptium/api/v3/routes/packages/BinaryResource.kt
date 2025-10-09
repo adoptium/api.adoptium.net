@@ -65,7 +65,7 @@ class BinaryResource @Inject constructor(private val packageEndpoint: PackageEnd
         arch: Architecture,
 
         @Parameter(
-            name = "release_name", description = OpenApiDocs.RELASE_NAME, required = true,
+            name = "release_name", description = OpenApiDocs.RELEASE_NAME, required = true,
             schema = Schema(example = "jdk-11.0.6+10", type = SchemaType.STRING)
         )
         @PathParam("release_name")
@@ -125,7 +125,7 @@ class BinaryResource @Inject constructor(private val packageEndpoint: PackageEnd
         arch: Architecture,
 
         @Parameter(
-            name = "release_name", description = OpenApiDocs.RELASE_NAME, required = true,
+            name = "release_name", description = OpenApiDocs.RELEASE_NAME, required = true,
             schema = Schema(example = "jdk-11.0.6+10", type = SchemaType.STRING)
         )
         @PathParam("release_name")
