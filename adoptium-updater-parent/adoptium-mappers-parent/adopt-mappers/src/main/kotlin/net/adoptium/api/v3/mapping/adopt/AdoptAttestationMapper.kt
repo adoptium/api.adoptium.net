@@ -75,7 +75,7 @@ private class AdoptAttestationMapper(
                 val assessor_org: String? = ghAttestationAsset?.declarations?.assessors?.assessor[0]?.organization?.name
                 val assessor_affirmation: String? = ghAttestationAsset?.declarations?.affirmation?.statement
                 val assessor_claim_predicate: String? = ghAttestationAsset?.declarations?.claims?.claim[0]?.predicate
-                val target_checksum: String? = ghAttestationAsset?.declarations?.targets?.components?.component[0]?.externalReferences?.reference[0]?.hashes?.hash[0]?.sha256
+                val target_checksum: String? = ghAttestationAsset?.declarations?.targets?.components?.component[0]?.externalReferences?.reference[0]?.hashes?.hash[0]?.sha256?.uppercase()
 
                 var archStr: String = ""
                 var osStr: String = ""

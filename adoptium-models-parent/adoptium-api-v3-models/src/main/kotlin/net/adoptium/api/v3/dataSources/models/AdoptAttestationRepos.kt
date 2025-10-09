@@ -32,27 +32,33 @@ class AdoptAttestationRepos {
         return repos
     }
 
-    fun findAttestationForAssetBinary(
+    fun listAttestationsForAssetBinary(
             release_name: String?,
             vendor: Vendor?,
             os: OperatingSystem?,
             arch: Architecture?,
             image_type: ImageType?,
-            jvm_impl: JvmImpl?,
-            target_checksum: String?): Attestation? {
+            jvm_impl: JvmImpl?): List<Attestation> {
 
-        val result = repos.firstOrNull { it.release_name == release_name &&
-                                         it.vendor == vendor &&
-                                         it.os == os &&
-                                         it.architecture == arch &&
-                                         it.image_type == image_type &&
-                                         it.jvm_impl == jvm_impl &&
-                                         it.target_checksum == target_checksum }
+        val result = repos.filter { it.release_name == release_name &&
+                                    it.vendor == vendor &&
+                                    it.os == os &&
+                                    it.architecture == arch &&
+                                    it.image_type == image_type &&
+                                    it.jvm_impl == jvm_impl }
 
         return result
     }
 
-    fun findAttestationsForRelease(
+    fun listAttestationsForTargetChecksum(
+            target_checksum: String?): List<Attestation> {
+
+        val result = repos.filter { it.target_checksum == target_checksum?.uppercase() }
+
+        return result
+    }
+
+    fun listAttestationsForRelease(
             release_name: String?): List<Attestation> {
 
         val result = repos.filter { it.release_name == release_name }

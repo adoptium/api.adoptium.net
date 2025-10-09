@@ -44,22 +44,22 @@ constructor(
 ) {
 
     @GET
-    @Path("/version/{release_name}/{os}/{arch}/{image_type}/{jvm_impl}/{vendor}/{target_checksum}")
+    @Path("/version/{release_name}/{os}/{arch}/{image_type}/{jvm_impl}/{vendor}")
     @Operation(
-        operationId = "findAttestationForAssetBinary",
-        summary = "Returns matching attestation",
-        description = "Return the attestation that matches the given query"
+        operationId = "listAttestationsForAssetBinary",
+        summary = "Returns matching attestations",
+        description = "Return the attestations that matches the given query"
     )
     @APIResponses(
         value = [
             APIResponse(
-                responseCode = "200", description = "Attestation for the given asset binary",
-                content = [Content(schema = Schema(type = SchemaType.OBJECT, implementation = Attestation::class))]
+                responseCode = "200", description = "Attestations for the given asset binary",
+                content = [Content(schema = Schema(type = SchemaType.ARRAY, implementation = Attestation::class))]
             ),
-            APIResponse(responseCode = "404", description = "No matching attestation found")
+            APIResponse(responseCode = "404", description = "No matching attestations found")
         ]
     )
-    fun get(
+    fun listAttestationsForAssetBinary(
         @Parameter(name = "os", description = "Operating System", required = true)
         @PathParam("os")
         os: OperatingSystem,
@@ -69,7 +69,7 @@ constructor(
         arch: Architecture,
 
         @Parameter(
-            name = "release_name", description = OpenApiDocs.RELASE_NAME, required = true,
+            name = "release_name", description = OpenApiDocs.RELEASE_NAME, required = true,
             schema = Schema(example = "jdk-11.0.6+10", type = SchemaType.STRING)
         )
         @PathParam("release_name")
@@ -87,6 +87,38 @@ constructor(
         @PathParam("vendor")
         vendor: Vendor,
 
+        @Parameter(name = "project", description = "Project", required = false)
+        @QueryParam("project")
+        project: Project?
+    ): List<Attestation> {
+        val attestations = apiDataStore
+            .getAdoptAttestationRepos()
+            .listAttestationsForAssetBinary( release_name, vendor, os, arch, image_type, jvm_impl )
+
+        if ( attestations == null || attestations.isEmpty() ) {
+            throw NotFoundException("Attestations not found")
+        } else {
+            return attestations
+        }
+    }
+
+    @GET
+    @Path("/target_checksum/{target_checksum}")
+    @Operation(
+        operationId = "listAttestationsForTargetChecksum",
+        summary = "Returns attestations that target the given SHA256 checksum",
+        description = "Return the list of attestations that have the matching target binary SHA256 checksum"
+    )
+    @APIResponses(
+        value = [
+            APIResponse(
+                responseCode = "200", description = "Attestations for the given target binary SHA256 checksum",
+                content = [Content(schema = Schema(type = SchemaType.ARRAY, implementation = Attestation::class))]
+            ),
+            APIResponse(responseCode = "404", description = "No matching attestations found")
+        ]
+    )
+    fun listAttestationsForTargetChecksum(
         @Parameter(
             name = "target_checksum", description = "Target binary SHA256 checksum", required = true,
             schema = Schema(example = "6773cfdc56d66b75f4a88ac843b2b5854791240114cf8bb1b56fb6f7826ae436", type = SchemaType.STRING)
@@ -97,15 +129,15 @@ constructor(
         @Parameter(name = "project", description = "Project", required = false)
         @QueryParam("project")
         project: Project?
-    ): Attestation {
-        val attestation = apiDataStore
+    ): List<Attestation> {
+        val attestations = apiDataStore
             .getAdoptAttestationRepos()
-            .findAttestationForAssetBinary( release_name, vendor, os, arch, image_type, jvm_impl, target_checksum)
+            .listAttestationsForTargetChecksum( target_checksum )
 
-        if ( attestation == null) {
-            throw NotFoundException("Attestation not found")
+        if ( attestations == null || attestations.isEmpty() ) {
+            throw NotFoundException("No attestations found")
         } else {
-            return attestation
+            return attestations
         }
     }
 
@@ -125,9 +157,9 @@ constructor(
             APIResponse(responseCode = "404", description = "No matching attestations found")
         ]
     )
-    fun get(
+    fun listAttestationsForRelease(
         @Parameter(
-            name = "release_name", description = OpenApiDocs.RELASE_NAME, required = true,
+            name = "release_name", description = OpenApiDocs.RELEASE_NAME, required = true,
             schema = Schema(example = "jdk-11.0.6+10", type = SchemaType.STRING)
         )
         @PathParam("release_name")
@@ -139,7 +171,7 @@ constructor(
     ): List<Attestation> {
         val attestations = apiDataStore
             .getAdoptAttestationRepos()
-            .findAttestationsForRelease( release_name )
+            .listAttestationsForRelease( release_name )
 
         if ( attestations == null || attestations.isEmpty() ) {
             throw NotFoundException("No attestations found")
