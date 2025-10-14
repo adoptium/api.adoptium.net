@@ -26,7 +26,7 @@ class AttestationResourceTest : FrontendTest() {
     fun `find existing attestations`() {
         val response: Response = RestAssured.given()
             .`when`()
-            .get("/v3/attestations/version/jdk-21.0.5+6/linux/x64/jdk/hotspot/eclipse")
+            .get("/v3/attestations/release_name/jdk-21.0.5+6/linux/x64/jdk/hotspot/eclipse")
 
         val release_names: List<String> = response.jsonPath().getList("release_name")
 
@@ -50,7 +50,7 @@ class AttestationResourceTest : FrontendTest() {
     fun `find existing attestations by release_name`() {
         val response: Response = RestAssured.given()
             .`when`()
-            .get("/v3/attestations/version/jdk-24.0.2+12")
+            .get("/v3/attestations/release_name/jdk-24.0.2+12")
 
         val release_names: List<String> = response.jsonPath().getList("release_name")
 
@@ -62,7 +62,7 @@ class AttestationResourceTest : FrontendTest() {
     fun `non-existent attestation 404`() {
         RestAssured.given()
             .`when`()
-            .get("/v3/attestations/version/foo/linux/x64/jdk/hotspot/eclipse")
+            .get("/v3/attestations/release_name/foo/linux/x64/jdk/hotspot/eclipse")
             .then()
             .statusCode(404)
     }
@@ -80,7 +80,7 @@ class AttestationResourceTest : FrontendTest() {
     fun `non-existent attestations by release_name`() {
         RestAssured.given()
             .`when`()
-            .get("/v3/attestations/version/jdk-99+36")
+            .get("/v3/attestations/release_name/jdk-99+36")
             .then()
             .statusCode(404)
     }

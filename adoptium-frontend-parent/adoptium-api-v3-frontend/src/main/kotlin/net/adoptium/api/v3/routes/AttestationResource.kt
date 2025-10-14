@@ -44,7 +44,7 @@ constructor(
 ) {
 
     @GET
-    @Path("/version/{release_name}/{os}/{arch}/{image_type}/{jvm_impl}/{vendor}")
+    @Path("/release_name/{release_name}/{os}/{arch}/{image_type}/{jvm_impl}/{vendor}")
     @Operation(
         operationId = "listAttestationsForAssetBinary",
         summary = "Returns matching attestations",
@@ -142,7 +142,7 @@ constructor(
     }
 
     @GET
-    @Path("/version/{release_name}")
+    @Path("/release_name/{release_name}")
     @Operation(
         operationId = "listAttestationsForRelease",
         summary = "Returns attestations for the given release",
