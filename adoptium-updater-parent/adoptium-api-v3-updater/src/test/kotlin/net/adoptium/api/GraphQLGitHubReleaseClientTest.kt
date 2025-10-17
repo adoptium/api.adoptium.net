@@ -20,6 +20,8 @@ import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubRelea
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubRepositoryClient
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubRepositoryClient.GetQueryData
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubSummaryClient
+import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubAttestationSummaryClient
+import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubAttestationClient
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLRequest
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
@@ -340,7 +342,9 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
             GraphQLGitHubClient(
                 mockk<GraphQLGitHubSummaryClient>(),
                 mockk<GraphQLGitHubReleaseClient>(),
-                client
+                client,
+                mockk<GraphQLGitHubAttestationSummaryClient>(),
+                mockk<GraphQLGitHubAttestationClient>()
             ),
             adoptReleaseMapperFactory
         )

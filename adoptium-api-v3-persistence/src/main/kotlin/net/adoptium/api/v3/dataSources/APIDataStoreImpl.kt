@@ -4,6 +4,7 @@ import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.Releases
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
@@ -22,7 +23,9 @@ import kotlin.concurrent.timerTask
 open class APIDataStoreImpl : APIDataStore {
     private var dataStore: ApiPersistence
     private var updatedAt: UpdatedInfo
+    private var attestationUpdatedAt: UpdatedInfo
     private var binaryRepos: AdoptRepos
+    private var attestationRepos: AdoptAttestationRepos
     private var releaseInfo: ReleaseInfo
     private var schedule: ScheduledFuture<*>?
 
@@ -59,6 +62,33 @@ open class APIDataStoreImpl : APIDataStore {
                     if (logEntries) {
                         LOGGER.info("Loaded Version: $updatedAt")
                         showStats(previousRepo, newData)
+                    }
+                    Pair(newData, updatedAt)
+                } else {
+                    Pair(previousRepo, previousUpdateInfo)
+                }
+            }
+        }
+
+        fun loadAttestationDataFromDb(
+            dataStore: ApiPersistence,
+            previousUpdateInfo: UpdatedInfo,
+            forceUpdate: Boolean,
+            previousRepo: AdoptAttestationRepos?,
+            logEntries: Boolean = true): Pair<AdoptAttestationRepos, UpdatedInfo> {
+
+            return runBlocking {
+                val updated = dataStore.getAttestationUpdatedAt()
+
+                if (previousRepo == null || forceUpdate || updated != previousUpdateInfo) {
+                    val data = dataStore.readAttestationData()
+                    val updatedAt = dataStore.getAttestationUpdatedAt()
+
+                    val newData = AdoptAttestationRepos(data)
+
+                    if (logEntries) {
+                        LOGGER.info("Loaded Attestations: $updatedAt")
+                        showAttestationStats(previousRepo, newData)
                     }
                     Pair(newData, updatedAt)
                 } else {
@@ -106,6 +136,27 @@ open class APIDataStoreImpl : APIDataStore {
                 }
         }
 
+        private fun showAttestationStats(attRepos: AdoptAttestationRepos?, newData: AdoptAttestationRepos) {
+            newData.repos
+                .forEach { att ->
+                    val oldAtt = attRepos?.repos?.firstOrNull { it.id == att.id }
+
+                    if (oldAtt == null) {
+                        LOGGER.info("New Attestation: ${att.release_name} ${att.filename}")
+                    } else if (oldAtt != att) {
+                        LOGGER.info("Modified Attestation: ${att.release_name} ${att.filename}")
+                    }
+                }
+
+            attRepos?.repos
+                ?.forEach { oldAtt ->
+                    val newAtt = newData.repos.firstOrNull { it.id == oldAtt.id }
+                    if (newAtt == null) {
+                        LOGGER.info("Removed Attestation: ${oldAtt.release_name} ${oldAtt.filename}")
+                    }
+                }
+        }
+
 
     }
 
@@ -114,6 +165,7 @@ open class APIDataStoreImpl : APIDataStore {
         this.dataStore = dataStore
 
         updatedAt = UpdatedInfo(ZonedDateTime.now().minusYears(10), "111", 0)
+        attestationUpdatedAt = UpdatedInfo(ZonedDateTime.now().minusYears(10), "111", 0)
         schedule = null
 
         binaryRepos = try {
@@ -131,11 +183,26 @@ open class APIDataStoreImpl : APIDataStore {
             AdoptRepos(listOf())
         }
 
+        attestationRepos = try {
+            val update = loadAttestationDataFromDb(
+                dataStore,
+                attestationUpdatedAt,
+                true,
+                null
+            )
+            attestationUpdatedAt = update.second
+            update.first
+        } catch (e: Exception) {
+            LOGGER.error("Failed to read attestation db", e)
+            AdoptAttestationRepos(listOf())
+        }
+
         releaseInfo = loadReleaseInfo()
     }
 
     override fun schedulePeriodicUpdates() {
         if (schedule == null) {
+            LOGGER.debug("schedulePeriodicUpdates")
             schedule = Executors
                 .newSingleThreadScheduledExecutor()
                 .scheduleWithFixedDelay(
@@ -194,8 +261,31 @@ open class APIDataStoreImpl : APIDataStore {
 
     }
 
+    override fun loadAttestationDataFromDb(
+        forceUpdate: Boolean,
+        logEntries: Boolean
+    ): AdoptAttestationRepos {
+        val update = loadAttestationDataFromDb(
+            dataStore,
+            attestationUpdatedAt,
+            forceUpdate,
+            attestationRepos,
+            logEntries
+        )
+
+        this.attestationUpdatedAt = update.second
+        this.attestationRepos = update.first
+
+        return attestationRepos
+
+    }
+
     override fun getUpdateInfo(): UpdatedInfo {
         return updatedAt
+    }
+
+    override fun getAttestationUpdateInfo(): UpdatedInfo {
+        return attestationUpdatedAt
     }
 
     override suspend fun isConnectedToDb(): Boolean {
@@ -211,10 +301,20 @@ open class APIDataStoreImpl : APIDataStore {
         this.binaryRepos = binaryRepos
     }
 
+    override fun getAdoptAttestationRepos(): AdoptAttestationRepos {
+        return attestationRepos
+    }       
+                
+    override fun setAdoptAttestationRepos(attestationRepos: AdoptAttestationRepos) {
+        this.attestationRepos = attestationRepos
+    } 
+
     private fun periodicUpdate() {
         // Must catch errors or may kill the scheduler
         try {
+            LOGGER.debug("periodicUpdate")
             binaryRepos = loadDataFromDb(false)
+            attestationRepos = loadAttestationDataFromDb(false)
             releaseInfo = loadReleaseInfo()
         } catch (e: Exception) {
             LOGGER.error("Failed to load db", e)
