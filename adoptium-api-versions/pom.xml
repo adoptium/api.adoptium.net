@@ -250,7 +250,7 @@
             <dependency>
                 <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
                 <artifactId>opentelemetry-javaagent-netty-4.1</artifactId>
-                <version>2.20.1-alpha</version>
+                <version>2.21.0-alpha</version>
             </dependency>
             <dependency>
                 <groupId>org.jboss.weld</groupId>
