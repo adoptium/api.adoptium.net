@@ -127,9 +127,12 @@ class V3Updater @Inject constructor(
                     database::getGhReleaseMetadata
                 )
 
-                if (updatedRepo != oldRepo) {
-                    val after = writeIncrementalUpdate(updatedRepo, oldRepo)
+                if (updatedRepo.newRepoValue != oldRepo) {
+                    val after = writeIncrementalUpdate(updatedRepo.newRepoValue, oldRepo)
                     printRepoDebugInfo(oldRepo, after, null)
+
+                    LOGGER.info("Updating Release Notes for releases: ${toUpdateTmp.joinToString(", ")}")
+                    adoptReleaseNotes.updateReleaseNotes(updatedRepo.updatedReleases)
                     return@runBlocking after
                 }
             } catch (e: Exception) {
