@@ -131,7 +131,9 @@ class V3Updater @Inject constructor(
                     val after = writeIncrementalUpdate(updatedRepo.newRepoValue, oldRepo)
                     printRepoDebugInfo(oldRepo, after, null)
 
-                    LOGGER.info("Updating Release Notes for releases: ${toUpdateTmp.joinToString(", ")}")
+                    val updateReleases = updatedRepo.updatedReleases.joinToString(", ") { it.release_name }
+
+                    LOGGER.info("Updating Release Notes for releases: ${updateReleases}")
                     adoptReleaseNotes.updateReleaseNotes(updatedRepo.updatedReleases)
                     return@runBlocking after
                 }
