@@ -3,6 +3,7 @@
     <logger name="net.adoptium.api.v3.dataSources.APIDataStoreImpl" level="WARN"/>
     <logger name="org.mongodb" level="WARN"/>
     <logger name="org.jboss.weld" level="WARN"/>
+    <logger name="io.ktor" level="WARN"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
