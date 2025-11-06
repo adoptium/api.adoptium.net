@@ -17,6 +17,7 @@ import net.adoptium.api.v3.dataSources.ReleaseVersionResolver
 import net.adoptium.api.v3.dataSources.UpdatableVersionSupplier
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.releaseNotes.AdoptReleaseNotes
@@ -42,6 +43,7 @@ class V3UpdaterApp : Application()
 @ApplicationScoped
 class V3Updater @Inject constructor(
     private val adoptReposBuilder: AdoptReposBuilder,
+    private val adoptAttestationReposBuilder: AdoptAttestationReposBuilder,
     private val apiDataStore: APIDataStore,
     private val database: ApiPersistence,
     private val statsInterface: StatsInterface,
@@ -58,6 +60,22 @@ class V3Updater @Inject constructor(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
 
         fun calculateChecksum(repo: AdoptRepos): String {
+            val md = MessageDigest.getInstance("SHA256")
+            val outputStream = object : OutputStream() {
+                override fun write(b: Int) {
+                    md.update(b.toByte())
+                }
+            }
+            UpdaterJsonMapper.mapper.writeValue(outputStream, repo)
+
+            return String(Base64.getEncoder().encode(md.digest()))
+        }
+
+        fun calculateAttestationChecksum(repo: AdoptAttestationRepos?): String {
+            if (repo == null) {
+                return "null"
+            }
+
             val md = MessageDigest.getInstance("SHA256")
             val outputStream = object : OutputStream() {
                 override fun write(b: Int) {
@@ -121,6 +139,25 @@ class V3Updater @Inject constructor(
         }
     }
 
+    private fun incrementalAttestationUpdate(oldRepo: AdoptAttestationRepos): AdoptAttestationRepos? {
+        return runBlocking {
+            // Must catch errors or may kill the scheduler
+            try {
+                LOGGER.info("Starting Attestation Incremental update")
+                val updatedRepo = adoptAttestationReposBuilder.incrementalUpdate( oldRepo, database.getAttestationUpdatedAt() )
+
+                if (updatedRepo != oldRepo) {
+                    val after = writeIncrementalAttestationUpdate(updatedRepo, oldRepo)
+                    printAttestationReposDebugInfo(oldRepo, after, null)
+                    return@runBlocking after
+                }
+            } catch (e: Exception) {
+                LOGGER.error("Failed to perform incremental attestation update", e)
+            }
+            return@runBlocking null
+        }
+    }
+
     private fun printRepoDebugInfo(
         oldRepo: AdoptRepos,
         afterInMemory: AdoptRepos,
@@ -135,6 +172,24 @@ class V3Updater @Inject constructor(
             if (afterInDb != null) {
                 LOGGER.debug("Compare in memory and in db")
                 deepDiffDebugPrint(afterInMemory, afterInDb)
+            }
+        }
+    }
+
+    private fun printAttestationReposDebugInfo(
+        oldRepo: AdoptAttestationRepos,
+        afterInMemory: AdoptAttestationRepos,
+        afterInDb: AdoptAttestationRepos?) {
+
+        if (APIConfig.DEBUG) {
+            LOGGER.debug("Attestation old and new in-memory CRC comparison oldRepoChecksum={} oldRepoHashCode={} newInMemoryChecksum={} newInMemoryHashCode={}", calculateAttestationChecksum(oldRepo), oldRepo.hashCode(), calculateAttestationChecksum(afterInMemory), afterInMemory.hashCode())
+
+            LOGGER.debug("Deep-compare Attestation old and new in-memory")
+            deepDiffAttestationDebugPrint(oldRepo, afterInMemory)
+
+            if (afterInDb != null) {
+                LOGGER.debug("Deep-compare Attestation new in memory and new in db")
+                deepDiffAttestationDebugPrint(afterInMemory, afterInDb)
             }
         }
     }
@@ -178,6 +233,34 @@ class V3Updater @Inject constructor(
             }
     }
 
+    private fun deepDiffAttestationDebugPrint(repoA: AdoptAttestationRepos, repoB: AdoptAttestationRepos) {
+        var theSame = true
+        repoA.repos.forEach { attA ->
+                val attB = repoB.repos.firstOrNull { it.id == attA.id }
+                if (attB == null) {
+                    LOGGER.debug("Attestation disappeared ${attA.id} ${attA.filename}")
+                    theSame = false
+                } else if (attA != attB) {
+                    theSame = false
+                    LOGGER.debug("Attestation changedA {}", attA)
+                    LOGGER.debug("Attestation changedB {}", attB)
+                }
+            }
+
+        repoB.repos.forEach { attB ->
+                val attA = repoA.repos.firstOrNull { it.id == attB.id }
+                if (attA == null) {
+                    theSame = false
+                    LOGGER.info("Attestation Added ${attB.id} ${attB.filename}")
+                }
+            }
+        if ( theSame ) {
+            LOGGER.debug("deepDiffAttestationDebugPrint: Identical")
+        } else {
+            LOGGER.debug("deepDiffAttestationDebugPrint: Differences found")
+        }
+    }
+
     private suspend fun writeIncrementalUpdate(updatedRepo: AdoptRepos, oldRepo: AdoptRepos): AdoptRepos {
         val checksum = calculateChecksum(updatedRepo)
         val oldChecksum = calculateChecksum(oldRepo)
@@ -211,6 +294,38 @@ class V3Updater @Inject constructor(
         }
     }
 
+    private suspend fun writeIncrementalAttestationUpdate(updatedRepo: AdoptAttestationRepos, oldRepo: AdoptAttestationRepos): AdoptAttestationRepos {
+        val checksum = calculateAttestationChecksum(updatedRepo)
+        val oldChecksum = calculateAttestationChecksum(oldRepo)
+
+        if (checksum == oldChecksum) {
+            return updatedRepo
+        }
+
+        return mutex.withLock {
+            // Ensure that the database has not been updated since calculating the incremental update
+            if (database.getAttestationUpdatedAt().checksum == oldChecksum) {
+                database.updateAttestationRepos(updatedRepo, checksum)
+
+                LOGGER.info("Incremental attestation update done")
+                LOGGER.info("Saved attestation version: $checksum ${updatedRepo.hashCode()}")
+                return@withLock updatedRepo
+            } else {
+                LOGGER.info("Incremental attestation update done")
+                LOGGER.warn("Not applying incremental attestation update due to checksum miss $checksum ${updatedRepo.hashCode()} $oldChecksum ${oldRepo.hashCode()} ${database.getUpdatedAt().checksum}")
+
+                // re-calculate checksum in case of schema change
+                val dbVersion = apiDataStore.loadAttestationDataFromDb(true)
+                val dbChecksum = calculateAttestationChecksum(dbVersion)
+                if (dbChecksum != database.getAttestationUpdatedAt().checksum) {
+                    database.updateAttestationRepos(dbVersion, dbChecksum)
+                }
+
+                return@withLock dbVersion
+            }
+        }
+    }
+
     fun run(instantFullUpdate: Boolean) {
         assertConnectedToDb()
 
@@ -230,12 +345,26 @@ class V3Updater @Inject constructor(
             AdoptRepos(emptyList())
         }
 
+        var attestationRepo: AdoptAttestationRepos = try {
+            apiDataStore.loadAttestationDataFromDb(true)
+        } catch (e: java.lang.Exception) {
+            LOGGER.error("Failed to load attestation db", e)
+            if (e is MongoException) {
+                LOGGER.error("Failed to connect to attestation db, exiting")
+                Quarkus.asyncExit(2)
+                Quarkus.waitForExit()
+            }   
+            AdoptAttestationRepos(emptyList())
+        } 
+
         val incrementalUpdateScheduled = AtomicBoolean(false)
+        val incrementalAttestationUpdateScheduled = AtomicBoolean(false)
 
         executor.scheduleWithFixedDelay(
             timerTask {
                 try {
                     runUpdate(repo, incrementalUpdateScheduled, executor)
+                    runAttestationUpdate(attestationRepo, incrementalAttestationUpdateScheduled, executor)
                 } catch (e: InvalidUpdateException) {
                     LOGGER.error("Failed to perform update", e)
                 }
@@ -261,6 +390,25 @@ class V3Updater @Inject constructor(
             )
         }
         repo1 = fullUpdate(repo1, false) ?: repo1
+        return repo1
+    }
+
+    fun runAttestationUpdate(
+        repo: AdoptAttestationRepos,
+        incrementalAttestationUpdateScheduled: AtomicBoolean,
+        executor: ScheduledExecutorService
+    ): AdoptAttestationRepos {
+        var repo1 = repo
+        repo1 = fullAttestationUpdate(repo1) ?: repo1
+        repo1 = incrementalAttestationUpdate(repo1) ?: repo1
+        if (!incrementalAttestationUpdateScheduled.getAndSet(true)) {
+            executor.scheduleWithFixedDelay(
+                timerTask {
+                    repo1 = incrementalAttestationUpdate(repo1) ?: repo1
+                },
+                1, 6, TimeUnit.MINUTES
+            )
+        }
         return repo1
     }
 
@@ -316,7 +464,6 @@ class V3Updater @Inject constructor(
                         database.updateAllRepos(repo, checksum)
                         statsInterface.update(repo)
                         database.setReleaseInfo(releaseVersionResolver.formReleaseInfo(repo))
-
                         apiDataStore.loadDataFromDb(forceUpdate = true, logEntries = false)
                     }
                 }
@@ -331,6 +478,44 @@ class V3Updater @Inject constructor(
             }
         } catch (e: Exception) {
             LOGGER.error("Failed to perform full update", e)
+        } catch (e: Throwable) {
+            // Log and rethrow, may be unrecoverable error such as OutOfMemoryError
+            LOGGER.error("Error during full update", e)
+            throw e
+        }
+        return null
+    }
+
+    @Throws(InvalidUpdateException::class)
+    private fun fullAttestationUpdate(currentRepo: AdoptAttestationRepos): AdoptAttestationRepos? {
+        // Must catch errors or may kill the scheduler
+        try {
+            return runBlocking {
+                LOGGER.info("Starting Full Attestation update")
+
+                updatableVersionSupplier.updateVersions()
+
+                val repo = adoptAttestationReposBuilder.build()
+
+                printAttestationReposDebugInfo(currentRepo, repo, null)
+
+                val checksum = calculateAttestationChecksum(repo)
+
+                val dataInDb = mutex.withLock {
+                    runBlocking {
+                        database.updateAttestationRepos(repo, checksum)
+
+                        apiDataStore.loadAttestationDataFromDb(forceUpdate = true, logEntries = true)
+                    }
+                }
+
+                printAttestationReposDebugInfo(currentRepo, repo, dataInDb)
+
+                LOGGER.info("Full Attestation update done")
+                return@runBlocking repo
+            }
+        } catch (e: Exception) {
+            LOGGER.error("Failed to perform full Attestation update", e)
         } catch (e: Throwable) {
             // Log and rethrow, may be unrecoverable error such as OutOfMemoryError
             LOGGER.error("Error during full update", e)

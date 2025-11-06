@@ -26,6 +26,21 @@ class MongoAPIPersistenceTests : MongoTest() {
     }
 
     @Test
+    fun `attestation update time is set`(api: MongoApiPersistence) {
+        runBlocking {
+            api.updateAttestationUpdatedTime(TimeSource.now(), "", 0)
+            api.updateAttestationUpdatedTime(TimeSource.now(), "", 0)
+            api.updateAttestationUpdatedTime(TimeSource.now(), "", 0)
+            val time = TimeSource.now()
+            api.updateAttestationUpdatedTime(time, "", 0)
+
+            val stored = api.getAttestationUpdatedAt()
+
+            assertEquals(time, stored.time)
+        }
+    }
+
+    @Test
     fun `metadata is persisted`() {
         runBlocking {
             val apiPersistence = MongoApiPersistence(MongoClient())

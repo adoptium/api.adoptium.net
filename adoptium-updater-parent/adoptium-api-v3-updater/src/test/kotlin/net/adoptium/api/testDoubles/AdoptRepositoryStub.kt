@@ -13,6 +13,7 @@ import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.models.Release
@@ -29,6 +30,11 @@ open class AdoptRepositoryStub : AdoptRepository {
     @Produces
     @ExcludeBean
     open val repo = BaseTest.adoptRepos
+
+    @Produces
+    @ExcludeBean
+    open val attestationRepo = BaseTest.adoptAttestationRepos
+
     open val toRemove = repo.getFeatureRelease(8)!!.releases.nodes.values.first()
     open val originalToUpdate = repo.getFeatureRelease(8)!!.releases.nodes.values.take(2).last()
 

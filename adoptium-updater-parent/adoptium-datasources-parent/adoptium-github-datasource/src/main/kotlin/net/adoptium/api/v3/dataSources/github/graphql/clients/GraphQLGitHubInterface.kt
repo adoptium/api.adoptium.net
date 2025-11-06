@@ -20,6 +20,7 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 import kotlin.random.Random
+import net.adoptium.api.v3.config.APIConfig
 
 @ApplicationScoped
 open class GraphQLGitHubInterface @Inject constructor(
@@ -158,6 +159,10 @@ open class GraphQLGitHubInterface @Inject constructor(
 
         val query = requestEntityBuilder.invoke(cursor)
 
+        if (APIConfig.DEBUG) {
+            LOGGER.debug("GraphQL query: "+query.query)
+        }
+
         var retryCount = 0
         while (retryCount <= 20) {
             try {
@@ -172,6 +177,7 @@ open class GraphQLGitHubInterface @Inject constructor(
 
                 if (repoDoesNotExist(response)) return response
 
+                LOGGER.info("Failed query: "+query.query)
                 LOGGER.info("Retrying ${retryCount++}")
                 delay((TimeUnit.SECONDS.toMillis(5) * retryCount))
             } catch (e: ResponseException) {
@@ -188,6 +194,7 @@ open class GraphQLGitHubInterface @Inject constructor(
                 }
 
             } catch (e: MismatchedInputException) {
+                LOGGER.info("MismatchedInputException: "+e)
                 return null
             } catch (e: Exception) {
                 LOGGER.error("Query failed", e)

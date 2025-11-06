@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.ReleaseNotes
@@ -21,6 +22,7 @@ import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseInfo
 import net.adoptium.api.v3.models.Vendor
+import net.adoptium.api.v3.models.Attestation
 import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDateTime
@@ -34,10 +36,12 @@ import java.time.ZonedDateTime
 open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : MongoInterface(), ApiPersistence {
     private val githubReleaseMetadataCollection: MongoCollection<GHReleaseMetadata> = createCollection(mongoClient.getDatabase(), GH_RELEASE_METADATA)
     private val releasesCollection: MongoCollection<Release> = createCollection(mongoClient.getDatabase(), RELEASE_DB)
+    private var attestationsCollection: MongoCollection<Attestation> = createCollection(mongoClient.getDatabase(), ATTESTATIONS_DB)
     private val gitHubStatsCollection: MongoCollection<GitHubDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), GITHUB_STATS_DB)
     private val dockerStatsCollection: MongoCollection<DockerDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), DOCKER_STATS_DB)
     private val releaseInfoCollection: MongoCollection<ReleaseInfo> = createCollection(mongoClient.getDatabase(), RELEASE_INFO_DB)
     private val updateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), UPDATE_TIME_DB)
+    private val attestationUpdateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), ATTESTATIONS_UPDATE_TIME_DB)
     private val githubReleaseNotesCollection: MongoCollection<ReleaseNotes> = createCollection(mongoClient.getDatabase(), GH_RELEASE_NOTES)
     private val client: MongoClient = mongoClient
 
@@ -46,6 +50,8 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
         const val GH_RELEASE_METADATA = "githubReleaseMetadata"
         const val RELEASE_DB = "release"
+        const val ATTESTATIONS_DB = "attestations"
+        const val ATTESTATIONS_UPDATE_TIME_DB = "attestationsUpdateTime"
         const val GITHUB_STATS_DB = "githubStats"
         const val DOCKER_STATS_DB = "dockerStats"
         const val RELEASE_INFO_DB = "releaseInfo"
@@ -66,11 +72,47 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         }
     }
 
+    override suspend fun updateAttestationRepos(repo: AdoptAttestationRepos, checksum: String) {
+
+        try {
+            val featureVersions = repo.repos.map { it.featureVersion }.toSet()
+
+            featureVersions.forEach { featureVersion ->
+                writeAttestations(featureVersion, repo.repos.filter { it.featureVersion == featureVersion })
+            }
+
+            removeAttestationsNotInFeatureVersions( featureVersions )
+        } finally {
+            updateAttestationUpdatedTime(TimeSource.now(), checksum, repo.hashCode())
+        }
+    }
+
     private suspend fun writeReleases(featureVersion: Int, value: FeatureRelease) {
         val toAdd = value.releases.getReleases().toList()
         if (toAdd.isNotEmpty()) {
             releasesCollection.deleteMany(majorVersionMatcher(featureVersion))
             releasesCollection.insertMany(toAdd, InsertManyOptions())
+        }
+    }
+
+    private suspend fun writeAttestations(featureVersion: Int, attestations: List<Attestation>) {
+        // First delete all existing for featureVersion
+        attestationsCollection.deleteMany(attestationFeatureVersionMatcher(featureVersion))
+        if (attestations.isNotEmpty()) {
+            // Then add updated featureVersionAttestations...
+            attestationsCollection.insertMany(attestations, InsertManyOptions())
+        }
+    }
+
+    private suspend fun removeAttestationsNotInFeatureVersions(featureVersions: Set<Int>) {
+        // Get existing featureVersions in DB
+        val dbFeatureVersions = attestationsCollection.distinct<Int>("featureVersion").toList()
+
+        // Delete feature versions that no longer exist
+        val toDelete = dbFeatureVersions.filterNot { it in featureVersions }
+        toDelete.forEach { featureVersionToDelete ->
+            // Delete all existing for featureVersionToDelete
+            attestationsCollection.deleteMany(attestationFeatureVersionMatcher(featureVersionToDelete))
         }
     }
 
@@ -80,6 +122,12 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
             .toList()
 
         return FeatureRelease(featureVersion, Releases(releases))
+    }
+
+    override suspend fun readAttestationData(): List<Attestation> {
+        return attestationsCollection
+            .find(Document())
+            .toList()
     }
 
     override suspend fun addGithubDownloadStatsEntries(stats: List<GitHubDownloadStatsDbEntry>) {
@@ -157,8 +205,23 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         updateTimeCollection.deleteMany(Document("time", BsonDocument("\$lt", BsonDateTime(dateTime.toInstant().toEpochMilli()))))
     }
 
+    open suspend fun updateAttestationUpdatedTime(dateTime: ZonedDateTime, checksum: String, hashCode: Int) {
+        attestationUpdateTimeCollection.replaceOne(
+            Document(),
+            UpdatedInfo(dateTime, checksum, hashCode),
+            ReplaceOptions().upsert(true)
+        )
+        attestationUpdateTimeCollection.deleteMany(Document("time", BsonDocument("\$lt", BsonDateTime(dateTime.toInstant().toEpochMilli()))))
+    }
+
     override suspend fun getUpdatedAt(): UpdatedInfo {
         val info = updateTimeCollection.find().firstOrNull()
+        // if we have no existing time, make it 5 mins ago, should only happen on first time the db is used
+        return info ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
+    }
+
+    override suspend fun getAttestationUpdatedAt(): UpdatedInfo {
+        val info = attestationUpdateTimeCollection.find().firstOrNull()
         // if we have no existing time, make it 5 mins ago, should only happen on first time the db is used
         return info ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
     }
@@ -182,6 +245,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     }
 
     private fun majorVersionMatcher(featureVersion: Int) = Document("version_data.major", featureVersion)
+    private fun attestationFeatureVersionMatcher(featureVersion: Int) = Document("featureVersion", featureVersion)
 
     override suspend fun getGhReleaseMetadata(gitHubId: GitHubId): GHReleaseMetadata? {
         return githubReleaseMetadataCollection.find(matchGithubId(gitHubId)).firstOrNull()
