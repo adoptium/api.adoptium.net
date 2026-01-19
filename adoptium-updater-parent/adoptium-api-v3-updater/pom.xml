@@ -14,7 +14,7 @@
 
     <properties>
         <main.class>net.adoptium.api.v3.Main</main.class>
-        <quarkus.package.type>uber-jar</quarkus.package.type>
+        <quarkus.package.jar.type>uber-jar</quarkus.package.jar.type>
         <quarkus.package.runner-suffix>-jar-with-dependencies</quarkus.package.runner-suffix>
     </properties>
 

@@ -1,6 +1,6 @@
 ######################################################
 ## Build
-FROM eclipse-temurin:21-jammy as build
+FROM eclipse-temurin:21-jammy AS build
 
 # BUILDS FOR ADOPTIUM, NOT ADOPTOPENJDK
 ARG MAVEN_FLAGS="-Padoptium,-adoptopenjdk"
@@ -12,7 +12,7 @@ ENV REPOSITORY=$REPOSITORY
 ARG BRANCH="main"
 ENV BRANCH=$BRANCH
 
-RUN     mkdir /tmp/build
+RUN mkdir /tmp/build
 
 WORKDIR /tmp/build
 
