@@ -9,7 +9,7 @@
 
     <properties>
         <coroutine.version>1.10.2</coroutine.version>
-        <jackson.version>2.19.2</jackson.version>
+        <jackson.version>2.21.0</jackson.version>
         <jdk.version>17</jdk.version>
         <mongo.version>5.1.2</mongo.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
@@ -94,7 +94,8 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
-                <version>${jackson.version}</version>
+                <!-- jackson-annotations uses 2.21 (no .0 suffix) unlike other Jackson modules -->
+                <version>2.21</version>
             </dependency>
 
             <!-- Mocking libs -->
