@@ -13,14 +13,14 @@
         <jdk.version>17</jdk.version>
         <mongo.version>5.1.2</mongo.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <kotlin.version>2.2.21</kotlin.version>
+        <kotlin.version>2.3.0</kotlin.version>
         <logback.version>1.5.28</logback.version>
         <maven.compiler.release>17</maven.compiler.release>
         <maven.version>3.9.12</maven.version>
         <maven.project-info-reports-plugin.version>3.9.0</maven.project-info-reports-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.30.6</quarkus.version>
+        <quarkus.version>3.31.2</quarkus.version>
         <rest-assured.version>6.0.0</rest-assured.version>
     </properties>
 
