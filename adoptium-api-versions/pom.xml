@@ -9,23 +9,31 @@
 
     <properties>
         <coroutine.version>1.10.2</coroutine.version>
-        <jackson.version>2.19.2</jackson.version>
+        <jackson.version>2.21.0</jackson.version>
         <jdk.version>17</jdk.version>
         <mongo.version>5.1.2</mongo.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <kotlin.version>2.2.21</kotlin.version>
+        <kotlin.version>2.3.10</kotlin.version>
         <logback.version>1.5.31</logback.version>
         <maven.compiler.release>17</maven.compiler.release>
         <maven.version>3.9.12</maven.version>
         <maven.project-info-reports-plugin.version>3.9.0</maven.project-info-reports-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.30.6</quarkus.version>
+        <quarkus.version>3.31.2</quarkus.version>
         <rest-assured.version>6.0.0</rest-assured.version>
     </properties>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>2.21.0</version>
+                <configuration>
+                    <processDependencyManagement>false</processDependencyManagement>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
@@ -62,6 +70,15 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!--
+            <dependency>
+                <groupId>io.ktor</groupId>
+                <artifactId>ktor-bom</artifactId>
+                <version>3.4.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            -->
             <dependency>
                 <groupId>org.jetbrains.kotlinx</groupId>
                 <artifactId>kotlinx-coroutines-bom</artifactId>
@@ -87,6 +104,11 @@
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-xml</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>${jackson.version}</version>
@@ -94,7 +116,8 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
-                <version>${jackson.version}</version>
+                <!-- jackson-annotations uses 2.21 (no .0 suffix) unlike other Jackson modules -->
+                <version>2.21</version>
             </dependency>
 
             <!-- Mocking libs -->
@@ -166,7 +189,7 @@
             <dependency>
                 <groupId>org.mongodb</groupId>
                 <artifactId>mongodb-driver-kotlin-coroutine</artifactId>
-                <version>5.6.2</version>
+                <version>5.6.3</version>
             </dependency>
 
             <dependency>
@@ -177,7 +200,7 @@
             <dependency>
                 <groupId>de.flapdoodle.embed</groupId>
                 <artifactId>de.flapdoodle.embed.mongo</artifactId>
-                <version>4.23.0</version>
+                <version>4.24.0</version>
                 <scope>test</scope>
             </dependency>
 
