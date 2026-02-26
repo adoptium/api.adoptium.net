@@ -17,9 +17,18 @@ open class CloudflareStatsCalculator @Inject constructor(
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
 
-        // TODO: Extract version from clientRequestPath - need real examples to implement
-        fun extractVersionFromPath(path: String): Int {
-            return 0
+        fun extractVersionFromPath(path: String): Int? {
+            return try {
+                path
+                    .split("/temurin-")
+                    .lastOrNull()
+                    ?.split("-", "_")
+                    ?.firstOrNull()
+                    ?.toIntOrNull()
+            } catch (e: Exception) {
+                LOGGER.warn("Failed to extract version from path: $path", e)
+                null
+            }
         }
     }
 
@@ -32,14 +41,18 @@ open class CloudflareStatsCalculator @Inject constructor(
 
             val response = cloudFlareClient.fetchDownloadStats(startDate, endDate)
 
+
             val stats = response.data
-                .groupingBy { stats ->
+                .mapNotNull { stats ->
                     val version = extractVersionFromPath(stats.path)
+                    version?.let { stats to version }
+                }
+                .groupingBy { (stats, version) ->
                     // This is a hack to put all stats of the same day together
                     stats.date to version
                 }
                 .fold(0L) { currentTotal, element ->
-                    currentTotal + element.count
+                    currentTotal + element.first.count
                 }
                 .map { (key, totalDownloads) ->
                     CloudflarePackageDownloadStatsDbEntry(
@@ -50,7 +63,7 @@ open class CloudflareStatsCalculator @Inject constructor(
                 }
 
             database.addPackageDownloadStatsEntries(stats)
-            LOGGER.info("Saved CloudFlare package stats: $stats downloads")
+            LOGGER.info("Saved CloudFlare package stats: ${stats.size} entries with total downloads")
         } catch (e: Exception) {
             LOGGER.error("Failed to fetch CloudFlare package stats", e)
             throw e
