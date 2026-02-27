@@ -71,7 +71,7 @@ class CloudflareStatsCalculatorTest {
 
         val testDate = LocalDate.of(2024, 1, 15)
         val response = CloudflareResponse(
-            data = listOf(
+            data = setOf(
                 // Version 17 entries - should aggregate to 150
                 CloudflarePackageStats(testDate, 100, "/artifactory/deb/pool/main/t/temurin-17/temurin-17-jdk_17.0.10_amd64.deb"),
                 CloudflarePackageStats(testDate, 50, "/artifactory/rpm/centos/7/x86_64/Packages/temurin-17-jdk-17.0.10.x86_64.rpm"),
@@ -120,7 +120,7 @@ class CloudflareStatsCalculatorTest {
         val database = InMemoryApiPersistence(AdoptRepos(emptyList()), AdoptAttestationRepos(emptyList()))
         val calculator = CloudflareStatsCalculator(database, mockClient)
 
-        coEvery { mockClient.fetchDownloadStats(any(), any()) } returns CloudflareResponse(data = emptyList())
+        coEvery { mockClient.fetchDownloadStats(any(), any()) } returns CloudflareResponse(data = emptySet())
 
         
         calculator.updateDb()
@@ -142,7 +142,7 @@ class CloudflareStatsCalculatorTest {
 
         val testDate = LocalDate.of(2024, 1, 15)
         val response = CloudflareResponse(
-            data = listOf(
+            data = setOf(
                 CloudflarePackageStats(testDate, 100, "/artifactory/rpm/centos/7/x86_64/Packages/temurin-17-jdk-17.0.18.0.0.8-1.x86_64.rpm"),
                 CloudflarePackageStats(testDate, 50, "/invalid/path1"),
                 CloudflarePackageStats(testDate, 200, "/artifactory/deb/pool/main/t/temurin-11/temurin-11-jdk_11.0.30.0.0%2b7-0_amd64.deb"),
