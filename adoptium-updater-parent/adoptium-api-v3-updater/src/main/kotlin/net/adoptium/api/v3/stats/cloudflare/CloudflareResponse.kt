@@ -9,7 +9,16 @@ data class CloudflarePackageStats(
     val date: LocalDate,
     val count: Long,
     val path: String
-)
+) : Comparable<CloudflarePackageStats> {
+
+    companion object {
+        private val COMPARATOR: Comparator<CloudflarePackageStats> = compareBy<CloudflarePackageStats>(
+            { it.date }, { it.path }, { it.count }
+        )
+    }
+
+    override fun compareTo(other: CloudflarePackageStats): Int = COMPARATOR.compare(this, other)
+}
 
 private object ResponseKey {
     const val DATA = "data"
@@ -20,15 +29,39 @@ private object ResponseKey {
     const val DATE = "date"
     const val PATH = "clientRequestPath"
     const val HTTP_REQUESTS_ADAPTIVE_GROUPS = "httpRequestsAdaptiveGroups"
+    const val ERRORS = "errors"
+    const val MESSAGE = "message"
+    const val EXTENSIONS = "extensions"
+    const val TIMESTAMP = "timestamp"
 }
 
 data class CloudflareResponse(
-    val data: Set<CloudflarePackageStats>
+    val data: Set<CloudflarePackageStats> = sortedSetOf()
 ) {
     companion object {
         private val mapper = ObjectMapper()
+
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
+
+        /**
+         * Parse GraphQL errors from JSON response.
+         */
+        fun parseErrors(json: String): List<GraphQLError> {
+            val root = mapper.readTree(json)
+            val errorsNode = root.path(ResponseKey.ERRORS)
+
+            if (errorsNode.isMissingNode || !errorsNode.isArray) {
+                return emptyList()
+            }
+
+            return errorsNode.map { errorNode ->
+                val message = errorNode.path(ResponseKey.MESSAGE).asText() ?: "Unknown error"
+                val path = errorNode.path("path").map { it.asText() }
+                val timestamp = errorNode.path(ResponseKey.EXTENSIONS).path(ResponseKey.TIMESTAMP).asText()
+                GraphQLError(message, path, timestamp)
+            }
+        }
 
         fun fromJson(json: String): CloudflareResponse {
             val root = mapper.readTree(json)
