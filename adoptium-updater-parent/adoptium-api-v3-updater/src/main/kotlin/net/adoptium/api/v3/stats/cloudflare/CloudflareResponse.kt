@@ -47,7 +47,7 @@ data class CloudflareResponse(
         /**
          * Parse GraphQL errors from JSON response.
          */
-        fun parseErrors(json: String): List<GraphQLError> {
+        private fun parseErrors(json: String): List<GraphQLError> {
             val root = mapper.readTree(json)
             val errorsNode = root.path(ResponseKey.ERRORS)
 
@@ -63,8 +63,81 @@ data class CloudflareResponse(
             }
         }
 
+        /**
+         * Handle GraphQL errors by mapping them to appropriate exceptions.
+         * Throws the first matching exception found.
+         *
+         * https://developers.cloudflare.com/analytics/graphql-api/errors/#common-error-types
+         */
+        private fun handleErrors(errors: List<GraphQLError>) {
+            for (error in errors) {
+                val message = error.message
+
+                when {
+                    // Service unavailability
+                    message.contains("unable to execute query", ignoreCase = true) ||
+                    message.contains("too many queries in progress", ignoreCase = true) -> {
+                        throw CloudflareServiceUnavailableException(message)
+                    }
+
+                    // Rate limits
+                    message.contains("rate limiter budget depleted", ignoreCase = true) ||
+                    message.contains("too many nodes", ignoreCase = true) ||
+                    message.contains("excessive resources", ignoreCase = true) -> {
+                        throw CloudflareRateLimitException(message)
+                    }
+
+                    // Dataset limits
+                    message.contains("cannot request data older than", ignoreCase = true) ||
+                    message.contains("number of fields can't be more than", ignoreCase = true) ||
+                    message.contains("limit must be positive", ignoreCase = true) ||
+                    message.contains("query time range is too large", ignoreCase = true) -> {
+                        throw CloudflareDatasetLimitException(message)
+                    }
+
+                    // Query parsing issues
+                    message.contains("error parsing args", ignoreCase = true) ||
+                    message.contains("scalar fields must have no selections", ignoreCase = true) ||
+                    message.contains("object field must have selections", ignoreCase = true) ||
+                    message.contains("unknown field", ignoreCase = true) ||
+                    message.contains("query contains error", ignoreCase = true) -> {
+                        throw CloudflareQueryException(message)
+                    }
+
+                    // Auth errors
+                    message.contains("Unauthorized", ignoreCase = true) ||
+                    message.contains("not authorized", ignoreCase = true) ||
+                    message.contains("does not have access", ignoreCase = true) -> {
+                        throw CloudflareAuthException(message)
+                    }
+
+                    // Internal server error
+                    message.contains("Internal server error", ignoreCase = true) -> {
+                        throw CloudflareInternalErrorException(message)
+                    }
+
+                    else -> {
+                        LOGGER.warn("Unrecognized GraphQL error: $message")
+                    }
+                }
+            }
+        }
+
+        /**
+         * Parse JSON response. Checks for GraphQL errors first and throws appropriate exceptions.
+         * Only returns data if no errors are present.
+         *
+         * @return net.adoptium.api.v3.stats.cloudflare.CloudflareResponse or throws CloudflareApiException
+         */
         fun fromJson(json: String): CloudflareResponse {
             val root = mapper.readTree(json)
+
+            // Check for GraphQL-level errors first
+            val errors = parseErrors(json)
+            if (errors.isNotEmpty()) {
+                handleErrors(errors)
+            }
+
             val dataList = mutableSetOf<CloudflarePackageStats>()
 
             val zones = root.path(ResponseKey.DATA).path(ResponseKey.VIEWER).path(ResponseKey.ZONES)

@@ -95,8 +95,8 @@ class CloudflareClient @Inject constructor(
     /**
      * Fetches all download stats from Cloudflare with automatic pagination.
      * 
-     * Cloudflare has a 1000 result limit per query. If we hit this limit,
-     * we use filtering with date_gt and clientRequestPath_geq to fetch additional pages.
+     * Cloudflare has a result limit per query defined in $limit. If we hit this limit,
+     * we use filtering with clientRequestPath_geq to fetch additional pages.
      *
      * @param startDate inclusive start date
      * @param endDate exclusive end date
@@ -121,13 +121,10 @@ class CloudflareClient @Inject constructor(
 
             allStats.addAll(pageStats)
 
-            // Check if we hit the limit and need to paginate
             if (pageStats.size >= MAX_RESULTS_PER_PAGE) {
-                // Data is already sorted, get last item directly
-                val lastItem = pageStats.last()
-                lastPath = lastItem.path
+                lastPath = pageStats.last().path
 
-                LOGGER.info("Hit ${MAX_RESULTS_PER_PAGE} result limit on page $pageCount. " +
+                LOGGER.info("Hit $MAX_RESULTS_PER_PAGE result limit on page $pageCount. " +
                     "Fetching next page with clientRequestPath_gt=$lastPath")
             } else {
                 // Last page
@@ -158,28 +155,16 @@ class CloudflareClient @Inject constructor(
             try {
                 return executeQuery(startDate, endDate, lastPath)
             } catch (e: CloudflareApiException) {
-                when (e) {
+                retryCount = when (e) {
                     is CloudflareServiceUnavailableException,
                     is CloudflareInternalErrorException -> {
-                        if (retryCount >= MAX_RETRY_ATTEMPTS) {
-                            LOGGER.error("Max retry attempts ($MAX_RETRY_ATTEMPTS) exceeded for ${e::class.simpleName}")
-                            throw e
-                        }
-                        retryCount++
-                        val delayMs = BASE_RETRY_DELAY_MS * retryCount
-                        LOGGER.warn("${e::class.simpleName} (attempt $retryCount/$MAX_RETRY_ATTEMPTS), retrying in ${delayMs}ms: ${e.message}")
-                        delay(delayMs)
+                        retryOrFail(e, retryCount, 1)
                     }
+
                     is CloudflareRateLimitException -> {
-                        if (retryCount >= MAX_RETRY_ATTEMPTS) {
-                            LOGGER.error("Max retry attempts ($MAX_RETRY_ATTEMPTS) exceeded for rate limit")
-                            throw e
-                        }
-                        retryCount++
-                        val delayMs = BASE_RETRY_DELAY_MS * 2 * retryCount
-                        LOGGER.warn("Rate limit hit (attempt $retryCount/$MAX_RETRY_ATTEMPTS), retrying in ${delayMs}ms: ${e.message}")
-                        delay(delayMs)
+                        retryOrFail(e, retryCount, 2)
                     }
+
                     else -> {
                         // Non-retryable errors: Auth, DatasetLimit, Query
                         LOGGER.error("Non-retryable error: ${e::class.simpleName}: ${e.message}")
@@ -234,7 +219,7 @@ class CloudflareClient @Inject constructor(
 
         val statusCode = response.statusLine.statusCode
         val body = response.entity.content.bufferedReader().readText()
-        
+
         // Handle HTTP status codes first
         when (statusCode) {
             401 -> throw CloudflareAuthException("Unauthorized - API token is missing, expired, or invalid")
@@ -244,91 +229,12 @@ class CloudflareClient @Inject constructor(
             503 -> throw CloudflareServiceUnavailableException("Service unavailable (HTTP 503)")
             504 -> throw CloudflareServiceUnavailableException("Gateway timeout (HTTP 504)")
         }
-        
+
         if (statusCode != 200) {
             throw CloudflareInternalErrorException("Cloudflare API returned unexpected status code: $statusCode, body: $body")
         }
 
-        // Parse response and check for GraphQL errors
-        val cfResponse = CloudflareResponse.fromJson(body)
-        
-        // Check for GraphQL-level errors in the JSON
-        val errors = parseGraphQLErrors(body)
-        if (errors.isNotEmpty()) {
-            handleGraphQLErrors(errors)
-        }
-        
-        return cfResponse
-    }
-
-    /**
-     * Parse GraphQL errors from JSON response.
-     */
-    private fun parseGraphQLErrors(json: String): List<GraphQLError> {
-        return try {
-            CloudflareResponse.parseErrors(json)
-        } catch (e: Exception) {
-            LOGGER.warn("Failed to parse GraphQL errors: ${e.message}")
-            emptyList()
-        }
-    }
-
-    /**
-     * Handle GraphQL errors by mapping them to appropriate exceptions.
-     * https://developers.cloudflare.com/analytics/graphql-api/errors/#common-error-types
-     */
-    private fun handleGraphQLErrors(errors: List<GraphQLError>) {
-        for (error in errors) {
-            val message = error.message
-            
-            when {
-                // Service unavailability
-                message.contains("unable to execute query", ignoreCase = true) ||
-                message.contains("too many queries in progress", ignoreCase = true) -> {
-                    throw CloudflareServiceUnavailableException(message)
-                }
-                
-                // Rate limits
-                message.contains("rate limiter budget depleted", ignoreCase = true) ||
-                message.contains("too many nodes", ignoreCase = true) ||
-                message.contains("excessive resources", ignoreCase = true) -> {
-                    throw CloudflareRateLimitException(message)
-                }
-                
-                // Dataset limits
-                message.contains("cannot request data older than", ignoreCase = true) ||
-                message.contains("number of fields can't be more than", ignoreCase = true) ||
-                message.contains("limit must be positive", ignoreCase = true) ||
-                message.contains("query time range is too large", ignoreCase = true) -> {
-                    throw CloudflareDatasetLimitException(message)
-                }
-                
-                // Query parsing issues
-                message.contains("error parsing args", ignoreCase = true) ||
-                message.contains("scalar fields must have no selections", ignoreCase = true) ||
-                message.contains("object field must have selections", ignoreCase = true) ||
-                message.contains("unknown field", ignoreCase = true) ||
-                message.contains("query contains error", ignoreCase = true) -> {
-                    throw CloudflareQueryException(message)
-                }
-                
-                // Auth errors (shouldn't happen with 200 response, but check anyway)
-                message.contains("Unauthorized", ignoreCase = true) ||
-                message.contains("not authorized", ignoreCase = true) ||
-                message.contains("does not have access", ignoreCase = true) -> {
-                    throw CloudflareAuthException(message)
-                }
-                
-                // Internal server error
-                message.contains("Internal server error", ignoreCase = true) -> {
-                    throw CloudflareInternalErrorException(message)
-                }
-                
-                else -> {
-                    LOGGER.warn("Unrecognized GraphQL error: $message")
-                }
-            }
-        }
+        return CloudflareResponse.fromJson(body)
     }
 
     private fun buildGraphQLQuery(
@@ -346,6 +252,21 @@ class CloudflareClient @Inject constructor(
         lastPath?.let { variables["lastPath"] = it }
 
         return mapper.writeValueAsString(mapOf("query" to GRAPHQL_QUERY, "variables" to variables))
+    }
+
+    /**
+     * Handle retry logic with exponential backoff. Returns incremented retry count or throws.
+     */
+    private suspend fun retryOrFail(e: CloudflareApiException, retryCount: Int, delayMultiplier: Int): Int {
+        if (retryCount >= MAX_RETRY_ATTEMPTS) {
+            LOGGER.error("Max retry attempts ($MAX_RETRY_ATTEMPTS) exceeded for ${e::class.simpleName}")
+            throw e
+        }
+        val newRetryCount = retryCount + 1
+        val delayMs = BASE_RETRY_DELAY_MS * delayMultiplier * newRetryCount
+        LOGGER.warn("(attempt $newRetryCount/$MAX_RETRY_ATTEMPTS), retrying in ${delayMs}ms: ${e.message}")
+        delay(delayMs)
+        return newRetryCount
     }
 }
 
