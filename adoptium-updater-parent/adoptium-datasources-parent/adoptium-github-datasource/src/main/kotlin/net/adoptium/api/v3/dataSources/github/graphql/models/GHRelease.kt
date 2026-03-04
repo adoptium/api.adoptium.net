@@ -21,11 +21,12 @@ data class GHRelease @JsonCreator constructor(
     val id: GitHubId,
     @JsonProperty("name") val name: String,
     @JsonProperty("isPrerelease") val isPrerelease: Boolean,
-    @JsonProperty("publishedAt") val publishedAt: String,
+    @JsonProperty("publishedAt") val publishedAt: String?,
     @JsonProperty("updatedAt") val updatedAt: String,
     @JsonProperty("releaseAssets") val releaseAssets: GHAssets,
     @JsonProperty("resourcePath") val resourcePath: String,
-    @JsonProperty("url") val url: String
+    @JsonProperty("url") val url: String,
+    @JsonProperty("isDraft") val isDraft: Boolean = false
 )
 
 data class GHAssets @JsonCreator constructor(

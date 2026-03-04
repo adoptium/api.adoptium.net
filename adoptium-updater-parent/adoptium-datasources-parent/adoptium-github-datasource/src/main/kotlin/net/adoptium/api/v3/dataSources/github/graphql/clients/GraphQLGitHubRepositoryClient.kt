@@ -84,6 +84,7 @@ open class GraphQLGitHubRepositoryClient @Inject constructor(
                                         publishedAt,
                                         updatedAt,
                                         isPrerelease,
+                                        isDraft,
                                         resourcePath,
                                         releaseAssets(first:1) {
                                             totalCount,

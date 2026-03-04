@@ -56,6 +56,7 @@ open class GraphQLGitHubReleaseClient @Inject constructor(
                                         publishedAt,
                                         updatedAt,
                                         isPrerelease,
+                                        isDraft,
                                         resourcePath,
                                         releaseAssets(first:50) {
                                             nodes {

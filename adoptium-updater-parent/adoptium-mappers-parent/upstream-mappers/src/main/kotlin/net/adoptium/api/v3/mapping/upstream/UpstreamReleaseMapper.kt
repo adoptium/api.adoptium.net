@@ -25,7 +25,7 @@ object UpstreamReleaseMapper : ReleaseMapper() {
 
         val releaseLink = ghRelease.url
         val releaseName = ghRelease.name
-        val timestamp = parseDate(ghRelease.publishedAt)
+        val timestamp = parseDate(ghRelease.publishedAt ?: ghRelease.updatedAt)
         val updatedAt = parseDate(ghRelease.updatedAt)
         val downloadCount = ghRelease.releaseAssets.assets
             .filter { asset ->

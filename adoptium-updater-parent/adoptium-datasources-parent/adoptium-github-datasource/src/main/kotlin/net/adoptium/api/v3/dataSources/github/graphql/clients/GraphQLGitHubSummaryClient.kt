@@ -64,6 +64,7 @@ open class GraphQLGitHubSummaryClient @Inject constructor(
                                         id,
                                         publishedAt,
                                         updatedAt,
+                                        isDraft,
                                         name,
                                         releaseAssets {
                                             totalCount

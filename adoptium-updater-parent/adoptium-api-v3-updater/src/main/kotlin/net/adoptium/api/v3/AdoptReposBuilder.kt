@@ -144,7 +144,8 @@ class AdoptReposBuilder @Inject constructor(
             .flatMap { getReleaseById(it) }
     }
 
-    private fun isReleaseOldEnough(timestamp: String): Boolean {
+    private fun isReleaseOldEnough(timestamp: String?): Boolean {
+        if (timestamp == null) return true // Draft releases have no publishedAt, always include them
         val created = ReleaseMapper.parseDate(timestamp)
         return ChronoUnit.MINUTES.between(created, TimeSource.now()).absoluteValue > 10
     }

@@ -24,10 +24,11 @@ data class GHReleaseSummary @JsonCreator constructor(
     @JsonProperty("id")
     @JsonDeserialize(using = GitHubIdDeserializer::class)
     val id: GitHubId,
-    @JsonProperty("publishedAt") val publishedAt: String,
+    @JsonProperty("publishedAt") val publishedAt: String?,
     @JsonProperty("updatedAt") val updatedAt: String,
     @JsonProperty("name") val name: String,
-    @JsonProperty("releaseAssets") val releaseAssets: GHAssetsSummary
+    @JsonProperty("releaseAssets") val releaseAssets: GHAssetsSummary,
+    @JsonProperty("isDraft") val isDraft: Boolean = false
 ) {
 
     fun getUpdatedTime(): ZonedDateTime {
@@ -35,7 +36,7 @@ data class GHReleaseSummary @JsonCreator constructor(
     }
 
     fun getPublishedTime(): ZonedDateTime {
-        return parseDate(publishedAt)
+        return parseDate(publishedAt ?: updatedAt)
     }
 
     private fun parseDate(date: String): ZonedDateTime {

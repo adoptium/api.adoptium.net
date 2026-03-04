@@ -51,7 +51,8 @@ open class GraphQLGitHubReleaseRequest @Inject constructor(
                 0
             ),
             release.resourcePath,
-            release.url
+            release.url,
+            release.isDraft
         )
     }
 
