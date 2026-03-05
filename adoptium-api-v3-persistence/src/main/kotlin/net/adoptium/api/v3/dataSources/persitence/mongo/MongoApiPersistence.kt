@@ -17,6 +17,7 @@ import net.adoptium.api.v3.dataSources.models.ReleaseNotes
 import net.adoptium.api.v3.dataSources.models.Releases
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.DockerDownloadStatsDbEntry
+import net.adoptium.api.v3.models.CloudflarePackageDownloadStatsDbEntry
 import net.adoptium.api.v3.models.GHReleaseMetadata
 import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
 import net.adoptium.api.v3.models.Release
@@ -39,6 +40,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     private var attestationsCollection: MongoCollection<Attestation> = createCollection(mongoClient.getDatabase(), ATTESTATIONS_DB)
     private val gitHubStatsCollection: MongoCollection<GitHubDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), GITHUB_STATS_DB)
     private val dockerStatsCollection: MongoCollection<DockerDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), DOCKER_STATS_DB)
+    private val packageStatsCollection: MongoCollection<CloudflarePackageDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), PACKAGE_STATS_DB)
     private val releaseInfoCollection: MongoCollection<ReleaseInfo> = createCollection(mongoClient.getDatabase(), RELEASE_INFO_DB)
     private val updateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), UPDATE_TIME_DB)
     private val attestationUpdateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), ATTESTATIONS_UPDATE_TIME_DB)
@@ -54,6 +56,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         const val ATTESTATIONS_UPDATE_TIME_DB = "attestationsUpdateTime"
         const val GITHUB_STATS_DB = "githubStats"
         const val DOCKER_STATS_DB = "dockerStats"
+        const val PACKAGE_STATS_DB = "packageStats"
         const val RELEASE_INFO_DB = "releaseInfo"
         const val UPDATE_TIME_DB = "updateTime"
         const val GH_RELEASE_NOTES = "releaseNotes"
@@ -180,10 +183,30 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
             .toList()
     }
 
+    override suspend fun addPackageDownloadStatsEntries(stats: List<CloudflarePackageDownloadStatsDbEntry>) {
+        packageStatsCollection.insertMany(stats)
+    }
+
+    override suspend fun getLatestPackageStatsForFeatureVersion(featureVersion: Int): CloudflarePackageDownloadStatsDbEntry? {
+        return packageStatsCollection
+            .find(Document("feature_version", featureVersion))
+            .sort(Document("date", -1))
+            .limit(1)
+            .firstOrNull()
+    }
+
+    override suspend fun getPackageStats(start: ZonedDateTime, end: ZonedDateTime): List<CloudflarePackageDownloadStatsDbEntry> {
+        return packageStatsCollection
+            .find(betweenDates(start, end))
+            .sort(Document("date", 1))
+            .toList()
+    }
+
     override suspend fun removeStatsBetween(start: ZonedDateTime, end: ZonedDateTime) {
         val deleteQuery = betweenDates(start, end)
         dockerStatsCollection.deleteMany(deleteQuery)
         gitHubStatsCollection.deleteMany(deleteQuery)
+        packageStatsCollection.deleteMany(deleteQuery)
     }
 
     override suspend fun setReleaseInfo(releaseInfo: ReleaseInfo) {
