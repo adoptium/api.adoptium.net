@@ -36,6 +36,7 @@
         <dependency>
             <groupId>io.ktor</groupId>
             <artifactId>ktor-client-logging-jvm</artifactId>
+            <!-- This matches the transitive dependency that com.expediagroup:graphql-kotlin-ktor-client:jar:8.8.1 has -->
             <version>2.3.12</version>
         </dependency>
         <dependency>
