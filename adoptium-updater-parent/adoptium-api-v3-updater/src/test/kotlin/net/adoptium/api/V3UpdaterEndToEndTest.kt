@@ -7,7 +7,6 @@ import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.v3.AdoptReposBuilder
 import net.adoptium.api.v3.AdoptRepositoryImpl
 import net.adoptium.api.v3.AdoptAttestationReposBuilder
-import net.adoptium.api.v3.AdoptAttestationRepository
 import net.adoptium.api.v3.AdoptAttestationRepositoryImpl
 import net.adoptium.api.v3.V3Updater
 import net.adoptium.api.v3.dataSources.APIDataStore
@@ -21,11 +20,8 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHReleases
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRepository
-import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummaryData
-import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummaryRepository
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummaryEntry
-import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummaryObject
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestation
 import net.adoptium.api.v3.dataSources.github.graphql.models.Declarations
 import net.adoptium.api.v3.dataSources.github.graphql.models.Targets
@@ -546,7 +542,7 @@ class V3UpdaterEndToEndTest {
             ),
             apiDataStore,
             memoryDb,
-            object : StatsInterface(mockk(), object : DockerStatsInterfaceFactory(mockk(), mockk()) {
+            object : StatsInterface(mockk(), mockk(), object : DockerStatsInterfaceFactory(mockk(), mockk()) {
                 override fun getDockerStatsInterface(): StatsInterface {
                     return mockk()
                 }
@@ -663,7 +659,7 @@ class V3UpdaterEndToEndTest {
             ),
             apiDataStore,
             memoryDb,
-            object : StatsInterface(mockk(), object : DockerStatsInterfaceFactory(mockk(), mockk()) {
+            object : StatsInterface(mockk(), mockk(), object : DockerStatsInterfaceFactory(mockk(), mockk()) {
                 override fun getDockerStatsInterface(): StatsInterface {
                     return mockk()
                 }
