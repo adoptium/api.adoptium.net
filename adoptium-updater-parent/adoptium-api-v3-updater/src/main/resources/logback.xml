@@ -7,6 +7,7 @@
     <logger name="io.netty" level="INFO"/>
     <logger name="org.kohsuke" level="WARN"/>
     <logger name="jdk.event.security" level="WARN"/>
+    <logger name="io.ktor" level="WARN"/>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>/tmp/updater.log</file>

@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21 as build
+FROM eclipse-temurin:21 AS build
 
 RUN mkdir /tmp/build
 
