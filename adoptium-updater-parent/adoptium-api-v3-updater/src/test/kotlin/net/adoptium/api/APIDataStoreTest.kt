@@ -62,6 +62,22 @@ class APIDataStoreTest : MongoTest() {
     }
 
     @Test
+    fun attestationDataIsStoredToDbCorrectly(apiDataStore: APIDataStore, apiPersistence: ApiPersistence) {
+        runBlocking {
+            apiPersistence.updateAttestationRepos(BaseTest.adoptAttestationRepos, "")
+            val dbData = apiDataStore.loadAttestationDataFromDb(false)
+
+            val before = UpdaterJsonMapper.mapper.writeValueAsString(dbData)
+            val after = UpdaterJsonMapper.mapper.writeValueAsString(BaseTest.adoptAttestationRepos)
+            JSONAssert.assertEquals(
+                before,
+                after,
+                true
+            )
+        }
+    }
+
+    @Test
     fun `updated at is set`(apiPersistence: ApiPersistence) {
         runBlocking {
             apiPersistence.updateAllRepos(BaseTest.adoptRepos, Base64.getEncoder().encodeToString("1234".toByteArray()))
@@ -70,6 +86,21 @@ class APIDataStoreTest : MongoTest() {
             apiPersistence.updateAllRepos(BaseTest.adoptRepos, Base64.getEncoder().encodeToString("a-checksum".toByteArray()))
 
             val updatedTime = apiPersistence.getUpdatedAt()
+
+            assertTrue(updatedTime.time.isAfter(time))
+            assertEquals(Base64.getEncoder().encodeToString("a-checksum".toByteArray()), updatedTime.checksum)
+        }
+    }
+
+    @Test
+    fun `attestation updated at is set`(apiPersistence: ApiPersistence) {
+        runBlocking {
+            apiPersistence.updateAttestationRepos(BaseTest.adoptAttestationRepos, Base64.getEncoder().encodeToString("1234".toByteArray()))
+            val time = TimeSource.now()
+            delay(1000)
+            apiPersistence.updateAttestationRepos(BaseTest.adoptAttestationRepos, Base64.getEncoder().encodeToString("a-checksum".toByteArray()))
+
+            val updatedTime = apiPersistence.getAttestationUpdatedAt()
 
             assertTrue(updatedTime.time.isAfter(time))
             assertEquals(Base64.getEncoder().encodeToString("a-checksum".toByteArray()), updatedTime.checksum)

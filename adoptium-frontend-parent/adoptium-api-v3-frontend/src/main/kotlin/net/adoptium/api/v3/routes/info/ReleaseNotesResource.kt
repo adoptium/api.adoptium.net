@@ -49,7 +49,7 @@ constructor(
     )
     fun getReleaseNotes(
         @Parameter(
-            name = "release_name", description = OpenApiDocs.RELASE_NAME, required = true,
+            name = "release_name", description = OpenApiDocs.RELEASE_NAME, required = true,
             schema = Schema(example = "jdk-19.0.2+7", type = SchemaType.STRING)
         )
         @PathParam("release_name")
