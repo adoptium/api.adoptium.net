@@ -1,5 +1,8 @@
 FROM eclipse-temurin:25 AS build
 
+RUN apt-get update && \
+    apt-get install -y curl
+
 RUN mkdir /tmp/build
 
 WORKDIR /tmp/build
