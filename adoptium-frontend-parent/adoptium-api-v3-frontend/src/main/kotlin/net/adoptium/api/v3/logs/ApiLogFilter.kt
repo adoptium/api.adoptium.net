@@ -1,7 +1,6 @@
 package net.adoptium.api.v3.logs
 
 import io.quarkus.logging.LoggingFilter
-import io.quarkus.vertx.http.runtime.QuarkusErrorHandler
 import java.util.logging.Filter
 import java.util.logging.LogRecord
 
@@ -9,8 +8,11 @@ import java.util.logging.LogRecord
 class ApiLogFilter : Filter {
     override fun isLoggable(record: LogRecord?): Boolean {
         // Frequent message that is safe to ignore
-        val exclude = record?.loggerName?.equals(QuarkusErrorHandler::class.java.name) == true &&
-            record.message?.contains("Unable to serialize property") == true
+        var exclude = record?.loggerName?.equals("org.eclipse.yasson.internal.SerializationContextImpl") == true &&
+            record.message?.contains("Generating incomplete JSON") == true
+
+        exclude = exclude || record?.loggerName?.equals("io.quarkus.vertx.http.runtime.QuarkusErrorHandler") == true &&
+            record.thrown?.message?.contains("Unable to serialize") == true
 
         return !exclude;
     }

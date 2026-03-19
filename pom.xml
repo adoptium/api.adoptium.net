@@ -38,7 +38,7 @@
         <maven.directory-maven-plugin.version>1.0</maven.directory-maven-plugin.version>
         <maven.enforcer-plugin.version>3.6.2</maven.enforcer-plugin.version>
         <maven.exec-plugin.version>3.6.3</maven.exec-plugin.version>
-        <maven.filtering-plugin.version>3.4.0</maven.filtering-plugin.version>
+        <maven.filtering-plugin.version>3.5.0</maven.filtering-plugin.version>
         <maven.help-plugin.version>3.5.1</maven.help-plugin.version>
         <maven.install-plugin.version>3.1.4</maven.install-plugin.version>
         <maven.jacoco-plugin.version>0.8.10</maven.jacoco-plugin.version>
@@ -50,7 +50,7 @@
         <maven.jxr-plugin.version>3.6.0</maven.jxr-plugin.version>
         <maven.license-plugin.version>2.7.1</maven.license-plugin.version>
         <maven.openapi-generator-maven-plugin.version>7.20.0</maven.openapi-generator-maven-plugin.version>
-        <maven.pitest-plugin.version>1.22.1</maven.pitest-plugin.version>
+        <maven.pitest-plugin.version>1.23.0</maven.pitest-plugin.version>
         <maven.pmd-plugin.version>3.28.0</maven.pmd-plugin.version>
         <maven.project-info-reports-plugin.version>3.9.0</maven.project-info-reports-plugin.version>
         <maven.rat-plugin.version>0.17</maven.rat-plugin.version>
@@ -74,7 +74,7 @@
         <spotbugs.version>4.7.3</spotbugs.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.32.3</quarkus.version>
+        <quarkus.version>3.34.0</quarkus.version>
     </properties>
 
     <modules>
