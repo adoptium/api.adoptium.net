@@ -2,7 +2,10 @@ package net.adoptium.api.v3.dataSources.github.graphql.models
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
+import net.adoptium.api.v3.dataSources.github.graphql.models.GitHubIdDeserializer
+import net.adoptium.api.v3.dataSources.models.GitHubId
 
 /*
     Models that encapsulate how GitHub represents its release data
@@ -34,3 +37,4 @@ class ReleaseQueryData @JsonCreator constructor(
     @JsonProperty("node") val assetNode: GHAssetNode?,
     @JsonProperty("rateLimit") rateLimit: RateLimit
 ) : HasRateLimit(rateLimit)
+

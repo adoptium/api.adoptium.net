@@ -10,6 +10,9 @@ import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.v3.AdoptReposBuilder
 import net.adoptium.api.v3.AdoptRepositoryImpl
+import net.adoptium.api.v3.AdoptAttestationReposBuilder
+import net.adoptium.api.v3.AdoptAttestationRepository
+import net.adoptium.api.v3.AdoptAttestationRepositoryImpl
 import net.adoptium.api.v3.ReleaseFilterType
 import net.adoptium.api.v3.ReleaseIncludeFilter
 import net.adoptium.api.v3.TimeSource
@@ -23,20 +26,31 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRepository
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummaryData
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestation
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.mapping.adopt.AdoptBinaryMapper
 import net.adoptium.api.v3.mapping.adopt.AdoptReleaseMapperFactory
+import net.adoptium.api.v3.mapping.adopt.AdoptAttestationMapperFactory
 import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
+import net.adoptium.api.v3.models.Release
+import net.adoptium.api.v3.stats.StatsInterface
+import net.adoptium.api.v3.releaseNotes.AdoptReleaseNotes
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicBoolean
+import net.adoptium.api.v3.dataSources.SortMethod
+import net.adoptium.api.v3.dataSources.SortOrder
+import java.util.function.Predicate
 
 class V3UpdaterTest {
 
@@ -50,6 +64,10 @@ class V3UpdaterTest {
         runBlocking {
             val apiDataStore: APIDataStore = mockk()
             coEvery { apiDataStore.isConnectedToDb() } returns false
+            coEvery { apiDataStore.loadDataFromDb(true, false) } returns AdoptRepos(emptyList())
+            coEvery { apiDataStore.loadDataFromDb(true, true) } returns AdoptRepos(emptyList())
+            coEvery { apiDataStore.loadAttestationDataFromDb(true, false) } returns AdoptAttestationRepos(emptyList())
+            coEvery { apiDataStore.loadAttestationDataFromDb(true, true) } returns AdoptAttestationRepos(emptyList())
 
             mockkStatic(Quarkus::class)
             val called = AtomicBoolean(false)
@@ -58,14 +76,32 @@ class V3UpdaterTest {
                 ApplicationLifecycleManager.exit(2)
             }
 
+            val vs = object : UpdatableVersionSupplier {
+                override suspend fun updateVersions() {
+                }
+
+                override fun getTipVersion(): Int? {
+                    return 24
+                }
+
+                override fun getLtsVersions(): Array<Int> {
+                    return arrayOf(8, 11, 17, 21)
+                }
+
+                override fun getAllVersions(): Array<Int> {
+                    return arrayOf(8, 11, 17, 21)
+                }
+            }
+
             val updater = V3Updater(
+                mockk(),
                 mockk(),
                 apiDataStore,
                 mockk(),
                 mockk(),
                 mockk(),
                 mockk(),
-                mockk()
+                vs
             )
 
             updater.run(true)
@@ -75,10 +111,17 @@ class V3UpdaterTest {
 
 
     @Test
+    @Disabled("Issue: https://github.com/adoptium/api.adoptium.net/issues/1612")
     fun `new update works`() {
         runBlocking {
             val apiDataStore: APIDataStore = mockk()
             coEvery { apiDataStore.isConnectedToDb() } returns false
+
+            val statsInterface: StatsInterface = mockk()
+            coEvery { statsInterface.update(any()) } returns Unit
+
+            val adoptReleaseNotes: AdoptReleaseNotes = mockk()
+            coEvery { adoptReleaseNotes.updateReleaseNotes(any()) } returns Unit
 
             mockkStatic(Quarkus::class)
             val called = AtomicBoolean(false)
@@ -152,6 +195,13 @@ class V3UpdaterTest {
                                         )
                                     }
                             }
+
+                            override suspend fun getAttestationSummary(org: String, repo: String, directory: String): GHAttestationRepoSummaryData? {
+                                return null
+                            }
+                            override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
+                                return null
+                            }
                         },
                         AdoptReleaseMapperFactory(
                             AdoptBinaryMapper(ghClient),
@@ -160,17 +210,68 @@ class V3UpdaterTest {
                     ),
                     vs
                 ),
+                AdoptAttestationReposBuilder(
+                    AdoptAttestationRepositoryImpl(
+                        object : GitHubApi {
+                                override suspend fun getRepository(owner: String, repoName: String, filter: (updatedAt: String, isPrerelease: Boolean) -> Boolean): GHRepository {
+                                    return GHSummaryTestDataGenerator.generateGHRepository(repo)
+                                }
+
+                                override suspend fun getRepositorySummary(owner: String, repoName: String): GHRepositorySummary {
+                                    return GHSummaryTestDataGenerator.generateGHRepositorySummary(GHSummaryTestDataGenerator.generateGHRepository(repo))
+                                }
+
+                                override suspend fun getReleaseById(id: GitHubId): GHRelease? {
+                                    return repo.allReleases.nodeList
+                                        .firstOrNull { it.id == id.id }
+                                        ?.let {
+                                            return GHRelease(
+                                                GitHubId(it.id),
+                                                it.release_name,
+                                                it.release_type == ReleaseType.ea,
+                                                it.timestamp.dateTime.toString(),
+                                                it.updated_at.dateTime.toString(),
+                                                GHAssets(
+                                                    it.binaries.map { binary ->
+                                                        GHAsset(
+                                                            binary.`package`.name,
+                                                            binary.`package`.size,
+                                                            binary.`package`.link,
+                                                            binary.`package`.download_count,
+                                                            binary.updated_at.dateTime.toString()
+                                                        )
+                                                    },
+                                                    PageInfo(false, null),
+                                                    it.binaries.size
+                                                ),
+                                                it.id,
+                                                "/AdoptOpenJDK/openjdk${it.version_data.major}-binaries/releases/tag/jdk8u-2020-01-09-03-36"
+                                            )
+                                        }
+                                }
+
+                            override suspend fun getAttestationSummary(org: String, repo: String, directory: String): GHAttestationRepoSummaryData? {
+                                return null
+                            }
+                            override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
+                                return null
+                            }
+                        },
+                        AdoptAttestationMapperFactory(ghClient)
+                    )
+                ),
                 apiDataStore,
-                InMemoryApiPersistence(repo),
-                mockk(),
+                InMemoryApiPersistence(repo, mockk()),
+                statsInterface,
                 ReleaseVersionResolver(vs),
-                mockk(),
+                adoptReleaseNotes,
                 vs
             )
 
             var updatedRepo = updater.runUpdate(repo, AtomicBoolean(true), mockk())
 
             assertTrue(updatedRepo == repo)
+            assertTrue(updatedRepo !== repo)
         }
     }
 

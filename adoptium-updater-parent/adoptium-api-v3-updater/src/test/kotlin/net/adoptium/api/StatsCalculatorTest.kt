@@ -1,5 +1,6 @@
 package net.adoptium.api
 
+import io.mockk.mockk
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
@@ -26,7 +27,7 @@ import org.junit.jupiter.api.Test
 
 class StatsCalculatorTest : BaseTest() {
 
-    private fun gitHubDownloadStatsCalculator() = GitHubDownloadStatsCalculator(InMemoryApiPersistence(adoptRepos))
+    private fun gitHubDownloadStatsCalculator() = GitHubDownloadStatsCalculator(InMemoryApiPersistence(adoptRepos, mockk()))
 
     @Test
     fun testGithubStatsCalculator() {

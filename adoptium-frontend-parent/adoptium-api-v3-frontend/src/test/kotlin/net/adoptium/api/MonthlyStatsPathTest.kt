@@ -33,7 +33,8 @@ class MonthlyStatsPathTest : FrontendTest() {
 
         fun initApi(): ApiPersistence {
             val api = InMemoryApiPersistence(
-                AdoptReposTestDataGenerator.generate()
+                AdoptReposTestDataGenerator.generate(),
+                AdoptAttestationReposTestDataGenerator.generate()
             )
 
             runBlocking {

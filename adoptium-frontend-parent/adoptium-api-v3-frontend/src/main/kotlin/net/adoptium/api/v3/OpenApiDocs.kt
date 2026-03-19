@@ -2,7 +2,7 @@ package net.adoptium.api.v3
 
 object OpenApiDocs {
 
-    const val RELASE_NAME =
+    const val RELEASE_NAME =
         """
 <p>
     Name of the release as displayed in github or <a href="https://adoptopenjdk.net/">https://adoptopenjdk.net/</a> e.g

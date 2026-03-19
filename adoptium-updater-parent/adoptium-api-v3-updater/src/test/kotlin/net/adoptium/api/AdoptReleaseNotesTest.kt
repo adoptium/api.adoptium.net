@@ -1,5 +1,6 @@
 package net.adoptium.api
 
+import io.mockk.mockk
 import net.adoptium.api.v3.ReleaseIncludeFilter
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
@@ -24,7 +25,7 @@ class AdoptReleaseNotesTest : BaseTest() {
 
         val modifiedRepo = addReleaseNotesFiles(adoptRepository)
 
-        val persistence = InMemoryApiPersistence(adoptRepos)
+        val persistence = InMemoryApiPersistence(adoptRepos, mockk())
 
         val adoptReleaseNotes = AdoptReleaseNotes(
             modifiedRepo,

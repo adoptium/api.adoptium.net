@@ -31,7 +31,8 @@ class DownloadStatsPathTest : FrontendTest() {
     private val apiDataStore: APIDataStore = ApiDataStoreStub()
 
     private val apiPersistence: ApiPersistence = InMemoryApiPersistence(
-        AdoptReposTestDataGenerator.generate()
+        AdoptReposTestDataGenerator.generate(),
+        AdoptAttestationReposTestDataGenerator.generate()
     )
 
     private val downloadStatsResource: DownloadStatsResource = createDownloadStatsResource(apiDataStore, apiPersistence)
