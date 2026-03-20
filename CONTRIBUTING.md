@@ -101,6 +101,14 @@ export GITHUB_TOKEN=your-personal-github-token
 docker-compose up
 ```
 
+To enable Cloudflare stats collection, also set the following environment variables:
+
+```bash
+export CLOUDFLARE_ZONE_TAG=your-zone-tag
+export CLOUDFLARE_API_TOKEN=your-cloudflare-api-token
+docker-compose up
+```
+
 You will need to wait the updater to complete its first full run before the API is usable. There is currently no persistence between runs.
 
 The front-end app will be available at <http://localhost:8080>.
