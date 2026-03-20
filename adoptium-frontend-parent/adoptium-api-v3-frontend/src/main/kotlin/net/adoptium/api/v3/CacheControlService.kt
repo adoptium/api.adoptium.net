@@ -67,6 +67,10 @@ class CacheControlService @Inject constructor(private var apiDataStore: APIDataS
 
     @ServerResponseFilter
     fun responseFilter(requestContext: ContainerRequestContext?, responseContext: ContainerResponseContext?) {
+        if (ignoreResponseCodes(responseContext)) {
+            return
+        }
+
         if (isCacheControlledPath(requestContext)) {
 
             val ecc = ExtendedCacheControl();
@@ -87,4 +91,6 @@ class CacheControlService @Inject constructor(private var apiDataStore: APIDataS
             responseContext?.headers?.add("Cache-Control", CacheControlDelegate.INSTANCE.toString(ecc))
         }
     }
+
+    private fun ignoreResponseCodes(responseContext: ContainerResponseContext?): Boolean = responseContext?.status == 406
 }
