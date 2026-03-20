@@ -56,10 +56,10 @@ class CloudflareClient @Inject constructor(
                     zones(filter: { zoneTag: ${'$'}zoneTag }) {
                         httpRequestsAdaptiveGroups(
                             limit: ${'$'}limit,
-                            orderBy: [date_ASC, clientRequestPath_ASC],
+                            orderBy: [datetime_ASC, clientRequestPath_ASC],
                             filter: {
-                                date_geq: ${'$'}startDate,
-                                date_lt: ${'$'}endDate,
+                                datetime_geq: ${'$'}startDate,
+                                datetime_lt: ${'$'}endDate,
                                 clientRequestPath_gt: ${'$'}lastPath,
                                 clientRequestHTTPHost: "packages.adoptium.net",
                                 OR: [
@@ -77,7 +77,7 @@ class CloudflareClient @Inject constructor(
                         ) {
                             count
                             dimensions {
-                                date
+                                datetime
                                 clientRequestPath
                             }
                         }

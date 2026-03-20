@@ -12,11 +12,15 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
-import java.time.LocalDate
+import java.time.Instant
 import java.time.ZoneId
-import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 
 class CloudflareStatsCalculatorTest {
+
+    companion object {
+        private val ZONE_ID_UTC = ZoneId.of("UTC")
+    }
 
     @ParameterizedTest(name = "extractVersionFromPath(\"{0}\") should return {1}")
     @CsvSource(
@@ -69,19 +73,19 @@ class CloudflareStatsCalculatorTest {
         val database = InMemoryApiPersistence(AdoptRepos(emptyList()), AdoptAttestationRepos(emptyList()))
         val calculator = CloudflareStatsCalculator(database, mockClient)
 
-        val testDate = LocalDate.of(2024, 1, 15)
+        val testDateTime = Instant.parse("2024-01-15T00:00:00Z")
         val response = CloudflareResponse(
             data = setOf(
                 // Version 17 entries - should aggregate to 150
-                CloudflarePackageStats(testDate, 100, "/artifactory/deb/pool/main/t/temurin-17/temurin-17-jdk_17.0.10_amd64.deb"),
-                CloudflarePackageStats(testDate, 50, "/artifactory/rpm/centos/7/x86_64/Packages/temurin-17-jdk-17.0.10.x86_64.rpm"),
+                CloudflarePackageStats(testDateTime, 100, "/artifactory/deb/pool/main/t/temurin-17/temurin-17-jdk_17.0.10_amd64.deb"),
+                CloudflarePackageStats(testDateTime, 50, "/artifactory/rpm/centos/7/x86_64/Packages/temurin-17-jdk-17.0.10.x86_64.rpm"),
                 // Version 21 entries - should aggregate to 300
-                CloudflarePackageStats(testDate, 200, "/artifactory/deb/pool/main/t/temurin-21/temurin-21-jdk_21.0.2_amd64.deb"),
-                CloudflarePackageStats(testDate, 100, "/artifactory/apk/alpine/main/x86_64/temurin-21-jdk-21.0.2.apk"),
+                CloudflarePackageStats(testDateTime, 200, "/artifactory/deb/pool/main/t/temurin-21/temurin-21-jdk_21.0.2_amd64.deb"),
+                CloudflarePackageStats(testDateTime, 100, "/artifactory/apk/alpine/main/x86_64/temurin-21-jdk-21.0.2.apk"),
                 // Invalid entry - should be skipped
-                CloudflarePackageStats(testDate, 999, "/invalid/path"),
+                CloudflarePackageStats(testDateTime, 999, "/invalid/path"),
                 // Different date - should be separate entry
-                CloudflarePackageStats(testDate.plusDays(1), 75, "/artifactory/deb/pool/main/t/temurin-17/temurin-17-jdk_17.0.10_amd64.deb")
+                CloudflarePackageStats(testDateTime.plus(1, ChronoUnit.DAYS), 75, "/artifactory/deb/pool/main/t/temurin-17/temurin-17-jdk_17.0.10_amd64.deb")
             )
         )
 
@@ -89,24 +93,24 @@ class CloudflareStatsCalculatorTest {
 
         calculator.updateDb()
 
-        val startTime = testDate.atStartOfDay(ZoneId.of("UTC")).minusDays(1)
-        val endTime = testDate.plusDays(2).atStartOfDay(ZoneId.of("UTC"))
+        val startTime = testDateTime.minus(1, ChronoUnit.DAYS).atZone(ZONE_ID_UTC)
+        val endTime = testDateTime.plus(2, ChronoUnit.DAYS).atZone(ZONE_ID_UTC)
         val savedStats = database.getPackageStats(startTime, endTime)
 
         assertEquals(3, savedStats.size)
 
-        // Find stats for version 17 on first date
-        val version17Stats = savedStats.find { it.feature_version == 17 && it.date.toLocalDate() == testDate }
+        // Find stats for version 17 on first datetime
+        val version17Stats = savedStats.find { it.feature_version == 17 && it.date.toInstant() == testDateTime }
         assertNotNull(version17Stats)
         assertEquals(150, version17Stats!!.downloads)
 
-        // Find stats for version 21 on first date
-        val version21Stats = savedStats.find { it.feature_version == 21 && it.date.toLocalDate() == testDate }
+        // Find stats for version 21 on first datetime
+        val version21Stats = savedStats.find { it.feature_version == 21 && it.date.toInstant() == testDateTime }
         assertNotNull(version21Stats)
         assertEquals(300, version21Stats!!.downloads)
 
-        // Find stats for version 17 on second date
-        val version17NextDayStats = savedStats.find { it.feature_version == 17 && it.date.toLocalDate() == testDate.plusDays(1) }
+        // Find stats for version 17 on second datetime
+        val version17NextDayStats = savedStats.find { it.feature_version == 17 && it.date.toInstant() == testDateTime.plus(1, ChronoUnit.DAYS) }
         assertNotNull(version17NextDayStats)
         assertEquals(75, version17NextDayStats!!.downloads)
 
@@ -127,8 +131,8 @@ class CloudflareStatsCalculatorTest {
 
         
         val savedStats = database.getPackageStats(
-            ZonedDateTime.now().minusDays(7),
-            ZonedDateTime.now().plusDays(1)
+            Instant.now().minus(7, ChronoUnit.DAYS).atZone(ZONE_ID_UTC),
+            Instant.now().plus(1, ChronoUnit.DAYS).atZone(ZONE_ID_UTC)
         )
         assertTrue(savedStats.isEmpty())
     }
@@ -140,14 +144,14 @@ class CloudflareStatsCalculatorTest {
         val database = InMemoryApiPersistence(AdoptRepos(emptyList()), AdoptAttestationRepos(emptyList()))
         val calculator = CloudflareStatsCalculator(database, mockClient)
 
-        val testDate = LocalDate.of(2024, 1, 15)
+        val testDateTime = Instant.parse("2024-01-15T00:00:00Z")
         val response = CloudflareResponse(
             data = setOf(
-                CloudflarePackageStats(testDate, 100, "/artifactory/rpm/centos/7/x86_64/Packages/temurin-17-jdk-17.0.18.0.0.8-1.x86_64.rpm"),
-                CloudflarePackageStats(testDate, 50, "/invalid/path1"),
-                CloudflarePackageStats(testDate, 200, "/artifactory/deb/pool/main/t/temurin-11/temurin-11-jdk_11.0.30.0.0%2b7-0_amd64.deb"),
-                CloudflarePackageStats(testDate, 75, "/another/invalid"),
-                CloudflarePackageStats(testDate, 150, "/artifactory/apk/alpine/main/x86_64/temurin-8-jdk-8.482.08-r0.apk")
+                CloudflarePackageStats(testDateTime, 100, "/artifactory/rpm/centos/7/x86_64/Packages/temurin-17-jdk-17.0.18.0.0.8-1.x86_64.rpm"),
+                CloudflarePackageStats(testDateTime, 50, "/invalid/path1"),
+                CloudflarePackageStats(testDateTime, 200, "/artifactory/deb/pool/main/t/temurin-11/temurin-11-jdk_11.0.30.0.0%2b7-0_amd64.deb"),
+                CloudflarePackageStats(testDateTime, 75, "/another/invalid"),
+                CloudflarePackageStats(testDateTime, 150, "/artifactory/apk/alpine/main/x86_64/temurin-8-jdk-8.482.08-r0.apk")
             )
         )
 
@@ -158,8 +162,8 @@ class CloudflareStatsCalculatorTest {
 
         
         val savedStats = database.getPackageStats(
-            testDate.minusDays(1).atStartOfDay(ZoneId.of("UTC")),
-            testDate.plusDays(1).atStartOfDay(ZoneId.of("UTC"))
+            testDateTime.minus(1, ChronoUnit.DAYS).atZone(ZONE_ID_UTC),
+            testDateTime.plus(1, ChronoUnit.DAYS).atZone(ZONE_ID_UTC)
         )
 
         assertEquals(3, savedStats.size)

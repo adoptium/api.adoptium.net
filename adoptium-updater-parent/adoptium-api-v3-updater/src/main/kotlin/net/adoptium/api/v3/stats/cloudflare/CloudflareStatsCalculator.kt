@@ -48,15 +48,14 @@ open class CloudflareStatsCalculator @Inject constructor(
                     version?.let { stats to version }
                 }
                 .groupingBy { (stats, version) ->
-                    // This is a hack to put all stats of the same day together
-                    stats.date to version
+                    stats.datetime.atZone(ZoneId.of("UTC")) to version
                 }
                 .fold(0L) { currentTotal, element ->
                     currentTotal + element.first.count
                 }
                 .map { (key, totalDownloads) ->
                     CloudflarePackageDownloadStatsDbEntry(
-                        date = key.first.atStartOfDay(ZoneId.of("UTC")),
+                        date = key.first,
                         feature_version = key.second,
                         downloads = totalDownloads
                     )

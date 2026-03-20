@@ -2,18 +2,19 @@ package net.adoptium.api.v3.stats.cloudflare
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
-import java.time.LocalDate
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 
 data class CloudflarePackageStats(
-    val date: LocalDate,
+    val datetime: Instant,
     val count: Long,
     val path: String
 ) : Comparable<CloudflarePackageStats> {
 
     companion object {
         private val COMPARATOR: Comparator<CloudflarePackageStats> = compareBy<CloudflarePackageStats>(
-            { it.date }, { it.path }, { it.count }
+            { it.datetime }, { it.path }, { it.count }
         )
     }
 
@@ -26,7 +27,7 @@ private object ResponseKey {
     const val ZONES = "zones"
     const val DIMENSIONS = "dimensions"
     const val COUNT = "count"
-    const val DATE = "date"
+    const val DATETIME = "datetime"
     const val PATH = "clientRequestPath"
     const val HTTP_REQUESTS_ADAPTIVE_GROUPS = "httpRequestsAdaptiveGroups"
     const val ERRORS = "errors"
@@ -161,17 +162,17 @@ data class CloudflareResponse(
                         continue
                     }
 
-                    val dateStr = dimensions.path(ResponseKey.DATE).asText()
+                    val datetimeStr = dimensions.path(ResponseKey.DATETIME).asText()
                     val path = dimensions.path(ResponseKey.PATH).asText()
-                    if (dateStr.isNullOrBlank() || path.isNullOrBlank()) {
+                    if (datetimeStr.isNullOrBlank() || path.isNullOrBlank()) {
                         LOGGER.warn("There is a group with missing information $group")
                         continue
                     }
 
                     val count = countNode.asLong()
                     if (count > 0) {
-                        val date = LocalDate.parse(dateStr)
-                        dataList.add(CloudflarePackageStats(date, count, path))
+                        val datetime = Instant.parse(datetimeStr).truncatedTo(ChronoUnit.MINUTES)
+                        dataList.add(CloudflarePackageStats(datetime, count, path))
                     }
                 }
             }
@@ -185,11 +186,10 @@ data class CloudflareResponse(
      */
     fun merge(other: CloudflareResponse): CloudflareResponse {
         val mergedData = (this.data + other.data)
-            .groupBy { it.path to it.date }
-            // I haven't seen this, but it could be possible or at least the doc doesn't discard it.
+            .groupBy { it.path to it.datetime }
             .map { (key, entries) ->
                 CloudflarePackageStats(
-                    date = key.second,
+                    datetime = key.second,
                     count = entries.sumOf { it.count },
                     path = key.first
                 )
