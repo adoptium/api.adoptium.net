@@ -33,7 +33,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
 
-@Tag(name = "Cdxas")
+@Tag(name = "CycloneDX Attestations (CDXAs)")
 @Path("/v3/cdxas/")
 @Produces(MediaType.APPLICATION_JSON)
 @ApplicationScoped
