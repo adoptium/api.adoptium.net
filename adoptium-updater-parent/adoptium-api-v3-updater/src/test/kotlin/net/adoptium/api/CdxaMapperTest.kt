@@ -5,10 +5,10 @@ import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.XmlMapper
 import net.adoptium.api.v3.dataSources.github.GitHubHtmlClient
-import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestation
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHCdxa
 import net.adoptium.api.v3.dataSources.models.GitHubId
-import net.adoptium.api.v3.mapping.AttestationMapper
-import net.adoptium.api.v3.mapping.adopt.AdoptAttestationMapperFactory
+import net.adoptium.api.v3.mapping.CdxaMapper
+import net.adoptium.api.v3.mapping.adopt.AdoptCdxaMapperFactory
 import net.adoptium.api.v3.models.Architecture
 import net.adoptium.api.v3.models.ImageType
 import net.adoptium.api.v3.models.JvmImpl
@@ -24,16 +24,16 @@ import org.slf4j.LoggerFactory
 import java.time.Instant
 
 @TestInstance(Lifecycle.PER_CLASS)
-class AttestationMapperTest {
+class CdxaMapperTest {
 
-    private val LOGGER = LoggerFactory.getLogger(AttestationMapperTest::class.java)
+    private val LOGGER = LoggerFactory.getLogger(CdxaMapperTest::class.java)
 
     private val fakeGithubHtmlClient = mockk<GitHubHtmlClient>()
-    private val adoptAttestationMapperFactory = AdoptAttestationMapperFactory(fakeGithubHtmlClient)
-    private val adoptAttestationMapper = adoptAttestationMapperFactory.get(Vendor.eclipse)
+    private val adoptCdxaMapperFactory = AdoptCdxaMapperFactory(fakeGithubHtmlClient)
+    private val adoptCdxaMapper = adoptCdxaMapperFactory.get(Vendor.eclipse)
 
     companion object {
-        val ghAttestation = XmlMapper.mapper.readValue(
+        val ghCdxa = XmlMapper.mapper.readValue(
             """
 <?xml version="1.0" encoding="UTF-8"?>
 <bom serialNumber="urn:uuid:8d58d54f-e666-4c12-be06-ecfef6a0f0ab" version="1" xmlns="http://cyclonedx.org/schema/bom/1.6">
@@ -46,17 +46,17 @@ class AttestationMapperTest {
         </organization>
       </assessor>
     </assessors>
-    <attestations>
-      <attestation>
-        <summary>Eclipse Temurin Attestation</summary>
+    <cdxas>
+      <cdxa>
+        <summary>Eclipse Temurin Cdxa</summary>
         <assessor>assessor-1</assessor>
         <map>
           <claims>
             <claim>claim-1</claim>
           </claims>
         </map>
-      </attestation>
-    </attestations>
+      </cdxa>
+    </cdxas>
     <claims>
       <claim bom-ref="claim-1">
         <target>target-jdk-1</target>
@@ -91,15 +91,15 @@ class AttestationMapperTest {
   </declarations>
 </bom>
             """.trimIndent(),
-            GHAttestation::class.java
+            GHCdxa::class.java
         )
 
         init {
-            ghAttestation.id = GitHubId("1")
-            ghAttestation.filename = "filename"
-            ghAttestation.linkUrl = "linkUrl"
-            ghAttestation.linkSignUrl = "linkSignUrl"
-            ghAttestation.committedDate = Instant.parse("2025-09-25T12:00:00Z")
+            ghCdxa.id = GitHubId("1")
+            ghCdxa.filename = "filename"
+            ghCdxa.linkUrl = "linkUrl"
+            ghCdxa.linkSignUrl = "linkSignUrl"
+            ghCdxa.committedDate = Instant.parse("2025-09-25T12:00:00Z")
         }
     }
 
@@ -109,11 +109,11 @@ class AttestationMapperTest {
     }
 
     @Test
-    fun `Test Attestation xml mapper parsing`() {
+    fun `Test Cdxa xml mapper parsing`() {
 
         runBlocking {
-            val parsed = adoptAttestationMapper.toAttestation(Vendor.eclipse, ghAttestation)
-            LOGGER.info("Parsed Attestation: ${parsed}")
+            val parsed = adoptCdxaMapper.toCdxa(Vendor.eclipse, ghCdxa)
+            LOGGER.info("Parsed Cdxa: ${parsed}")
             assertEquals(GitHubId("1").id.toString(), parsed?.id)
             assertEquals("filename", parsed?.filename)
             assertEquals(Vendor.eclipse, parsed?.vendor)
@@ -126,8 +126,8 @@ class AttestationMapperTest {
             assertEquals("Acme confirms a verified reproducible build", parsed?.assessor_affirmation)
             assertEquals("VERIFIED_REPRODUCIBLE_BUILD", parsed?.assessor_claim_predicate)
             assertEquals("1234567890123456789012345678901234567890123456789012345678901234", parsed?.target_checksum)
-            assertEquals("linkUrl", parsed?.attestation_link)
-            assertEquals("linkSignUrl", parsed?.attestation_public_signing_key_link)
+            assertEquals("linkUrl", parsed?.cdxa_link)
+            assertEquals("linkSignUrl", parsed?.cdxa_public_signing_key_link)
             assertEquals(Instant.parse("2025-09-25T12:00:00Z"), parsed?.committedDate)
         }
     }

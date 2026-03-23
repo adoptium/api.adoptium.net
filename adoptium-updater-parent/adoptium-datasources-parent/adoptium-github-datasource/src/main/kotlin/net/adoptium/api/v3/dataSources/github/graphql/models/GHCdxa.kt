@@ -63,7 +63,7 @@ data class ClaimMap(
         var claims: ClaimRefs? = null
 )
 
-data class Attestation(
+data class Cdxa(
         @JacksonXmlProperty(localName = "summary")
         var summary: String? = null,
 
@@ -74,9 +74,9 @@ data class Attestation(
         var map: ClaimMap? = null
 )
 
-data class Attestations(
+data class Cdxas(
         @get:JacksonXmlElementWrapper(useWrapping = false)
-        var attestation: List<Attestation>
+        var cdxa: List<Cdxa>
 )
 
 // Cannot use "data class" due to known bug: https://github.com/FasterXML/jackson-module-kotlin/issues/138
@@ -150,8 +150,8 @@ data class Declarations(
         @JacksonXmlProperty(localName = "claims")
         var claims: Claims? = null,
 
-        @JacksonXmlProperty(localName = "attestations")
-        var attestations: Attestations? = null,
+        @JacksonXmlProperty(localName = "cdxas")
+        var cdxas: Cdxas? = null,
 
         @JacksonXmlProperty(localName = "targets")
         var targets: Targets? = null,
@@ -162,7 +162,7 @@ data class Declarations(
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JacksonXmlRootElement(localName = "bom")
-data class GHAttestation @JsonCreator constructor(
+data class GHCdxa @JsonCreator constructor(
         var id: GitHubId?,
         var filename: String?,
         var linkUrl: String?,

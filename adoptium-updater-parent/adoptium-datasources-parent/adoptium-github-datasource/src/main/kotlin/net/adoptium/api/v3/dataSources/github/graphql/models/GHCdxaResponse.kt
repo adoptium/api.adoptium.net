@@ -62,45 +62,45 @@ Response:
 }
 */
 
-data class GHAttestationResponse @JsonCreator constructor(
-    @JsonProperty("data") val data: GHAttestationResponseData
+data class GHCdxaResponse @JsonCreator constructor(
+    @JsonProperty("data") val data: GHCdxaResponseData
 ) {
 }
 
-data class GHAttestationResponseData @JsonCreator constructor(
-    @JsonProperty("repository") val repository: GHAttestationResponseRepository,
+data class GHCdxaResponseData @JsonCreator constructor(
+    @JsonProperty("repository") val repository: GHCdxaResponseRepository,
     @JsonProperty("rateLimit") override val rateLimit: RateLimit
 ) : HasRateLimit(rateLimit) {
 }
 
-data class GHAttestationResponseRepository @JsonCreator constructor(
-    @JsonProperty("defaultBranchRef") val defaultBranchRef: GHAttestationResponseDefaultBranchRef,
-    @JsonProperty("object") val res_object: GHAttestationResponseObject
+data class GHCdxaResponseRepository @JsonCreator constructor(
+    @JsonProperty("defaultBranchRef") val defaultBranchRef: GHCdxaResponseDefaultBranchRef,
+    @JsonProperty("object") val res_object: GHCdxaResponseObject
 ) {
 }
 
-data class GHAttestationResponseDefaultBranchRef @JsonCreator constructor(
+data class GHCdxaResponseDefaultBranchRef @JsonCreator constructor(
     @JsonProperty("name")   val name: String,
-    @JsonProperty("target") val target: GHAttestationResponseDefaultBranchRefTarget?
+    @JsonProperty("target") val target: GHCdxaResponseDefaultBranchRefTarget?
 ) {
 }
 
-data class GHAttestationResponseDefaultBranchRefTarget @JsonCreator constructor(
-    @JsonProperty("history")            var history: GHAttestationResponseDefaultBranchRefHistory?
+data class GHCdxaResponseDefaultBranchRefTarget @JsonCreator constructor(
+    @JsonProperty("history")            var history: GHCdxaResponseDefaultBranchRefHistory?
 ) {
 }
 
-data class GHAttestationResponseDefaultBranchRefHistory @JsonCreator constructor(
-    @JsonProperty("nodes")              var nodes: List<GHAttestationResponseDefaultBranchRefNode>?
+data class GHCdxaResponseDefaultBranchRefHistory @JsonCreator constructor(
+    @JsonProperty("nodes")              var nodes: List<GHCdxaResponseDefaultBranchRefNode>?
 ) {
 }
 
-data class GHAttestationResponseDefaultBranchRefNode @JsonCreator constructor(
+data class GHCdxaResponseDefaultBranchRefNode @JsonCreator constructor(
     @JsonProperty("committedDate")      var committedDate: String?
 ) {
 }
 
-data class GHAttestationResponseObject @JsonCreator constructor(
+data class GHCdxaResponseObject @JsonCreator constructor(
     @JsonProperty("id")
     @JsonDeserialize(using = GitHubIdDeserializer::class)
     val id: GitHubId,

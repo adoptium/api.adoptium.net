@@ -36,7 +36,7 @@ abstract class BaseTest {
         val adoptRepos = AdoptReposTestDataGenerator.generate()
 
         @JvmStatic
-        val adoptAttestationRepos = AdoptAttestationReposTestDataGenerator.generate()
+        val adoptCdxaRepos = AdoptCdxaReposTestDataGenerator.generate()
 
         @JvmStatic
         @BeforeAll

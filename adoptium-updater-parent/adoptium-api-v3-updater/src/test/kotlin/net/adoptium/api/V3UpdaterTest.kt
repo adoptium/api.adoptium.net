@@ -10,9 +10,9 @@ import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.v3.AdoptReposBuilder
 import net.adoptium.api.v3.AdoptRepositoryImpl
-import net.adoptium.api.v3.AdoptAttestationReposBuilder
-import net.adoptium.api.v3.AdoptAttestationRepository
-import net.adoptium.api.v3.AdoptAttestationRepositoryImpl
+import net.adoptium.api.v3.AdoptCdxaReposBuilder
+import net.adoptium.api.v3.AdoptCdxaRepository
+import net.adoptium.api.v3.AdoptCdxaRepositoryImpl
 import net.adoptium.api.v3.ReleaseFilterType
 import net.adoptium.api.v3.ReleaseIncludeFilter
 import net.adoptium.api.v3.TimeSource
@@ -26,16 +26,16 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRepository
-import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummaryData
-import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestation
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHCdxaRepoSummaryData
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHCdxa
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
+import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.mapping.adopt.AdoptBinaryMapper
 import net.adoptium.api.v3.mapping.adopt.AdoptReleaseMapperFactory
-import net.adoptium.api.v3.mapping.adopt.AdoptAttestationMapperFactory
+import net.adoptium.api.v3.mapping.adopt.AdoptCdxaMapperFactory
 import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.models.Release
@@ -66,8 +66,8 @@ class V3UpdaterTest {
             coEvery { apiDataStore.isConnectedToDb() } returns false
             coEvery { apiDataStore.loadDataFromDb(true, false) } returns AdoptRepos(emptyList())
             coEvery { apiDataStore.loadDataFromDb(true, true) } returns AdoptRepos(emptyList())
-            coEvery { apiDataStore.loadAttestationDataFromDb(true, false) } returns AdoptAttestationRepos(emptyList())
-            coEvery { apiDataStore.loadAttestationDataFromDb(true, true) } returns AdoptAttestationRepos(emptyList())
+            coEvery { apiDataStore.loadCdxaDataFromDb(true, false) } returns AdoptCdxaRepos(emptyList())
+            coEvery { apiDataStore.loadCdxaDataFromDb(true, true) } returns AdoptCdxaRepos(emptyList())
 
             mockkStatic(Quarkus::class)
             val called = AtomicBoolean(false)
@@ -196,10 +196,10 @@ class V3UpdaterTest {
                                     }
                             }
 
-                            override suspend fun getAttestationSummary(org: String, repo: String, directory: String): GHAttestationRepoSummaryData? {
+                            override suspend fun getCdxaSummary(org: String, repo: String, directory: String): GHCdxaRepoSummaryData? {
                                 return null
                             }
-                            override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
+                            override suspend fun getCdxaByName(org: String, repo: String, name: String): GHCdxa? {
                                 return null
                             }
                         },
@@ -210,8 +210,8 @@ class V3UpdaterTest {
                     ),
                     vs
                 ),
-                AdoptAttestationReposBuilder(
-                    AdoptAttestationRepositoryImpl(
+                AdoptCdxaReposBuilder(
+                    AdoptCdxaRepositoryImpl(
                         object : GitHubApi {
                                 override suspend fun getRepository(owner: String, repoName: String, filter: (updatedAt: String, isPrerelease: Boolean) -> Boolean): GHRepository {
                                     return GHSummaryTestDataGenerator.generateGHRepository(repo)
@@ -250,14 +250,14 @@ class V3UpdaterTest {
                                         }
                                 }
 
-                            override suspend fun getAttestationSummary(org: String, repo: String, directory: String): GHAttestationRepoSummaryData? {
+                            override suspend fun getCdxaSummary(org: String, repo: String, directory: String): GHCdxaRepoSummaryData? {
                                 return null
                             }
-                            override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
+                            override suspend fun getCdxaByName(org: String, repo: String, name: String): GHCdxa? {
                                 return null
                             }
                         },
-                        AdoptAttestationMapperFactory(ghClient)
+                        AdoptCdxaMapperFactory(ghClient)
                     )
                 ),
                 apiDataStore,

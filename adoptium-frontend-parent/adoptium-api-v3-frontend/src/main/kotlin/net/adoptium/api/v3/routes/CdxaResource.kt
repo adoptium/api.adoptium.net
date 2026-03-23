@@ -23,7 +23,7 @@ import net.adoptium.api.v3.models.JvmImpl
 import net.adoptium.api.v3.models.OperatingSystem
 import net.adoptium.api.v3.models.Project
 import net.adoptium.api.v3.models.Vendor
-import net.adoptium.api.v3.models.Attestation
+import net.adoptium.api.v3.models.Cdxa
 import org.eclipse.microprofile.openapi.annotations.Operation
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
 import org.eclipse.microprofile.openapi.annotations.media.Content
@@ -33,11 +33,11 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses
 import org.eclipse.microprofile.openapi.annotations.tags.Tag
 
-@Tag(name = "Attestations")
-@Path("/v3/attestations/")
+@Tag(name = "Cdxas")
+@Path("/v3/cdxas/")
 @Produces(MediaType.APPLICATION_JSON)
 @ApplicationScoped
-class AttestationResource
+class CdxaResource
 @Inject
 constructor(
     private val apiDataStore: APIDataStore
@@ -46,20 +46,20 @@ constructor(
     @GET
     @Path("/release_name/{release_name}/{os}/{arch}/{image_type}/{jvm_impl}/{vendor}")
     @Operation(
-        operationId = "listAttestationsForAssetBinary",
-        summary = "Returns matching attestations",
-        description = "Return the attestations that matches the given query"
+        operationId = "listCdxasForAssetBinary",
+        summary = "Returns matching cdxas",
+        description = "Return the cdxas that matches the given query"
     )
     @APIResponses(
         value = [
             APIResponse(
-                responseCode = "200", description = "Attestations for the given asset binary",
-                content = [Content(schema = Schema(type = SchemaType.ARRAY, implementation = Attestation::class))]
+                responseCode = "200", description = "Cdxas for the given asset binary",
+                content = [Content(schema = Schema(type = SchemaType.ARRAY, implementation = Cdxa::class))]
             ),
-            APIResponse(responseCode = "404", description = "No matching attestations found")
+            APIResponse(responseCode = "404", description = "No matching cdxas found")
         ]
     )
-    fun listAttestationsForAssetBinary(
+    fun listCdxasForAssetBinary(
         @Parameter(name = "os", description = "Operating System", required = true)
         @PathParam("os")
         os: OperatingSystem,
@@ -90,35 +90,35 @@ constructor(
         @Parameter(name = "project", description = "Project", required = false)
         @QueryParam("project")
         project: Project?
-    ): List<Attestation> {
-        val attestations = apiDataStore
-            .getAdoptAttestationRepos()
-            .listAttestationsForAssetBinary( release_name, vendor, os, arch, image_type, jvm_impl )
+    ): List<Cdxa> {
+        val cdxas = apiDataStore
+            .getAdoptCdxaRepos()
+            .listCdxasForAssetBinary( release_name, vendor, os, arch, image_type, jvm_impl )
 
-        if ( attestations == null || attestations.isEmpty() ) {
-            throw NotFoundException("Attestations not found")
+        if ( cdxas == null || cdxas.isEmpty() ) {
+            throw NotFoundException("Cdxas not found")
         } else {
-            return attestations
+            return cdxas
         }
     }
 
     @GET
     @Path("/target_checksum/{target_checksum}")
     @Operation(
-        operationId = "listAttestationsForTargetChecksum",
-        summary = "Returns attestations that target the given SHA256 checksum",
-        description = "Return the list of attestations that have the matching target binary SHA256 checksum"
+        operationId = "listCdxasForTargetChecksum",
+        summary = "Returns cdxas that target the given SHA256 checksum",
+        description = "Return the list of cdxas that have the matching target binary SHA256 checksum"
     )
     @APIResponses(
         value = [
             APIResponse(
-                responseCode = "200", description = "Attestations for the given target binary SHA256 checksum",
-                content = [Content(schema = Schema(type = SchemaType.ARRAY, implementation = Attestation::class))]
+                responseCode = "200", description = "Cdxas for the given target binary SHA256 checksum",
+                content = [Content(schema = Schema(type = SchemaType.ARRAY, implementation = Cdxa::class))]
             ),
-            APIResponse(responseCode = "404", description = "No matching attestations found")
+            APIResponse(responseCode = "404", description = "No matching cdxas found")
         ]
     )
-    fun listAttestationsForTargetChecksum(
+    fun listCdxasForTargetChecksum(
         @Parameter(
             name = "target_checksum", description = "Target binary SHA256 checksum", required = true,
             schema = Schema(example = "6773cfdc56d66b75f4a88ac843b2b5854791240114cf8bb1b56fb6f7826ae436", type = SchemaType.STRING)
@@ -129,35 +129,35 @@ constructor(
         @Parameter(name = "project", description = "Project", required = false)
         @QueryParam("project")
         project: Project?
-    ): List<Attestation> {
-        val attestations = apiDataStore
-            .getAdoptAttestationRepos()
-            .listAttestationsForTargetChecksum( target_checksum )
+    ): List<Cdxa> {
+        val cdxas = apiDataStore
+            .getAdoptCdxaRepos()
+            .listCdxasForTargetChecksum( target_checksum )
 
-        if ( attestations == null || attestations.isEmpty() ) {
-            throw NotFoundException("No attestations found")
+        if ( cdxas == null || cdxas.isEmpty() ) {
+            throw NotFoundException("No cdxas found")
         } else {
-            return attestations
+            return cdxas
         }
     }
 
     @GET
     @Path("/release_name/{release_name}")
     @Operation(
-        operationId = "listAttestationsForRelease",
-        summary = "Returns attestations for the given release",
-        description = "Return the list of attestations that match the given release name"
+        operationId = "listCdxasForRelease",
+        summary = "Returns cdxas for the given release",
+        description = "Return the list of cdxas that match the given release name"
     )
     @APIResponses(
         value = [
             APIResponse(
-                responseCode = "200", description = "Attestations for the given release name",
-                content = [Content(schema = Schema(type = SchemaType.ARRAY, implementation = Attestation::class))]
+                responseCode = "200", description = "Cdxas for the given release name",
+                content = [Content(schema = Schema(type = SchemaType.ARRAY, implementation = Cdxa::class))]
             ),
-            APIResponse(responseCode = "404", description = "No matching attestations found")
+            APIResponse(responseCode = "404", description = "No matching cdxas found")
         ]
     )
-    fun listAttestationsForRelease(
+    fun listCdxasForRelease(
         @Parameter(
             name = "release_name", description = OpenApiDocs.RELEASE_NAME, required = true,
             schema = Schema(example = "jdk-11.0.6+10", type = SchemaType.STRING)
@@ -168,15 +168,15 @@ constructor(
         @Parameter(name = "project", description = "Project", required = false)
         @QueryParam("project")
         project: Project?
-    ): List<Attestation> {
-        val attestations = apiDataStore
-            .getAdoptAttestationRepos()
-            .listAttestationsForRelease( release_name )
+    ): List<Cdxa> {
+        val cdxas = apiDataStore
+            .getAdoptCdxaRepos()
+            .listCdxasForRelease( release_name )
 
-        if ( attestations == null || attestations.isEmpty() ) {
-            throw NotFoundException("No attestations found")
+        if ( cdxas == null || cdxas.isEmpty() ) {
+            throw NotFoundException("No cdxas found")
         } else {
-            return attestations
+            return cdxas
         }
     }
 }

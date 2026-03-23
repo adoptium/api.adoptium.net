@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
+import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.ReleaseNotes
@@ -22,7 +22,7 @@ import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseInfo
 import net.adoptium.api.v3.models.Vendor
-import net.adoptium.api.v3.models.Attestation
+import net.adoptium.api.v3.models.Cdxa
 import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDateTime
@@ -36,12 +36,12 @@ import java.time.ZonedDateTime
 open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : MongoInterface(), ApiPersistence {
     private val githubReleaseMetadataCollection: MongoCollection<GHReleaseMetadata> = createCollection(mongoClient.getDatabase(), GH_RELEASE_METADATA)
     private val releasesCollection: MongoCollection<Release> = createCollection(mongoClient.getDatabase(), RELEASE_DB)
-    private var attestationsCollection: MongoCollection<Attestation> = createCollection(mongoClient.getDatabase(), ATTESTATIONS_DB)
+    private var cdxasCollection: MongoCollection<Cdxa> = createCollection(mongoClient.getDatabase(), CDXAS_DB)
     private val gitHubStatsCollection: MongoCollection<GitHubDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), GITHUB_STATS_DB)
     private val dockerStatsCollection: MongoCollection<DockerDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), DOCKER_STATS_DB)
     private val releaseInfoCollection: MongoCollection<ReleaseInfo> = createCollection(mongoClient.getDatabase(), RELEASE_INFO_DB)
     private val updateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), UPDATE_TIME_DB)
-    private val attestationUpdateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), ATTESTATIONS_UPDATE_TIME_DB)
+    private val cdxaUpdateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), CDXAS_UPDATE_TIME_DB)
     private val githubReleaseNotesCollection: MongoCollection<ReleaseNotes> = createCollection(mongoClient.getDatabase(), GH_RELEASE_NOTES)
     private val client: MongoClient = mongoClient
 
@@ -50,8 +50,8 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
         const val GH_RELEASE_METADATA = "githubReleaseMetadata"
         const val RELEASE_DB = "release"
-        const val ATTESTATIONS_DB = "attestations"
-        const val ATTESTATIONS_UPDATE_TIME_DB = "attestationsUpdateTime"
+        const val CDXAS_DB = "cdxas"
+        const val CDXAS_UPDATE_TIME_DB = "cdxasUpdateTime"
         const val GITHUB_STATS_DB = "githubStats"
         const val DOCKER_STATS_DB = "dockerStats"
         const val RELEASE_INFO_DB = "releaseInfo"
@@ -72,18 +72,18 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         }
     }
 
-    override suspend fun updateAttestationRepos(repo: AdoptAttestationRepos, checksum: String) {
+    override suspend fun updateCdxaRepos(repo: AdoptCdxaRepos, checksum: String) {
 
         try {
             val featureVersions = repo.repos.map { it.featureVersion }.toSet()
 
             featureVersions.forEach { featureVersion ->
-                writeAttestations(featureVersion, repo.repos.filter { it.featureVersion == featureVersion })
+                writeCdxas(featureVersion, repo.repos.filter { it.featureVersion == featureVersion })
             }
 
-            removeAttestationsNotInFeatureVersions( featureVersions )
+            removeCdxasNotInFeatureVersions( featureVersions )
         } finally {
-            updateAttestationUpdatedTime(TimeSource.now(), checksum, repo.hashCode())
+            updateCdxaUpdatedTime(TimeSource.now(), checksum, repo.hashCode())
         }
     }
 
@@ -95,24 +95,24 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         }
     }
 
-    private suspend fun writeAttestations(featureVersion: Int, attestations: List<Attestation>) {
+    private suspend fun writeCdxas(featureVersion: Int, cdxas: List<Cdxa>) {
         // First delete all existing for featureVersion
-        attestationsCollection.deleteMany(attestationFeatureVersionMatcher(featureVersion))
-        if (attestations.isNotEmpty()) {
-            // Then add updated featureVersionAttestations...
-            attestationsCollection.insertMany(attestations, InsertManyOptions())
+        cdxasCollection.deleteMany(cdxaFeatureVersionMatcher(featureVersion))
+        if (cdxas.isNotEmpty()) {
+            // Then add updated featureVersionCdxas...
+            cdxasCollection.insertMany(cdxas, InsertManyOptions())
         }
     }
 
-    private suspend fun removeAttestationsNotInFeatureVersions(featureVersions: Set<Int>) {
+    private suspend fun removeCdxasNotInFeatureVersions(featureVersions: Set<Int>) {
         // Get existing featureVersions in DB
-        val dbFeatureVersions = attestationsCollection.distinct<Int>("featureVersion").toList()
+        val dbFeatureVersions = cdxasCollection.distinct<Int>("featureVersion").toList()
 
         // Delete feature versions that no longer exist
         val toDelete = dbFeatureVersions.filterNot { it in featureVersions }
         toDelete.forEach { featureVersionToDelete ->
             // Delete all existing for featureVersionToDelete
-            attestationsCollection.deleteMany(attestationFeatureVersionMatcher(featureVersionToDelete))
+            cdxasCollection.deleteMany(cdxaFeatureVersionMatcher(featureVersionToDelete))
         }
     }
 
@@ -124,8 +124,8 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         return FeatureRelease(featureVersion, Releases(releases))
     }
 
-    override suspend fun readAttestationData(): List<Attestation> {
-        return attestationsCollection
+    override suspend fun readCdxaData(): List<Cdxa> {
+        return cdxasCollection
             .find(Document())
             .toList()
     }
@@ -205,13 +205,13 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         updateTimeCollection.deleteMany(Document("time", BsonDocument("\$lt", BsonDateTime(dateTime.toInstant().toEpochMilli()))))
     }
 
-    open suspend fun updateAttestationUpdatedTime(dateTime: ZonedDateTime, checksum: String, hashCode: Int) {
-        attestationUpdateTimeCollection.replaceOne(
+    open suspend fun updateCdxaUpdatedTime(dateTime: ZonedDateTime, checksum: String, hashCode: Int) {
+        cdxaUpdateTimeCollection.replaceOne(
             Document(),
             UpdatedInfo(dateTime, checksum, hashCode),
             ReplaceOptions().upsert(true)
         )
-        attestationUpdateTimeCollection.deleteMany(Document("time", BsonDocument("\$lt", BsonDateTime(dateTime.toInstant().toEpochMilli()))))
+        cdxaUpdateTimeCollection.deleteMany(Document("time", BsonDocument("\$lt", BsonDateTime(dateTime.toInstant().toEpochMilli()))))
     }
 
     override suspend fun getUpdatedAt(): UpdatedInfo {
@@ -220,8 +220,8 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         return info ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
     }
 
-    override suspend fun getAttestationUpdatedAt(): UpdatedInfo {
-        val info = attestationUpdateTimeCollection.find().firstOrNull()
+    override suspend fun getCdxaUpdatedAt(): UpdatedInfo {
+        val info = cdxaUpdateTimeCollection.find().firstOrNull()
         // if we have no existing time, make it 5 mins ago, should only happen on first time the db is used
         return info ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
     }
@@ -245,7 +245,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     }
 
     private fun majorVersionMatcher(featureVersion: Int) = Document("version_data.major", featureVersion)
-    private fun attestationFeatureVersionMatcher(featureVersion: Int) = Document("featureVersion", featureVersion)
+    private fun cdxaFeatureVersionMatcher(featureVersion: Int) = Document("featureVersion", featureVersion)
 
     override suspend fun getGhReleaseMetadata(gitHubId: GitHubId): GHReleaseMetadata? {
         return githubReleaseMetadataCollection.find(matchGithubId(gitHubId)).firstOrNull()
