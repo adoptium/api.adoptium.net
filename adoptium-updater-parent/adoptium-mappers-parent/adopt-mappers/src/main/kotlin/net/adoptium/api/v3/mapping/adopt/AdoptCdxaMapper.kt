@@ -60,7 +60,7 @@ private class AdoptCdxaMapper(
     ): Deferred<Cdxa?> {
         return GlobalScope.async {
             try {
-                // Temurin Cdxas (https://github.com/adoptium/temurin-cdxas/blob/main/.github/workflows/validate-cdxa.yml) have:
+                // Temurin Cdxas (https://github.com/adoptium/temurin-cdxa/blob/main/.github/workflows/validate-cdxa.yml) have:
                 //   ONE cdxa
                 //   ONE target component
                 //   ONE assessor

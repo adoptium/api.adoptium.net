@@ -40,10 +40,10 @@ class Cdxa {
     @Schema(example = "VERIFIED_REPRODUCIBLE_BUILD")
     val assessor_claim_predicate: String?
 
-    @Schema(example = "https://github.com/adoptium/temurin-cdxas/blob/main/21/jdk_21_0_6_7_x64-linux_MyOrgLtd.xml")
+    @Schema(example = "https://github.com/adoptium/temurin-cdxa/blob/main/21/jdk_21_0_6_7_x64-linux_MyOrgLtd.xml")
     val cdxa_link: String?
 
-    @Schema(example = "https://github.com/adoptium/temurin-cdxas/blob/main/21/jdk_21_0_6_7_x64-linux_MyOrgLtd.xml.sig")
+    @Schema(example = "https://github.com/adoptium/temurin-cdxa/blob/main/21/jdk_21_0_6_7_x64-linux_MyOrgLtd.xml.sig")
     val cdxa_sig_link: String?
 
     @JsonCreator

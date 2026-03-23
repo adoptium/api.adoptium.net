@@ -42,7 +42,7 @@ open class AdoptCdxaRepositoryImpl @Inject constructor(
     }
 
     private val mappers = mapOf(
-        ".*/temurin-cdxas/.*".toRegex() to adoptCdxaMapperFactory.get(Vendor.eclipse),
+        ".*/temurin-cdxa/.*".toRegex() to adoptCdxaMapperFactory.get(Vendor.eclipse),
     )
 
     private fun getMapperForRepo(url: String): CdxaMapper {
@@ -244,7 +244,7 @@ open class AdoptCdxaRepositoryImpl @Inject constructor(
         return GlobalScope.async {
 
             return@async listOf(
-                getRepoDataAsync(ADOPTIUM_ORG, Vendor.eclipse, "temurin-cdxas", getFun),
+                getRepoDataAsync(ADOPTIUM_ORG, Vendor.eclipse, "temurin-cdxa", getFun),
             )
                 .map { repo -> repo.await() }
         }
