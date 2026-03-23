@@ -107,7 +107,7 @@ private class AdoptCdxaMapper(
                 return@async Cdxa(ghCdxaAsset?.id?.id?:"", ghCdxaAsset.filename?:"",
                                          featureVersion, releaseName, os, arch, imageType, jvmImpl,
                                          vendor, target_checksum, assessor_org, assessor_affirmation, assessor_claim_predicate,
-                                         ghCdxaAsset.linkUrl?:"", ghCdxaAsset.linkSignUrl?:"", ghCdxaAsset.committedDate?: Instant.now())
+                                         ghCdxaAsset.linkUrl?:"", ghCdxaAsset.linkSigUrl?:"", ghCdxaAsset.committedDate?: Instant.now())
             } catch (e: java.lang.Exception) {
                 LOGGER.error("Exception mapping cdxa : "+e+" GHCdxa: "+ghCdxaAsset)
                 return@async null

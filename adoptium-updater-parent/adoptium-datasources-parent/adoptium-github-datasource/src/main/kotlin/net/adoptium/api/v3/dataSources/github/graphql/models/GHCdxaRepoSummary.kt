@@ -54,7 +54,7 @@ Response:
             "type": "blob"
           },
           {
-            "name": "jdk_21_0_5_11_x64_linux_Adoptium.xml.sign.pub",
+            "name": "jdk_21_0_5_11_x64_linux_Adoptium.xml.sig",
             "type": "blob"
           }
         ]

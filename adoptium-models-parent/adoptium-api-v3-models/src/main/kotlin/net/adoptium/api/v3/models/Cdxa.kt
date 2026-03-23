@@ -43,8 +43,8 @@ class Cdxa {
     @Schema(example = "https://github.com/adoptium/temurin-cdxas/blob/main/21/jdk_21_0_6_7_x64-linux_MyOrgLtd.xml")
     val cdxa_link: String?
 
-    @Schema(example = "https://github.com/adoptium/temurin-cdxas/blob/main/21/jdk_21_0_6_7_x64-linux_MyOrgLtd.xml.sign.pub")
-    val cdxa_public_signing_key_link: String?
+    @Schema(example = "https://github.com/adoptium/temurin-cdxas/blob/main/21/jdk_21_0_6_7_x64-linux_MyOrgLtd.xml.sig")
+    val cdxa_sig_link: String?
 
     @JsonCreator
     constructor(
@@ -62,7 +62,7 @@ class Cdxa {
         assessor_affirmation: String?,
         assessor_claim_predicate: String?,
         cdxa_link: String?,
-        cdxa_public_signing_key_link: String?,
+        cdxa_sig_link: String?,
         committedDate: Instant?
     ) {
         this.id = id
@@ -79,7 +79,7 @@ class Cdxa {
         this.assessor_affirmation = assessor_affirmation
         this.assessor_claim_predicate = assessor_claim_predicate
         this.cdxa_link = cdxa_link
-        this.cdxa_public_signing_key_link = cdxa_public_signing_key_link
+        this.cdxa_sig_link = cdxa_sig_link
         this.committedDate = committedDate
     }
 
@@ -103,7 +103,7 @@ class Cdxa {
         if (assessor_affirmation != other.assessor_affirmation) return false
         if (assessor_claim_predicate != other.assessor_claim_predicate) return false
         if (cdxa_link != other.cdxa_link) return false
-        if (cdxa_public_signing_key_link != other.cdxa_public_signing_key_link) return false
+        if (cdxa_sig_link != other.cdxa_sig_link) return false
         if (committedDate != other.committedDate) return false
 
         return true
@@ -124,7 +124,7 @@ class Cdxa {
         result = 31 * result + assessor_affirmation.hashCode()
         result = 31 * result + assessor_claim_predicate.hashCode()
         result = 31 * result + cdxa_link.hashCode()
-        result = 31 * result + cdxa_public_signing_key_link.hashCode()
+        result = 31 * result + cdxa_sig_link.hashCode()
         result = 31 * result + committedDate.hashCode()
         return result
     }
@@ -133,6 +133,6 @@ class Cdxa {
         return "Cdxa(id='$id', filename='$filename', featureVersion='$featureVersion', release_name='$release_name', os='$os', architecture='$architecture', image_type='$image_type', jvm_impl='$jvm_impl', vendor='$vendor'" +
                            "assessor_org='$assessor_org', assessor_affirmation='$assessor_affirmation', assessor_claim_predicate.hashCode='$assessor_claim_predicate.hashCode', " +
                            "target_checksum='$target_checksum', "+
-                           "cdxa_link='$cdxa_link', cdxa_public_signing_key_link='$cdxa_public_signing_key_link', committedDate='$committedDate')"
+                           "cdxa_link='$cdxa_link', cdxa_sig_link='$cdxa_sig_link', committedDate='$committedDate')"
     }
 }

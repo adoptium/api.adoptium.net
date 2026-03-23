@@ -166,7 +166,7 @@ data class GHCdxa @JsonCreator constructor(
         var id: GitHubId?,
         var filename: String?,
         var linkUrl: String?,
-        var linkSignUrl: String?,
+        var linkSigUrl: String?,
         var committedDate: Instant?,
 
         @JacksonXmlProperty(localName = "declarations")

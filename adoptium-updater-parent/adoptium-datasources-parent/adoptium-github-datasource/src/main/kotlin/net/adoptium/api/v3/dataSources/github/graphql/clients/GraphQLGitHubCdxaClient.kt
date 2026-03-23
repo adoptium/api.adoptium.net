@@ -56,19 +56,19 @@ open class GraphQLGitHubCdxaClient @Inject constructor(
             null
         }
 
-        // Each Cdxa must have a public signing key file ".sign.pub"
-        val cdxa_sign_file = name+".sign.pub"
+        // Each Cdxa must have a public signing key file ".sig"
+        val cdxa_sign_file = name+".sig"
         val queryPubKey = RequestCdxaFileByName(org, repo, cdxa_sign_file)
         val resultPubKey = try {
             graphQLGitHubInterface.queryApi(queryPubKey::withCursor, null)
         } catch (e: java.lang.Exception) {
-            LOGGER.error("Exception on cdxa sign.pub file query $org/$repo/$cdxa_sign_file :"+e)
+            LOGGER.error("Exception on cdxa sig file query $org/$repo/$cdxa_sign_file :"+e)
             return null
         }
 
         if (resultPubKey == null || resultPubKey?.data == null) {
-            // Not a valid Cdxa if no .sign.pub file
-            LOGGER.warn("WARNING: Cdxa $org/$repo/$name is not valid as it does not have a valid associated sign.pub file: $cdxa_sign_file")
+            // Not a valid Cdxa if no .sig file
+            LOGGER.warn("WARNING: Cdxa $org/$repo/$name is not valid as it does not have a valid associated sig file: $cdxa_sign_file")
             return null
         }
 
@@ -77,7 +77,7 @@ open class GraphQLGitHubCdxaClient @Inject constructor(
             ghAtt.id = ghCdxaResponse?.repository?.res_object?.id ?: GitHubId("0")
             ghAtt.filename = name
             ghAtt.linkUrl = "https://github.com/"+org+"/"+repo+"/blob/"+ghCdxaResponse?.repository?.defaultBranchRef?.name+"/"+name
-            ghAtt.linkSignUrl = "https://github.com/"+org+"/"+repo+"/blob/"+ghCdxaResponse?.repository?.defaultBranchRef?.name+"/"+cdxa_sign_file
+            ghAtt.linkSigUrl = "https://github.com/"+org+"/"+repo+"/blob/"+ghCdxaResponse?.repository?.defaultBranchRef?.name+"/"+cdxa_sign_file
             ghAtt.committedDate = committedDate
             ghAtt
         } catch (e: java.lang.Exception) {

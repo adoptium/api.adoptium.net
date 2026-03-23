@@ -98,7 +98,7 @@ class CdxaMapperTest {
             ghCdxa.id = GitHubId("1")
             ghCdxa.filename = "filename"
             ghCdxa.linkUrl = "linkUrl"
-            ghCdxa.linkSignUrl = "linkSignUrl"
+            ghCdxa.linkSigUrl = "linkSigUrl"
             ghCdxa.committedDate = Instant.parse("2025-09-25T12:00:00Z")
         }
     }
@@ -127,7 +127,7 @@ class CdxaMapperTest {
             assertEquals("VERIFIED_REPRODUCIBLE_BUILD", parsed?.assessor_claim_predicate)
             assertEquals("1234567890123456789012345678901234567890123456789012345678901234", parsed?.target_checksum)
             assertEquals("linkUrl", parsed?.cdxa_link)
-            assertEquals("linkSignUrl", parsed?.cdxa_public_signing_key_link)
+            assertEquals("linkSigUrl", parsed?.cdxa_sig_link)
             assertEquals(Instant.parse("2025-09-25T12:00:00Z"), parsed?.committedDate)
         }
     }

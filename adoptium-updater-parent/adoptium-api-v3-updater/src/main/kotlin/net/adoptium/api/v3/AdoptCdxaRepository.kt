@@ -79,7 +79,7 @@ open class AdoptCdxaRepositoryImpl @Inject constructor(
         LOGGER.info("Cdxa getRepository for: " + vendor + " " + owner + "/" + repoName)
 
         // Repository structure:
-        //   <major-version>/<release-tag>/<Cdxas.xml|xml.sign.pub>
+        //   <major-version>/<release-tag>/<Cdxas.xml|xml.sig>
 
         // Get the top major version list
         var majorVersions = mutableListOf<Int>()
@@ -155,7 +155,7 @@ open class AdoptCdxaRepositoryImpl @Inject constructor(
         LOGGER.info("Cdxas getSummaries for: " + vendor + " " + owner + "/" + repoName)
 
         // Repository structure:
-        //   <major-version>/<release-tag>/<Cdxas.xml|xml.sign.pub>
+        //   <major-version>/<release-tag>/<Cdxas.xml|xml.sig>
 
         // Get the top major versions committedDate summary
         val attSummaryTop = client.getCdxaSummary(owner, repoName, "")

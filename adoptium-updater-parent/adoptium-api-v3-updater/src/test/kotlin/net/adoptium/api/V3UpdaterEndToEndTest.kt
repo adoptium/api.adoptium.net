@@ -254,7 +254,7 @@ class V3UpdaterEndToEndTest {
                                 var cls: Claims = Claims(listOf(cl))
                                 var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
 
-                                GHCdxa( GitHubId(existAtt.id), existAtt.filename, existAtt.cdxa_link, existAtt.cdxa_public_signing_key_link, existAtt.committedDate, d, null)
+                                GHCdxa( GitHubId(existAtt.id), existAtt.filename, existAtt.cdxa_link, existAtt.cdxa_sig_link, existAtt.committedDate, d, null)
                             } else if (name == "24/jdk-24.0.2+12/jdk_24_0_2_12_aarch64_linux_Adoptium.xml") {
                                 // Return the new cdxa
                                 var propPlatform: Property = Property()
@@ -281,7 +281,7 @@ class V3UpdaterEndToEndTest {
                                 var cls: Claims = Claims(listOf(cl))
                                 var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
 
-                                GHCdxa( GitHubId("1"), name, "https://github.com/"+org+"/"+repo+"/blob/main/"+name, "https://github.com/"+org+"/"+repo+"/blob/main/"+name+".sign.pub", Instant.now(), d, null)
+                                GHCdxa( GitHubId("1"), name, "https://github.com/"+org+"/"+repo+"/blob/main/"+name, "https://github.com/"+org+"/"+repo+"/blob/main/"+name+".sig", Instant.now(), d, null)
                             } else {
                                 null
                             }
@@ -346,7 +346,7 @@ class V3UpdaterEndToEndTest {
                                 var cls: Claims = Claims(listOf(cl))
                                 var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
 
-                                GHCdxa( GitHubId(existAtt.id), existAtt.filename, existAtt.cdxa_link, existAtt.cdxa_public_signing_key_link, existAtt.committedDate, d, null)
+                                GHCdxa( GitHubId(existAtt.id), existAtt.filename, existAtt.cdxa_link, existAtt.cdxa_sig_link, existAtt.committedDate, d, null)
                             } else {
                                 null
                             }
@@ -404,7 +404,7 @@ class V3UpdaterEndToEndTest {
                                 var cls: Claims = Claims(listOf(cl))
                                 var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
 
-                                GHCdxa( GitHubId(existAtt.id), existAtt.filename, existAtt.cdxa_link, existAtt.cdxa_public_signing_key_link, existAtt.committedDate, d, null)
+                                GHCdxa( GitHubId(existAtt.id), existAtt.filename, existAtt.cdxa_link, existAtt.cdxa_sig_link, existAtt.committedDate, d, null)
                             } else {
                                 null
                             }
