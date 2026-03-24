@@ -65,6 +65,7 @@ private class AdoptCdxaMapper(
                 //   ONE target component
                 //   ONE assessor
                 //   ONE claim
+                //   ONE evidence
                 //   ONE target component externalReferences reference with a single hash
                 //   target component version is of format jdk-$MAJOR_VERSION+$BUILD_NUM or jdk-$MAJOR_VERSION.0.$UPDATE_VERSION+$BUILD_NUM
                 
@@ -76,6 +77,10 @@ private class AdoptCdxaMapper(
                 val assessor_affirmation: String? = ghCdxaAsset?.declarations?.affirmation?.statement
                 val assessor_claim_predicate: String? = ghCdxaAsset?.declarations?.claims?.claim[0]?.predicate
                 val target_checksum: String? = ghCdxaAsset?.declarations?.targets?.components?.component[0]?.externalReferences?.reference[0]?.hashes?.hash[0]?.sha256?.uppercase()
+
+                val evidence_propertyName: String? = ghCdxaAsset?.declarations?.evidences?.evidence?.get(0)?.propertyName
+                val evidence_data_name: String? = ghCdxaAsset?.declarations?.evidences?.evidence?.get(0)?.data?.name
+                val evidence_data_contents_attachment_text: String? = ghCdxaAsset?.declarations?.evidences?.evidence?.get(0)?.data?.contents?.attachment?.content
 
                 var archStr: String = ""
                 var osStr: String = ""
@@ -107,7 +112,9 @@ private class AdoptCdxaMapper(
                 return@async Cdxa(ghCdxaAsset?.id?.id?:"", ghCdxaAsset.filename?:"",
                                          featureVersion, releaseName, os, arch, imageType, jvmImpl,
                                          vendor, target_checksum, assessor_org, assessor_affirmation, assessor_claim_predicate,
-                                         ghCdxaAsset.linkUrl?:"", ghCdxaAsset.linkSigUrl?:"", ghCdxaAsset.committedDate?: Instant.now())
+                                         ghCdxaAsset.linkUrl?:"", ghCdxaAsset.linkSigUrl?:"",
+                                         evidence_propertyName, evidence_data_name, evidence_data_contents_attachment_text,
+                                         ghCdxaAsset.committedDate?: Instant.now())
             } catch (e: java.lang.Exception) {
                 LOGGER.error("Exception mapping cdxa : "+e+" GHCdxa: "+ghCdxaAsset)
                 return@async null

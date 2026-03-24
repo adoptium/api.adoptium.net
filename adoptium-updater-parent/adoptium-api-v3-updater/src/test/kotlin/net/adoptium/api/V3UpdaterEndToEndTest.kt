@@ -43,6 +43,11 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.Reference
 import net.adoptium.api.v3.dataSources.github.graphql.models.ExternalReferences
 import net.adoptium.api.v3.dataSources.github.graphql.models.Property
 import net.adoptium.api.v3.dataSources.github.graphql.models.Properties
+import net.adoptium.api.v3.dataSources.github.graphql.models.Attachment
+import net.adoptium.api.v3.dataSources.github.graphql.models.Contents
+import net.adoptium.api.v3.dataSources.github.graphql.models.EvidenceData
+import net.adoptium.api.v3.dataSources.github.graphql.models.Evidence
+import net.adoptium.api.v3.dataSources.github.graphql.models.Evidences
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
@@ -252,7 +257,14 @@ class V3UpdaterEndToEndTest {
                                 var aff: Affirmation = Affirmation(existAtt.assessor_affirmation)
                                 var cl: Claim = Claim(null, existAtt.assessor_claim_predicate)
                                 var cls: Claims = Claims(listOf(cl))
-                                var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
+                                var attachment: Attachment = Attachment()
+                                attachment.contentType = "text/plain"
+                                attachment.content = existAtt.evidence_data_contents_attachment_text
+                                var contents: Contents = Contents(attachment)
+                                var evidenceData: EvidenceData = EvidenceData(existAtt.evidence_data_name, contents)
+                                var evidence: Evidence = Evidence(null, existAtt.evidence_propertyName, evidenceData)
+                                var evidences: Evidences = Evidences(listOf(evidence))
+                                var d: Declarations = Declarations(ass, cls, evidences, null, Targets(cs), aff)
 
                                 GHCdxa( GitHubId(existAtt.id), existAtt.filename, existAtt.cdxa_link, existAtt.cdxa_sig_link, existAtt.committedDate, d, null)
                             } else if (name == "24/jdk-24.0.2+12/jdk_24_0_2_12_aarch64_linux_Adoptium.xml") {
@@ -279,7 +291,14 @@ class V3UpdaterEndToEndTest {
                                 var aff: Affirmation = Affirmation("assessor_affirmation_new")
                                 var cl: Claim = Claim(null, "assessor_claim_predicate_new")
                                 var cls: Claims = Claims(listOf(cl))
-                                var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
+                                var attachment: Attachment = Attachment()
+                                attachment.contentType = "text/plain"
+                                attachment.content = "New build verification: jdk-24.0.2+12 reproducible build confirmed"
+                                var contents: Contents = Contents(attachment)
+                                var evidenceData: EvidenceData = EvidenceData("log", contents)
+                                var evidence: Evidence = Evidence(null, "VERIFICATION_LOG", evidenceData)
+                                var evidences: Evidences = Evidences(listOf(evidence))
+                                var d: Declarations = Declarations(ass, cls, evidences, null, Targets(cs), aff)
 
                                 GHCdxa( GitHubId("1"), name, "https://github.com/"+org+"/"+repo+"/blob/main/"+name, "https://github.com/"+org+"/"+repo+"/blob/main/"+name+".sig", Instant.now(), d, null)
                             } else {
@@ -344,7 +363,14 @@ class V3UpdaterEndToEndTest {
                                 var aff: Affirmation = Affirmation(existAtt.assessor_affirmation)
                                 var cl: Claim = Claim(null, existAtt.assessor_claim_predicate)
                                 var cls: Claims = Claims(listOf(cl))
-                                var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
+                                var attachment: Attachment = Attachment()
+                                attachment.contentType = "text/plain"
+                                attachment.content = existAtt.evidence_data_contents_attachment_text
+                                var contents: Contents = Contents(attachment)
+                                var evidenceData: EvidenceData = EvidenceData(existAtt.evidence_data_name, contents)
+                                var evidence: Evidence = Evidence(null, existAtt.evidence_propertyName, evidenceData)
+                                var evidences: Evidences = Evidences(listOf(evidence))
+                                var d: Declarations = Declarations(ass, cls, evidences, null, Targets(cs), aff)
 
                                 GHCdxa( GitHubId(existAtt.id), existAtt.filename, existAtt.cdxa_link, existAtt.cdxa_sig_link, existAtt.committedDate, d, null)
                             } else {
@@ -402,7 +428,14 @@ class V3UpdaterEndToEndTest {
                                 var aff: Affirmation = Affirmation(existAtt.assessor_affirmation)
                                 var cl: Claim = Claim(null, existAtt.assessor_claim_predicate)
                                 var cls: Claims = Claims(listOf(cl))
-                                var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
+                                var attachment: Attachment = Attachment()
+                                attachment.contentType = "text/plain"
+                                attachment.content = existAtt.evidence_data_contents_attachment_text
+                                var contents: Contents = Contents(attachment)
+                                var evidenceData: EvidenceData = EvidenceData(existAtt.evidence_data_name, contents)
+                                var evidence: Evidence = Evidence(null, existAtt.evidence_propertyName, evidenceData)
+                                var evidences: Evidences = Evidences(listOf(evidence))
+                                var d: Declarations = Declarations(ass, cls, evidences, null, Targets(cs), aff)
 
                                 GHCdxa( GitHubId(existAtt.id), existAtt.filename, existAtt.cdxa_link, existAtt.cdxa_sig_link, existAtt.committedDate, d, null)
                             } else {

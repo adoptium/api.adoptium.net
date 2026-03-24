@@ -46,6 +46,15 @@ class Cdxa {
     @Schema(example = "https://github.com/adoptium/temurin-cdxa/blob/main/21/jdk_21_0_6_7_x64-linux_MyOrgLtd.xml.sig")
     val cdxa_sig_link: String?
 
+    @Schema(example = "VERIFICATION_LOG")
+    val evidence_propertyName: String?
+
+    @Schema(example = "log")
+    val evidence_data_name: String?
+
+    @Schema(example = "Reproducible script output...")
+    val evidence_data_contents_attachment_text: String?
+
     @JsonCreator
     constructor(
         id: String,
@@ -63,6 +72,9 @@ class Cdxa {
         assessor_claim_predicate: String?,
         cdxa_link: String?,
         cdxa_sig_link: String?,
+        evidence_propertyName: String?,
+        evidence_data_name: String?,
+        evidence_data_contents_attachment_text: String?,
         committedDate: Instant?
     ) {
         this.id = id
@@ -80,6 +92,9 @@ class Cdxa {
         this.assessor_claim_predicate = assessor_claim_predicate
         this.cdxa_link = cdxa_link
         this.cdxa_sig_link = cdxa_sig_link
+        this.evidence_propertyName = evidence_propertyName
+        this.evidence_data_name = evidence_data_name
+        this.evidence_data_contents_attachment_text = evidence_data_contents_attachment_text
         this.committedDate = committedDate
     }
 
@@ -104,6 +119,9 @@ class Cdxa {
         if (assessor_claim_predicate != other.assessor_claim_predicate) return false
         if (cdxa_link != other.cdxa_link) return false
         if (cdxa_sig_link != other.cdxa_sig_link) return false
+        if (evidence_propertyName != other.evidence_propertyName) return false
+        if (evidence_data_name != other.evidence_data_name) return false
+        if (evidence_data_contents_attachment_text != other.evidence_data_contents_attachment_text) return false
         if (committedDate != other.committedDate) return false
 
         return true
@@ -125,6 +143,9 @@ class Cdxa {
         result = 31 * result + assessor_claim_predicate.hashCode()
         result = 31 * result + cdxa_link.hashCode()
         result = 31 * result + cdxa_sig_link.hashCode()
+        result = 31 * result + evidence_propertyName.hashCode()
+        result = 31 * result + evidence_data_name.hashCode()
+        result = 31 * result + evidence_data_contents_attachment_text.hashCode()
         result = 31 * result + committedDate.hashCode()
         return result
     }
@@ -133,6 +154,8 @@ class Cdxa {
         return "Cdxa(id='$id', filename='$filename', featureVersion='$featureVersion', release_name='$release_name', os='$os', architecture='$architecture', image_type='$image_type', jvm_impl='$jvm_impl', vendor='$vendor'" +
                            "assessor_org='$assessor_org', assessor_affirmation='$assessor_affirmation', assessor_claim_predicate.hashCode='$assessor_claim_predicate.hashCode', " +
                            "target_checksum='$target_checksum', "+
-                           "cdxa_link='$cdxa_link', cdxa_sig_link='$cdxa_sig_link', committedDate='$committedDate')"
+                           "cdxa_link='$cdxa_link', cdxa_sig_link='$cdxa_sig_link', " +
+                           "evidence_propertyName='$evidence_propertyName', evidence_data_name='$evidence_data_name', evidence_data_contents_attachment_text='$evidence_data_contents_attachment_text', " +
+                           "committedDate='$committedDate')"
     }
 }

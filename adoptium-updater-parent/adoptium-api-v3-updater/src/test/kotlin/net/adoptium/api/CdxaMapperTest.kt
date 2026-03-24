@@ -19,6 +19,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.slf4j.LoggerFactory
 
 import java.time.Instant
@@ -46,23 +48,40 @@ class CdxaMapperTest {
         </organization>
       </assessor>
     </assessors>
-    <cdxas>
-      <cdxa>
-        <summary>Eclipse Temurin Cdxa</summary>
+    <attestations>
+      <attestation>
+        <summary>Eclipse Temurin Attestation</summary>
         <assessor>assessor-1</assessor>
         <map>
           <claims>
             <claim>claim-1</claim>
           </claims>
         </map>
-      </cdxa>
-    </cdxas>
+      </attestation>
+    </attestations>
     <claims>
       <claim bom-ref="claim-1">
         <target>target-jdk-1</target>
         <predicate>VERIFIED_REPRODUCIBLE_BUILD</predicate>
+        <evidence>evidence-1</evidence>
       </claim>
     </claims>
+    <evidence>
+       <evidence bom-ref="evidence-1">
+          <propertyName>VERIFICATION_LOG</propertyName>
+          <data>
+            <name>log</name>
+            <contents>
+              <attachment content-type="text/plain">
+Reproducible script output...it is...
+successfully compared
+123456 files
+and is 100% identical!
+              </attachment>
+            </contents>
+          </data>
+      </evidence>
+    </evidence>
     <targets>
       <components>
         <component type="application" bom-ref="target-jdk-1">
@@ -129,6 +148,44 @@ class CdxaMapperTest {
             assertEquals("linkUrl", parsed?.cdxa_link)
             assertEquals("linkSigUrl", parsed?.cdxa_sig_link)
             assertEquals(Instant.parse("2025-09-25T12:00:00Z"), parsed?.committedDate)
+            
+            // Verify evidence parsing
+            val evidences = ghCdxa.declarations?.evidences
+            assertNotNull(evidences, "Evidences should not be null")
+            assertEquals(1, evidences?.evidence?.size, "Should have 1 evidence")
+            
+            val evidence = evidences?.evidence?.get(0)
+            assertNotNull(evidence, "Evidence should not be null")
+            assertEquals("evidence-1", evidence?.bomRef, "Evidence bom-ref should be evidence-1")
+            assertEquals("VERIFICATION_LOG", evidence?.propertyName, "Evidence propertyName should be VERIFICATION_LOG")
+            
+            // Verify evidence data section
+            val evidenceData = evidence?.data
+            assertNotNull(evidenceData, "Evidence data should not be null")
+            assertEquals("log", evidenceData?.name, "Evidence data name should be log")
+            
+            val contents = evidenceData?.contents
+            assertNotNull(contents, "Evidence data contents should not be null")
+            
+            val attachment = contents?.attachment
+            assertNotNull(attachment, "Evidence data attachment should not be null")
+            assertEquals("text/plain", attachment?.contentType, "Attachment content-type should be text/plain")
+            assertNotNull(attachment?.content, "Attachment content should not be null")
+            assertTrue(attachment?.content?.contains("Reproducible script output") == true, "Attachment should contain expected text")
+            assertTrue(attachment?.content?.contains("successfully compared") == true, "Attachment should contain 'successfully compared'")
+            assertTrue(attachment?.content?.contains("123456 files") == true, "Attachment should contain '123456 files'")
+            assertTrue(attachment?.content?.contains("100% identical") == true, "Attachment should contain '100% identical'")
+            
+            // Verify claim evidence reference
+            val claims = ghCdxa.declarations?.claims
+            assertNotNull(claims, "Claims should not be null")
+            assertEquals(1, claims?.claim?.size, "Should have 1 claim")
+            
+            val claim = claims?.claim?.get(0)
+            assertNotNull(claim, "Claim should not be null")
+            assertEquals("evidence-1", claim?.evidence, "Claim should reference evidence-1")
+            assertEquals("target-jdk-1", claim?.target, "Claim target should be target-jdk-1")
+            assertEquals("VERIFIED_REPRODUCIBLE_BUILD", claim?.predicate, "Claim predicate should be VERIFIED_REPRODUCIBLE_BUILD")
         }
     }
 }

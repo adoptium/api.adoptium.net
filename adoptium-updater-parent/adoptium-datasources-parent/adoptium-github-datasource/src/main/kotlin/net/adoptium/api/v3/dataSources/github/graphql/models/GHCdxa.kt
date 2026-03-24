@@ -33,12 +33,54 @@ data class Claim(
         var target: String? = null,
 
         @JacksonXmlProperty(localName = "predicate")
-        var predicate: String? = null
+        var predicate: String? = null,
+
+        @JacksonXmlProperty(localName = "evidence")
+        var evidence: String? = null
 )
 
 data class Claims(
         @get:JacksonXmlElementWrapper(useWrapping = false)
         var claim: List<Claim>
+)
+
+// Cannot use "data class" due to known bug with @JacksonXmlText: https://github.com/FasterXML/jackson-module-kotlin/issues/138
+class Attachment() {
+        @JacksonXmlProperty(isAttribute = true, localName = "content-type")
+        var contentType: String? = null
+        
+        @JacksonXmlText
+        var content: String? = null
+}
+
+data class Contents(
+        @JacksonXmlProperty(localName = "attachment")
+        var attachment: Attachment? = null
+)
+
+data class EvidenceData(
+        @JacksonXmlProperty(localName = "name")
+        var name: String? = null,
+        
+        @JacksonXmlProperty(localName = "contents")
+        var contents: Contents? = null
+)
+
+data class Evidence(
+        @JacksonXmlProperty(isAttribute = true, localName = "bom-ref")
+        var bomRef: String? = null,
+        
+        @JacksonXmlProperty(localName = "propertyName")
+        var propertyName: String? = null,
+        
+        @JacksonXmlProperty(localName = "data")
+        var data: EvidenceData? = null
+)
+
+data class Evidences(
+        @get:JacksonXmlElementWrapper(useWrapping = false)
+        @JacksonXmlProperty(localName = "evidence")
+        var evidence: List<Evidence>
 )
 
 data class Affirmation(
@@ -76,6 +118,7 @@ data class Cdxa(
 
 data class Cdxas(
         @get:JacksonXmlElementWrapper(useWrapping = false)
+        @JacksonXmlProperty(localName = "attestation")
         var cdxa: List<Cdxa>
 )
 
@@ -150,7 +193,10 @@ data class Declarations(
         @JacksonXmlProperty(localName = "claims")
         var claims: Claims? = null,
 
-        @JacksonXmlProperty(localName = "cdxas")
+        @JacksonXmlProperty(localName = "evidence")
+        var evidences: Evidences? = null,
+
+        @JacksonXmlProperty(localName = "attestations")
         var cdxas: Cdxas? = null,
 
         @JacksonXmlProperty(localName = "targets")
