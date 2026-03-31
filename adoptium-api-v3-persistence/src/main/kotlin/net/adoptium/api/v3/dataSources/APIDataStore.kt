@@ -1,7 +1,7 @@
 package net.adoptium.api.v3.dataSources
 
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
+import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import net.adoptium.api.v3.dataSources.persitence.mongo.UpdatedInfo
 import net.adoptium.api.v3.models.ReleaseInfo
 
@@ -9,12 +9,12 @@ interface APIDataStore {
     fun schedulePeriodicUpdates()
     fun getAdoptRepos(): AdoptRepos
     fun setAdoptRepos(binaryRepos: AdoptRepos)
-    fun getAdoptAttestationRepos(): AdoptAttestationRepos
-    fun setAdoptAttestationRepos(attestationRepos: AdoptAttestationRepos)
+    fun getAdoptCdxaRepos(): AdoptCdxaRepos
+    fun setAdoptCdxaRepos(cdxaRepos: AdoptCdxaRepos)
     fun getReleaseInfo(): ReleaseInfo
     fun loadDataFromDb(forceUpdate: Boolean, logEntries: Boolean = true): AdoptRepos
-    fun loadAttestationDataFromDb(forceUpdate: Boolean, logEntries: Boolean = true): AdoptAttestationRepos
+    fun loadCdxaDataFromDb(forceUpdate: Boolean, logEntries: Boolean = true): AdoptCdxaRepos
     fun getUpdateInfo(): UpdatedInfo
-    fun getAttestationUpdateInfo(): UpdatedInfo
+    fun getCdxaUpdateInfo(): UpdatedInfo
     suspend fun isConnectedToDb(): Boolean
 }

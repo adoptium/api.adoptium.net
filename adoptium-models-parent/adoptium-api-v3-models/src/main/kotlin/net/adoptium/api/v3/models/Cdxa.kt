@@ -5,7 +5,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema
 
 import java.time.Instant
 
-class Attestation {
+class Cdxa {
 
     val id: String
 
@@ -40,11 +40,20 @@ class Attestation {
     @Schema(example = "VERIFIED_REPRODUCIBLE_BUILD")
     val assessor_claim_predicate: String?
 
-    @Schema(example = "https://github.com/adoptium/temurin-attestations/blob/main/21/jdk_21_0_6_7_x64-linux_MyOrgLtd.xml")
-    val attestation_link: String?
+    @Schema(example = "https://github.com/adoptium/temurin-cdxa/blob/main/21/jdk_21_0_6_7_x64-linux_MyOrgLtd.xml")
+    val cdxa_link: String?
 
-    @Schema(example = "https://github.com/adoptium/temurin-attestations/blob/main/21/jdk_21_0_6_7_x64-linux_MyOrgLtd.xml.sign.pub")
-    val attestation_public_signing_key_link: String?
+    @Schema(example = "https://github.com/adoptium/temurin-cdxa/blob/main/21/jdk_21_0_6_7_x64-linux_MyOrgLtd.xml.sig")
+    val cdxa_sig_link: String?
+
+    @Schema(example = "VERIFICATION_LOG")
+    val evidence_propertyName: String?
+
+    @Schema(example = "log")
+    val evidence_data_name: String?
+
+    @Schema(example = "Reproducible script output...")
+    val evidence_data_contents_attachment_text: String?
 
     @JsonCreator
     constructor(
@@ -61,8 +70,11 @@ class Attestation {
         assessor_org: String?,
         assessor_affirmation: String?,
         assessor_claim_predicate: String?,
-        attestation_link: String?,
-        attestation_public_signing_key_link: String?,
+        cdxa_link: String?,
+        cdxa_sig_link: String?,
+        evidence_propertyName: String?,
+        evidence_data_name: String?,
+        evidence_data_contents_attachment_text: String?,
         committedDate: Instant?
     ) {
         this.id = id
@@ -78,8 +90,11 @@ class Attestation {
         this.assessor_org = assessor_org
         this.assessor_affirmation = assessor_affirmation
         this.assessor_claim_predicate = assessor_claim_predicate
-        this.attestation_link = attestation_link
-        this.attestation_public_signing_key_link = attestation_public_signing_key_link
+        this.cdxa_link = cdxa_link
+        this.cdxa_sig_link = cdxa_sig_link
+        this.evidence_propertyName = evidence_propertyName
+        this.evidence_data_name = evidence_data_name
+        this.evidence_data_contents_attachment_text = evidence_data_contents_attachment_text
         this.committedDate = committedDate
     }
 
@@ -87,7 +102,7 @@ class Attestation {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as Attestation
+        other as Cdxa
 
         if (id != other.id) return false
         if (filename != other.filename) return false
@@ -102,8 +117,11 @@ class Attestation {
         if (assessor_org != other.assessor_org) return false
         if (assessor_affirmation != other.assessor_affirmation) return false
         if (assessor_claim_predicate != other.assessor_claim_predicate) return false
-        if (attestation_link != other.attestation_link) return false
-        if (attestation_public_signing_key_link != other.attestation_public_signing_key_link) return false
+        if (cdxa_link != other.cdxa_link) return false
+        if (cdxa_sig_link != other.cdxa_sig_link) return false
+        if (evidence_propertyName != other.evidence_propertyName) return false
+        if (evidence_data_name != other.evidence_data_name) return false
+        if (evidence_data_contents_attachment_text != other.evidence_data_contents_attachment_text) return false
         if (committedDate != other.committedDate) return false
 
         return true
@@ -123,16 +141,21 @@ class Attestation {
         result = 31 * result + assessor_org.hashCode()
         result = 31 * result + assessor_affirmation.hashCode()
         result = 31 * result + assessor_claim_predicate.hashCode()
-        result = 31 * result + attestation_link.hashCode()
-        result = 31 * result + attestation_public_signing_key_link.hashCode()
+        result = 31 * result + cdxa_link.hashCode()
+        result = 31 * result + cdxa_sig_link.hashCode()
+        result = 31 * result + evidence_propertyName.hashCode()
+        result = 31 * result + evidence_data_name.hashCode()
+        result = 31 * result + evidence_data_contents_attachment_text.hashCode()
         result = 31 * result + committedDate.hashCode()
         return result
     }
 
     override fun toString(): String {
-        return "Attestation(id='$id', filename='$filename', featureVersion='$featureVersion', release_name='$release_name', os='$os', architecture='$architecture', image_type='$image_type', jvm_impl='$jvm_impl', vendor='$vendor'" +
+        return "Cdxa(id='$id', filename='$filename', featureVersion='$featureVersion', release_name='$release_name', os='$os', architecture='$architecture', image_type='$image_type', jvm_impl='$jvm_impl', vendor='$vendor'" +
                            "assessor_org='$assessor_org', assessor_affirmation='$assessor_affirmation', assessor_claim_predicate.hashCode='$assessor_claim_predicate.hashCode', " +
                            "target_checksum='$target_checksum', "+
-                           "attestation_link='$attestation_link', attestation_public_signing_key_link='$attestation_public_signing_key_link', committedDate='$committedDate')"
+                           "cdxa_link='$cdxa_link', cdxa_sig_link='$cdxa_sig_link', " +
+                           "evidence_propertyName='$evidence_propertyName', evidence_data_name='$evidence_data_name', evidence_data_contents_attachment_text='$evidence_data_contents_attachment_text', " +
+                           "committedDate='$committedDate')"
     }
 }

@@ -17,7 +17,7 @@ import net.adoptium.api.v3.dataSources.ReleaseVersionResolver
 import net.adoptium.api.v3.dataSources.UpdatableVersionSupplier
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
+import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.releaseNotes.AdoptReleaseNotes
@@ -43,7 +43,7 @@ class V3UpdaterApp : Application()
 @ApplicationScoped
 class V3Updater @Inject constructor(
     private val adoptReposBuilder: AdoptReposBuilder,
-    private val adoptAttestationReposBuilder: AdoptAttestationReposBuilder,
+    private val adoptCdxaReposBuilder: AdoptCdxaReposBuilder,
     private val apiDataStore: APIDataStore,
     private val database: ApiPersistence,
     private val statsInterface: StatsInterface,
@@ -71,7 +71,7 @@ class V3Updater @Inject constructor(
             return String(Base64.getEncoder().encode(md.digest()))
         }
 
-        fun calculateAttestationChecksum(repo: AdoptAttestationRepos?): String {
+        fun calculateCdxaChecksum(repo: AdoptCdxaRepos?): String {
             if (repo == null) {
                 return "null"
             }
@@ -139,20 +139,20 @@ class V3Updater @Inject constructor(
         }
     }
 
-    private fun incrementalAttestationUpdate(oldRepo: AdoptAttestationRepos): AdoptAttestationRepos? {
+    private fun incrementalCdxaUpdate(oldRepo: AdoptCdxaRepos): AdoptCdxaRepos? {
         return runBlocking {
             // Must catch errors or may kill the scheduler
             try {
-                LOGGER.info("Starting Attestation Incremental update")
-                val updatedRepo = adoptAttestationReposBuilder.incrementalUpdate( oldRepo, database.getAttestationUpdatedAt() )
+                LOGGER.info("Starting Cdxa Incremental update")
+                val updatedRepo = adoptCdxaReposBuilder.incrementalUpdate( oldRepo, database.getCdxaUpdatedAt() )
 
                 if (updatedRepo != oldRepo) {
-                    val after = writeIncrementalAttestationUpdate(updatedRepo, oldRepo)
-                    printAttestationReposDebugInfo(oldRepo, after, null)
+                    val after = writeIncrementalCdxaUpdate(updatedRepo, oldRepo)
+                    printCdxaReposDebugInfo(oldRepo, after, null)
                     return@runBlocking after
                 }
             } catch (e: Exception) {
-                LOGGER.error("Failed to perform incremental attestation update", e)
+                LOGGER.error("Failed to perform incremental cdxa update", e)
             }
             return@runBlocking null
         }
@@ -176,20 +176,20 @@ class V3Updater @Inject constructor(
         }
     }
 
-    private fun printAttestationReposDebugInfo(
-        oldRepo: AdoptAttestationRepos,
-        afterInMemory: AdoptAttestationRepos,
-        afterInDb: AdoptAttestationRepos?) {
+    private fun printCdxaReposDebugInfo(
+        oldRepo: AdoptCdxaRepos,
+        afterInMemory: AdoptCdxaRepos,
+        afterInDb: AdoptCdxaRepos?) {
 
         if (APIConfig.DEBUG) {
-            LOGGER.debug("Attestation old and new in-memory CRC comparison oldRepoChecksum={} oldRepoHashCode={} newInMemoryChecksum={} newInMemoryHashCode={}", calculateAttestationChecksum(oldRepo), oldRepo.hashCode(), calculateAttestationChecksum(afterInMemory), afterInMemory.hashCode())
+            LOGGER.debug("Cdxa old and new in-memory CRC comparison oldRepoChecksum={} oldRepoHashCode={} newInMemoryChecksum={} newInMemoryHashCode={}", calculateCdxaChecksum(oldRepo), oldRepo.hashCode(), calculateCdxaChecksum(afterInMemory), afterInMemory.hashCode())
 
-            LOGGER.debug("Deep-compare Attestation old and new in-memory")
-            deepDiffAttestationDebugPrint(oldRepo, afterInMemory)
+            LOGGER.debug("Deep-compare Cdxa old and new in-memory")
+            deepDiffCdxaDebugPrint(oldRepo, afterInMemory)
 
             if (afterInDb != null) {
-                LOGGER.debug("Deep-compare Attestation new in memory and new in db")
-                deepDiffAttestationDebugPrint(afterInMemory, afterInDb)
+                LOGGER.debug("Deep-compare Cdxa new in memory and new in db")
+                deepDiffCdxaDebugPrint(afterInMemory, afterInDb)
             }
         }
     }
@@ -233,17 +233,17 @@ class V3Updater @Inject constructor(
             }
     }
 
-    private fun deepDiffAttestationDebugPrint(repoA: AdoptAttestationRepos, repoB: AdoptAttestationRepos) {
+    private fun deepDiffCdxaDebugPrint(repoA: AdoptCdxaRepos, repoB: AdoptCdxaRepos) {
         var theSame = true
         repoA.repos.forEach { attA ->
                 val attB = repoB.repos.firstOrNull { it.id == attA.id }
                 if (attB == null) {
-                    LOGGER.debug("Attestation disappeared ${attA.id} ${attA.filename}")
+                    LOGGER.debug("Cdxa disappeared ${attA.id} ${attA.filename}")
                     theSame = false
                 } else if (attA != attB) {
                     theSame = false
-                    LOGGER.debug("Attestation changedA {}", attA)
-                    LOGGER.debug("Attestation changedB {}", attB)
+                    LOGGER.debug("Cdxa changedA {}", attA)
+                    LOGGER.debug("Cdxa changedB {}", attB)
                 }
             }
 
@@ -251,13 +251,13 @@ class V3Updater @Inject constructor(
                 val attA = repoA.repos.firstOrNull { it.id == attB.id }
                 if (attA == null) {
                     theSame = false
-                    LOGGER.info("Attestation Added ${attB.id} ${attB.filename}")
+                    LOGGER.info("Cdxa Added ${attB.id} ${attB.filename}")
                 }
             }
         if ( theSame ) {
-            LOGGER.debug("deepDiffAttestationDebugPrint: Identical")
+            LOGGER.debug("deepDiffCdxaDebugPrint: Identical")
         } else {
-            LOGGER.debug("deepDiffAttestationDebugPrint: Differences found")
+            LOGGER.debug("deepDiffCdxaDebugPrint: Differences found")
         }
     }
 
@@ -294,9 +294,9 @@ class V3Updater @Inject constructor(
         }
     }
 
-    private suspend fun writeIncrementalAttestationUpdate(updatedRepo: AdoptAttestationRepos, oldRepo: AdoptAttestationRepos): AdoptAttestationRepos {
-        val checksum = calculateAttestationChecksum(updatedRepo)
-        val oldChecksum = calculateAttestationChecksum(oldRepo)
+    private suspend fun writeIncrementalCdxaUpdate(updatedRepo: AdoptCdxaRepos, oldRepo: AdoptCdxaRepos): AdoptCdxaRepos {
+        val checksum = calculateCdxaChecksum(updatedRepo)
+        val oldChecksum = calculateCdxaChecksum(oldRepo)
 
         if (checksum == oldChecksum) {
             return updatedRepo
@@ -304,21 +304,21 @@ class V3Updater @Inject constructor(
 
         return mutex.withLock {
             // Ensure that the database has not been updated since calculating the incremental update
-            if (database.getAttestationUpdatedAt().checksum == oldChecksum) {
-                database.updateAttestationRepos(updatedRepo, checksum)
+            if (database.getCdxaUpdatedAt().checksum == oldChecksum) {
+                database.updateCdxaRepos(updatedRepo, checksum)
 
-                LOGGER.info("Incremental attestation update done")
-                LOGGER.info("Saved attestation version: $checksum ${updatedRepo.hashCode()}")
+                LOGGER.info("Incremental cdxa update done")
+                LOGGER.info("Saved cdxa version: $checksum ${updatedRepo.hashCode()}")
                 return@withLock updatedRepo
             } else {
-                LOGGER.info("Incremental attestation update done")
-                LOGGER.warn("Not applying incremental attestation update due to checksum miss $checksum ${updatedRepo.hashCode()} $oldChecksum ${oldRepo.hashCode()} ${database.getUpdatedAt().checksum}")
+                LOGGER.info("Incremental cdxa update done")
+                LOGGER.warn("Not applying incremental cdxa update due to checksum miss $checksum ${updatedRepo.hashCode()} $oldChecksum ${oldRepo.hashCode()} ${database.getCdxaUpdatedAt().checksum}")
 
                 // re-calculate checksum in case of schema change
-                val dbVersion = apiDataStore.loadAttestationDataFromDb(true)
-                val dbChecksum = calculateAttestationChecksum(dbVersion)
-                if (dbChecksum != database.getAttestationUpdatedAt().checksum) {
-                    database.updateAttestationRepos(dbVersion, dbChecksum)
+                val dbVersion = apiDataStore.loadCdxaDataFromDb(true)
+                val dbChecksum = calculateCdxaChecksum(dbVersion)
+                if (dbChecksum != database.getCdxaUpdatedAt().checksum) {
+                    database.updateCdxaRepos(dbVersion, dbChecksum)
                 }
 
                 return@withLock dbVersion
@@ -345,26 +345,26 @@ class V3Updater @Inject constructor(
             AdoptRepos(emptyList())
         }
 
-        var attestationRepo: AdoptAttestationRepos = try {
-            apiDataStore.loadAttestationDataFromDb(true)
+        var cdxaRepo: AdoptCdxaRepos = try {
+            apiDataStore.loadCdxaDataFromDb(true)
         } catch (e: java.lang.Exception) {
-            LOGGER.error("Failed to load attestation db", e)
+            LOGGER.error("Failed to load cdxa db", e)
             if (e is MongoException) {
-                LOGGER.error("Failed to connect to attestation db, exiting")
+                LOGGER.error("Failed to connect to cdxa db, exiting")
                 Quarkus.asyncExit(2)
                 Quarkus.waitForExit()
             }   
-            AdoptAttestationRepos(emptyList())
+            AdoptCdxaRepos(emptyList())
         } 
 
         val incrementalUpdateScheduled = AtomicBoolean(false)
-        val incrementalAttestationUpdateScheduled = AtomicBoolean(false)
+        val incrementalCdxaUpdateScheduled = AtomicBoolean(false)
 
         executor.scheduleWithFixedDelay(
             timerTask {
                 try {
                     runUpdate(repo, incrementalUpdateScheduled, executor)
-                    runAttestationUpdate(attestationRepo, incrementalAttestationUpdateScheduled, executor)
+                    runCdxaUpdate(cdxaRepo, incrementalCdxaUpdateScheduled, executor)
                 } catch (e: InvalidUpdateException) {
                     LOGGER.error("Failed to perform update", e)
                 }
@@ -393,18 +393,18 @@ class V3Updater @Inject constructor(
         return repo1
     }
 
-    fun runAttestationUpdate(
-        repo: AdoptAttestationRepos,
-        incrementalAttestationUpdateScheduled: AtomicBoolean,
+    fun runCdxaUpdate(
+        repo: AdoptCdxaRepos,
+        incrementalCdxaUpdateScheduled: AtomicBoolean,
         executor: ScheduledExecutorService
-    ): AdoptAttestationRepos {
+    ): AdoptCdxaRepos {
         var repo1 = repo
-        repo1 = fullAttestationUpdate(repo1) ?: repo1
-        repo1 = incrementalAttestationUpdate(repo1) ?: repo1
-        if (!incrementalAttestationUpdateScheduled.getAndSet(true)) {
+        repo1 = fullCdxaUpdate(repo1) ?: repo1
+        repo1 = incrementalCdxaUpdate(repo1) ?: repo1
+        if (!incrementalCdxaUpdateScheduled.getAndSet(true)) {
             executor.scheduleWithFixedDelay(
                 timerTask {
-                    repo1 = incrementalAttestationUpdate(repo1) ?: repo1
+                    repo1 = incrementalCdxaUpdate(repo1) ?: repo1
                 },
                 1, 6, TimeUnit.MINUTES
             )
@@ -487,35 +487,35 @@ class V3Updater @Inject constructor(
     }
 
     @Throws(InvalidUpdateException::class)
-    private fun fullAttestationUpdate(currentRepo: AdoptAttestationRepos): AdoptAttestationRepos? {
+    private fun fullCdxaUpdate(currentRepo: AdoptCdxaRepos): AdoptCdxaRepos? {
         // Must catch errors or may kill the scheduler
         try {
             return runBlocking {
-                LOGGER.info("Starting Full Attestation update")
+                LOGGER.info("Starting Full Cdxa update")
 
                 updatableVersionSupplier.updateVersions()
 
-                val repo = adoptAttestationReposBuilder.build()
+                val repo = adoptCdxaReposBuilder.build()
 
-                printAttestationReposDebugInfo(currentRepo, repo, null)
+                printCdxaReposDebugInfo(currentRepo, repo, null)
 
-                val checksum = calculateAttestationChecksum(repo)
+                val checksum = calculateCdxaChecksum(repo)
 
                 val dataInDb = mutex.withLock {
                     runBlocking {
-                        database.updateAttestationRepos(repo, checksum)
+                        database.updateCdxaRepos(repo, checksum)
 
-                        apiDataStore.loadAttestationDataFromDb(forceUpdate = true, logEntries = true)
+                        apiDataStore.loadCdxaDataFromDb(forceUpdate = true, logEntries = true)
                     }
                 }
 
-                printAttestationReposDebugInfo(currentRepo, repo, dataInDb)
+                printCdxaReposDebugInfo(currentRepo, repo, dataInDb)
 
-                LOGGER.info("Full Attestation update done")
+                LOGGER.info("Full Cdxa update done")
                 return@runBlocking repo
             }
         } catch (e: Exception) {
-            LOGGER.error("Failed to perform full Attestation update", e)
+            LOGGER.error("Failed to perform full Cdxa update", e)
         } catch (e: Throwable) {
             // Log and rethrow, may be unrecoverable error such as OutOfMemoryError
             LOGGER.error("Error during full update", e)
