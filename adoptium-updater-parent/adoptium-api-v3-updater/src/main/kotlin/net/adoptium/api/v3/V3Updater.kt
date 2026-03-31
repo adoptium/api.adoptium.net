@@ -312,7 +312,7 @@ class V3Updater @Inject constructor(
                 return@withLock updatedRepo
             } else {
                 LOGGER.info("Incremental cdxa update done")
-                LOGGER.warn("Not applying incremental cdxa update due to checksum miss $checksum ${updatedRepo.hashCode()} $oldChecksum ${oldRepo.hashCode()} ${database.getUpdatedAt().checksum}")
+                LOGGER.warn("Not applying incremental cdxa update due to checksum miss $checksum ${updatedRepo.hashCode()} $oldChecksum ${oldRepo.hashCode()} ${database.getCdxaUpdatedAt().checksum}")
 
                 // re-calculate checksum in case of schema change
                 val dbVersion = apiDataStore.loadCdxaDataFromDb(true)

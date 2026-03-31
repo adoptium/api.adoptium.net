@@ -39,7 +39,7 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var
     }
 
     override suspend fun updateCdxaRepos(repos: AdoptCdxaRepos, checksum: String) {
-        this.cdxaRepos = cdxaRepos
+        this.cdxaRepos = repos
         this.cdxaUpdatedAtInfo = UpdatedInfo(TimeSource.now(), checksum, repos.hashCode())
     }
 
