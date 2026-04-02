@@ -19,6 +19,7 @@ import java.time.ZonedDateTime
 import jakarta.annotation.Priority
 import jakarta.enterprise.inject.Alternative
 import jakarta.inject.Inject
+import net.adoptium.api.v3.models.CloudflarePackageDownloadStatsDbEntry
 
 @Priority(1)
 @Alternative
@@ -30,6 +31,7 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var
 
     private var githubStats = ArrayList<GitHubDownloadStatsDbEntry>()
     private var dockerStats = ArrayList<DockerDownloadStatsDbEntry>()
+    private var packageStats = ArrayList<CloudflarePackageDownloadStatsDbEntry>()
     private var ghReleaseMetadata = HashMap<GitHubId, GHReleaseMetadata>()
     val releaseNotes = ArrayList<ReleaseNotes>()
 
@@ -92,6 +94,21 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var
 
     override suspend fun removeStatsBetween(start: ZonedDateTime, end: ZonedDateTime) {
         TODO("Not yet implemented")
+    }
+
+    override suspend fun addPackageDownloadStatsEntries(stats: List<CloudflarePackageDownloadStatsDbEntry>) {
+        packageStats.addAll(stats)
+    }
+
+    override suspend fun getLatestPackageStatsForFeatureVersion(featureVersion: Int): CloudflarePackageDownloadStatsDbEntry? {
+        return packageStats.filter { it.feature_version == featureVersion }
+            .sortedBy { it.date }
+            .lastOrNull()
+    }
+
+    override suspend fun getPackageStats(start: ZonedDateTime, end: ZonedDateTime): List<CloudflarePackageDownloadStatsDbEntry> {
+        return packageStats.filter { it.date.isAfter(start) && it.date.isBefore(end) }
+            .sortedBy { it.date }
     }
 
     override suspend fun setReleaseInfo(releaseInfo: ReleaseInfo) {
