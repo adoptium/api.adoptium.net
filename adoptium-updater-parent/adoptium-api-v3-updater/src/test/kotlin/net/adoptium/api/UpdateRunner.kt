@@ -17,8 +17,8 @@ import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubRelea
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubReleaseRequest
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubRepositoryClient
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubSummaryClient
-import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubAttestationSummaryClient
-import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubAttestationClient
+import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubCdxaSummaryClient
+import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubCdxaClient
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLRequest
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLRequestImpl
 import net.adoptium.api.v3.mapping.adopt.AdoptBinaryMapper
@@ -72,8 +72,8 @@ class UpdateRunner {
                     graphQLGitHubInterface,
                     graphQLGitHubReleaseRequest
                 ),
-                GraphQLGitHubAttestationSummaryClient(graphQLGitHubInterface),
-                GraphQLGitHubAttestationClient(graphQLGitHubInterface)
+                GraphQLGitHubCdxaSummaryClient(graphQLGitHubInterface),
+                GraphQLGitHubCdxaClient(graphQLGitHubInterface)
             )
             val gitHubHtmlClient: GitHubHtmlClient = CachedGitHubHtmlClient(
                 InMemoryInternalDbStore(),

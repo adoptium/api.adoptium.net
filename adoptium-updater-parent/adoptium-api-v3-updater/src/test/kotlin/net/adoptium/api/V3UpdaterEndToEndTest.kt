@@ -6,8 +6,9 @@ import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.v3.AdoptReposBuilder
 import net.adoptium.api.v3.AdoptRepositoryImpl
-import net.adoptium.api.v3.AdoptAttestationReposBuilder
-import net.adoptium.api.v3.AdoptAttestationRepositoryImpl
+import net.adoptium.api.v3.AdoptCdxaReposBuilder
+import net.adoptium.api.v3.AdoptCdxaRepository
+import net.adoptium.api.v3.AdoptCdxaRepositoryImpl
 import net.adoptium.api.v3.V3Updater
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.APIDataStoreImpl
@@ -20,9 +21,12 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHReleases
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRepository
-import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummaryData
-import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestationRepoSummaryEntry
-import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestation
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHCdxaRepoSummary
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHCdxaRepoSummaryData
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHCdxaRepoSummaryRepository
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHCdxaRepoSummaryEntry
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHCdxaRepoSummaryObject
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHCdxa
 import net.adoptium.api.v3.dataSources.github.graphql.models.Declarations
 import net.adoptium.api.v3.dataSources.github.graphql.models.Targets
 import net.adoptium.api.v3.dataSources.github.graphql.models.Components
@@ -39,14 +43,19 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.Reference
 import net.adoptium.api.v3.dataSources.github.graphql.models.ExternalReferences
 import net.adoptium.api.v3.dataSources.github.graphql.models.Property
 import net.adoptium.api.v3.dataSources.github.graphql.models.Properties
+import net.adoptium.api.v3.dataSources.github.graphql.models.Attachment
+import net.adoptium.api.v3.dataSources.github.graphql.models.Contents
+import net.adoptium.api.v3.dataSources.github.graphql.models.EvidenceData
+import net.adoptium.api.v3.dataSources.github.graphql.models.Evidence
+import net.adoptium.api.v3.dataSources.github.graphql.models.Evidences
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
+import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.mapping.adopt.AdoptBinaryMapper
 import net.adoptium.api.v3.mapping.adopt.AdoptReleaseMapperFactory
-import net.adoptium.api.v3.mapping.adopt.AdoptAttestationMapperFactory
+import net.adoptium.api.v3.mapping.adopt.AdoptCdxaMapperFactory
 import net.adoptium.api.v3.models.DateTime
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
@@ -200,32 +209,32 @@ class V3UpdaterEndToEndTest {
     }
 
     @Test   
-    fun `new attestation is added`() {
+    fun `new cdxa is added`() {
         runBlocking {
-            val attestationRepo = AdoptAttestationReposTestDataGenerator.generate()
+            val cdxaRepo = AdoptCdxaReposTestDataGenerator.generate()
 
-            val getAttestationSummary: ((String, String, String) -> GHAttestationRepoSummaryData?) = { org, repo , directory ->
-                LOGGER.info("getAttestationSummary: "+org+" "+repo+" "+directory)
+            val getCdxaSummary: ((String, String, String) -> GHCdxaRepoSummaryData?) = { org, repo , directory ->
+                LOGGER.info("getCdxaSummary: "+org+" "+repo+" "+directory)
 
-                var attestationSummary = GHAttestationSummaryTestDataGenerator.generateGHAttestationRepoSummary(attestationRepo, directory)
+                var cdxaSummary = GHCdxaSummaryTestDataGenerator.generateGHCdxaRepoSummary(cdxaRepo, directory)
 
-                // Add a 24/jdk-24.0.2+12 aarch64_linux attestation file into the summary
-                if ( directory == "24/jdk-24.0.2+12" && attestationSummary?.repository?.att_object?.entries != null ) {
-                    attestationSummary?.repository?.att_object?.entries = (attestationSummary?.repository?.att_object?.entries ?: mutableListOf<GHAttestationRepoSummaryEntry>()) +
-                                                                                     GHAttestationRepoSummaryEntry("jdk_24_0_2_12_aarch64_linux_Adoptium.xml",
+                // Add a 24/jdk-24.0.2+12 aarch64_linux cdxa file into the summary
+                if ( directory == "24/jdk-24.0.2+12" && cdxaSummary?.repository?.att_object?.entries != null ) {
+                    cdxaSummary?.repository?.att_object?.entries = (cdxaSummary?.repository?.att_object?.entries ?: mutableListOf<GHCdxaRepoSummaryEntry>()) +
+                                                                                     GHCdxaRepoSummaryEntry("jdk_24_0_2_12_aarch64_linux_Adoptium.xml",
                                                                                                                    "blob"
                                                                                                                   )
                 }
 
-                LOGGER.info("getAttestationSummary: "+attestationSummary)
+                LOGGER.info("getCdxaSummary: "+cdxaSummary)
 
-                attestationSummary
+                cdxaSummary
             }
             
-            val getAttestationByName: ((String, String, String) -> GHAttestation?) = { org, repo, name ->
-                            val existAtt = attestationRepo.repos.firstOrNull { it.filename == name }
+            val getCdxaByName: ((String, String, String) -> GHCdxa?) = { org, repo, name ->
+                            val existAtt = cdxaRepo.repos.firstOrNull { it.filename == name }
                             if (existAtt != null) {
-                                // Construct GHAttestation equivalent of existing Attestation
+                                // Construct GHCdxa equivalent of existing Cdxa
                                 var propPlatform: Property = Property()
                                 propPlatform.name = "platform"
                                 propPlatform.value = existAtt.architecture.toString() + "_" + existAtt.os.toString()
@@ -248,11 +257,18 @@ class V3UpdaterEndToEndTest {
                                 var aff: Affirmation = Affirmation(existAtt.assessor_affirmation)
                                 var cl: Claim = Claim(null, existAtt.assessor_claim_predicate)
                                 var cls: Claims = Claims(listOf(cl))
-                                var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
+                                var attachment: Attachment = Attachment()
+                                attachment.contentType = "text/plain"
+                                attachment.content = existAtt.evidence_data_contents_attachment_text
+                                var contents: Contents = Contents(attachment)
+                                var evidenceData: EvidenceData = EvidenceData(existAtt.evidence_data_name, contents)
+                                var evidence: Evidence = Evidence(null, existAtt.evidence_propertyName, evidenceData)
+                                var evidences: Evidences = Evidences(listOf(evidence))
+                                var d: Declarations = Declarations(ass, cls, evidences, null, Targets(cs), aff)
 
-                                GHAttestation( GitHubId(existAtt.id), existAtt.filename, existAtt.attestation_link, existAtt.attestation_public_signing_key_link, existAtt.committedDate, d, null)
+                                GHCdxa( GitHubId(existAtt.id), existAtt.filename, existAtt.cdxa_link, existAtt.cdxa_sig_link, existAtt.committedDate, d, null)
                             } else if (name == "24/jdk-24.0.2+12/jdk_24_0_2_12_aarch64_linux_Adoptium.xml") {
-                                // Return the new attestation
+                                // Return the new cdxa
                                 var propPlatform: Property = Property()
                                 propPlatform.name = "platform"
                                 propPlatform.value = "aarch64_linux"
@@ -275,49 +291,56 @@ class V3UpdaterEndToEndTest {
                                 var aff: Affirmation = Affirmation("assessor_affirmation_new")
                                 var cl: Claim = Claim(null, "assessor_claim_predicate_new")
                                 var cls: Claims = Claims(listOf(cl))
-                                var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
+                                var attachment: Attachment = Attachment()
+                                attachment.contentType = "text/plain"
+                                attachment.content = "New build verification: jdk-24.0.2+12 reproducible build confirmed"
+                                var contents: Contents = Contents(attachment)
+                                var evidenceData: EvidenceData = EvidenceData("log", contents)
+                                var evidence: Evidence = Evidence(null, "VERIFICATION_LOG", evidenceData)
+                                var evidences: Evidences = Evidences(listOf(evidence))
+                                var d: Declarations = Declarations(ass, cls, evidences, null, Targets(cs), aff)
 
-                                GHAttestation( GitHubId("1"), name, "https://github.com/"+org+"/"+repo+"/blob/main/"+name, "https://github.com/"+org+"/"+repo+"/blob/main/"+name+".sign.pub", Instant.now(), d, null)
+                                GHCdxa( GitHubId("1"), name, "https://github.com/"+org+"/"+repo+"/blob/main/"+name, "https://github.com/"+org+"/"+repo+"/blob/main/"+name+".sig", Instant.now(), d, null)
                             } else {
                                 null
                             }
             }
 
-            val updatedRepo = runAttestationUpdateTest(attestationRepo, getAttestationSummary, getAttestationByName)
+            val updatedRepo = runCdxaUpdateTest(cdxaRepo, getCdxaSummary, getCdxaByName)
 
-            assertTrue(updatedRepo.repos.size == attestationRepo.repos.size + 1)
+            assertTrue(updatedRepo.repos.size == cdxaRepo.repos.size + 1)
             val addedAtt = updatedRepo.repos.firstOrNull { it.filename == "24/jdk-24.0.2+12/jdk_24_0_2_12_aarch64_linux_Adoptium.xml" }
             assertTrue(addedAtt != null)
-            assertTrue(updatedRepo != attestationRepo)
+            assertTrue(updatedRepo != cdxaRepo)
         }
     }
 
     @Test
-    fun `remove attestation is removed`() {
+    fun `remove cdxa is removed`() {
         runBlocking {
-            val attestationRepo = AdoptAttestationReposTestDataGenerator.generate()
+            val cdxaRepo = AdoptCdxaReposTestDataGenerator.generate()
 
-            val getAttestationSummary: ((String, String, String) -> GHAttestationRepoSummaryData?) = { org, repo, directory ->
-                LOGGER.info("getAttestationSummary: "+org+" "+repo+" "+directory)
+            val getCdxaSummary: ((String, String, String) -> GHCdxaRepoSummaryData?) = { org, repo, directory ->
+                LOGGER.info("getCdxaSummary: "+org+" "+repo+" "+directory)
 
-                var attestationSummary = GHAttestationSummaryTestDataGenerator.generateGHAttestationRepoSummary(attestationRepo, directory)
+                var cdxaSummary = GHCdxaSummaryTestDataGenerator.generateGHCdxaRepoSummary(cdxaRepo, directory)
 
-                // Remove the jdk-11 attestation file from the summary
-                if ( attestationSummary?.repository?.att_object?.entries != null ) {
-                    var newEntries = attestationSummary?.repository?.att_object?.entries?.toMutableList()
-                    newEntries?.removeIf { it.name == "11" || it.name == "jdk-11.0.21+8" || it.name.startsWith("attestation_jdk-11.0.21+8") }
-                    attestationSummary?.repository?.att_object?.entries = newEntries
+                // Remove the jdk-11 cdxa file from the summary
+                if ( cdxaSummary?.repository?.att_object?.entries != null ) {
+                    var newEntries = cdxaSummary?.repository?.att_object?.entries?.toMutableList()
+                    newEntries?.removeIf { it.name == "11" || it.name == "jdk-11.0.21+8" || it.name.startsWith("cdxa_jdk-11.0.21+8") }
+                    cdxaSummary?.repository?.att_object?.entries = newEntries
                 }
 
-                LOGGER.info("getAttestationSummary: "+attestationSummary)
+                LOGGER.info("getCdxaSummary: "+cdxaSummary)
 
-                attestationSummary
+                cdxaSummary
             }
 
-            val getAttestationByName: ((String, String, String) -> GHAttestation?) = { org, repo, name ->
-                            val existAtt = attestationRepo.repos.firstOrNull { it.filename == name }
+            val getCdxaByName: ((String, String, String) -> GHCdxa?) = { org, repo, name ->
+                            val existAtt = cdxaRepo.repos.firstOrNull { it.filename == name }
                             if (existAtt != null) {
-                                // Construct GHAttestation equivalent of existing Attestation
+                                // Construct GHCdxa equivalent of existing Cdxa
                                 var propPlatform: Property = Property()
                                 propPlatform.name = "platform"
                                 propPlatform.value = existAtt.architecture.toString() + "_" + existAtt.os.toString()
@@ -340,42 +363,49 @@ class V3UpdaterEndToEndTest {
                                 var aff: Affirmation = Affirmation(existAtt.assessor_affirmation)
                                 var cl: Claim = Claim(null, existAtt.assessor_claim_predicate)
                                 var cls: Claims = Claims(listOf(cl))
-                                var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
+                                var attachment: Attachment = Attachment()
+                                attachment.contentType = "text/plain"
+                                attachment.content = existAtt.evidence_data_contents_attachment_text
+                                var contents: Contents = Contents(attachment)
+                                var evidenceData: EvidenceData = EvidenceData(existAtt.evidence_data_name, contents)
+                                var evidence: Evidence = Evidence(null, existAtt.evidence_propertyName, evidenceData)
+                                var evidences: Evidences = Evidences(listOf(evidence))
+                                var d: Declarations = Declarations(ass, cls, evidences, null, Targets(cs), aff)
 
-                                GHAttestation( GitHubId(existAtt.id), existAtt.filename, existAtt.attestation_link, existAtt.attestation_public_signing_key_link, existAtt.committedDate, d, null)
+                                GHCdxa( GitHubId(existAtt.id), existAtt.filename, existAtt.cdxa_link, existAtt.cdxa_sig_link, existAtt.committedDate, d, null)
                             } else {
                                 null
                             }
             }
 
-            val updatedRepo = runAttestationUpdateTest(attestationRepo, getAttestationSummary, getAttestationByName)
+            val updatedRepo = runCdxaUpdateTest(cdxaRepo, getCdxaSummary, getCdxaByName)
 
-            assertTrue(updatedRepo.repos.size == attestationRepo.repos.size - 1)
+            assertTrue(updatedRepo.repos.size == cdxaRepo.repos.size - 1)
             val removedAtt = updatedRepo.repos.firstOrNull { it.featureVersion == 11 }
             assertTrue(removedAtt == null)
-            assertTrue(updatedRepo != attestationRepo)
+            assertTrue(updatedRepo != cdxaRepo)
         }
     }
 
     @Test
-    fun `unchanged attestation repo has no updates`() {
+    fun `unchanged cdxa repo has no updates`() {
         runBlocking {
-            val attestationRepo = AdoptAttestationReposTestDataGenerator.generate()
+            val cdxaRepo = AdoptCdxaReposTestDataGenerator.generate()
 
-            val getAttestationSummary: ((String, String, String) -> GHAttestationRepoSummaryData?) = { org, repo, directory ->
-                LOGGER.info("getAttestationSummary: "+org+" "+repo+" "+directory)
+            val getCdxaSummary: ((String, String, String) -> GHCdxaRepoSummaryData?) = { org, repo, directory ->
+                LOGGER.info("getCdxaSummary: "+org+" "+repo+" "+directory)
 
-                var attestationSummary = GHAttestationSummaryTestDataGenerator.generateGHAttestationRepoSummary(attestationRepo, directory)
+                var cdxaSummary = GHCdxaSummaryTestDataGenerator.generateGHCdxaRepoSummary(cdxaRepo, directory)
 
-                LOGGER.info("getAttestationSummary: "+attestationSummary)
+                LOGGER.info("getCdxaSummary: "+cdxaSummary)
 
-                attestationSummary
+                cdxaSummary
             }
 
-            val getAttestationByName: ((String, String, String) -> GHAttestation?) = { org, repo, name ->
-                            val existAtt = attestationRepo.repos.firstOrNull { it.filename == name }
+            val getCdxaByName: ((String, String, String) -> GHCdxa?) = { org, repo, name ->
+                            val existAtt = cdxaRepo.repos.firstOrNull { it.filename == name }
                             if (existAtt != null) {
-                                // Construct GHAttestation equivalent of existing Attestation
+                                // Construct GHCdxa equivalent of existing Cdxa
                                 var propPlatform: Property = Property()
                                 propPlatform.name = "platform"
                                 propPlatform.value = existAtt.architecture.toString() + "_" + existAtt.os.toString()
@@ -398,19 +428,26 @@ class V3UpdaterEndToEndTest {
                                 var aff: Affirmation = Affirmation(existAtt.assessor_affirmation)
                                 var cl: Claim = Claim(null, existAtt.assessor_claim_predicate)
                                 var cls: Claims = Claims(listOf(cl))
-                                var d: Declarations = Declarations(ass, cls, null, Targets(cs), aff)
+                                var attachment: Attachment = Attachment()
+                                attachment.contentType = "text/plain"
+                                attachment.content = existAtt.evidence_data_contents_attachment_text
+                                var contents: Contents = Contents(attachment)
+                                var evidenceData: EvidenceData = EvidenceData(existAtt.evidence_data_name, contents)
+                                var evidence: Evidence = Evidence(null, existAtt.evidence_propertyName, evidenceData)
+                                var evidences: Evidences = Evidences(listOf(evidence))
+                                var d: Declarations = Declarations(ass, cls, evidences, null, Targets(cs), aff)
 
-                                GHAttestation( GitHubId(existAtt.id), existAtt.filename, existAtt.attestation_link, existAtt.attestation_public_signing_key_link, existAtt.committedDate, d, null)
+                                GHCdxa( GitHubId(existAtt.id), existAtt.filename, existAtt.cdxa_link, existAtt.cdxa_sig_link, existAtt.committedDate, d, null)
                             } else {
                                 null
                             }
             }
 
-            val updatedRepo = runAttestationUpdateTest(attestationRepo, getAttestationSummary, getAttestationByName)
+            val updatedRepo = runCdxaUpdateTest(cdxaRepo, getCdxaSummary, getCdxaByName)
 
-            assertTrue(updatedRepo.repos.size == attestationRepo.repos.size)
-            assertTrue(updatedRepo == attestationRepo)
-            assertTrue(updatedRepo !== attestationRepo)
+            assertTrue(updatedRepo.repos.size == cdxaRepo.repos.size)
+            assertTrue(updatedRepo == cdxaRepo)
+            assertTrue(updatedRepo !== cdxaRepo)
         }
     }
 
@@ -504,10 +541,10 @@ class V3UpdaterEndToEndTest {
                             }
                         }
 
-                        override suspend fun getAttestationSummary(org: String, repo: String, directory: String): GHAttestationRepoSummaryData? {
+                        override suspend fun getCdxaSummary(org: String, repo: String, directory: String): GHCdxaRepoSummaryData? {
                             return null
                         }
-                        override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
+                        override suspend fun getCdxaByName(org: String, repo: String, name: String): GHCdxa? {
                             return null
                         }
                     },
@@ -515,8 +552,8 @@ class V3UpdaterEndToEndTest {
                 ),
                 vs
             ),
-            AdoptAttestationReposBuilder(
-                AdoptAttestationRepositoryImpl(
+            AdoptCdxaReposBuilder(
+                AdoptCdxaRepositoryImpl(
                     object : GitHubApi {
                         override suspend fun getRepository(owner: String, repoName: String, filter: (updatedAt: String, isPrerelease: Boolean) -> Boolean): GHRepository {
                             return mockk()
@@ -530,14 +567,14 @@ class V3UpdaterEndToEndTest {
                             return null
                         }
 
-                        override suspend fun getAttestationSummary(org: String, repo: String, directory: String): GHAttestationRepoSummaryData? {
+                        override suspend fun getCdxaSummary(org: String, repo: String, directory: String): GHCdxaRepoSummaryData? {
                             return null
                         }
-                        override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
+                        override suspend fun getCdxaByName(org: String, repo: String, name: String): GHCdxa? {
                             return null
                         }
                     },
-                    AdoptAttestationMapperFactory(ghClient)
+                    AdoptCdxaMapperFactory(ghClient)
                 )
             ),
             apiDataStore,
@@ -568,14 +605,14 @@ class V3UpdaterEndToEndTest {
         return updatedRepo
     }
 
-    private fun runAttestationUpdateTest(attestationRepo: AdoptAttestationRepos,
-                   getAttestationSummary: (String, String, String) -> GHAttestationRepoSummaryData?,
-                   getAttestationByName: (String, String, String) -> GHAttestation? ): AdoptAttestationRepos {
+    private fun runCdxaUpdateTest(cdxaRepo: AdoptCdxaRepos,
+                   getCdxaSummary: (String, String, String) -> GHCdxaRepoSummaryData?,
+                   getCdxaByName: (String, String, String) -> GHCdxa? ): AdoptCdxaRepos {
 
         val adoptRepos: AdoptRepos = mockk()
         coEvery { adoptRepos.getFeatureRelease(any()) } returns null
 
-        val memoryDb = InMemoryApiPersistence(adoptRepos, attestationRepo)
+        val memoryDb = InMemoryApiPersistence(adoptRepos, cdxaRepo)
 
         val apiDataStore: APIDataStore = APIDataStoreImpl(memoryDb)
         coEvery { apiDataStore.loadDataFromDb(true, false) } returns AdoptRepos(emptyList())
@@ -620,10 +657,10 @@ class V3UpdaterEndToEndTest {
                             return null
                         }
 
-                        override suspend fun getAttestationSummary(org: String, repo: String, directory: String): GHAttestationRepoSummaryData? {
+                        override suspend fun getCdxaSummary(org: String, repo: String, directory: String): GHCdxaRepoSummaryData? {
                             return null
                         }
-                        override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
+                        override suspend fun getCdxaByName(org: String, repo: String, name: String): GHCdxa? {
                             return null
                         }
                     },
@@ -631,8 +668,8 @@ class V3UpdaterEndToEndTest {
                 ),
                 vs
             ),
-            AdoptAttestationReposBuilder(
-                AdoptAttestationRepositoryImpl(
+            AdoptCdxaReposBuilder(
+                AdoptCdxaRepositoryImpl(
                     object : GitHubApi {
                         override suspend fun getRepository(owner: String, repoName: String, filter: (updatedAt: String, isPrerelease: Boolean) -> Boolean): GHRepository {
                             return mockk()
@@ -646,15 +683,15 @@ class V3UpdaterEndToEndTest {
                             return null
                         }
 
-                        override suspend fun getAttestationSummary(org: String, repo: String, directory: String): GHAttestationRepoSummaryData? {
-                            return getAttestationSummary(org, repo, directory)
+                        override suspend fun getCdxaSummary(org: String, repo: String, directory: String): GHCdxaRepoSummaryData? {
+                            return getCdxaSummary(org, repo, directory)
                         }
 
-                        override suspend fun getAttestationByName(org: String, repo: String, name: String): GHAttestation? {
-                            return getAttestationByName(org, repo, name)
+                        override suspend fun getCdxaByName(org: String, repo: String, name: String): GHCdxa? {
+                            return getCdxaByName(org, repo, name)
                         }
                     },
-                    AdoptAttestationMapperFactory(ghClient)
+                    AdoptCdxaMapperFactory(ghClient)
                 )
             ),
             apiDataStore,
@@ -681,8 +718,8 @@ class V3UpdaterEndToEndTest {
             vs
         )
 
-        val updatedAttestationRepo = updater.runAttestationUpdate(attestationRepo, AtomicBoolean(true), mockk())
-        return updatedAttestationRepo
+        val updatedCdxaRepo = updater.runCdxaUpdate(cdxaRepo, AtomicBoolean(true), mockk())
+        return updatedCdxaRepo
     }
 
 }

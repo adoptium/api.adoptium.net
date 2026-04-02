@@ -1,6 +1,6 @@
 ######################################################
 ## Build
-FROM eclipse-temurin:21-jammy AS build
+FROM eclipse-temurin:25-jammy AS build
 
 # BUILDS FOR ADOPTIUM, NOT ADOPTOPENJDK
 ARG MAVEN_FLAGS="-Padoptium,-adoptopenjdk"
@@ -11,6 +11,10 @@ ENV REPOSITORY=$REPOSITORY
 
 ARG BRANCH="main"
 ENV BRANCH=$BRANCH
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /tmp/build
 
@@ -32,7 +36,7 @@ RUN     ./mvnw clean install $MAVEN_FLAGS && \
 
 ######################################################
 ## Build Deployment
-FROM eclipse-temurin:21-jammy
+FROM eclipse-temurin:25-jammy
 
 RUN     apt-get update && apt-get -y install openssl adduser && \
         useradd -ms /bin/bash api && \

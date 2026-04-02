@@ -3,7 +3,7 @@ package net.adoptium.api.v3
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import net.adoptium.api.v3.dataSources.VersionSupplier
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
+import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.Releases
@@ -16,8 +16,8 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.absoluteValue
 
 @ApplicationScoped
-class AdoptAttestationReposBuilder @Inject constructor(
-    private var adoptAttestationRepository: AdoptAttestationRepository
+class AdoptCdxaReposBuilder @Inject constructor(
+    private var adoptCdxaRepository: AdoptCdxaRepository
     ) {
 
     companion object {
@@ -25,18 +25,18 @@ class AdoptAttestationReposBuilder @Inject constructor(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    suspend fun build(): AdoptAttestationRepos {
-        val attestations = adoptAttestationRepository.getAttestations()
-        LOGGER.info("DONE attestation build")
-        return AdoptAttestationRepos(attestations)
+    suspend fun build(): AdoptCdxaRepos {
+        val cdxas = adoptCdxaRepository.getCdxas()
+        LOGGER.info("DONE cdxa build")
+        return AdoptCdxaRepos(cdxas)
     }
 
     suspend fun incrementalUpdate(
-        oldRepo: AdoptAttestationRepos,
+        oldRepo: AdoptCdxaRepos,
         lastUpdatedAt: UpdatedInfo
-    ): AdoptAttestationRepos {
-        val attestations = adoptAttestationRepository.incrementalUpdate(oldRepo, lastUpdatedAt)
-        LOGGER.info("DONE attestation incrementalUpdate")
-        return AdoptAttestationRepos(attestations)
+    ): AdoptCdxaRepos {
+        val cdxas = adoptCdxaRepository.incrementalUpdate(oldRepo, lastUpdatedAt)
+        LOGGER.info("DONE cdxa incrementalUpdate")
+        return AdoptCdxaRepos(cdxas)
     }
 }

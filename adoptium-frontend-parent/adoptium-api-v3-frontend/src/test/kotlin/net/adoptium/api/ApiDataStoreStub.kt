@@ -5,7 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped
 import jakarta.enterprise.inject.Alternative
 import net.adoptium.api.v3.dataSources.APIDataStore
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
+import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import net.adoptium.api.v3.dataSources.persitence.mongo.UpdatedInfo
 import net.adoptium.api.v3.models.ReleaseInfo
 import java.time.ZonedDateTime
@@ -17,7 +17,7 @@ open class ApiDataStoreStub : APIDataStore {
 
     open var scheduled: Boolean = false
     private lateinit var adoptRepo: AdoptRepos
-    private lateinit var attestationRepo: AdoptAttestationRepos
+    private lateinit var cdxaRepo: AdoptCdxaRepos
 
     constructor() {
         reset()
@@ -30,7 +30,7 @@ open class ApiDataStoreStub : APIDataStore {
     open fun reset() {
         BaseTest.startDb()
         this.adoptRepo = AdoptReposTestDataGenerator.generate()
-        this.attestationRepo = AdoptAttestationReposTestDataGenerator.generate()
+        this.cdxaRepo = AdoptCdxaReposTestDataGenerator.generate()
     }
 
     override fun schedulePeriodicUpdates() {
@@ -46,12 +46,12 @@ open class ApiDataStoreStub : APIDataStore {
         this.adoptRepo = adoptRepo
     }
 
-    override fun getAdoptAttestationRepos(): AdoptAttestationRepos {
-        return attestationRepo
+    override fun getAdoptCdxaRepos(): AdoptCdxaRepos {
+        return cdxaRepo
     }
 
-    override fun setAdoptAttestationRepos(attestationRepo: AdoptAttestationRepos) {
-        this.attestationRepo = attestationRepo
+    override fun setAdoptCdxaRepos(cdxaRepo: AdoptCdxaRepos) {
+        this.cdxaRepo = cdxaRepo
     }
 
     override fun getReleaseInfo(): ReleaseInfo {
@@ -70,9 +70,9 @@ open class ApiDataStoreStub : APIDataStore {
         return adoptRepo
     }
 
-    override fun loadAttestationDataFromDb(forceUpdate: Boolean, log:Boolean): AdoptAttestationRepos {
+    override fun loadCdxaDataFromDb(forceUpdate: Boolean, log:Boolean): AdoptCdxaRepos {
         // nop
-        return attestationRepo
+        return cdxaRepo
     }
 
     override fun getUpdateInfo(): UpdatedInfo {
@@ -83,7 +83,7 @@ open class ApiDataStoreStub : APIDataStore {
         )
     }
 
-    override fun getAttestationUpdateInfo(): UpdatedInfo {
+    override fun getCdxaUpdateInfo(): UpdatedInfo {
         return UpdatedInfo(
             ZonedDateTime.now(),
             "1234567890",

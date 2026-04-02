@@ -242,6 +242,19 @@ class AssetsResourceFeatureReleasePathTest : AssetsPathTest() {
     }
 
     @Test
+    fun `406 responses do not have cache headers`() {
+        // Request with Accept header that cannot be satisfied
+        RestAssured.given()
+            .`when`()
+            .header("Accept", "application/unsupported-media-type")
+            .get("/v3/info/available_releases")
+            .then()
+            .statusCode(406)
+            .assertThat()
+            .header("Cache-Control", Matchers.nullValue())
+    }
+
+    @Test
     fun `cache control headers are present`() {
         RestAssured.given()
             .`when`()
