@@ -4,9 +4,10 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
+import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.time.ZoneId
@@ -31,7 +32,7 @@ class CloudflareClientTest {
         val mockClient = mockk<CloudflareClient>() {
             coEvery { fetchDownloadStats(any(), any()) } returns response
         }
-        val database = InMemoryApiPersistence(AdoptRepos(emptyList()), AdoptAttestationRepos(emptyList()))
+        val database = InMemoryApiPersistence(AdoptRepos(emptyList()), AdoptCdxaRepos(emptyList()))
         val calculator = CloudflareStatsCalculator(database, mockClient)
 
         calculator.updateDb()

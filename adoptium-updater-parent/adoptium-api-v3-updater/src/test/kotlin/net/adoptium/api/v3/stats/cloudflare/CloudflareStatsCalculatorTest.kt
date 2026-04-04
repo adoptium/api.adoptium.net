@@ -6,7 +6,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
+import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -70,7 +70,7 @@ class CloudflareStatsCalculatorTest {
     fun `updateDb should aggregate downloads by date and version`() = runBlocking {
         
         val mockClient = mockk<CloudflareClient>()
-        val database = InMemoryApiPersistence(AdoptRepos(emptyList()), AdoptAttestationRepos(emptyList()))
+        val database = InMemoryApiPersistence(AdoptRepos(emptyList()), AdoptCdxaRepos(emptyList()))
         val calculator = CloudflareStatsCalculator(database, mockClient)
 
         val testDateTime = Instant.parse("2024-01-15T00:00:00Z")
@@ -121,7 +121,7 @@ class CloudflareStatsCalculatorTest {
     fun `updateDb should handle empty response gracefully`() = runBlocking {
         
         val mockClient = mockk<CloudflareClient>()
-        val database = InMemoryApiPersistence(AdoptRepos(emptyList()), AdoptAttestationRepos(emptyList()))
+        val database = InMemoryApiPersistence(AdoptRepos(emptyList()), AdoptCdxaRepos(emptyList()))
         val calculator = CloudflareStatsCalculator(database, mockClient)
 
         coEvery { mockClient.fetchDownloadStats(any(), any()) } returns CloudflareResponse(data = emptySet())
@@ -141,7 +141,7 @@ class CloudflareStatsCalculatorTest {
     fun `updateDb should skip entries with unparseable versions`() = runBlocking {
         
         val mockClient = mockk<CloudflareClient>()
-        val database = InMemoryApiPersistence(AdoptRepos(emptyList()), AdoptAttestationRepos(emptyList()))
+        val database = InMemoryApiPersistence(AdoptRepos(emptyList()), AdoptCdxaRepos(emptyList()))
         val calculator = CloudflareStatsCalculator(database, mockClient)
 
         val testDateTime = Instant.parse("2024-01-15T00:00:00Z")
