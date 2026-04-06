@@ -579,7 +579,7 @@ class V3UpdaterEndToEndTest {
             ),
             apiDataStore,
             memoryDb,
-            object : StatsInterface(mockk(), object : DockerStatsInterfaceFactory(mockk(), mockk()) {
+            object : StatsInterface(mockk(), mockk(), object : DockerStatsInterfaceFactory(mockk(), mockk()) {
                 override fun getDockerStatsInterface(): StatsInterface {
                     return mockk()
                 }
@@ -696,7 +696,7 @@ class V3UpdaterEndToEndTest {
             ),
             apiDataStore,
             memoryDb,
-            object : StatsInterface(mockk(), object : DockerStatsInterfaceFactory(mockk(), mockk()) {
+            object : StatsInterface(mockk(), mockk(), object : DockerStatsInterfaceFactory(mockk(), mockk()) {
                 override fun getDockerStatsInterface(): StatsInterface {
                     return mockk()
                 }
