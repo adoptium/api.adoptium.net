@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 class AdoptMetadataVersionParsingTest : BaseTest() {
 
     val client: UpdaterHtmlClient = object : UpdaterHtmlClient {
-        override suspend fun get(url: String): String {
+        override suspend fun get(url: String, log: Boolean): String {
             return """
                         {
                             "WARNING": "THIS METADATA FILE IS STILL IN ALPHA DO NOT USE ME",
@@ -49,7 +49,7 @@ class AdoptMetadataVersionParsingTest : BaseTest() {
             """.trimIndent()
         }
 
-        override suspend fun getFullResponse(request: UrlRequest): HttpResponse {
+        override suspend fun getFullResponse(request: UrlRequest, log: Boolean): HttpResponse {
             val metadataResponse = mockk<HttpResponse>()
             val entity = mockk<HttpEntity>()
             every { entity.content } returns get(request.url).byteInputStream()

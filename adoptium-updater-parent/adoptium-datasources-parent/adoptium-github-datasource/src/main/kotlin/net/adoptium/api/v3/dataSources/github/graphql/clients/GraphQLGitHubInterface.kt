@@ -116,7 +116,7 @@ open class GraphQLGitHubInterface @Inject constructor(
 
     private suspend fun getRemainingQuota(): Pair<Int, Long> {
         try {
-            val response = updaterHtmlClient.get("https://api.github.com/rate_limit")
+            val response = updaterHtmlClient.get("https://api.github.com/rate_limit", false)
             if (response != null) {
                 return processResponse(response)
             }
