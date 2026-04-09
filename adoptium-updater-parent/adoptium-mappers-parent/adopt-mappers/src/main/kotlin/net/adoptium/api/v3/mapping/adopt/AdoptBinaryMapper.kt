@@ -32,7 +32,7 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         private const val HOTSPOT_JFR = "hotspot-jfr"
         private const val TEMURIN = "temurin"
 
-        private val EXCLUDED = listOf("corretto")
+        private val EXCLUDED = listOf("corretto", "AQAvitTapFiles")
     }
 
 
