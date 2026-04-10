@@ -130,7 +130,7 @@ open class DefaultUpdaterHtmlClient @Inject constructor(
         }
     }
 
-    override suspend fun getFullResponse(request: UrlRequest): HttpResponse? {
+    override suspend fun getFullResponse(request: UrlRequest, log: Boolean): HttpResponse? {
         val requestURL = URL(request.url)
         var authInfo: AuthInfo? = null
         if (GITHUB_DOMAINS.contains(requestURL.host)) {
@@ -139,13 +139,13 @@ open class DefaultUpdaterHtmlClient @Inject constructor(
         // Retry up to 10 times
         for (retryCount in 1..10) {
             try {
-                LOGGER.debug("Getting ${request.url} ${request.lastModified}")
+                if(log) LOGGER.debug("Getting ${request.url} ${request.lastModified}")
                 val response: HttpResponse = withTimeout(REQUEST_TIMEOUT) {
                     suspendCoroutine { continuation ->
                         getData(request, continuation, authInfo?.token)
                     }
                 }
-                LOGGER.debug("Got  ${request.url}")
+                if(log) LOGGER.debug("Got  ${request.url}")
                 return response
             } catch (e: NotFoundException) {
                 return null
@@ -158,7 +158,7 @@ open class DefaultUpdaterHtmlClient @Inject constructor(
         return null
     }
 
-    override suspend fun get(url: String): String? {
+    override suspend fun get(url: String, log: Boolean): String? {
         return extractBody(getFullResponse(UrlRequest(url)))
     }
 

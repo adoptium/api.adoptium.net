@@ -47,7 +47,7 @@ abstract class BaseTest {
 
     fun mockkHttpClient(): UpdaterHtmlClient {
         return object : UpdaterHtmlClient {
-            override suspend fun get(url: String): String? {
+            override suspend fun get(url: String, log: Boolean): String? {
                 if (url.endsWith("sha256.txt")) {
                     return "CAFE123 IAmAChecksum"
                 }
@@ -55,7 +55,7 @@ abstract class BaseTest {
                 return null
             }
 
-            override suspend fun getFullResponse(request: UrlRequest): HttpResponse {
+            override suspend fun getFullResponse(request: UrlRequest, log: Boolean): HttpResponse {
                 val metadataResponse = mockk<HttpResponse>()
 
                 val entity = mockk<HttpEntity>()

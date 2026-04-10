@@ -46,7 +46,7 @@ class SemeruReleaseMapperTest : BaseTest() {
             )
 
             val client = object : UpdaterHtmlClient {
-                override suspend fun get(url: String): String {
+                override suspend fun get(url: String, log: Boolean): String {
                     return getMetadata()
                 }
 
@@ -96,7 +96,7 @@ class SemeruReleaseMapperTest : BaseTest() {
                         .replace("\n", "")
                 }
 
-                override suspend fun getFullResponse(request: UrlRequest): HttpResponse {
+                override suspend fun getFullResponse(request: UrlRequest, log: Boolean): HttpResponse {
 
                     val metadataResponse = mockk<HttpResponse>()
 
