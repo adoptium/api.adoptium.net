@@ -48,7 +48,7 @@ open class CloudflareStatsCalculator @Inject constructor(
                     version?.let { stats to version }
                 }
                 .groupingBy { (stats, version) ->
-                    stats.datetime.atZone(ZoneId.of("UTC")) to version
+                    stats.datetime.atZone(TimeSource.ZONE) to version
                 }
                 .fold(0L) { currentTotal, element ->
                     currentTotal + element.first.count

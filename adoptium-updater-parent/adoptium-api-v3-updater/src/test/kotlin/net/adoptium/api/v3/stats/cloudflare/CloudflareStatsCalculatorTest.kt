@@ -5,6 +5,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
+import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import org.junit.jupiter.api.Assertions.*
@@ -17,10 +18,6 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 class CloudflareStatsCalculatorTest {
-
-    companion object {
-        private val ZONE_ID_UTC = ZoneId.of("UTC")
-    }
 
     @ParameterizedTest(name = "extractVersionFromPath(\"{0}\") should return {1}")
     @CsvSource(
@@ -93,8 +90,8 @@ class CloudflareStatsCalculatorTest {
 
         calculator.updateDb()
 
-        val startTime = testDateTime.minus(1, ChronoUnit.DAYS).atZone(ZONE_ID_UTC)
-        val endTime = testDateTime.plus(2, ChronoUnit.DAYS).atZone(ZONE_ID_UTC)
+        val startTime = testDateTime.minus(1, ChronoUnit.DAYS).atZone(TimeSource.ZONE)
+        val endTime = testDateTime.plus(2, ChronoUnit.DAYS).atZone(TimeSource.ZONE)
         val savedStats = database.getPackageStats(startTime, endTime)
 
         assertEquals(3, savedStats.size)
@@ -131,8 +128,8 @@ class CloudflareStatsCalculatorTest {
 
         
         val savedStats = database.getPackageStats(
-            Instant.now().minus(7, ChronoUnit.DAYS).atZone(ZONE_ID_UTC),
-            Instant.now().plus(1, ChronoUnit.DAYS).atZone(ZONE_ID_UTC)
+            Instant.now().minus(7, ChronoUnit.DAYS).atZone(TimeSource.ZONE),
+            Instant.now().plus(1, ChronoUnit.DAYS).atZone(TimeSource.ZONE)
         )
         assertTrue(savedStats.isEmpty())
     }
@@ -162,8 +159,8 @@ class CloudflareStatsCalculatorTest {
 
         
         val savedStats = database.getPackageStats(
-            testDateTime.minus(1, ChronoUnit.DAYS).atZone(ZONE_ID_UTC),
-            testDateTime.plus(1, ChronoUnit.DAYS).atZone(ZONE_ID_UTC)
+            testDateTime.minus(1, ChronoUnit.DAYS).atZone(TimeSource.ZONE),
+            testDateTime.plus(1, ChronoUnit.DAYS).atZone(TimeSource.ZONE)
         )
 
         assertEquals(3, savedStats.size)
