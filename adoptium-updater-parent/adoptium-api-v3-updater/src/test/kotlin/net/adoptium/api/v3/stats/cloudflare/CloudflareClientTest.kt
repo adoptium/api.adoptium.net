@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
+import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -14,10 +15,6 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 class CloudflareClientTest {
-
-    private companion object {
-        private val ZONE_ID_UTC = ZoneId.of("UTC")
-    }
 
     @Test
     fun `should successfully fetch and aggregate paginated results`() = runBlocking {
@@ -37,8 +34,8 @@ class CloudflareClientTest {
 
         calculator.updateDb()
 
-        val startTime = testDateTime.minus(1, ChronoUnit.DAYS).atZone(ZONE_ID_UTC)
-        val endTime = testDateTime.plus(1, ChronoUnit.DAYS).atZone(ZONE_ID_UTC)
+        val startTime = testDateTime.minus(1, ChronoUnit.DAYS).atZone(TimeSource.ZONE)
+        val endTime = testDateTime.plus(1, ChronoUnit.DAYS).atZone(TimeSource.ZONE)
         val savedStats = database.getPackageStats(startTime, endTime)
 
         assertEquals(1, savedStats.size)

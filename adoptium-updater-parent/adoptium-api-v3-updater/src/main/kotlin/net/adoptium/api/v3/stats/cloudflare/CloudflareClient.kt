@@ -12,6 +12,7 @@ import org.apache.http.entity.StringEntity
 import org.apache.http.nio.client.HttpAsyncClient
 import jakarta.inject.Named
 import kotlinx.coroutines.delay
+import net.adoptium.api.v3.TimeSource
 import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
 import kotlin.coroutines.resume
@@ -245,8 +246,8 @@ class CloudflareClient @Inject constructor(
         val variables = mutableMapOf<String, Any>(
             "zoneTag" to zoneTag,
             "limit" to MAX_RESULTS_PER_PAGE,
-            "startDate" to startDate.toLocalDate().atStartOfDay().toString(),
-            "endDate" to endDate.toLocalDate().toString()
+            "startDate" to startDate.toLocalDate().atStartOfDay(TimeSource.ZONE).toInstant().toString(),
+            "endDate" to endDate.toInstant().toString()
         )
 
         lastPath?.let { variables["lastPath"] = it }
