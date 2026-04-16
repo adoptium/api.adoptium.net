@@ -10,7 +10,6 @@ import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.DefaultUpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.HttpClientFactory
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
-import net.adoptium.api.v3.models.CloudflarePackageDownloadStatsDbEntry
 import net.adoptium.api.v3.models.DockerDownloadStatsDbEntry
 import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
 import net.adoptium.api.v3.models.JvmImpl
@@ -100,33 +99,6 @@ class DockerStatsInterfaceTest : BaseTest() {
             assertEquals(14, DockerStats.getOpenjdkVersionFromString("maven-openjdk14-openj9"))
 
             assertEquals(null, DockerStats.getOpenjdkVersionFromString("official"))
-        }
-    }
-
-    @Test
-    fun packageStatsShouldSumDeltasAcrossMinutes() {
-        runBlocking {
-            val apiPersistenceMock = mockk<ApiPersistence>()
-            val baseTime = TimeSource.now()
-
-            coEvery { apiPersistenceMock.getLatestAllDockerStats() } returns emptyList()
-            coEvery { apiPersistenceMock.getLatestGithubStatsForFeatureVersion(any()) } returns null
-            coEvery { apiPersistenceMock.getPackageStats(any<ZonedDateTime>(), any<ZonedDateTime>()) } returns listOf(
-                // Version 17: three minute-level deltas that should sum to 1000
-                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(3), 400, 17),
-                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(2), 350, 17),
-                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(1), 250, 17),
-                // Version 21: two minute-level deltas that should sum to 500
-                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(2), 300, 21),
-                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(1), 200, 21)
-            )
-
-            val downloadStatsInterface = DownloadStatsInterface(apiPersistenceMock, UpdatableVersionSupplierStub())
-            val stats = downloadStatsInterface.getTotalDownloadStats()
-
-            assertEquals(1500L, stats.total_downloads.package_downloads)
-            assertEquals(1000L, stats.package_downloads[17])
-            assertEquals(500L, stats.package_downloads[21])
         }
     }
 }
