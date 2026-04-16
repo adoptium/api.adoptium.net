@@ -296,15 +296,7 @@ class DownloadStatsInterface {
     private suspend fun getPackageStats(): List<CloudflarePackageDownloadStatsDbEntry> {
         val start = Instant.EPOCH.atZone(TimeSource.ZONE)
         val end = TimeSource.now()
-        return dataStore.getPackageStats(start, end)
-            .groupBy { it.feature_version }
-            .map { (featureVersion, entries) ->
-                CloudflarePackageDownloadStatsDbEntry(
-                    date = entries.maxOf { it.date },
-                    downloads = entries.sumOf { it.downloads },
-                    feature_version = featureVersion
-                )
-            }
+        return dataStore.getAggregatedPackageStats(start, end)
             .filter { it.downloads != 0L }
     }
 }

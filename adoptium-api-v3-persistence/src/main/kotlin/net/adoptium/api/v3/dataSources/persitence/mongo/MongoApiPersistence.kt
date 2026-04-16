@@ -8,6 +8,7 @@ import jakarta.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
@@ -41,6 +42,18 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     private val gitHubStatsCollection: MongoCollection<GitHubDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), GITHUB_STATS_DB)
     private val dockerStatsCollection: MongoCollection<DockerDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), DOCKER_STATS_DB)
     private val packageStatsCollection: MongoCollection<CloudflarePackageDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), PACKAGE_STATS_DB)
+
+    init {
+        // Create indexes for packageStats if they don't exist
+        try {
+            runBlocking {
+                packageStatsCollection.createIndex(Document("date", 1))
+                packageStatsCollection.createIndex(Document("feature_version", 1).append("date", 1))
+            }
+        } catch (e: Exception) {
+            LOGGER.warn("Failed to create indexes for packageStats: ${e.message}")
+        }
+    }
     private val releaseInfoCollection: MongoCollection<ReleaseInfo> = createCollection(mongoClient.getDatabase(), RELEASE_INFO_DB)
     private val updateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), UPDATE_TIME_DB)
     private val cdxaUpdateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), CDXAS_UPDATE_TIME_DB)
@@ -185,6 +198,44 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
 
     override suspend fun addPackageDownloadStatsEntries(stats: List<CloudflarePackageDownloadStatsDbEntry>) {
         packageStatsCollection.insertMany(stats)
+    }
+
+    override suspend fun getAggregatedPackageStats(start: ZonedDateTime, end: ZonedDateTime): List<CloudflarePackageDownloadStatsDbEntry> {
+        val startMillis = start.toInstant().toEpochMilli()
+        val endMillis = end.toInstant().toEpochMilli()
+
+        val pipeline = listOf(
+            Document(
+                "\$match",
+                Document(
+                    "\$and", listOf(
+                        Document("date", Document("\$gt", BsonDateTime(startMillis))),
+                        Document("date", Document("\$lt", BsonDateTime(endMillis)))
+                    )
+                )
+            ),
+            Document(
+                "\$group",
+                mapOf(
+                    "_id" to Document("feature_version", "\$feature_version"),
+                    "downloads" to Document("\$sum", "\$downloads"),
+                    "date" to Document("\$max", "\$date")
+                )
+            ),
+            Document(
+                "\$project",
+                mapOf(
+                    "_id" to 0,
+                    "date" to 1,
+                    "downloads" to 1,
+                    "feature_version" to "\$_id.feature_version"
+                )
+            )
+        )
+
+        return packageStatsCollection.aggregate(pipeline)
+            .toList()
+
     }
 
     override suspend fun getLatestPackageStatsForFeatureVersion(featureVersion: Int): CloudflarePackageDownloadStatsDbEntry? {

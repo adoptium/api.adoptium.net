@@ -31,6 +31,7 @@ interface ApiPersistence {
     suspend fun addPackageDownloadStatsEntries(stats: List<CloudflarePackageDownloadStatsDbEntry>)
     suspend fun getLatestPackageStatsForFeatureVersion(featureVersion: Int): CloudflarePackageDownloadStatsDbEntry?
     suspend fun getPackageStats(start: ZonedDateTime, end: ZonedDateTime): List<CloudflarePackageDownloadStatsDbEntry>
+    suspend fun getAggregatedPackageStats(start: ZonedDateTime, end: ZonedDateTime): List<CloudflarePackageDownloadStatsDbEntry>
     suspend fun removeStatsBetween(start: ZonedDateTime, end: ZonedDateTime)
     suspend fun setReleaseInfo(releaseInfo: ReleaseInfo)
     suspend fun getReleaseInfo(): ReleaseInfo?

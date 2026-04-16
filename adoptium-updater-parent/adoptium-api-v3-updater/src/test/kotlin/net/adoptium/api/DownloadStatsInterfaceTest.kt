@@ -25,12 +25,9 @@ class DownloadStatsInterfaceTest {
 
             coEvery { apiPersistenceMock.getLatestAllDockerStats() } returns emptyList()
             coEvery { apiPersistenceMock.getLatestGithubStatsForFeatureVersion(any()) } returns null
-            coEvery { apiPersistenceMock.getPackageStats(any<ZonedDateTime>(), any<ZonedDateTime>()) } returns listOf(
-                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(3), 400, 17),
-                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(2), 350, 17),
-                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(1), 250, 17),
-                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(2), 300, 21),
-                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(1), 200, 21)
+            coEvery { apiPersistenceMock.getAggregatedPackageStats(any<ZonedDateTime>(), any<ZonedDateTime>()) } returns listOf(
+                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(1), 1000, 17),
+                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(1), 500, 21)
             )
 
             val downloadStatsInterface = DownloadStatsInterface(apiPersistenceMock, UpdatableVersionSupplierStub())
@@ -57,16 +54,15 @@ class DownloadStatsInterfaceTest {
                 GitHubDownloadStatsDbEntry(baseTime, 200, mapOf(JvmImpl.hotspot to 200L), 8)
             coEvery { apiPersistenceMock.getLatestGithubStatsForFeatureVersion(11) } returns
                 GitHubDownloadStatsDbEntry(baseTime, 100, mapOf(JvmImpl.hotspot to 100L), 11)
-            coEvery { apiPersistenceMock.getPackageStats(any<ZonedDateTime>(), any<ZonedDateTime>()) } returns listOf(
-                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(2), 400, 17),
-                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(1), 600, 17),
+            coEvery { apiPersistenceMock.getAggregatedPackageStats(any<ZonedDateTime>(), any<ZonedDateTime>()) } returns listOf(
+                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(1), 1000, 17),
                 CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(1), 100, 21)
             )
 
             val downloadStatsInterface = DownloadStatsInterface(apiPersistenceMock, UpdatableVersionSupplierStub())
             val stats = downloadStatsInterface.getTotalDownloadStats()
 
-            // Package: 400+600(v17) + 100(v21) = 1100
+            // Package: 1000(v17) + 100(v21) = 1100
             assertEquals(1000L, stats.package_downloads[17])
             assertEquals(100L, stats.package_downloads[21])
             // GitHub: 200(v8) + 100(v11) = 300
@@ -83,7 +79,7 @@ class DownloadStatsInterfaceTest {
 
             coEvery { apiPersistenceMock.getLatestAllDockerStats() } returns emptyList()
             coEvery { apiPersistenceMock.getLatestGithubStatsForFeatureVersion(any()) } returns null
-            coEvery { apiPersistenceMock.getPackageStats(any<ZonedDateTime>(), any<ZonedDateTime>()) } returns emptyList()
+            coEvery { apiPersistenceMock.getAggregatedPackageStats(any<ZonedDateTime>(), any<ZonedDateTime>()) } returns emptyList()
 
             val downloadStatsInterface = DownloadStatsInterface(apiPersistenceMock, UpdatableVersionSupplierStub())
             val stats = downloadStatsInterface.getTotalDownloadStats()

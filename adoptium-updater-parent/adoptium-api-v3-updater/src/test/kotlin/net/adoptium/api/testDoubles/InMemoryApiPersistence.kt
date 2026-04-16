@@ -107,6 +107,18 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var
             .sortedBy { it.date }
     }
 
+    override suspend fun getAggregatedPackageStats(start: ZonedDateTime, end: ZonedDateTime): List<CloudflarePackageDownloadStatsDbEntry> {
+        return getPackageStats(start, end)
+            .groupBy { it.feature_version }
+            .map { (version, entries) ->
+                CloudflarePackageDownloadStatsDbEntry(
+                    date = entries.maxOf { it.date },
+                    downloads = entries.sumOf { it.downloads },
+                    feature_version = version
+                )
+            }
+    }
+
     override suspend fun removeStatsBetween(start: ZonedDateTime, end: ZonedDateTime) {
         githubStats.removeIf { it.date.isAfter(start) && it.date.isBefore(end) }
         dockerStats.removeIf { it.date.isAfter(start) && it.date.isBefore(end) }
