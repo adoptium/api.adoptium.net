@@ -71,15 +71,13 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <!--
             <dependency>
                 <groupId>io.ktor</groupId>
                 <artifactId>ktor-bom</artifactId>
-                <version>3.4.0</version>
+                <version>3.4.3</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            -->
             <dependency>
                 <groupId>org.jetbrains.kotlinx</groupId>
                 <artifactId>kotlinx-coroutines-bom</artifactId>
