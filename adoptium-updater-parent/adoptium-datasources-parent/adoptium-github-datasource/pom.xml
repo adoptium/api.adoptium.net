@@ -36,8 +36,6 @@
         <dependency>
             <groupId>io.ktor</groupId>
             <artifactId>ktor-client-logging-jvm</artifactId>
-            <!-- Version managed by ktor-bom in adoptium-api-versions -->
-            <version>3.4.3</version>
         </dependency>
         <dependency>
             <groupId>com.expediagroup</groupId>
