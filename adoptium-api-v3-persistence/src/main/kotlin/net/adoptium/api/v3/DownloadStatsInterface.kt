@@ -16,6 +16,7 @@ import net.adoptium.api.v3.models.MonthlyDownloadDiff
 import net.adoptium.api.v3.models.StatsSource
 import net.adoptium.api.v3.models.TotalStats
 import org.eclipse.microprofile.openapi.annotations.media.Schema
+import java.time.Instant
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.math.max
@@ -293,10 +294,9 @@ class DownloadStatsInterface {
     }
 
     private suspend fun getPackageStats(): List<CloudflarePackageDownloadStatsDbEntry> {
-        return versionSupplier.getAllVersions()
-            .mapNotNull { featureVersion ->
-                dataStore.getLatestPackageStatsForFeatureVersion(featureVersion)
-            }
+        val start = Instant.EPOCH.atZone(TimeSource.ZONE)
+        val end = TimeSource.now()
+        return dataStore.getAggregatedPackageStats(start, end)
             .filter { it.downloads != 0L }
     }
 }

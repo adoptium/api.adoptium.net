@@ -8,22 +8,23 @@ import jakarta.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.TimeSource
-import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
+import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.ReleaseNotes
 import net.adoptium.api.v3.dataSources.models.Releases
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
-import net.adoptium.api.v3.models.DockerDownloadStatsDbEntry
+import net.adoptium.api.v3.models.Cdxa
 import net.adoptium.api.v3.models.CloudflarePackageDownloadStatsDbEntry
+import net.adoptium.api.v3.models.DockerDownloadStatsDbEntry
 import net.adoptium.api.v3.models.GHReleaseMetadata
 import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseInfo
 import net.adoptium.api.v3.models.Vendor
-import net.adoptium.api.v3.models.Cdxa
 import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDateTime
@@ -40,7 +41,21 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     private var cdxasCollection: MongoCollection<Cdxa> = createCollection(mongoClient.getDatabase(), CDXAS_DB)
     private val gitHubStatsCollection: MongoCollection<GitHubDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), GITHUB_STATS_DB)
     private val dockerStatsCollection: MongoCollection<DockerDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), DOCKER_STATS_DB)
-    private val packageStatsCollection: MongoCollection<CloudflarePackageDownloadStatsDbEntry> = createCollection(mongoClient.getDatabase(), PACKAGE_STATS_DB)
+    private val packageStatsCollection: MongoCollection<CloudflarePackageDownloadStatsDbEntry> = createCollection(
+        mongoClient.getDatabase(),
+        PACKAGE_STATS_DB,
+        ensureIndexes = { collection ->
+            // Create indexes for packageStats if they don't exist
+            try {
+                runBlocking {
+                    collection.createIndex(Document("date", 1))
+                    collection.createIndex(Document("feature_version", 1).append("date", 1))
+                }
+            } catch (e: Exception) {
+                LOGGER.warn("Failed to create indexes for packageStats: ${e.message}")
+            }
+        })
+
     private val releaseInfoCollection: MongoCollection<ReleaseInfo> = createCollection(mongoClient.getDatabase(), RELEASE_INFO_DB)
     private val updateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), UPDATE_TIME_DB)
     private val cdxaUpdateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), CDXAS_UPDATE_TIME_DB)
@@ -84,7 +99,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
                 writeCdxas(featureVersion, repo.repos.filter { it.featureVersion == featureVersion })
             }
 
-            removeCdxasNotInFeatureVersions( featureVersions )
+            removeCdxasNotInFeatureVersions(featureVersions)
         } finally {
             updateCdxaUpdatedTime(TimeSource.now(), checksum, repo.hashCode())
         }
@@ -185,6 +200,36 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
 
     override suspend fun addPackageDownloadStatsEntries(stats: List<CloudflarePackageDownloadStatsDbEntry>) {
         packageStatsCollection.insertMany(stats)
+    }
+
+    override suspend fun getAggregatedPackageStats(start: ZonedDateTime, end: ZonedDateTime): List<CloudflarePackageDownloadStatsDbEntry> {
+        val pipeline = listOf(
+            Document(
+                "\$match",
+                betweenDates(start, end)
+            ),
+            Document(
+                "\$group",
+                mapOf(
+                    "_id" to Document("feature_version", "\$feature_version"),
+                    "downloads" to Document("\$sum", "\$downloads"),
+                    "date" to Document("\$max", "\$date")
+                )
+            ),
+            Document(
+                "\$project",
+                mapOf(
+                    "_id" to 0,
+                    "date" to 1,
+                    "downloads" to 1,
+                    "feature_version" to "\$_id.feature_version"
+                )
+            )
+        )
+
+        return packageStatsCollection.aggregate(pipeline)
+            .toList()
+
     }
 
     override suspend fun getLatestPackageStatsForFeatureVersion(featureVersion: Int): CloudflarePackageDownloadStatsDbEntry? {

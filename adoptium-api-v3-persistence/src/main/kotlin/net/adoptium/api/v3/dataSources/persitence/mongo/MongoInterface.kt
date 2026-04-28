@@ -15,11 +15,19 @@ abstract class MongoInterface {
         val LOGGER = LoggerFactory.getLogger(MongoInterface::class.java)!!
     }
 
-    inline fun <reified T : Any> createCollection(database: MongoDatabase, collectionName: String): MongoCollection<T> {
+    inline fun <reified T : Any> createCollection(
+        database: MongoDatabase,
+        collectionName: String,
+        //To be used for first collection init only, it will not run if collection already exists
+        crossinline initCollection: (collection: MongoCollection<T>) -> Unit = {},
 
-        runBlocking {
+        // To be used to create any indexes, this must be idempotent and not affect/destroy an existing collection
+        crossinline ensureIndexes: (collection: MongoCollection<T>) -> Unit = {},
+        ): MongoCollection<T> {
+        return runBlocking<MongoCollection<T>> {
             try {
                 database.createCollection(collectionName)
+                initCollection(database.getCollection(collectionName, T::class.java))
             } catch (e: MongoCommandException) {
                 if (e.errorCode == 48) {
                     // collection already exists ... ignore
@@ -30,8 +38,9 @@ abstract class MongoInterface {
                     }
                 }
             }
+            val collection = database.getCollection(collectionName, T::class.java)
+            ensureIndexes(collection)
+            collection
         }
-        return database.getCollection(collectionName, T::class.java)
-
     }
 }
