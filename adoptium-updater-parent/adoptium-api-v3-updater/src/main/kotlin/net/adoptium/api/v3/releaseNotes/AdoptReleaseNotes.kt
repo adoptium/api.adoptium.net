@@ -14,6 +14,7 @@ import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.ReleaseType
 import org.slf4j.LoggerFactory
 import jakarta.inject.Inject
+import net.adoptium.api.v3.models.Release
 
 @ApplicationScoped
 open class AdoptReleaseNotes @Inject constructor(
@@ -31,12 +32,14 @@ open class AdoptReleaseNotes @Inject constructor(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
+    open suspend fun updateReleaseNotes(adoptRepos: AdoptRepos) {
+        updateReleaseNotes(adoptRepos.allReleases.getReleases().toList())
+    }
+
     open suspend fun updateReleaseNotes(
-        adoptRepos: AdoptRepos
+        releases: List<Release>
     ) {
-        adoptRepos
-            .allReleases
-            .getReleases()
+        releases
             .filter { it.release_type == ReleaseType.ga }
             .filter {
                 runBlocking {

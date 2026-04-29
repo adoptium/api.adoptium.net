@@ -121,7 +121,8 @@ class V3UpdaterTest {
             coEvery { statsInterface.update(any()) } returns Unit
 
             val adoptReleaseNotes: AdoptReleaseNotes = mockk()
-            coEvery { adoptReleaseNotes.updateReleaseNotes(any()) } returns Unit
+            coEvery { adoptReleaseNotes.updateReleaseNotes(any<AdoptRepos>()) } returns Unit
+            coEvery { adoptReleaseNotes.updateReleaseNotes(any<List<Release>>()) } returns Unit
 
             mockkStatic(Quarkus::class)
             val called = AtomicBoolean(false)
