@@ -1,7 +1,7 @@
 FROM eclipse-temurin:25 AS build
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
+    apt-get install -y --no-install-recommends curl unzip && \
     rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /tmp/build
