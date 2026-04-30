@@ -26,7 +26,7 @@ constructor(private val apiDataStore: APIDataStore) {
 
         if (enabled) {
             apiDataStore.getAdoptRepos()
-            apiDataStore.getAdoptAttestationRepos()
+            apiDataStore.getAdoptCdxaRepos()
             apiDataStore.schedulePeriodicUpdates()
         }
     }

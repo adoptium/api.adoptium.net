@@ -5,8 +5,8 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema
 
 import java.time.Instant
 
-// Model represents a summary of Attestation repository feature Version and containing releaseTags and their "committedDate"'s
-class AttestationRepoVersionSummary {
+// Model represents a summary of Cdxa repository feature Version and containing releaseTags and their "committedDate"'s
+class CdxaRepoVersionSummary {
 
     val vendor: Vendor
 
@@ -41,7 +41,7 @@ class AttestationRepoVersionSummary {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as AttestationRepoVersionSummary
+        other as CdxaRepoVersionSummary
 
         if (featureVersion != other.featureVersion) return false
         if (releaseTags != other.releaseTags) return false
@@ -64,6 +64,6 @@ class AttestationRepoVersionSummary {
     }
 
     override fun toString(): String {
-        return "AttestationRepoVersionSummary(vendor='$vendor', org='$org', repo='$repo', featureVersion='$featureVersion', committedDate='$committedDate', releaseTags='$releaseTags')"
+        return "CdxaRepoVersionSummary(vendor='$vendor', org='$org', repo='$repo', featureVersion='$featureVersion', committedDate='$committedDate', releaseTags='$releaseTags')"
     }
 }

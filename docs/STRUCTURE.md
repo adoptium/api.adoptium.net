@@ -40,19 +40,20 @@ Each of these repos contains a number of releases, inside each release are a num
 - Metadata file (e.g. OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz.json)
 - Checksum (e.g. OpenJDK17-jdk_x64_linux_hotspot_17_35.tar.gz.sha256.txt)
 
-The attestation repositories such as:
-- https://github.com/adoptium/temurin-attestations
+The CycloneDX Attestation repositories such as:
+- https://github.com/adoptium/temurin-cdxa
 
-The attestation repository contains CycloneDX Attestation xml documents that assert to the reproducible build verification of Adoptium binaries.
-An attestation repository contains the following structure:
-    featureVersion/releaseTag/Attestation.xml
+The CycloneDX Attestation repository contains CDXA Attestation xml documents that assert to the reproducible build verification of Adoptium binaries.
+A cdxa repository contains the following structure:
+    featureVersion/releaseTag/cdxa.xml
+    featureVersion/releaseTag/cdxa.xml.sig
 
 The updater interacts with the GitHub API using the [V4 GraphQL interface](https://developer.github.com/v4/guides/intro-to-graphql/).
 Once we have obtained the data through the GitHub API the Upstream (for the upstream OpenJDK project) and Adoptium mappers which map the
 GitHub data into Adoptium API models.
 It does this by iterating through the list of repos and releases, for each binary asset download its metadata or checksum and parse their contents in order to extract the data.
 If metadata is not available then we attempt to extract the relevant data by parsing the file name.
-Attestation resources are also iterated through by querying using GitHub GraphQL queries on the "Attestations github repositories".
+CycloneDX Attestation resources are also iterated through by querying using GitHub GraphQL queries on the "Cdxa github repositories".
 
 In order to speed up access and reduce bandwidth we use Mongo as a cache for this data.
 When we require data such as the metadata file or checksum, that data will be provided by the cache (assuming it is present).
@@ -75,7 +76,7 @@ The database stores 4 main types of data:
     - DockerStats - Broken down into each docker repository
     - GitHubStats - Broken down into each feature version
 1. Web-Cache - Cached data used to speed up requests
-1. Attestation - The CycloneDX reproducible build attestation
+1. Cdxa - The reproducible build CycloneDX Attestation (CDXA)
 
 ## Front-end
 

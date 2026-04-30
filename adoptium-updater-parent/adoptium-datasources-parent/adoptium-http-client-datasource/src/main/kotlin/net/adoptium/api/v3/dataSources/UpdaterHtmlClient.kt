@@ -8,6 +8,6 @@ data class UrlRequest(
 )
 
 interface UpdaterHtmlClient {
-    suspend fun get(url: String): String?
-    suspend fun getFullResponse(request: UrlRequest): HttpResponse?
+    suspend fun get(url: String, log: Boolean = true): String?
+    suspend fun getFullResponse(request: UrlRequest, log: Boolean = true): HttpResponse?
 }

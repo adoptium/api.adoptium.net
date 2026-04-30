@@ -62,13 +62,13 @@ class APIDataStoreTest : MongoTest() {
     }
 
     @Test
-    fun attestationDataIsStoredToDbCorrectly(apiDataStore: APIDataStore, apiPersistence: ApiPersistence) {
+    fun cdxaDataIsStoredToDbCorrectly(apiDataStore: APIDataStore, apiPersistence: ApiPersistence) {
         runBlocking {
-            apiPersistence.updateAttestationRepos(BaseTest.adoptAttestationRepos, "")
-            val dbData = apiDataStore.loadAttestationDataFromDb(false)
+            apiPersistence.updateCdxaRepos(BaseTest.adoptCdxaRepos, "")
+            val dbData = apiDataStore.loadCdxaDataFromDb(false)
 
             val before = UpdaterJsonMapper.mapper.writeValueAsString(dbData)
-            val after = UpdaterJsonMapper.mapper.writeValueAsString(BaseTest.adoptAttestationRepos)
+            val after = UpdaterJsonMapper.mapper.writeValueAsString(BaseTest.adoptCdxaRepos)
             JSONAssert.assertEquals(
                 before,
                 after,
@@ -93,14 +93,14 @@ class APIDataStoreTest : MongoTest() {
     }
 
     @Test
-    fun `attestation updated at is set`(apiPersistence: ApiPersistence) {
+    fun `cdxa updated at is set`(apiPersistence: ApiPersistence) {
         runBlocking {
-            apiPersistence.updateAttestationRepos(BaseTest.adoptAttestationRepos, Base64.getEncoder().encodeToString("1234".toByteArray()))
+            apiPersistence.updateCdxaRepos(BaseTest.adoptCdxaRepos, Base64.getEncoder().encodeToString("1234".toByteArray()))
             val time = TimeSource.now()
             delay(1000)
-            apiPersistence.updateAttestationRepos(BaseTest.adoptAttestationRepos, Base64.getEncoder().encodeToString("a-checksum".toByteArray()))
+            apiPersistence.updateCdxaRepos(BaseTest.adoptCdxaRepos, Base64.getEncoder().encodeToString("a-checksum".toByteArray()))
 
-            val updatedTime = apiPersistence.getAttestationUpdatedAt()
+            val updatedTime = apiPersistence.getCdxaUpdatedAt()
 
             assertTrue(updatedTime.time.isAfter(time))
             assertEquals(Base64.getEncoder().encodeToString("a-checksum".toByteArray()), updatedTime.checksum)

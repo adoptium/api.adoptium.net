@@ -3,7 +3,7 @@ package net.adoptium.api.testDoubles
 import jakarta.enterprise.context.ApplicationScoped
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
+import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.ReleaseNotes
@@ -14,22 +14,24 @@ import net.adoptium.api.v3.models.GHReleaseMetadata
 import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
 import net.adoptium.api.v3.models.ReleaseInfo
 import net.adoptium.api.v3.models.Vendor
-import net.adoptium.api.v3.models.Attestation
+import net.adoptium.api.v3.models.Cdxa
 import java.time.ZonedDateTime
 import jakarta.annotation.Priority
 import jakarta.enterprise.inject.Alternative
 import jakarta.inject.Inject
+import net.adoptium.api.v3.models.CloudflarePackageDownloadStatsDbEntry
 
 @Priority(1)
 @Alternative
 @ApplicationScoped
-open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var attestationRepos: AdoptAttestationRepos) : ApiPersistence {
+open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var cdxaRepos: AdoptCdxaRepos) : ApiPersistence {
     private var updatedAtInfo: UpdatedInfo? = null
-    private var attestationUpdatedAtInfo: UpdatedInfo? = null
+    private var cdxaUpdatedAtInfo: UpdatedInfo? = null
     private var releaseInfo: ReleaseInfo? = null
 
     private var githubStats = ArrayList<GitHubDownloadStatsDbEntry>()
     private var dockerStats = ArrayList<DockerDownloadStatsDbEntry>()
+    private var packageStats = ArrayList<CloudflarePackageDownloadStatsDbEntry>()
     private var ghReleaseMetadata = HashMap<GitHubId, GHReleaseMetadata>()
     val releaseNotes = ArrayList<ReleaseNotes>()
 
@@ -38,13 +40,13 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var
         this.updatedAtInfo = UpdatedInfo(TimeSource.now(), checksum, repos.hashCode())
     }
 
-    override suspend fun updateAttestationRepos(repos: AdoptAttestationRepos, checksum: String) {
-        this.attestationRepos = attestationRepos
-        this.attestationUpdatedAtInfo = UpdatedInfo(TimeSource.now(), checksum, repos.hashCode())
+    override suspend fun updateCdxaRepos(repos: AdoptCdxaRepos, checksum: String) {
+        this.cdxaRepos = repos
+        this.cdxaUpdatedAtInfo = UpdatedInfo(TimeSource.now(), checksum, repos.hashCode())
     }
 
-    override suspend fun readAttestationData(): List<Attestation> {
-        return attestationRepos.getAttestations()
+    override suspend fun readCdxaData(): List<Cdxa> {
+        return cdxaRepos.getCdxas()
     }
 
     override suspend fun readReleaseData(featureVersion: Int): FeatureRelease {
@@ -90,8 +92,37 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var
             }
     }
 
+    override suspend fun addPackageDownloadStatsEntries(stats: List<CloudflarePackageDownloadStatsDbEntry>) {
+        packageStats.addAll(stats)
+    }
+
+    override suspend fun getLatestPackageStatsForFeatureVersion(featureVersion: Int): CloudflarePackageDownloadStatsDbEntry? {
+        return packageStats.filter { it.feature_version == featureVersion }
+            .sortedBy { it.date }
+            .lastOrNull()
+    }
+
+    override suspend fun getPackageStats(start: ZonedDateTime, end: ZonedDateTime): List<CloudflarePackageDownloadStatsDbEntry> {
+        return packageStats.filter { it.date.isAfter(start) && it.date.isBefore(end) }
+            .sortedBy { it.date }
+    }
+
+    override suspend fun getAggregatedPackageStats(start: ZonedDateTime, end: ZonedDateTime): List<CloudflarePackageDownloadStatsDbEntry> {
+        return getPackageStats(start, end)
+            .groupBy { it.feature_version }
+            .map { (version, entries) ->
+                CloudflarePackageDownloadStatsDbEntry(
+                    date = entries.maxOf { it.date },
+                    downloads = entries.sumOf { it.downloads },
+                    feature_version = version
+                )
+            }
+    }
+
     override suspend fun removeStatsBetween(start: ZonedDateTime, end: ZonedDateTime) {
-        TODO("Not yet implemented")
+        githubStats.removeIf { it.date.isAfter(start) && it.date.isBefore(end) }
+        dockerStats.removeIf { it.date.isAfter(start) && it.date.isBefore(end) }
+        packageStats.removeIf { it.date.isAfter(start) && it.date.isBefore(end) }
     }
 
     override suspend fun setReleaseInfo(releaseInfo: ReleaseInfo) {
@@ -106,8 +137,8 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var
         return updatedAtInfo ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
     }
 
-    override suspend fun getAttestationUpdatedAt(): UpdatedInfo {
-        return attestationUpdatedAtInfo ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
+    override suspend fun getCdxaUpdatedAt(): UpdatedInfo {
+        return cdxaUpdatedAtInfo ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
     }
 
     override suspend fun getGhReleaseMetadata(gitHubId: GitHubId): GHReleaseMetadata? {

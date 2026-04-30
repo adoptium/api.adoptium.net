@@ -32,7 +32,7 @@ class DownloadStatsPathTest : FrontendTest() {
 
     private val apiPersistence: ApiPersistence = InMemoryApiPersistence(
         AdoptReposTestDataGenerator.generate(),
-        AdoptAttestationReposTestDataGenerator.generate()
+        AdoptCdxaReposTestDataGenerator.generate()
     )
 
     private val downloadStatsResource: DownloadStatsResource = createDownloadStatsResource(apiDataStore, apiPersistence)

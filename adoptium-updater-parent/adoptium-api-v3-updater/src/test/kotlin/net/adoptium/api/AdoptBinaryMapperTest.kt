@@ -537,6 +537,24 @@ class AdoptBinaryMapperTest {
         }
     }
 
+    @Test
+    fun `excludes AQAvitTapFiles from binary list`() {
+        runBlocking {
+            val assets = listOf(
+                GHAsset(
+                    "AQAvitTapFiles.tar.gz",
+                    1L,
+                    "",
+                    1L,
+                    "2026-03-24T14:12:44Z"
+                )
+            )
+            val binaryList = adoptBinaryMapper.toBinaryList(assets, assets, emptyMap())
+
+            assertEquals(0, binaryList.size)
+        }
+    }
+
     private fun assertParsedHotspotJfr(binaryList: List<Binary>) {
         assertEquals(JvmImpl.hotspot, binaryList[0].jvm_impl)
         assertEquals(Project.jfr, binaryList[0].project)

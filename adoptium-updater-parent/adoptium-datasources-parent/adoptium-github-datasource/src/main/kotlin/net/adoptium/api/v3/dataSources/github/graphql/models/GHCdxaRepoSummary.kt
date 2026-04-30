@@ -54,7 +54,7 @@ Response:
             "type": "blob"
           },
           {
-            "name": "jdk_21_0_5_11_x64_linux_Adoptium.xml.sign.pub",
+            "name": "jdk_21_0_5_11_x64_linux_Adoptium.xml.sig",
             "type": "blob"
           }
         ]
@@ -69,49 +69,49 @@ Response:
 
 */
 
-data class GHAttestationRepoSummary @JsonCreator constructor(
-    @JsonProperty("data") val data: GHAttestationRepoSummaryData
+data class GHCdxaRepoSummary @JsonCreator constructor(
+    @JsonProperty("data") val data: GHCdxaRepoSummaryData
 ) {
 }
 
-data class GHAttestationRepoSummaryData @JsonCreator constructor(
-    @JsonProperty("repository") val repository: GHAttestationRepoSummaryRepository?,
+data class GHCdxaRepoSummaryData @JsonCreator constructor(
+    @JsonProperty("repository") val repository: GHCdxaRepoSummaryRepository?,
     @JsonProperty("rateLimit") override val rateLimit: RateLimit
 ) : HasRateLimit(rateLimit) {
 }
 
-data class GHAttestationRepoSummaryRepository @JsonCreator constructor(
-    @JsonProperty("defaultBranchRef") val defaultBranchRef: GHAttestationRepoSummaryDefaultBranchRef?,
-    @JsonProperty("object") val att_object: GHAttestationRepoSummaryObject?
+data class GHCdxaRepoSummaryRepository @JsonCreator constructor(
+    @JsonProperty("defaultBranchRef") val defaultBranchRef: GHCdxaRepoSummaryDefaultBranchRef?,
+    @JsonProperty("object") val att_object: GHCdxaRepoSummaryObject?
 ) {
 }
 
-data class GHAttestationRepoSummaryDefaultBranchRef @JsonCreator constructor(
-    @JsonProperty("target")             var target: GHAttestationRepoSummaryDefaultBranchRefTarget?
+data class GHCdxaRepoSummaryDefaultBranchRef @JsonCreator constructor(
+    @JsonProperty("target")             var target: GHCdxaRepoSummaryDefaultBranchRefTarget?
 ) {
 }
 
-data class GHAttestationRepoSummaryDefaultBranchRefTarget @JsonCreator constructor(
-    @JsonProperty("history")            var history: GHAttestationRepoSummaryDefaultBranchRefHistory?
+data class GHCdxaRepoSummaryDefaultBranchRefTarget @JsonCreator constructor(
+    @JsonProperty("history")            var history: GHCdxaRepoSummaryDefaultBranchRefHistory?
 ) {
 }
 
-data class GHAttestationRepoSummaryDefaultBranchRefHistory @JsonCreator constructor(
-    @JsonProperty("nodes")              var nodes: List<GHAttestationRepoSummaryDefaultBranchRefNode>?
+data class GHCdxaRepoSummaryDefaultBranchRefHistory @JsonCreator constructor(
+    @JsonProperty("nodes")              var nodes: List<GHCdxaRepoSummaryDefaultBranchRefNode>?
 ) {
 }
 
-data class GHAttestationRepoSummaryDefaultBranchRefNode @JsonCreator constructor(
+data class GHCdxaRepoSummaryDefaultBranchRefNode @JsonCreator constructor(
     @JsonProperty("committedDate")      var committedDate: String?
 ) {
 }
 
-data class GHAttestationRepoSummaryObject @JsonCreator constructor(
-    @JsonProperty("entries")            var entries: List<GHAttestationRepoSummaryEntry>?
+data class GHCdxaRepoSummaryObject @JsonCreator constructor(
+    @JsonProperty("entries")            var entries: List<GHCdxaRepoSummaryEntry>?
 ) { 
 }
 
-data class GHAttestationRepoSummaryEntry @JsonCreator constructor(
+data class GHCdxaRepoSummaryEntry @JsonCreator constructor(
     @JsonProperty("name")   val name: String,
     @JsonProperty("type")   val type: String
 ) { 

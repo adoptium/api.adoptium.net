@@ -21,7 +21,7 @@ open class GraphQLGitHubReleaseClient @Inject constructor(
 
     open suspend fun getReleaseById(id: GitHubId): GHRelease? {
 
-        LOGGER.info("Getting id $id")
+        LOGGER.info("Getting id ${id.id}")
 
         val query = RequestReleaseById(id)
 

@@ -143,7 +143,7 @@ class AdoptReleaseMapperTest : BaseTest() {
     }
 
     private fun mockClient() = object : UpdaterHtmlClient {
-        override suspend fun get(url: String): String {
+        override suspend fun get(url: String, log: Boolean): String {
             return getMetadata(url)
         }
 
@@ -182,7 +182,7 @@ class AdoptReleaseMapperTest : BaseTest() {
                 .replace("\n", "")
         }
 
-        override suspend fun getFullResponse(request: UrlRequest): HttpResponse {
+        override suspend fun getFullResponse(request: UrlRequest, log: Boolean): HttpResponse {
 
             val metadataResponse = mockk<HttpResponse>()
 
@@ -215,11 +215,11 @@ class AdoptReleaseMapperTest : BaseTest() {
         runBlocking {
 
             val client = object : UpdaterHtmlClient {
-                override suspend fun get(url: String): String? {
+                override suspend fun get(url: String, log: Boolean): String? {
                     throw RuntimeException("Failed to get metadata")
                 }
 
-                override suspend fun getFullResponse(request: UrlRequest): HttpResponse? {
+                override suspend fun getFullResponse(request: UrlRequest, log: Boolean): HttpResponse? {
                     throw RuntimeException("Failed to get metadata")
                 }
             }

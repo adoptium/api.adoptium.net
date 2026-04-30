@@ -7,6 +7,7 @@ import net.adoptium.api.v3.dataSources.VersionSupplier
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.DbStatsEntry
 import net.adoptium.api.v3.models.DockerDownloadStatsDbEntry
+import net.adoptium.api.v3.models.CloudflarePackageDownloadStatsDbEntry
 import net.adoptium.api.v3.models.DownloadDiff
 import net.adoptium.api.v3.models.DownloadStats
 import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
@@ -15,6 +16,7 @@ import net.adoptium.api.v3.models.MonthlyDownloadDiff
 import net.adoptium.api.v3.models.StatsSource
 import net.adoptium.api.v3.models.TotalStats
 import org.eclipse.microprofile.openapi.annotations.media.Schema
+import java.time.Instant
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.math.max
@@ -259,16 +261,22 @@ class DownloadStatsInterface {
 
         val githubStats = getGithubStats()
 
+        val packageStats = getPackageStats()
+
         val dockerPulls = dockerStats.sumOf { it.pulls }
 
         val githubDownloads = githubStats.sumOf { it.downloads }
+
+        val packageDownloads = packageStats.sumOf { it.downloads }
 
         val dockerBreakdown = dockerStats.associate { Pair(it.repo, it.pulls) }
 
         val githubBreakdown = githubStats.associate { Pair(it.feature_version, it.downloads) }
 
-        val totalStats = TotalStats(dockerPulls, githubDownloads, dockerPulls + githubDownloads)
-        return DownloadStats(TimeSource.now(), totalStats, githubBreakdown, dockerBreakdown)
+        val packageBreakdown = packageStats.associate { Pair(it.feature_version, it.downloads) }
+
+        val totalStats = TotalStats(dockerPulls, githubDownloads, packageDownloads, dockerPulls + githubDownloads + packageDownloads)
+        return DownloadStats(TimeSource.now(), totalStats, githubBreakdown, dockerBreakdown, packageBreakdown)
     }
 
     private suspend fun getAllDockerStats(): List<DockerDownloadStatsDbEntry> {
@@ -282,6 +290,13 @@ class DownloadStatsInterface {
             .mapNotNull { featureVersion ->
                 dataStore.getLatestGithubStatsForFeatureVersion(featureVersion)
             }
+            .filter { it.downloads != 0L }
+    }
+
+    private suspend fun getPackageStats(): List<CloudflarePackageDownloadStatsDbEntry> {
+        val start = Instant.EPOCH.atZone(TimeSource.ZONE)
+        val end = TimeSource.now()
+        return dataStore.getAggregatedPackageStats(start, end)
             .filter { it.downloads != 0L }
     }
 }

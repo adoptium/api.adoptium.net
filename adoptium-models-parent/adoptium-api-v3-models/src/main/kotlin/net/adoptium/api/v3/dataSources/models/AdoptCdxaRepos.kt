@@ -12,33 +12,33 @@ import net.adoptium.api.v3.models.JvmImpl
 import net.adoptium.api.v3.models.OperatingSystem
 import net.adoptium.api.v3.models.Project
 import net.adoptium.api.v3.models.Vendor
-import net.adoptium.api.v3.models.Attestation
+import net.adoptium.api.v3.models.Cdxa
 import java.time.ZonedDateTime
 import java.util.function.Predicate
 
-class AdoptAttestationRepos {
+class AdoptCdxaRepos {
 
-    val repos: List<Attestation>
+    val repos: List<Cdxa>
 
     @JsonCreator
     constructor(
         @JsonProperty("repos")
-        repos: List<Attestation>
+        repos: List<Cdxa>
     ) {
         this.repos = repos
     }
 
-    fun getAttestations(): List<Attestation> {
+    fun getCdxas(): List<Cdxa> {
         return repos
     }
 
-    fun listAttestationsForAssetBinary(
+    fun listCdxasForAssetBinary(
             release_name: String?,
             vendor: Vendor?,
             os: OperatingSystem?,
             arch: Architecture?,
             image_type: ImageType?,
-            jvm_impl: JvmImpl?): List<Attestation> {
+            jvm_impl: JvmImpl?): List<Cdxa> {
 
         val result = repos.filter { it.release_name == release_name &&
                                     it.vendor == vendor &&
@@ -50,53 +50,53 @@ class AdoptAttestationRepos {
         return result
     }
 
-    fun listAttestationsForTargetChecksum(
-            target_checksum: String?): List<Attestation> {
+    fun listCdxasForTargetChecksum(
+            target_checksum: String?): List<Cdxa> {
 
         val result = repos.filter { it.target_checksum == target_checksum?.uppercase() }
 
         return result
     }
 
-    fun listAttestationsForRelease(
-            release_name: String?): List<Attestation> {
+    fun listCdxasForRelease(
+            release_name: String?): List<Cdxa> {
 
         val result = repos.filter { it.release_name == release_name }
 
         return result
     }
 
-    fun addAll(attestations: List<Attestation>): AdoptAttestationRepos {
-        if (attestations.isEmpty()) {
+    fun addAll(cdxas: List<Cdxa>): AdoptCdxaRepos {
+        if (cdxas.isEmpty()) {
             return this
         }
-        return attestations
-            .fold(this) { repos, newAtt -> repos.addAttestation(newAtt) }
+        return cdxas
+            .fold(this) { repos, newAtt -> repos.addCdxa(newAtt) }
     }
 
-    fun addAttestation(att: Attestation): AdoptAttestationRepos {
+    fun addCdxa(att: Cdxa): AdoptCdxaRepos {
         val updated = repos + att
-        return AdoptAttestationRepos(updated)
+        return AdoptCdxaRepos(updated)
     }
 
-    fun removeAttestation(att: Attestation): AdoptAttestationRepos {
+    fun removeCdxa(att: Cdxa): AdoptCdxaRepos {
         val updated = repos.filter { it.id != att.id }
-        return AdoptAttestationRepos(updated)
+        return AdoptCdxaRepos(updated)
     }
 
-    fun removeAttestationis(attestations: List<Attestation>): AdoptAttestationRepos {
-        if (attestations.isEmpty()) {
+    fun removeCdxais(cdxas: List<Cdxa>): AdoptCdxaRepos {
+        if (cdxas.isEmpty()) {
             return this
         }
-        return attestations
-            .fold(this) { repos, newAtt -> repos.removeAttestation(newAtt) }
+        return cdxas
+            .fold(this) { repos, newAtt -> repos.removeCdxa(newAtt) }
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as AdoptAttestationRepos
+        other as AdoptCdxaRepos
 
         return repos == other.repos
     }

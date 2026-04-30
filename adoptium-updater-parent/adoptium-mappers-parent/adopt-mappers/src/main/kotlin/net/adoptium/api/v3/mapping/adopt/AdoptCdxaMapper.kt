@@ -6,82 +6,87 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import net.adoptium.api.v3.dataSources.github.GitHubHtmlClient
-import net.adoptium.api.v3.dataSources.github.graphql.models.GHAttestation
-import net.adoptium.api.v3.models.Attestation
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHCdxa
+import net.adoptium.api.v3.models.Cdxa
 import net.adoptium.api.v3.models.Architecture
 import net.adoptium.api.v3.models.ImageType
 import net.adoptium.api.v3.models.JvmImpl
 import net.adoptium.api.v3.models.OperatingSystem
 import net.adoptium.api.v3.models.Vendor
-import net.adoptium.api.v3.mapping.AttestationMapper
+import net.adoptium.api.v3.mapping.CdxaMapper
 import org.slf4j.LoggerFactory
 import java.util.EnumMap
 import java.time.Instant
 
 
 @ApplicationScoped
-open class AdoptAttestationMapperFactory @Inject constructor(
+open class AdoptCdxaMapperFactory @Inject constructor(
     val htmlClient: GitHubHtmlClient
 ) {
-    private val mappers: MutableMap<Vendor, AdoptAttestationMapper> = EnumMap(Vendor::class.java)
+    private val mappers: MutableMap<Vendor, AdoptCdxaMapper> = EnumMap(Vendor::class.java)
 
-    open fun get(vendor: Vendor): AttestationMapper {
+    open fun get(vendor: Vendor): CdxaMapper {
         return if (mappers.containsKey(vendor)) {
             mappers[vendor]!!
         } else {
-            val mapper = AdoptAttestationMapper(htmlClient)
+            val mapper = AdoptCdxaMapper(htmlClient)
             mappers[vendor] = mapper
             mapper
         }
     }
 }
 
-private class AdoptAttestationMapper(
+private class AdoptCdxaMapper(
     val htmlClient: GitHubHtmlClient
-) : AttestationMapper() {
+) : CdxaMapper() {
     companion object {
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    override suspend fun toAttestationList(vendor: Vendor, ghAttestationAssets: List<GHAttestation>): List<Attestation> {
-        return ghAttestationAssets
-            .map { it -> assetToAttestationAsync(vendor, it) }
+    override suspend fun toCdxaList(vendor: Vendor, ghCdxaAssets: List<GHCdxa>): List<Cdxa> {
+        return ghCdxaAssets
+            .map { it -> assetToCdxaAsync(vendor, it) }
             .mapNotNull { it.await() }
     }
 
-    override suspend fun toAttestation(vendor: Vendor, ghAttestation: GHAttestation): Attestation? {
-        return assetToAttestationAsync(vendor, ghAttestation).await()
+    override suspend fun toCdxa(vendor: Vendor, ghCdxa: GHCdxa): Cdxa? {
+        return assetToCdxaAsync(vendor, ghCdxa).await()
     }
 
-    private fun assetToAttestationAsync(
+    private fun assetToCdxaAsync(
         vendor: Vendor,
-        ghAttestationAsset: GHAttestation
-    ): Deferred<Attestation?> {
+        ghCdxaAsset: GHCdxa
+    ): Deferred<Cdxa?> {
         return GlobalScope.async {
             try {
-                // Temurin Attestations (https://github.com/adoptium/temurin-attestations/blob/main/.github/workflows/validate-cdxa.yml) have:
-                //   ONE attestation
+                // Temurin Cdxas (https://github.com/adoptium/temurin-cdxa/blob/main/.github/workflows/validate-cdxa.yml) have:
+                //   ONE cdxa
                 //   ONE target component
                 //   ONE assessor
                 //   ONE claim
+                //   ONE evidence
                 //   ONE target component externalReferences reference with a single hash
                 //   target component version is of format jdk-$MAJOR_VERSION+$BUILD_NUM or jdk-$MAJOR_VERSION.0.$UPDATE_VERSION+$BUILD_NUM
                 
-                val releaseName: String? = ghAttestationAsset?.declarations?.targets?.components?.component[0]?.version
+                val releaseName: String? = ghCdxaAsset?.declarations?.targets?.components?.component[0]?.version
                 // featureVersion derived from releaseName
                 val featureVersion: Int = releaseName?.split("-","+",".")[1]?.toInt() ?: 0
 
-                val assessor_org: String? = ghAttestationAsset?.declarations?.assessors?.assessor[0]?.organization?.name
-                val assessor_affirmation: String? = ghAttestationAsset?.declarations?.affirmation?.statement
-                val assessor_claim_predicate: String? = ghAttestationAsset?.declarations?.claims?.claim[0]?.predicate
-                val target_checksum: String? = ghAttestationAsset?.declarations?.targets?.components?.component[0]?.externalReferences?.reference[0]?.hashes?.hash[0]?.sha256?.uppercase()
+                val assessor_org: String? = ghCdxaAsset?.declarations?.assessors?.assessor[0]?.organization?.name
+                val assessor_affirmation: String? = ghCdxaAsset?.declarations?.affirmation?.statement
+                val assessor_claim_predicate: String? = ghCdxaAsset?.declarations?.claims?.claim[0]?.predicate
+                val target_checksum: String? = ghCdxaAsset?.declarations?.targets?.components?.component[0]?.externalReferences?.reference[0]?.hashes?.hash[0]?.sha256?.uppercase()
+
+                val evidence_propertyName: String? = ghCdxaAsset?.declarations?.evidences?.evidence?.get(0)?.propertyName
+                val evidence_data_name: String? = ghCdxaAsset?.declarations?.evidences?.evidence?.get(0)?.data?.name
+                val evidence_data_contents_attachment_text: String? = ghCdxaAsset?.declarations?.evidences?.evidence?.get(0)?.data?.contents?.attachment?.content
 
                 var archStr: String = ""
                 var osStr: String = ""
                 var imageTypeStr: String = ""
                 var jvmImplStr: String = ""
-                for (property in ghAttestationAsset?.declarations?.targets?.components?.component[0]?.properties?.property?: emptyList()) {
+                for (property in ghCdxaAsset?.declarations?.targets?.components?.component[0]?.properties?.property?: emptyList()) {
                     if (property.name == "platform") {
                         val split_platform: List<String>? = property.value?.split("_")
                         if (split_platform != null) {
@@ -104,12 +109,14 @@ private class AdoptAttestationMapper(
                 val imageType: ImageType = ImageType.valueOf(imageTypeStr)
                 val jvmImpl: JvmImpl = JvmImpl.valueOf(jvmImplStr)
  
-                return@async Attestation(ghAttestationAsset?.id?.id?:"", ghAttestationAsset.filename?:"",
+                return@async Cdxa(ghCdxaAsset?.id?.id?:"", ghCdxaAsset.filename?:"",
                                          featureVersion, releaseName, os, arch, imageType, jvmImpl,
                                          vendor, target_checksum, assessor_org, assessor_affirmation, assessor_claim_predicate,
-                                         ghAttestationAsset.linkUrl?:"", ghAttestationAsset.linkSignUrl?:"", ghAttestationAsset.committedDate?: Instant.now())
+                                         ghCdxaAsset.linkUrl?:"", ghCdxaAsset.linkSigUrl?:"",
+                                         evidence_propertyName, evidence_data_name, evidence_data_contents_attachment_text,
+                                         ghCdxaAsset.committedDate?: Instant.now())
             } catch (e: java.lang.Exception) {
-                LOGGER.error("Exception mapping attestation : "+e+" GHAttestation: "+ghAttestationAsset)
+                LOGGER.error("Exception mapping cdxa : "+e+" GHCdxa: "+ghCdxaAsset)
                 return@async null
             }
         }

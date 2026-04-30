@@ -4,7 +4,7 @@ import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
-import net.adoptium.api.v3.dataSources.models.AdoptAttestationRepos
+import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.Releases
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
@@ -23,9 +23,9 @@ import kotlin.concurrent.timerTask
 open class APIDataStoreImpl : APIDataStore {
     private var dataStore: ApiPersistence
     private var updatedAt: UpdatedInfo
-    private var attestationUpdatedAt: UpdatedInfo
+    private var cdxaUpdatedAt: UpdatedInfo
     private var binaryRepos: AdoptRepos
-    private var attestationRepos: AdoptAttestationRepos
+    private var cdxaRepos: AdoptCdxaRepos
     private var releaseInfo: ReleaseInfo
     private var schedule: ScheduledFuture<*>?
 
@@ -70,25 +70,25 @@ open class APIDataStoreImpl : APIDataStore {
             }
         }
 
-        fun loadAttestationDataFromDb(
+        fun loadCdxaDataFromDb(
             dataStore: ApiPersistence,
             previousUpdateInfo: UpdatedInfo,
             forceUpdate: Boolean,
-            previousRepo: AdoptAttestationRepos?,
-            logEntries: Boolean = true): Pair<AdoptAttestationRepos, UpdatedInfo> {
+            previousRepo: AdoptCdxaRepos?,
+            logEntries: Boolean = true): Pair<AdoptCdxaRepos, UpdatedInfo> {
 
             return runBlocking {
-                val updated = dataStore.getAttestationUpdatedAt()
+                val updated = dataStore.getCdxaUpdatedAt()
 
                 if (previousRepo == null || forceUpdate || updated != previousUpdateInfo) {
-                    val data = dataStore.readAttestationData()
-                    val updatedAt = dataStore.getAttestationUpdatedAt()
+                    val data = dataStore.readCdxaData()
+                    val updatedAt = dataStore.getCdxaUpdatedAt()
 
-                    val newData = AdoptAttestationRepos(data)
+                    val newData = AdoptCdxaRepos(data)
 
                     if (logEntries) {
-                        LOGGER.info("Loaded Attestations: $updatedAt")
-                        showAttestationStats(previousRepo, newData)
+                        LOGGER.info("Loaded Cdxas: $updatedAt")
+                        showCdxaStats(previousRepo, newData)
                     }
                     Pair(newData, updatedAt)
                 } else {
@@ -136,15 +136,15 @@ open class APIDataStoreImpl : APIDataStore {
                 }
         }
 
-        private fun showAttestationStats(attRepos: AdoptAttestationRepos?, newData: AdoptAttestationRepos) {
+        private fun showCdxaStats(attRepos: AdoptCdxaRepos?, newData: AdoptCdxaRepos) {
             newData.repos
                 .forEach { att ->
                     val oldAtt = attRepos?.repos?.firstOrNull { it.id == att.id }
 
                     if (oldAtt == null) {
-                        LOGGER.info("New Attestation: ${att.release_name} ${att.filename}")
+                        LOGGER.info("New Cdxa: ${att.release_name} ${att.filename}")
                     } else if (oldAtt != att) {
-                        LOGGER.info("Modified Attestation: ${att.release_name} ${att.filename}")
+                        LOGGER.info("Modified Cdxa: ${att.release_name} ${att.filename}")
                     }
                 }
 
@@ -152,7 +152,7 @@ open class APIDataStoreImpl : APIDataStore {
                 ?.forEach { oldAtt ->
                     val newAtt = newData.repos.firstOrNull { it.id == oldAtt.id }
                     if (newAtt == null) {
-                        LOGGER.info("Removed Attestation: ${oldAtt.release_name} ${oldAtt.filename}")
+                        LOGGER.info("Removed Cdxa: ${oldAtt.release_name} ${oldAtt.filename}")
                     }
                 }
         }
@@ -165,7 +165,7 @@ open class APIDataStoreImpl : APIDataStore {
         this.dataStore = dataStore
 
         updatedAt = UpdatedInfo(ZonedDateTime.now().minusYears(10), "111", 0)
-        attestationUpdatedAt = UpdatedInfo(ZonedDateTime.now().minusYears(10), "111", 0)
+        cdxaUpdatedAt = UpdatedInfo(ZonedDateTime.now().minusYears(10), "111", 0)
         schedule = null
 
         binaryRepos = try {
@@ -183,18 +183,18 @@ open class APIDataStoreImpl : APIDataStore {
             AdoptRepos(listOf())
         }
 
-        attestationRepos = try {
-            val update = loadAttestationDataFromDb(
+        cdxaRepos = try {
+            val update = loadCdxaDataFromDb(
                 dataStore,
-                attestationUpdatedAt,
+                cdxaUpdatedAt,
                 true,
                 null
             )
-            attestationUpdatedAt = update.second
+            cdxaUpdatedAt = update.second
             update.first
         } catch (e: Exception) {
-            LOGGER.error("Failed to read attestation db", e)
-            AdoptAttestationRepos(listOf())
+            LOGGER.error("Failed to read cdxa db", e)
+            AdoptCdxaRepos(listOf())
         }
 
         releaseInfo = loadReleaseInfo()
@@ -261,22 +261,22 @@ open class APIDataStoreImpl : APIDataStore {
 
     }
 
-    override fun loadAttestationDataFromDb(
+    override fun loadCdxaDataFromDb(
         forceUpdate: Boolean,
         logEntries: Boolean
-    ): AdoptAttestationRepos {
-        val update = loadAttestationDataFromDb(
+    ): AdoptCdxaRepos {
+        val update = loadCdxaDataFromDb(
             dataStore,
-            attestationUpdatedAt,
+            cdxaUpdatedAt,
             forceUpdate,
-            attestationRepos,
+            cdxaRepos,
             logEntries
         )
 
-        this.attestationUpdatedAt = update.second
-        this.attestationRepos = update.first
+        this.cdxaUpdatedAt = update.second
+        this.cdxaRepos = update.first
 
-        return attestationRepos
+        return cdxaRepos
 
     }
 
@@ -284,8 +284,8 @@ open class APIDataStoreImpl : APIDataStore {
         return updatedAt
     }
 
-    override fun getAttestationUpdateInfo(): UpdatedInfo {
-        return attestationUpdatedAt
+    override fun getCdxaUpdateInfo(): UpdatedInfo {
+        return cdxaUpdatedAt
     }
 
     override suspend fun isConnectedToDb(): Boolean {
@@ -301,12 +301,12 @@ open class APIDataStoreImpl : APIDataStore {
         this.binaryRepos = binaryRepos
     }
 
-    override fun getAdoptAttestationRepos(): AdoptAttestationRepos {
-        return attestationRepos
+    override fun getAdoptCdxaRepos(): AdoptCdxaRepos {
+        return cdxaRepos
     }       
                 
-    override fun setAdoptAttestationRepos(attestationRepos: AdoptAttestationRepos) {
-        this.attestationRepos = attestationRepos
+    override fun setAdoptCdxaRepos(cdxaRepos: AdoptCdxaRepos) {
+        this.cdxaRepos = cdxaRepos
     } 
 
     private fun periodicUpdate() {
@@ -314,7 +314,7 @@ open class APIDataStoreImpl : APIDataStore {
         try {
             LOGGER.debug("periodicUpdate")
             binaryRepos = loadDataFromDb(false)
-            attestationRepos = loadAttestationDataFromDb(false)
+            cdxaRepos = loadCdxaDataFromDb(false)
             releaseInfo = loadReleaseInfo()
         } catch (e: Exception) {
             LOGGER.error("Failed to load db", e)
