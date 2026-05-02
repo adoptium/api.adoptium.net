@@ -240,9 +240,11 @@ open class APIDataStoreImpl : APIDataStore {
         forceUpdate: Boolean,
         logEntries: Boolean
     ): AdoptRepos {
-        // Scan the currently available versions plus 5
+        // Scan the currently available versions plus 5, and also include known EA versions
         val versions = releaseInfo.available_releases.toList()
             .plus((releaseInfo.available_releases.last()..releaseInfo.available_releases.last() + 5))
+            .plus(releaseInfo.available_ea_releases.toList())
+            .distinct()
             .filter { it <= MAX_VERSION_TO_LOAD }
 
         val update = loadDataFromDb(
