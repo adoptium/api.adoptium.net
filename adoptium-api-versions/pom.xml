@@ -8,7 +8,7 @@
     <packaging>pom</packaging>
 
     <properties>
-        <coroutine.version>1.10.2</coroutine.version>
+        <coroutine.version>1.11.0</coroutine.version>
         <jackson.version>2.21.3</jackson.version>
         <jackson-annotations.version>2.21</jackson-annotations.version>
         <jdk.version>17</jdk.version>
