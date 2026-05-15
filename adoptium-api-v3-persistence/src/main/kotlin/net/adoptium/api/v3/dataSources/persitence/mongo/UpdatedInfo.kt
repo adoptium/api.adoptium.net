@@ -18,6 +18,6 @@ data class UpdatedInfo(
         ?.format(DateTimeFormatter.RFC_1123_DATE_TIME)) {
 
     override fun toString(): String {
-        return "$time $checksum $hashCode"
+        return "$time $checksum $hashCode $lastModified"
     }
 }
