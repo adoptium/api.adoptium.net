@@ -16,6 +16,7 @@ import net.adoptium.api.v3.models.ReleaseInfo
 import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.models.Cdxa
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 import jakarta.annotation.Priority
 import jakarta.enterprise.inject.Alternative
 import jakarta.inject.Inject
@@ -42,7 +43,8 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var
 
     override suspend fun updateCdxaRepos(repos: AdoptCdxaRepos, checksum: String) {
         this.cdxaRepos = repos
-        this.cdxaUpdatedAtInfo = UpdatedInfo(TimeSource.now(), checksum, repos.hashCode())
+        val lastModifiedDate = repos.lastModified?.let { java.util.Date.from(it) }
+        this.cdxaUpdatedAtInfo = UpdatedInfo(TimeSource.now(), checksum, repos.hashCode(), lastModifiedDate)
     }
 
     override suspend fun readCdxaData(): List<Cdxa> {
