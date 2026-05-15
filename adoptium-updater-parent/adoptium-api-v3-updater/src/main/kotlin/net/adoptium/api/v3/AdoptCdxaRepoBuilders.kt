@@ -26,17 +26,17 @@ class AdoptCdxaReposBuilder @Inject constructor(
     }
 
     suspend fun build(): AdoptCdxaRepos {
-        val cdxas = adoptCdxaRepository.getCdxas()
-        LOGGER.info("DONE cdxa build")
-        return AdoptCdxaRepos(cdxas)
+        val (cdxas, lastModified) = adoptCdxaRepository.getCdxas()
+        LOGGER.info("DONE cdxa build, lastModified: $lastModified")
+        return AdoptCdxaRepos(cdxas, lastModified)
     }
 
     suspend fun incrementalUpdate(
         oldRepo: AdoptCdxaRepos,
         lastUpdatedAt: UpdatedInfo
     ): AdoptCdxaRepos {
-        val cdxas = adoptCdxaRepository.incrementalUpdate(oldRepo, lastUpdatedAt)
-        LOGGER.info("DONE cdxa incrementalUpdate")
-        return AdoptCdxaRepos(cdxas)
+        val (cdxas, lastModified) = adoptCdxaRepository.incrementalUpdate(oldRepo, lastUpdatedAt)
+        LOGGER.info("DONE cdxa incrementalUpdate, lastModified: $lastModified")
+        return AdoptCdxaRepos(cdxas, lastModified)
     }
 }

@@ -13,19 +13,24 @@ import net.adoptium.api.v3.models.OperatingSystem
 import net.adoptium.api.v3.models.Project
 import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.models.Cdxa
+import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.function.Predicate
 
 class AdoptCdxaRepos {
 
     val repos: List<Cdxa>
+    val lastModified: Instant?  // Set to the "latest" committedDate of cdxas, to enable incrementalUpdate to determine changes
 
     @JsonCreator
     constructor(
         @JsonProperty("repos")
-        repos: List<Cdxa>
+        repos: List<Cdxa>,
+        @JsonProperty("lastModified")
+        lastModified: Instant? = null
     ) {
         this.repos = repos
+        this.lastModified = lastModified
     }
 
     fun getCdxas(): List<Cdxa> {
@@ -76,15 +81,15 @@ class AdoptCdxaRepos {
 
     fun addCdxa(att: Cdxa): AdoptCdxaRepos {
         val updated = repos + att
-        return AdoptCdxaRepos(updated)
+        return AdoptCdxaRepos(updated, lastModified)
     }
 
     fun removeCdxa(att: Cdxa): AdoptCdxaRepos {
         val updated = repos.filter { it.id != att.id }
-        return AdoptCdxaRepos(updated)
+        return AdoptCdxaRepos(updated, lastModified)
     }
 
-    fun removeCdxais(cdxas: List<Cdxa>): AdoptCdxaRepos {
+    fun removeCdxas(cdxas: List<Cdxa>): AdoptCdxaRepos {
         if (cdxas.isEmpty()) {
             return this
         }
@@ -98,10 +103,15 @@ class AdoptCdxaRepos {
 
         other as AdoptCdxaRepos
 
-        return repos == other.repos
+        if (repos != other.repos) return false
+        if (lastModified != other.lastModified) return false
+
+        return true
     }
 
     override fun hashCode(): Int {
-        return repos.hashCode()
+        var result = repos.hashCode()
+        result = 31 * result + (lastModified?.hashCode() ?: 0)
+        return result
     }
 }

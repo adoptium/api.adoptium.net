@@ -17,7 +17,7 @@ import net.adoptium.api.v3.mapping.CdxaMapper
 import org.slf4j.LoggerFactory
 import java.util.EnumMap
 import java.time.Instant
-
+import java.time.temporal.ChronoUnit
 
 @ApplicationScoped
 open class AdoptCdxaMapperFactory @Inject constructor(
@@ -114,7 +114,7 @@ private class AdoptCdxaMapper(
                                          vendor, target_checksum, assessor_org, assessor_affirmation, assessor_claim_predicate,
                                          ghCdxaAsset.linkUrl?:"", ghCdxaAsset.linkSigUrl?:"",
                                          evidence_propertyName, evidence_data_name, evidence_data_contents_attachment_text,
-                                         ghCdxaAsset.committedDate?: Instant.now())
+                                         (ghCdxaAsset.committedDate ?: Instant.now()).truncatedTo(ChronoUnit.MILLIS))
             } catch (e: java.lang.Exception) {
                 LOGGER.error("Exception mapping cdxa : "+e+" GHCdxa: "+ghCdxaAsset)
                 return@async null

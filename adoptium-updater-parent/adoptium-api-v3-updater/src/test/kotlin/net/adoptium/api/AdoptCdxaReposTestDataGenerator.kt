@@ -11,10 +11,13 @@ import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.models.Cdxa
 import java.util.*
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 object AdoptCdxaReposTestDataGenerator {
 
     var rand: Random = Random(1)
+    val FIXED_TIMESTAMP = Instant.parse("2026-01-01T00:00:00Z").truncatedTo(ChronoUnit.MILLIS)
+
     private val TEST_RESOURCES = listOf(
         Cdxa(randomString("cdxa id"),
                     "21/jdk-21.0.5+6/cdxa_jdk-21.0.5+6.xml",
@@ -34,7 +37,7 @@ object AdoptCdxaReposTestDataGenerator {
                     "VERIFICATION_LOG",
                     "log",
                     "Build verification completed: 100% reproducible for jdk-21.0.5+6",
-                    Instant.now()),
+                    FIXED_TIMESTAMP),
         Cdxa(randomString("cdxa id"),
                     "21/jdk-21.0.5+6/cdxa_jdk-21.0.5+6_other.xml",
                     21,
@@ -53,7 +56,7 @@ object AdoptCdxaReposTestDataGenerator {
                     "VERIFICATION_LOG",
                     "log",
                     "Alternative verification: Binary comparison successful for jdk-21.0.5+6",
-                    Instant.now()),
+                    FIXED_TIMESTAMP),
         Cdxa(randomString("cdxa id"),
                     "21/jdk-21.0.6+8/cdxa_jdk-21.0.6+8.xml",
                     21,
@@ -72,7 +75,7 @@ object AdoptCdxaReposTestDataGenerator {
                     "VERIFICATION_LOG",
                     "log",
                     "Reproducible build verified for aarch64 architecture jdk-21.0.6+8",
-                    Instant.now()),
+                    FIXED_TIMESTAMP),
         Cdxa(randomString("cdxa id"),
                     "23/jdk-23.0.1+6/cdxa_jdk-23.0.1+6.xml",
                     23,
@@ -91,7 +94,7 @@ object AdoptCdxaReposTestDataGenerator {
                     "VERIFICATION_LOG",
                     "log",
                     "JDK 23 build verification: All artifacts match reference build",
-                    Instant.now()),
+                    FIXED_TIMESTAMP),
         Cdxa(randomString("cdxa id"),
                     "24/jdk-24.0.2+12/cdxa_jdk-24.0.2+12.xml",
                     24,
@@ -110,7 +113,7 @@ object AdoptCdxaReposTestDataGenerator {
                     "VERIFICATION_LOG",
                     "log",
                     "macOS build verification complete: Reproducible build confirmed for jdk-24.0.2+12",
-                    Instant.now()),
+                    FIXED_TIMESTAMP),
         Cdxa(randomString("cdxa id"),
                     "11/jdk-11.0.21+8/cdxa_jdk-11.0.21+8.xml",
                     11,
@@ -129,13 +132,17 @@ object AdoptCdxaReposTestDataGenerator {
                     "VERIFICATION_LOG",
                     "log",
                     "Windows x64 verification: LTS build jdk-11.0.21+8 successfully reproduced",
-                    Instant.now())
+                    FIXED_TIMESTAMP)
     )
 
     fun generate(): AdoptCdxaRepos {
         rand = Random(1)
 
-        val repo = AdoptCdxaRepos(TEST_RESOURCES)
+        // Set lastModified to the latest committedDate from the test resources
+        val latestCommittedDate: Instant? = TEST_RESOURCES
+            .map { it.committedDate }
+            .maxWithOrNull(compareBy { it })
+        val repo = AdoptCdxaRepos(TEST_RESOURCES, latestCommittedDate)
 
         return repo
     }

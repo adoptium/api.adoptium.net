@@ -64,10 +64,12 @@ object GHCdxaSummaryTestDataGenerator {
           }
         }
 
+        // Use the lastModified from the repo, or fall back to a default timestamp
+        val committedDate = repo.lastModified?.toString() ?: "2025-01-06T10:30:00Z"
         val defaultBranchRef = GHCdxaRepoSummaryDefaultBranchRef(
-                                 GHCdxaRepoSummaryDefaultBranchRefTarget(
-                                   GHCdxaRepoSummaryDefaultBranchRefHistory(
-                                     listOf(GHCdxaRepoSummaryDefaultBranchRefNode("2025-01-06T10:30:00Z")))))
+                                  GHCdxaRepoSummaryDefaultBranchRefTarget(
+                                    GHCdxaRepoSummaryDefaultBranchRefHistory(
+                                     listOf(GHCdxaRepoSummaryDefaultBranchRefNode(committedDate)))))
 
         val cdxaSummary = GHCdxaRepoSummaryData(GHCdxaRepoSummaryRepository(defaultBranchRef, GHCdxaRepoSummaryObject(summaries)), RateLimit(1,1000))
 
