@@ -104,7 +104,7 @@ data class GHCdxaResponseObject @JsonCreator constructor(
     @JsonProperty("id")
     @JsonDeserialize(using = GitHubIdDeserializer::class)
     val id: GitHubId,
-    @JsonProperty("text")   val text: String
+    @JsonProperty("text")   val text: String? = null
 ) { 
 }
 

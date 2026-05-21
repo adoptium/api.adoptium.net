@@ -84,7 +84,8 @@ open class APIDataStoreImpl : APIDataStore {
                     val data = dataStore.readCdxaData()
                     val updatedAt = dataStore.getCdxaUpdatedAt()
 
-                    val newData = AdoptCdxaRepos(data)
+                    val lastModified = updatedAt.lastModified?.toInstant()
+                    val newData = AdoptCdxaRepos(data, lastModified)
 
                     if (logEntries) {
                         LOGGER.info("Loaded Cdxas: $updatedAt")

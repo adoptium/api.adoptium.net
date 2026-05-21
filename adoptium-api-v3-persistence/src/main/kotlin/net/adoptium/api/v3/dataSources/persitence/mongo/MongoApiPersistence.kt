@@ -32,6 +32,7 @@ import org.bson.BsonDocument
 import org.bson.BsonString
 import org.bson.Document
 import org.slf4j.LoggerFactory
+import java.time.Instant
 import java.time.ZonedDateTime
 
 @ApplicationScoped
@@ -101,7 +102,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
 
             removeCdxasNotInFeatureVersions(featureVersions)
         } finally {
-            updateCdxaUpdatedTime(TimeSource.now(), checksum, repo.hashCode())
+            updateCdxaUpdatedTime(TimeSource.now(), checksum, repo.hashCode(), repo.lastModified)
         }
     }
 
@@ -273,10 +274,11 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
         updateTimeCollection.deleteMany(Document("time", BsonDocument("\$lt", BsonDateTime(dateTime.toInstant().toEpochMilli()))))
     }
 
-    open suspend fun updateCdxaUpdatedTime(dateTime: ZonedDateTime, checksum: String, hashCode: Int) {
+    open suspend fun updateCdxaUpdatedTime(dateTime: ZonedDateTime, checksum: String, hashCode: Int, lastModified: Instant? = null) {
+        val lastModifiedDate = lastModified?.let { java.util.Date.from(it) }
         cdxaUpdateTimeCollection.replaceOne(
             Document(),
-            UpdatedInfo(dateTime, checksum, hashCode),
+            UpdatedInfo(dateTime, checksum, hashCode, lastModifiedDate),
             ReplaceOptions().upsert(true)
         )
         cdxaUpdateTimeCollection.deleteMany(Document("time", BsonDocument("\$lt", BsonDateTime(dateTime.toInstant().toEpochMilli()))))

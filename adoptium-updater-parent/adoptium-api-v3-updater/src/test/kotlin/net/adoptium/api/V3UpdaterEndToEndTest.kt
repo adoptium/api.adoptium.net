@@ -69,6 +69,7 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicBoolean
 import org.slf4j.LoggerFactory
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 class V3UpdaterEndToEndTest {
 
@@ -211,6 +212,9 @@ class V3UpdaterEndToEndTest {
     @Test   
     fun `new cdxa is added`() {
         runBlocking {
+            val newCommittedDateStr = "2026-02-01T00:00:00Z"
+            val newCommittedDate = Instant.parse(newCommittedDateStr).truncatedTo(ChronoUnit.MILLIS)
+
             val cdxaRepo = AdoptCdxaReposTestDataGenerator.generate()
 
             val getCdxaSummary: ((String, String, String) -> GHCdxaRepoSummaryData?) = { org, repo , directory ->
@@ -224,6 +228,11 @@ class V3UpdaterEndToEndTest {
                                                                                      GHCdxaRepoSummaryEntry("jdk_24_0_2_12_aarch64_linux_Adoptium.xml",
                                                                                                                    "blob"
                                                                                                                   )
+                }
+
+                // If directory covers new 24/jdk-24.0.2+12, then set committedDate summary to be for the new entry added
+                if ( (directory == "" || directory == "24" || directory == "24/jdk-24.0.2+12") && cdxaSummary?.repository?.att_object?.entries != null ) {
+                    cdxaSummary?.repository?.defaultBranchRef?.target?.history?.nodes?.firstOrNull()?.committedDate = newCommittedDateStr
                 }
 
                 LOGGER.info("getCdxaSummary: "+cdxaSummary)
@@ -300,13 +309,17 @@ class V3UpdaterEndToEndTest {
                                 var evidences: Evidences = Evidences(listOf(evidence))
                                 var d: Declarations = Declarations(ass, cls, evidences, null, Targets(cs), aff)
 
-                                GHCdxa( GitHubId("1"), name, "https://github.com/"+org+"/"+repo+"/blob/main/"+name, "https://github.com/"+org+"/"+repo+"/blob/main/"+name+".sig", Instant.now(), d, null)
+                                GHCdxa( GitHubId("1"), name, "https://github.com/"+org+"/"+repo+"/blob/main/"+name, "https://github.com/"+org+"/"+repo+"/blob/main/"+name+".sig", newCommittedDate, d, null)
                             } else {
                                 null
                             }
             }
 
             val updatedRepo = runCdxaUpdateTest(cdxaRepo, getCdxaSummary, getCdxaByName)
+
+            // Check lastModified gets updated to the "latest" lastCommittedDate of the cdxas
+            assertTrue(cdxaRepo.lastModified == AdoptCdxaReposTestDataGenerator.FIXED_TIMESTAMP)
+            assertTrue(updatedRepo.lastModified == newCommittedDate)
 
             assertTrue(updatedRepo.repos.size == cdxaRepo.repos.size + 1)
             val addedAtt = updatedRepo.repos.firstOrNull { it.filename == "24/jdk-24.0.2+12/jdk_24_0_2_12_aarch64_linux_Adoptium.xml" }

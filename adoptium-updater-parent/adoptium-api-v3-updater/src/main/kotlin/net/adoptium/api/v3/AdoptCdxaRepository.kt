@@ -23,9 +23,9 @@ import org.slf4j.LoggerFactory
 import java.time.Instant
 
 interface AdoptCdxaRepository {
-    suspend fun getCdxas(): List<Cdxa>
+    suspend fun getCdxas(): Pair<List<Cdxa>, Instant?>
     suspend fun getCdxaByName(vendor: Vendor, owner: String, repoName: String, name: String) : Cdxa?
-    suspend fun incrementalUpdate(oldRepo: AdoptCdxaRepos, lastUpdatedAt: UpdatedInfo): List<Cdxa>
+    suspend fun incrementalUpdate(oldRepo: AdoptCdxaRepos, lastUpdatedAt: UpdatedInfo): Pair<List<Cdxa>, Instant?>
 }
 
 @ApplicationScoped
@@ -69,12 +69,13 @@ open class AdoptCdxaRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun getRepository(): suspend (Vendor, String, String) -> List<Cdxa> {
+    private fun getRepository(): suspend (Vendor, String, String) -> Pair<List<Cdxa>, Instant?> {
         return { vendor: Vendor, owner: String, repoName: String -> getRepository(vendor, owner, repoName) }
     }
 
-    private suspend fun getRepository(vendor: Vendor, owner: String, repoName: String): List<Cdxa> {
+    private suspend fun getRepository(vendor: Vendor, owner: String, repoName: String): Pair<List<Cdxa>, Instant?> {
         val cdxas = mutableListOf<Cdxa>()
+        var latestCommittedDate: Instant? = null
 
         LOGGER.info("Cdxa getRepository for: " + vendor + " " + owner + "/" + repoName)
 
@@ -98,15 +99,22 @@ open class AdoptCdxaRepositoryImpl @Inject constructor(
 
         // Get the Cdxas for each major version
         for( majorVersion in majorVersions ) {
-          cdxas.addAll( getCdxasForVersion( vendor, owner, repoName, majorVersion, null ) )
+          val (versionCdxas, versionLatestDate) = getCdxasForVersion( vendor, owner, repoName, majorVersion, null )
+          cdxas.addAll( versionCdxas )
+
+          // Track the latest committedDate across all versions
+          if (versionLatestDate != null && (latestCommittedDate == null || versionLatestDate.isAfter(latestCommittedDate))) {
+              latestCommittedDate = versionLatestDate
+          }
         }
 
-        return cdxas
+        return Pair(cdxas, latestCommittedDate)
     }
 
-    private suspend fun getCdxasForVersion(vendor: Vendor, owner: String, repoName: String, version: Int, afterDate: Instant?): List<Cdxa> {
+    private suspend fun getCdxasForVersion(vendor: Vendor, owner: String, repoName: String, version: Int, afterDate: Instant?): Pair<List<Cdxa>, Instant?> {
         LOGGER.info("getCdxasForVersion: "+vendor+" "+owner+" "+repoName+" "+version+" modifiedAfterDate: "+afterDate)
         val cdxas = mutableListOf<GHCdxa>()
+        var latestCommittedDate: Instant? = null
 
         val attSummaryTags = client.getCdxaSummary(owner, repoName, "$version")
         if ( attSummaryTags != null ) {
@@ -121,6 +129,11 @@ open class AdoptCdxaRepositoryImpl @Inject constructor(
                 if ( attEntries?.repository?.att_object?.entries != null) {
                   // Get last commit update date for this releaseTag
                   var committedDate = instantFromCommittedDate( owner, repoName, attEntries?.repository?.defaultBranchRef?.target?.history?.nodes?.firstOrNull()?.committedDate )
+
+                  // Track the latest committedDate across all release tags
+                  if (committedDate != null && (latestCommittedDate == null || committedDate.isAfter(latestCommittedDate))) {
+                      latestCommittedDate = committedDate
+                  }
 
                   // Have cdxas for this release being updated?
                   if ( afterDate == null || committedDate == null || committedDate.isAfter(afterDate) ) {
@@ -142,7 +155,7 @@ open class AdoptCdxaRepositoryImpl @Inject constructor(
           }
         }
 
-        return getMapperForRepo(owner + "/" + repoName + "/").toCdxaList(vendor, cdxas)
+        return Pair(getMapperForRepo(owner + "/" + repoName + "/").toCdxaList(vendor, cdxas), latestCommittedDate)
     }
 
     private fun getSummaries(): suspend (Vendor, String, String) -> List<CdxaRepoVersionSummary> {
@@ -197,19 +210,33 @@ open class AdoptCdxaRepositoryImpl @Inject constructor(
     override suspend fun incrementalUpdate(
         oldRepo: AdoptCdxaRepos,
         lastUpdatedAt: UpdatedInfo
-    ): List<Cdxa> {
+    ): Pair<List<Cdxa>, Instant?> {
 
         val summaries: List<CdxaRepoVersionSummary> = getDataForEachRepo(
             getSummaries()
         ).await().flatMap { it.toList() }
 
         var updatedCdxas = oldRepo.repos.toMutableList()
-        for( summary in summaries ) {
-            if ( summary.committedDate == null || (summary.committedDate as Instant).isAfter( lastUpdatedAt.time.toInstant() ) ) {
-                LOGGER.info("incrementalUpdate: version has been updated: "+summary)
+        var latestCommittedDate: Instant? = null
+        var hasUpdates = false
 
-                // Get Cdxas for version releaseTags that have been updated after lastUpdatedAt
-                val cdxas = getCdxasForVersion( summary.vendor, summary.org, summary.repo, summary.featureVersion, lastUpdatedAt.time.toInstant() )
+        // Use lastModified from UpdatedInfo if available, otherwise fall back to time
+        val lastModifiedInstant = lastUpdatedAt.lastModified?.toInstant() ?: lastUpdatedAt.time.toInstant()
+
+        for( summary in summaries ) {
+            // Is this Cdxa folder "committedDate" after the current AdoptCdxaRepos lastUpdatedAt.lastModified ?
+            //   ie.has a new commit being merged into this folder?
+            if ( summary.committedDate == null || (summary.committedDate as Instant).isAfter( lastModifiedInstant ) ) {
+                LOGGER.info("incrementalUpdate: version has been updated: "+summary)
+                hasUpdates = true
+
+                // Get Cdxas for version releaseTags that have been updated after lastModified
+                val (cdxas, versionLatestDate) = getCdxasForVersion( summary.vendor, summary.org, summary.repo, summary.featureVersion, lastModifiedInstant )
+
+                // Track the latest committedDate
+                if (versionLatestDate != null && (latestCommittedDate == null || versionLatestDate.isAfter(latestCommittedDate))) {
+                    latestCommittedDate = versionLatestDate
+                }
 
                 val updatedReleases = cdxas.map { it.release_name }.distinct()
 
@@ -226,16 +253,27 @@ open class AdoptCdxaRepositoryImpl @Inject constructor(
         val currentVersions = summaries.map { it.featureVersion }.distinct()
         updatedCdxas.removeAll { it.featureVersion !in currentVersions }
 
-        return updatedCdxas
+        // If no versions were modified, preserve the old repo's lastModified to maintain equality
+        // Otherwise, use the new latestCommittedDate or fall back to lastModifiedInstant
+        val finalLastModified = if (!hasUpdates) {
+            oldRepo.lastModified
+        } else {
+            latestCommittedDate ?: lastModifiedInstant
+        }
+
+        return Pair(updatedCdxas, finalLastModified)
     }
 
-    override suspend fun getCdxas(): List<Cdxa> {
+    override suspend fun getCdxas(): Pair<List<Cdxa>, Instant?> {
         
-        val cdxas: List<Cdxa> = getDataForEachRepo(
+        val results: List<Pair<List<Cdxa>, Instant?>> = getDataForEachRepo(
             getRepository()
-        ).await().flatMap { it.toList() }
+        ).await()
+
+        val cdxas = results.flatMap { it.first }
+        val latestCommittedDate = results.mapNotNull { it.second }.maxOrNull()
                 
-        return cdxas
+        return Pair(cdxas, latestCommittedDate)
     }
 
     private fun <E> getDataForEachRepo(
