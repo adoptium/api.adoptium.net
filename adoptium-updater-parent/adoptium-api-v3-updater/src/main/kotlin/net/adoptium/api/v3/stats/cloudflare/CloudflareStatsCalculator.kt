@@ -55,7 +55,7 @@ open class CloudflareStatsCalculator @Inject constructor(
                 }
                 .map { (version, totalDownloads) ->
                     CloudflarePackageDownloadStatsDbEntry(
-                        date = startDate,
+                        date = endDate,
                         feature_version = version,
                         downloads = totalDownloads
                     )
