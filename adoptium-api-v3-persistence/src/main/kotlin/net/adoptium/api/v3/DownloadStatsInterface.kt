@@ -40,7 +40,21 @@ class DownloadStatsInterface {
         // with the day the baseline was captured; create a new dated baseline when the
         // baseline is next refreshed.
         // Map: feature_version -> baseline downloads at the date encoded in the name.
-        val PACKAGE_DOWNLOAD_BASELINE_2026_05_28: Map<Int, Long> = emptyMap()
+        val PACKAGE_DOWNLOAD_BASELINE_2026_05_28: Map<Int, Long> = mapOf(
+            8 to 635751L,
+            11 to 8029903L,
+            16 to 20L,
+            17 to 531547L,
+            18 to 3851L,
+            19 to 9614L,
+            20 to 5285L,
+            21 to 666282L,
+            22 to 10417L,
+            23 to 16341L,
+            24 to 21104L,
+            25 to 287069L,
+            26 to 18710L
+        )
     }
 
     @Schema(hidden = true)
