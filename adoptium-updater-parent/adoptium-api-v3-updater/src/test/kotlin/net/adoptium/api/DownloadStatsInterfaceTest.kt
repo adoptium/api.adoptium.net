@@ -87,4 +87,34 @@ class DownloadStatsInterfaceTest {
             assertEquals(0L, stats.total_downloads.package_downloads)
         }
     }
+
+    @Test
+    fun `package stats should include cumulative baseline added to tracked downloads`() {
+        runBlocking {
+            val apiPersistenceMock = mockk<ApiPersistence>()
+            val baseTime = TimeSource.now()
+
+            coEvery { apiPersistenceMock.getLatestAllDockerStats() } returns emptyList()
+            coEvery { apiPersistenceMock.getLatestGithubStatsForFeatureVersion(any()) } returns null
+            coEvery { apiPersistenceMock.getAggregatedPackageStats(any<ZonedDateTime>(), any<ZonedDateTime>()) } returns listOf(
+                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(1), 1000, 17),
+                CloudflarePackageDownloadStatsDbEntry(baseTime.minusMinutes(1), 500, 21)
+            )
+
+            // Currently the baseline placeholder is empty; verify breakdown matches tracked stats.
+            // This guards the cumulative-sum semantics (baseline + tracked) and will continue to
+            // pass once a non-empty baseline is populated for additional feature versions.
+            val downloadStatsInterface = DownloadStatsInterface(apiPersistenceMock, UpdatableVersionSupplierStub())
+            val stats = downloadStatsInterface.getTotalDownloadStats()
+
+            val baseline = DownloadStatsInterface.PACKAGE_DOWNLOAD_BASELINE_2026_05_28
+            val expected17 = 1000L + (baseline[17] ?: 0L)
+            val expected21 = 500L + (baseline[21] ?: 0L)
+            val expectedTotal = expected17 + expected21 + baseline.filterKeys { it != 17 && it != 21 }.values.sum()
+
+            assertEquals(expected17, stats.package_downloads[17])
+            assertEquals(expected21, stats.package_downloads[21])
+            assertEquals(expectedTotal, stats.total_downloads.package_downloads)
+        }
+    }
 }
