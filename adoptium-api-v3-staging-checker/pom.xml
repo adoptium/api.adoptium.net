@@ -12,7 +12,7 @@
     <artifactId>adoptium-api-v3-staging-checker</artifactId>
 
     <properties>
-        <main.class>net.adoptium.api.v3.Main</main.class>
+        <main.class>net.adoptium.api.v3.checker.StagingLiveChecker</main.class>
         <quarkus.package.jar.type>uber-jar</quarkus.package.jar.type>
         <quarkus.package.runner-suffix>-jar-with-dependencies</quarkus.package.runner-suffix>
     </properties>
@@ -101,7 +101,7 @@
         <dependency>
             <groupId>net.adoptium.api</groupId>
             <artifactId>adoptium-http-client-datasource</artifactId>
-            <version>3.0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

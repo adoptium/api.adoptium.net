@@ -13,7 +13,7 @@ From the project root (the staging checker requires the `staging-checker` and `a
 ## Run
 
 ```bash
-java -cp adoptium-api-v3-staging-checker/target/adoptium-api-v3-staging-checker-3.0.1-SNAPSHOT-jar-with-dependencies.jar \
+java -cp adoptium-api-v3-staging-checker/target/adoptium-api-v3-staging-checker-*-jar-with-dependencies.jar \
   net.adoptium.api.v3.checker.StagingLiveChecker
 ```
 

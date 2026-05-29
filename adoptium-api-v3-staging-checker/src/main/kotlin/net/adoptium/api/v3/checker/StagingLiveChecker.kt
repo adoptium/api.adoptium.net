@@ -24,7 +24,7 @@ class StagingLiveChecker(
 ) {
     companion object {
 
-        const val STAGING_URL = "https://staging-api.adoptium.net/"
+        const val STAGING_URL = "https://staging-api.adoptium.net"
         const val LIVE_URL = "https://api.adoptium.net"
 
         const val STAGING_ADOPTOPENJDK_URL = "https://staging-api.adoptopenjdk.net"
@@ -42,12 +42,14 @@ class StagingLiveChecker(
             "/v3/assets/feature_releases/{version}/ea?jvm_impl=openj9",
             "/v3/assets/feature_releases/{version}/ea?os=linux",
             "/v3/assets/feature_releases/{version}/ea&page=1",
+            "/v3/assets/feature_releases/{version}/ea&page=1",
             "/v3/assets/feature_releases/{version}/ea?page=1",
             "/v3/assets/feature_releases/{version}/ea?page=2",
             "/v3/assets/feature_releases/{version}/ea?sort_method=DATE",
             "/v3/assets/feature_releases/{version}/ea?sort_order=ASC",
             "/v3/assets/feature_releases/{version}/ea?vendor=openjdk",
             "/v3/assets/feature_releases/{version}/ga?jvm_impl=hotspot",
+            "/v3/assets/feature_releases/{version}/ga&page=1",
             "/v3/assets/feature_releases/{version}/ga&page=1",
             "/v3/assets/feature_releases/{version}/ga?page=1",
             "/v3/assets/feature_releases/{version}/ea?vendor=eclipse",
