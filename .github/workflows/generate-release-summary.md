@@ -1,15 +1,17 @@
 ---
 name: Generate Release Summary
 description: Generate an AI-written summary of changes between releases for the PR description.
-triggers:
-  - workflow_call
-inputs:
-  release_version:
-    description: "The version being released"
-    required: true
-  prev_tag:
-    description: "The previous release tag to compare against"
-    required: true
+on:
+   workflow_call:
+      inputs:
+         release_version:
+            description: "The version being released"
+            required: true
+            type: string
+         prev_tag:
+            description: "The previous release tag to compare against"
+            required: true
+            type: string
 ---
 
 # Generate Release Summary
