@@ -90,10 +90,6 @@
             <artifactId>quarkus-elytron-security-properties-file</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.quarkiverse.logging.logback</groupId>
-            <artifactId>quarkus-logging-logback</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.skyscreamer</groupId>
             <artifactId>jsonassert</artifactId>
             <scope>compile</scope>

@@ -4,10 +4,10 @@ Compares responses from the staging API against the live API to verify they are 
 
 ## Build
 
-From the project root (the staging checker requires the `staging-checker` profile):
+From the project root (the staging checker requires the `staging-checker` and `adoptium` profiles):
 
 ```bash
-./mvnw package -Pstaging-checker -pl adoptium-api-v3-staging-checker -am -DskipTests
+./mvnw package -Pstaging-checker,adoptium -pl adoptium-api-v3-staging-checker -am -DskipTests
 ```
 
 ## Run
