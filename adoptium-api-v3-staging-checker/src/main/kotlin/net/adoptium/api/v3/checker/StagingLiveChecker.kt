@@ -42,19 +42,20 @@ class StagingLiveChecker(
             "/v3/assets/feature_releases/{version}/ea?jvm_impl=openj9",
             "/v3/assets/feature_releases/{version}/ea?os=linux",
             "/v3/assets/feature_releases/{version}/ea&page=1",
+            "/v3/assets/feature_releases/{version}/ea?page=1",
             "/v3/assets/feature_releases/{version}/ea?page=2",
             "/v3/assets/feature_releases/{version}/ea?sort_method=DATE",
             "/v3/assets/feature_releases/{version}/ea?sort_order=ASC",
             "/v3/assets/feature_releases/{version}/ea?vendor=openjdk",
             "/v3/assets/feature_releases/{version}/ga?jvm_impl=hotspot",
             "/v3/assets/feature_releases/{version}/ga&page=1",
+            "/v3/assets/feature_releases/{version}/ga?page=1",
             "/v3/assets/feature_releases/{version}/ea?vendor=eclipse",
 
             "/v3/assets/latest/{version}/hotspot",
             "/v3/assets/latest/{version}/openj9",
 
             "/v3/binary/latest/{version}/ea/linux/x64/jdk/hotspot/normal/adoptium",
-            "/v3/binary/latest/{version}/ea/linux/x64/jdk/hotspot/normal/adoptopenjdk",
             "/v3/binary/latest/{version}/ea/linux/x64/jdk/hotspot/normal/adoptopenjdk",
             "/v3/binary/latest/{version}/ea/linux/x64/jdk/hotspot/normal/eclipse",
             "/v3/binary/latest/{version}/ea/linux/x64/jdk/hotspot/normal/ibm",
@@ -394,14 +395,13 @@ class StagingLiveChecker(
                 println("Failed url curl -L -o - \"$stagingUrl\" | grep -v download_count > /tmp/a && curl -L -o - \"$liveUrl\" | grep -v download_count > /tmp/b && diff /tmp/a /tmp/b")
                 println(result.message)
                 println("====================")
-                liveJsonCleaned?.toString()
-                stagingJsonCleaned?.toString()
                 return "$url (JSON mismatch)"
             } else {
                 println("good $url ${live.statusLine.statusCode}")
             }
         } catch (e: Exception) {
-            e.toString()
+            println("Exception comparing JSON for $url: ${e.message}")
+            return "$url (JSON comparison exception: ${e.message})"
         }
         return null
     }
@@ -411,14 +411,14 @@ class StagingLiveChecker(
         stagingJsonCleaned: JsonElement?
     ) {
         // if array sizes differ it is likely that staging and live are slightly out of sync, remove elements that are out of sync
-        if (liveJsonCleaned?.isJsonArray == true) {
-            while (liveJsonCleaned.asJsonArray.size() > 0) {
+        if (liveJsonCleaned?.isJsonArray == true && stagingJsonCleaned?.isJsonArray == true) {
+            while (liveJsonCleaned.asJsonArray.size() > 0 && stagingJsonCleaned.asJsonArray.size() > 0) {
                 // probably due to updates out of sync, pop off the newer entries
                 val liveId = liveJsonCleaned.asJsonArray?.get(0)?.asJsonObject?.get("id")
-                val stagingId = stagingJsonCleaned?.asJsonArray?.get(0)?.asJsonObject?.get("id")
+                val stagingId = stagingJsonCleaned.asJsonArray?.get(0)?.asJsonObject?.get("id")
 
                 if (liveId != stagingId) {
-                    stagingJsonCleaned?.asJsonArray?.remove(0)
+                    stagingJsonCleaned.asJsonArray?.remove(0)
                     liveJsonCleaned.asJsonArray?.size()?.minus(1)?.let { liveJsonCleaned.asJsonArray?.remove(it) }
                 } else {
                     break
@@ -483,9 +483,6 @@ class StagingLiveChecker(
                 if (v != null) result.add(it.key, v)
             }
 
-        if (result.entrySet().size != jsonObject.entrySet().size) {
-            "foo".toString()
-        }
         return result
     }
 
@@ -586,7 +583,7 @@ class StagingLiveChecker(
                     }
 
                     override fun cancelled() {
-                        TODO("Not yet implemented")
+                        continuation.resumeWith(Result.failure(java.util.concurrent.CancellationException("Request cancelled")))
                     }
                 }
             )
