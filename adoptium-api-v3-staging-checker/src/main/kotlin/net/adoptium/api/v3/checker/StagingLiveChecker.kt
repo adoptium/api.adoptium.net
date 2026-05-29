@@ -370,8 +370,8 @@ class StagingLiveChecker(
         } else {
             urlEncoded
         }
-
-        return "$host$prefix$url2$query2"
+        val normalizedHost = host.removeSuffix("/")
+        return "$normalizedHost$prefix$url2$query2"
     }
 
     private fun compareJsonData(
