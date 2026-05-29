@@ -660,4 +660,13 @@
             </plugin>
         </plugins>
     </reporting>
+
+    <profiles>
+        <profile>
+            <id>staging-checker</id>
+            <modules>
+                <module>adoptium-api-v3-staging-checker</module>
+            </modules>
+        </profile>
+    </profiles>
 </project>
