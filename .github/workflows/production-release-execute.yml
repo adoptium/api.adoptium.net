@@ -1,0 +1,169 @@
+name: Production Release — Execute
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release version (e.g. 3.5.0)'
+        required: true
+        type: string
+      development_version:
+        description: 'Next development version (e.g. 3.6.0-SNAPSHOT)'
+        required: true
+        type: string
+      staging_check_approved:
+        description: 'Staging check was approved by the agent'
+        required: true
+        type: boolean
+      staging_check_summary:
+        description: 'Agent summary of staging check findings'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  validate:
+    name: Validate inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check staging approval
+        if: ${{ inputs.staging_check_approved != true }}
+        run: |
+          echo "::error::Staging check was not approved. Cannot proceed with release."
+          exit 1
+
+  release:
+    name: Maven Release
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create release branch
+        run: git checkout -b "release/${{ inputs.release_version }}"
+
+      - name: Maven release:prepare
+        run: |
+          ./mvnw release:prepare -B \
+            -DreleaseVersion=${{ inputs.release_version }} \
+            -DdevelopmentVersion=${{ inputs.development_version }} \
+            -Dtag=v${{ inputs.release_version }} \
+            -DpushChanges=false \
+            -DlocalCheckout=true
+
+      - name: Maven release:perform
+        run: ./mvnw release:perform -B -DlocalCheckout=true
+
+      - name: Push release branch
+        run: git push origin "release/${{ inputs.release_version }}"
+
+  pull-request-to-main:
+    name: PR release → main
+    needs: release
+    runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.create-pr.outputs.pr_number }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: release/${{ inputs.release_version }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Find previous release tag
+        id: prev-tag
+        run: |
+          PREV_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]' | head -n 1)
+          if [ -z "$PREV_TAG" ]; then
+            PREV_TAG=$(git rev-list --max-parents=0 HEAD | head -1)
+          fi
+          echo "tag=$PREV_TAG" >> "$GITHUB_OUTPUT"
+          echo "Previous release: $PREV_TAG"
+
+      - name: Generate AI release summary
+        uses: github/agentic-workflows@v1
+        with:
+          workflow: .github/workflows/generate-release-summary.md
+          inputs: |
+            release_version=${{ inputs.release_version }}
+            prev_tag=${{ steps.prev-tag.outputs.tag }}
+
+      - name: Create Pull Request
+        id: create-pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Build PR body from agent-generated summary
+          {
+            echo "## Release v${{ inputs.release_version }}"
+            echo ""
+            echo "### Staging verification"
+            echo "✅ Staging-live check approved by AI agent."
+            echo ""
+            echo "**Agent summary:** ${{ inputs.staging_check_summary }}"
+            echo ""
+            if [ -f release-summary.md ]; then
+              cat release-summary.md
+            else
+              echo "_Release summary not available._"
+            fi
+            echo ""
+            echo "### Release commits"
+            echo "- \`release:prepare\` set version to \`${{ inputs.release_version }}\`"
+            echo "- \`release:perform\` completed successfully"
+            echo "- Next development version: \`${{ inputs.development_version }}\`"
+            echo ""
+            echo "### After merging"
+            echo "A follow-up PR to \`production\` and a release tag will be created automatically."
+          } > pr-body.md
+
+          PR_URL=$(gh pr create \
+            --repo "${{ github.repository }}" \
+            --head "release/${{ inputs.release_version }}" \
+            --base main \
+            --title "Release v${{ inputs.release_version }}" \
+            --body-file pr-body.md \
+            --label "release")
+
+          PR_NUM=$(echo "$PR_URL" | grep -oP '\d+$')
+          echo "pr_number=$PR_NUM" >> "$GITHUB_OUTPUT"
+
+  notify:
+    name: Post summary
+    needs: pull-request-to-main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "## Release v${{ inputs.release_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Staging check approved" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Maven release completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ PR #${{ needs.pull-request-to-main.outputs.pr_number }} created to main" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Next:** Merge the PR, then production promotion will happen automatically." >> $GITHUB_STEP_SUMMARY
+
+
+
+
+

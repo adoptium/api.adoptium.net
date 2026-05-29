@@ -1,0 +1,74 @@
+name: Production Release — Post Merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  promote-to-production:
+    name: Tag and PR to production
+    if: |
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract version
+        id: version
+        run: |
+          BRANCH="${{ github.event.pull_request.head.ref }}"
+          VERSION="${BRANCH#release/}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create release tag
+        run: |
+          git tag -a "v${{ steps.version.outputs.version }}" \
+            -m "Release v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+
+      - name: Create promote branch
+        run: |
+          git checkout -b "promote/${{ steps.version.outputs.version }}"
+          git push origin "promote/${{ steps.version.outputs.version }}"
+
+      - name: Create PR to production
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --repo "${{ github.repository }}" \
+            --head "promote/${{ steps.version.outputs.version }}" \
+            --base prod-agent-test \
+            --title "Deploy v${{ steps.version.outputs.version }} to production" \
+            --body "## Deploy v${{ steps.version.outputs.version }} to production
+
+          Merging release from \`main\` into \`prod-agent-test\`.
+
+          - Release PR: #${{ github.event.pull_request.number }}
+          - Tag: \`v${{ steps.version.outputs.version }}\`
+
+          Merge this PR to deploy to production." \
+            --label "release" \
+            --label "production"
+
+
+
+
+
+

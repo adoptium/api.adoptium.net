@@ -1,0 +1,67 @@
+---
+name: Production Release — Staging Verification
+description: Verify staging matches live before a production release. Uses AI judgement to determine if any differences are expected intentional changes or unexpected breakage.
+triggers:
+  - workflow_dispatch
+permissions:
+  contents: read
+  actions: write
+  issues: write
+inputs:
+  release_version:
+    description: "Release version (e.g. 3.5.0)"
+    required: true
+  development_version:
+    description: "Next development version (e.g. 3.6.0-SNAPSHOT)"
+    required: true
+---
+
+# Staging vs Live Verification
+
+You are verifying that the staging API is ready for a production release of version ${{ inputs.release_version }}.
+
+## Context
+
+The staging API may have **intentional differences** from live — these are the new changes being released. Your job is to distinguish between:
+- **Expected differences**: New versions added, updated metadata for recent releases, new endpoints for a feature being released, version bumps in available releases
+- **Unexpected breakage**: Missing releases that should still be present, HTTP errors, empty responses where data should exist, removed JDK versions that weren't EOL'd, schema/format changes that look unintentional
+
+## Steps
+
+1. **Build the staging checker:**
+   ```bash
+   ./mvnw package -Pstaging-checker,adoptium -pl adoptium-api-v3-staging-checker -am -DskipTests
+   ```
+
+2. **Run the staging-live checker and capture output:**
+   ```bash
+   java -cp adoptium-api-v3-staging-checker/target/adoptium-api-v3-staging-checker-*-jar-with-dependencies.jar \
+     net.adoptium.api.v3.checker.StagingLiveChecker adoptium 2>&1 | tee staging-check-output.txt
+   ```
+
+3. **Analyse the results.** Review the checker output carefully:
+   - If all checks pass (exit code 0): Approve the release and trigger the deterministic release workflow.
+   - If checks fail: Examine each failed URL and determine whether the difference is an **expected intentional change** (e.g. a new release was added to staging ahead of going live) or **unexpected breakage** (e.g. data missing, errors, regressions).
+
+4. **Make your decision:**
+   - If all differences are clearly intentional changes that align with what version ${{ inputs.release_version }} is releasing, **approve** and trigger the release workflow:
+     ```bash
+     gh workflow run production-release-execute.yml \
+       -f release_version=${{ inputs.release_version }} \
+       -f development_version=${{ inputs.development_version }} \
+       -f staging_check_approved=true \
+       -f staging_check_summary="<your summary of findings>"
+     ```
+   - If any differences look like unexpected breakage or you are unsure, **do not trigger the release**. Instead, create an issue summarising the unexpected differences:
+     ```bash
+     gh issue create \
+       --title "Release blocker: staging-live differences for v${{ inputs.release_version }}" \
+       --body "<your detailed findings>" \
+       --label "release-blocker"
+     ```
+
+5. **Report your findings.** Provide a clear summary of:
+   - How many URLs were checked
+   - How many passed vs failed
+   - For each failure: whether you judged it as intentional or unexpected, and why
+
