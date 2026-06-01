@@ -1,4 +1,4 @@
-name: Production Release — Post Merge
+name: Production Release — Post Merge Tag
 
 on:
   pull_request:
@@ -7,11 +7,10 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
-  promote-to-production:
-    name: Tag and PR to production
+  create-tag:
+    name: Create release tag
     if: |
       github.event.pull_request.merged == true &&
       startsWith(github.event.pull_request.head.ref, 'release/')
@@ -42,33 +41,8 @@ jobs:
             -m "Release v${{ steps.version.outputs.version }}"
           git push origin "v${{ steps.version.outputs.version }}"
 
-      - name: Create promote branch
+      - name: Summary
         run: |
-          git checkout -b "promote/${{ steps.version.outputs.version }}"
-          git push origin "promote/${{ steps.version.outputs.version }}"
-
-      - name: Create PR to production
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh pr create \
-            --repo "${{ github.repository }}" \
-            --head "promote/${{ steps.version.outputs.version }}" \
-            --base prod-agent-test \
-            --title "Deploy v${{ steps.version.outputs.version }} to production" \
-            --body "## Deploy v${{ steps.version.outputs.version }} to production
-
-          Merging release from \`main\` into \`prod-agent-test\`.
-
-          - Release PR: #${{ github.event.pull_request.number }}
-          - Tag: \`v${{ steps.version.outputs.version }}\`
-
-          Merge this PR to deploy to production." \
-            --label "release" \
-            --label "production"
-
-
-
-
-
-
+          echo "## Tagged v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Release tag \`v${{ steps.version.outputs.version }}\` created on main." >> $GITHUB_STEP_SUMMARY
