@@ -56,8 +56,7 @@ jobs:
         run: git checkout -b "release/${{ steps.versions.outputs.release_version }}"
 
       - name: Maven release:perform
-        run: ./mvnw release:perform -B -DlocalCheckout=true -Darguments="-Padoptium,-adoptopenjdk"
-      - name: Push release branch
+        run: ./mvnw release:perform -B -DlocalCheckout=true -Dgoals=install -Darguments="-Padoptium,-adoptopenjdk"
         run: git push origin "release/${{ steps.versions.outputs.release_version }}"
 
   pull-request-to-main:

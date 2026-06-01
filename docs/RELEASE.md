@@ -25,11 +25,12 @@ flowchart TD
 
     Trigger --> Release
 
+    PRMain -. on PR open .-> ReviewMain{{"Human review<br/>+ merge to main"}}:::review
     PRProd -. on PR open .-> StagingPR[["staging-verification.md<br/>(AI staging vs live checks)"]]:::wf
     PRProd -. on PR open .-> BranchChecker[["production-branch-checker.md<br/>(AI risk analysis +<br/>endpoint diff +<br/>release-summary comment)"]]:::wf
 
-    StagingPR --> ReviewMain{{"Human review<br/>+ merge to main"}}:::review
-    BranchChecker --> ReviewProd{{"Human review<br/>+ merge to production"}}:::review
+    StagingPR --> ReviewProd{{"Human review<br/>+ merge to production"}}:::review
+    BranchChecker --> ReviewProd
 
     ReviewMain --> PostMerge["<b>production-release-post-merge.yml</b><br/>• tag vX.Y.Z<br/>• push tag"]:::job
     ReviewProd --> Deploy[["Production deploy<br/>(image build +<br/>k8s rollout of frontend & updater)"]]:::deploy

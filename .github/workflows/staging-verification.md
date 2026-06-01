@@ -50,6 +50,7 @@ The staging API may have **intentional differences** from live — these are the
 
 2. **Run the staging-live checker and capture output:**
    ```bash
+   set -o pipefail
    java -cp adoptium-api-v3-staging-checker/target/adoptium-api-v3-staging-checker-*-jar-with-dependencies.jar \
      net.adoptium.api.v3.checker.StagingLiveChecker adoptium 2>&1 | tee staging-check-output.txt
    ```
