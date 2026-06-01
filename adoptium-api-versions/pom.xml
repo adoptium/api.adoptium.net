@@ -9,8 +9,8 @@
 
     <properties>
         <coroutine.version>1.11.0</coroutine.version>
-        <jackson.version>2.21.3</jackson.version>
-        <jackson-annotations.version>2.21</jackson-annotations.version>
+        <jackson.version>2.22.0</jackson.version>
+        <jackson-annotations.version>2.22</jackson-annotations.version>
         <jdk.version>17</jdk.version>
         <mongo.version>5.1.2</mongo.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
