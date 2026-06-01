@@ -25,7 +25,7 @@ flowchart TD
 
     Trigger --> Release
 
-    PRMain -. on PR open .-> StagingPR[["staging-verification.md<br/>(AI staging vs live checks)"]]:::wf
+    PRProd -. on PR open .-> StagingPR[["staging-verification.md<br/>(AI staging vs live checks)"]]:::wf
     PRProd -. on PR open .-> BranchChecker[["production-branch-checker.md<br/>(AI risk analysis +<br/>endpoint diff +<br/>release-summary comment)"]]:::wf
 
     StagingPR --> ReviewMain{{"Human review<br/>+ merge to main"}}:::review
@@ -65,7 +65,7 @@ It:
 An AI-powered agentic workflow that builds and runs the staging checker as
 part of the production release gate. It:
 
-1. Builds the staging checker using the `staging-checker` Maven profile.
+1. Builds the staging checker using the `staging-checker` and `adoptium` Maven profiles.
 2. Runs the checker against staging vs live.
 3. Uses AI judgement to determine whether any differences are expected
    intentional changes (e.g. new releases added to staging ahead of going

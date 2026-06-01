@@ -23,10 +23,10 @@ jobs:
           VERSION="${BRANCH#release/}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Checkout main
-        uses: actions/checkout@v4
+      - name: Checkout merge commit
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: main
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -37,9 +37,13 @@ jobs:
 
       - name: Create release tag
         run: |
-          git tag -a "v${{ steps.version.outputs.version }}" \
-            -m "Release v${{ steps.version.outputs.version }}"
-          git push origin "v${{ steps.version.outputs.version }}"
+          TAG="v${{ steps.version.outputs.version }}"
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            echo "Tag ${TAG} already exists; skipping."
+            exit 0
+          fi
+          git tag -a "${TAG}" -m "Release ${TAG}"
+          git push origin "${TAG}"
 
       - name: Summary
         run: |
