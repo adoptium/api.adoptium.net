@@ -10,3 +10,5 @@ jobs:
       contents: write
       pull-requests: write
     uses: adoptium/.github/.github/workflows/dependabot-auto-merge.yml@main
+    with:
+      merge_method: merge

@@ -16,6 +16,11 @@ safe-outputs:
   allowed-domains:
     - "*.adoptium.net"
 
+network:
+  allowed:
+    - defaults
+    - "*.adoptium.net"
+
 checkout:
   fetch-depth: 0
 
@@ -215,11 +220,15 @@ Assign HIGH if **any** of the following are true:
 - OpenAPI spec breaking changes (removed fields, changed types)
 - Security-related changes (auth, CORS, TLS)
 - Environment variable additions/removals that require infra changes
-- Quarkus version upgrade (major or minor)
+- Quarkus **major** version upgrade (e.g. 3.x → 4.x)
 
 #### 🟡 MEDIUM RISK
 Assign MEDIUM if **none** of the HIGH triggers apply, but **any** of these do:
+- Quarkus minor/patch version upgrade (e.g. 3.35 → 3.36) — these are frequent
+  and low-risk in practice
 - New API endpoints added (additive, non-breaking)
+- Changes to `/v3/stats/**` endpoints — stats routes are only consumed
+  internally, so changes here do not affect external consumers
 - Query logic changes in persistence layer (same schema, different queries)
 - Updater timing or scheduling changes
 - Telemetry configuration changes
