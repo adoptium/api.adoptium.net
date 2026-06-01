@@ -22,7 +22,7 @@
 #
 # For more information: https://github.github.com/gh-aw/introduction/overview/
 #
-# Runs automatically on PRs to prod-agent-test. Verifies staging matches live using AI judgement to determine if differences are expected intentional changes or unexpected breakage.
+# Runs automatically on PRs to production. Verifies staging matches live using AI judgement to determine if differences are expected intentional changes or unexpected breakage.
 #
 # Secrets used:
 #   - GH_AW_GITHUB_MCP_SERVER_TOKEN
@@ -50,7 +50,7 @@ name: "Production Release — Staging Verification"
 on:
   pull_request:
     branches:
-    - prod-agent-test
+    - production
 
 permissions: {}
 
@@ -1168,7 +1168,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           WORKFLOW_NAME: "Production Release — Staging Verification"
-          WORKFLOW_DESCRIPTION: "Runs automatically on PRs to prod-agent-test. Verifies staging matches live using AI judgement to determine if differences are expected intentional changes or unexpected breakage."
+          WORKFLOW_DESCRIPTION: "Runs automatically on PRs to production. Verifies staging matches live using AI judgement to determine if differences are expected intentional changes or unexpected breakage."
           HAS_PATCH: ${{ needs.agent.outputs.has_patch }}
         with:
           script: |

@@ -1,12 +1,12 @@
 ---
 name: Production Release — Staging Verification
 description: >
-  Runs automatically on PRs to prod-agent-test. Verifies staging matches live
+  Runs automatically on PRs to production. Verifies staging matches live
   using AI judgement to determine if differences are expected intentional changes
   or unexpected breakage.
 on:
   pull_request:
-    branches: [prod-agent-test]
+    branches: [production]
 
 permissions:
   contents: read
@@ -33,7 +33,7 @@ timeout-minutes: 30
 
 # Staging vs Live Verification
 
-You are verifying that the staging API is ready for a production release. This PR merges a release branch into `prod-agent-test`.
+You are verifying that the staging API is ready for a production release. This PR merges a release branch into `production`.
 
 ## Context
 

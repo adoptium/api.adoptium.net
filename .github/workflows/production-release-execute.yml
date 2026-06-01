@@ -104,7 +104,7 @@ jobs:
           echo "pr_number=$PR_NUM" >> "$GITHUB_OUTPUT"
 
   pull-request-to-prod:
-    name: PR release → prod-agent-test
+    name: PR release → production
     needs: release
     runs-on: ubuntu-latest
     outputs:
@@ -117,7 +117,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create Pull Request to prod-agent-test
+      - name: Create Pull Request to production
         id: create-pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -125,7 +125,7 @@ jobs:
           {
             echo "## Deploy v${{ needs.release.outputs.release_version }} to production"
             echo ""
-            echo "Merging release \`${{ needs.release.outputs.release_version }}\` into \`prod-agent-test\`."
+            echo "Merging release \`${{ needs.release.outputs.release_version }}\` into \`production\`."
             echo ""
             echo "The staging-live checker will run automatically on this PR to verify"
             echo "there are no unexpected differences between staging and production."
@@ -137,7 +137,7 @@ jobs:
           PR_URL=$(gh pr create \
             --repo "${{ github.repository }}" \
             --head "release/${{ needs.release.outputs.release_version }}" \
-            --base prod-agent-test \
+            --base production \
             --title "Deploy v${{ needs.release.outputs.release_version }} to production" \
             --body-file pr-body.md \
             --label "release" \
@@ -160,6 +160,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Maven release completed" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ PR #${{ needs.pull-request-to-main.outputs.pr_number }} created → main" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ PR #${{ needs.pull-request-to-prod.outputs.pr_number }} created → prod-agent-test (staging checker will run)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ PR #${{ needs.pull-request-to-prod.outputs.pr_number }} created → production (staging checker will run)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Next:** Review staging checker results on the prod PR, then merge both PRs to trigger tagging." >> $GITHUB_STEP_SUMMARY
