@@ -56,8 +56,14 @@ jobs:
 
     - if: matrix.build-mode == 'manual'
       run: |
-        # Remove any stale Kotlin artifacts from a cross-branch cache (e.g. main uses kotlin 2.4.0
-        # while this branch uses 2.3.21); Maven will re-download the correct version.
+        # Clear stale project and Kotlin artifacts from a cross-branch cache restore.
+        # If the cache was saved on main (kotlin.version=2.4.0) and restored here,
+        # the local-repo copy of adoptium-api-versions-3.0.1-SNAPSHOT.pom declares
+        # kotlin.version=2.4.0, which Maven uses during "Scanning for projects" to
+        # resolve the BOM import before any reactor module is built.  Removing the
+        # stale POM forces Maven to fall back to the workspace (reactor) version of
+        # the BOM, which correctly declares kotlin.version=2.3.21.
+        rm -rf ~/.m2/repository/net/adoptium
         rm -rf ~/.m2/repository/org/jetbrains/kotlin
         ./mvnw --batch-mode clean install -Padoptium,-adoptopenjdk
 
