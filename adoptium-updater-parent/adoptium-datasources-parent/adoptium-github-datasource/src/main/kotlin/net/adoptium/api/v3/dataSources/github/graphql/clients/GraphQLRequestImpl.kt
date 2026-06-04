@@ -7,7 +7,6 @@ import com.expediagroup.graphql.client.types.GraphQLClientResponse
 import io.ktor.client.*
 import io.ktor.client.plugins.logging.*
 import jakarta.enterprise.context.ApplicationScoped
-import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.github.GitHubAuth
 import net.adoptium.api.v3.dataSources.github.GitHubAuth.AuthInfo
 import java.net.URL
@@ -39,7 +38,7 @@ open class GraphQLRequestImpl : GraphQLRequest {
         client = GraphQLKtorClient(
             url = URL(BASE_URL),
             httpClient = httpClient,
-            serializer = GraphQLClientJacksonSerializer(UpdaterJsonMapper.mapper)
+            serializer = GraphQLClientJacksonSerializer()
         )
     }
 
