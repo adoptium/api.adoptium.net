@@ -56,6 +56,9 @@ jobs:
 
     - if: matrix.build-mode == 'manual'
       run: |
+        # Remove any stale Kotlin artifacts from a cross-branch cache (e.g. main uses kotlin 2.4.0
+        # while this branch uses 2.3.21); Maven will re-download the correct version.
+        rm -rf ~/.m2/repository/org/jetbrains/kotlin
         ./mvnw --batch-mode clean install -Padoptium,-adoptopenjdk
 
     - name: Perform CodeQL Analysis
