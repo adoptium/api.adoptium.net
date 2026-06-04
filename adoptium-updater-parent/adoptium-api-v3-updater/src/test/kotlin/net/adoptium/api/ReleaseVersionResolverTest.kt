@@ -62,6 +62,17 @@ class ReleaseVersionResolverTest : BaseTest() {
     }
 
     @Test
+    fun availableEaReleasesIsCorrect() {
+        check { releaseInfo ->
+            // all versions have ea releases (versions in TEST_RESOURCES), including version 18 which is ea-only
+            val versions = AdoptReposTestDataGenerator.generate().repos.keys
+                .toTypedArray()
+
+            releaseInfo.available_ea_releases.contentEquals(versions)
+        }
+    }
+
+    @Test
     fun tipVersionIsCorrect() {
         check { releaseInfo ->
             releaseInfo.tip_version == 15
