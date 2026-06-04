@@ -52,20 +52,9 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        cache: 'maven'
 
     - if: matrix.build-mode == 'manual'
-      run: |
-        # Clear stale project and Kotlin artifacts from a cross-branch cache restore.
-        # If the cache was saved on main (kotlin.version=2.4.0) and restored here,
-        # the local-repo copy of adoptium-api-versions-3.0.1-SNAPSHOT.pom declares
-        # kotlin.version=2.4.0, which Maven uses during "Scanning for projects" to
-        # resolve the BOM import before any reactor module is built.  Removing the
-        # stale POM forces Maven to fall back to the workspace (reactor) version of
-        # the BOM, which correctly declares kotlin.version=2.3.21.
-        rm -rf ~/.m2/repository/net/adoptium
-        rm -rf ~/.m2/repository/org/jetbrains/kotlin
-        ./mvnw --batch-mode clean install -Padoptium,-adoptopenjdk
+      run: ./mvnw --batch-mode clean install -Padoptium,-adoptopenjdk
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
