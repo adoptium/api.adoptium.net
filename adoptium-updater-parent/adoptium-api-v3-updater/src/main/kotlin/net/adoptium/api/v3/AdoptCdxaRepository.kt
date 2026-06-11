@@ -85,14 +85,13 @@ open class AdoptCdxaRepositoryImpl @Inject constructor(
         // Get the top major version list
         var majorVersions = mutableListOf<Int>()
         val attSummaryTop = client.getCdxaSummary(owner, repoName, "")
-        if ( attSummaryTop != null ) {
-          // Determine major versions
-          val topDirs = attSummaryTop?.repository?.att_object?.entries //List<GHCdxaRepoSummaryEntry>?
-          if ( topDirs != null) {
-            for( dir in topDirs ) {
-              if ( dir.type == "tree" && dir.name.toIntOrNull() != null) {
-                majorVersions.add(dir.name.toInt())
-              }
+            ?: throw Exception("getCdxaSummary returned null for top-level directory of $owner/$repoName")
+        // Determine major versions
+        val topDirs = attSummaryTop.repository?.att_object?.entries //List<GHCdxaRepoSummaryEntry>?
+        if ( topDirs != null) {
+          for( dir in topDirs ) {
+            if ( dir.type == "tree" && dir.name.toIntOrNull() != null) {
+              majorVersions.add(dir.name.toInt())
             }
           }
         }
@@ -172,19 +171,18 @@ open class AdoptCdxaRepositoryImpl @Inject constructor(
 
         // Get the top major versions committedDate summary
         val attSummaryTop = client.getCdxaSummary(owner, repoName, "")
-        if ( attSummaryTop != null ) {
-          // Determine major versions
-          val topDirs = attSummaryTop?.repository?.att_object?.entries //List<GHCdxaRepoSummaryEntry>?
-          if ( topDirs != null) {
-            for( dir in topDirs ) {
-              if ( dir.type == "tree" && dir.name.toIntOrNull() != null) {
-                // Get summary of featureVersion so as to get its committedDate
-                val attSummaryTags = client.getCdxaSummary(owner, repoName, dir.name)
-                val committedDate  = instantFromCommittedDate( owner, repoName, attSummaryTags?.repository?.defaultBranchRef?.target?.history?.nodes?.firstOrNull()?.committedDate )
-                val releaseTags    = attSummaryTags?.repository?.att_object?.entries?.filter { it.type == "tree" }?.map { it.name } ?: emptyList<String>()
+            ?: throw Exception("getCdxaSummary returned null for top-level directory of $owner/$repoName")
+        // Determine major versions
+        val topDirs = attSummaryTop.repository?.att_object?.entries //List<GHCdxaRepoSummaryEntry>?
+        if ( topDirs != null) {
+          for( dir in topDirs ) {
+            if ( dir.type == "tree" && dir.name.toIntOrNull() != null) {
+              // Get summary of featureVersion so as to get its committedDate
+              val attSummaryTags = client.getCdxaSummary(owner, repoName, dir.name)
+              val committedDate  = instantFromCommittedDate( owner, repoName, attSummaryTags?.repository?.defaultBranchRef?.target?.history?.nodes?.firstOrNull()?.committedDate )
+              val releaseTags    = attSummaryTags?.repository?.att_object?.entries?.filter { it.type == "tree" }?.map { it.name } ?: emptyList<String>()
 
-                summaries.add( CdxaRepoVersionSummary(vendor, owner, repoName, dir.name.toInt(), releaseTags, committedDate) )
-              }
+              summaries.add( CdxaRepoVersionSummary(vendor, owner, repoName, dir.name.toInt(), releaseTags, committedDate) )
             }
           }
         }
