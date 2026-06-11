@@ -28,18 +28,19 @@ open class GraphQLGitHubCdxaSummaryClient @Inject constructor(
           graphQLGitHubInterface.queryApi(query::withCursor, null)
         } catch (e: java.lang.Exception) {
             LOGGER.error("Exception on cdxa summary query $org/$repo/$directory :"+e)
-            return null
+            throw e
         }
 
         val ghCdxaRepoSummary: GHCdxaRepoSummaryData? = try {
           if (result == null || result?.data == null) {
-            return null
+            LOGGER.error("No data returned for cdxa summary query $org/$repo/$directory")
+            throw Exception("No data returned for cdxa summary query $org/$repo/$directory")
           } else {
             result.data
           }
         } catch (e: java.lang.Exception) {
             LOGGER.error("Exception mapping cdxa summary query response $org/$repo/$directory :"+e+" query result: "+result)
-            return null
+            throw e
         }
 
         return ghCdxaRepoSummary
