@@ -33,8 +33,7 @@ open class GraphQLGitHubCdxaSummaryClient @Inject constructor(
 
         val ghCdxaRepoSummary: GHCdxaRepoSummaryData? = try {
           if (result == null || result?.data == null) {
-            LOGGER.error("No data returned for cdxa summary query $org/$repo/$directory")
-            throw Exception("No data returned for cdxa summary query $org/$repo/$directory")
+            null
           } else {
             result.data
           }
