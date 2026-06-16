@@ -85,7 +85,7 @@ open class AdoptCdxaRepositoryImpl @Inject constructor(
         // Get the top major version list
         var majorVersions = mutableListOf<Int>()
         val attSummaryTop = client.getCdxaSummary(owner, repoName, "")
-            ?: throw Exception("getCdxaSummary returned null for top-level directory of $owner/$repoName")
+            ?: return Pair(cdxas, latestCommittedDate)
         // Determine major versions
         val topDirs = attSummaryTop.repository?.att_object?.entries //List<GHCdxaRepoSummaryEntry>?
         if ( topDirs != null) {
@@ -171,7 +171,7 @@ open class AdoptCdxaRepositoryImpl @Inject constructor(
 
         // Get the top major versions committedDate summary
         val attSummaryTop = client.getCdxaSummary(owner, repoName, "")
-            ?: throw Exception("getCdxaSummary returned null for top-level directory of $owner/$repoName")
+            ?: return summaries
         // Determine major versions
         val topDirs = attSummaryTop.repository?.att_object?.entries //List<GHCdxaRepoSummaryEntry>?
         if ( topDirs != null) {
