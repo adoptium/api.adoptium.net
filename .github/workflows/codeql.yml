@@ -26,12 +26,19 @@ jobs:
       contents: read
       security-events: write
 
+    # Use buildless (standalone) extraction so the Kotlin compiler is not invoked directly.
+    # This avoids the "kotlin-version-too-new" error from CodeQL's tracer-based extraction
+    # when the project uses a Kotlin version newer than CodeQL's bundled extractor supports.
+    env:
+      CODEQL_EXTRACTOR_JAVA_OPTION_BUILDLESS: "true"
+      CODEQL_EXTRACTOR_JAVA_OPTION_BUILDLESS_CLASSPATH_FROM_BUILD_FILES: "true"
+
     strategy:
       fail-fast: false
       matrix:
         include:
           - language: java-kotlin
-            build-mode: none
+            build-mode: autobuild
             # Learn more about CodeQL language support at https://git.io/codeql-language-support
 
     steps:
