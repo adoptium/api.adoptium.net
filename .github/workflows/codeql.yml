@@ -31,7 +31,7 @@ jobs:
       matrix:
         include:
           - language: java-kotlin
-            build-mode: manual
+            build-mode: none
             # Learn more about CodeQL language support at https://git.io/codeql-language-support
 
     steps:
@@ -54,10 +54,6 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: 'maven'
-
-    - if: matrix.build-mode == 'manual'
-      run: |
-        ./mvnw --batch-mode clean install -Padoptium,-adoptopenjdk
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
