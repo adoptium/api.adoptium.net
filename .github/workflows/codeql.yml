@@ -54,6 +54,7 @@ jobs:
         distribution: 'temurin'
         #cache: 'maven'
         verify-signature: true
+        check-latest: true
 
     - if: matrix.build-mode == 'manual'
       run: |

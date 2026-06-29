@@ -40,6 +40,7 @@ jobs:
         distribution: 'temurin'
         #cache: 'maven'
         verify-signature: true
+        check-latest: true
 
     - name: Build app
       run: ./mvnw --batch-mode clean install ${{ env.ARGS }}
