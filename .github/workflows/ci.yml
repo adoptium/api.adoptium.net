@@ -38,7 +38,7 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        cache: 'maven'
+        #cache: 'maven'
         verify-signature: true
 
     - name: Build app
