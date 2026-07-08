@@ -34,13 +34,11 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: actions/setup-java@main
+    - uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520 # v5.4.0
       with:
         java-version: '21'
         distribution: 'temurin'
-        #cache: 'maven'
-        verify-signature: true
-        check-latest: true
+        cache: 'maven'
 
     - name: Build app
       run: ./mvnw --batch-mode clean install ${{ env.ARGS }}
