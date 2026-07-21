@@ -1,6 +1,5 @@
 package net.adoptium.api.v3.dataSources.github.graphql.clients
 
-import com.expediagroup.graphql.client.jackson.GraphQLClientJacksonSerializer
 import com.expediagroup.graphql.client.ktor.GraphQLKtorClient
 import com.expediagroup.graphql.client.types.GraphQLClientRequest
 import com.expediagroup.graphql.client.types.GraphQLClientResponse
@@ -39,7 +38,7 @@ open class GraphQLRequestImpl : GraphQLRequest {
         client = GraphQLKtorClient(
             url = URL(BASE_URL),
             httpClient = httpClient,
-            serializer = GraphQLClientJacksonSerializer(UpdaterJsonMapper.mapper)
+            serializer = JacksonGraphQLClientSerializer(UpdaterJsonMapper.mapper)
         )
     }
 
