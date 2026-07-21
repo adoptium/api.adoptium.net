@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JavaType
+import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.databind.jsontype.TypeIdResolver
 import com.fasterxml.jackson.datatype.jsonp.JSONPModule
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
@@ -24,12 +25,13 @@ class UpdaterJsonMapper {
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
 
-        val mapper: ObjectMapper = ObjectMapper()
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            .registerModule(KotlinModule.Builder().build())
-            .registerModule(JavaTimeModule())
-            .registerModule(JSONPModule())
+        val mapper: JsonMapper = JsonMapper.builder()
+            .serializationInclusion(JsonInclude.Include.NON_NULL)
+            .addModule(KotlinModule.Builder().build())
+            .addModule(JavaTimeModule())
+            .addModule(JSONPModule())
             .addHandler(CustomDeserializationProblemHandler())
+            .build()
     }
 
     private class CustomDeserializationProblemHandler() : DeserializationProblemHandler() {
