@@ -18,39 +18,19 @@ import kotlin.reflect.KClass
  */
 class JacksonGraphQLClientSerializer(private val mapper: ObjectMapper) : GraphQLClientSerializer {
 
-    override fun serialize(request: GraphQLClientRequest<*>): String {
-        val body = mutableMapOf<String, Any?>()
-        request.query?.let { body["query"] = it }
-        request.operationName?.let { body["operationName"] = it }
-        request.variables?.let { body["variables"] = it }
-        request.extensions?.let { if (it.isNotEmpty()) body["extensions"] = it }
-        return mapper.writeValueAsString(body)
-    }
+    override fun serialize(request: GraphQLClientRequest<*>): String =
+        mapper.writeValueAsString(buildRequestBody(request))
 
-    override fun serialize(requests: List<GraphQLClientRequest<*>>): String {
-        return mapper.writeValueAsString(requests.map { request ->
-            val body = mutableMapOf<String, Any?>()
-            request.query?.let { body["query"] = it }
-            request.operationName?.let { body["operationName"] = it }
-            request.variables?.let { body["variables"] = it }
-            request.extensions?.let { if (it.isNotEmpty()) body["extensions"] = it }
-            body
-        })
-    }
+    override fun serialize(requests: List<GraphQLClientRequest<*>>): String =
+        mapper.writeValueAsString(requests.map { buildRequestBody(it) })
 
     override fun <T : Any> deserialize(rawResponse: String, responseType: KClass<T>): GraphQLClientResponse<T> {
         val rawResult = mapper.readValue(rawResponse, RawGraphQLResponse::class.java)
         val data = rawResult.data?.let { mapper.treeToValue(it, responseType.java) }
         return GraphQLClientResponseImpl(
             data = data,
-            errors = rawResult.errors?.map { err ->
-                GraphQLClientErrorImpl(
-                    message = err.message,
-                    locations = err.locations,
-                    path = err.path,
-                    extensions = err.extensions
-                )
-            }
+            errors = rawResult.errors?.map { mapError(it) },
+            extensions = rawResult.extensions
         )
     }
 
@@ -61,21 +41,33 @@ class JacksonGraphQLClientSerializer(private val mapper: ObjectMapper) : GraphQL
             val data = rawResult.data?.let { mapper.treeToValue(it, responseType.java) }
             GraphQLClientResponseImpl(
                 data = data,
-                errors = rawResult.errors?.map { err ->
-                    GraphQLClientErrorImpl(
-                        message = err.message,
-                        locations = err.locations,
-                        path = err.path,
-                        extensions = err.extensions
-                    )
-                }
+                errors = rawResult.errors?.map { mapError(it) },
+                extensions = rawResult.extensions
             )
         }
     }
 
+    private fun buildRequestBody(request: GraphQLClientRequest<*>): Map<String, Any?> {
+        val body = mutableMapOf<String, Any?>()
+        request.query?.let { body["query"] = it }
+        request.operationName?.let { body["operationName"] = it }
+        request.variables?.let { body["variables"] = it }
+        request.extensions?.let { if (it.isNotEmpty()) body["extensions"] = it }
+        return body
+    }
+
+    private fun mapError(err: RawGraphQLError): GraphQLClientError =
+        GraphQLClientErrorImpl(
+            message = err.message,
+            locations = err.locations,
+            path = err.path,
+            extensions = err.extensions
+        )
+
     private data class RawGraphQLResponse(
         @JsonProperty("data") val data: JsonNode? = null,
-        @JsonProperty("errors") val errors: List<RawGraphQLError>? = null
+        @JsonProperty("errors") val errors: List<RawGraphQLError>? = null,
+        @JsonProperty("extensions") val extensions: Map<String, Any>? = null
     )
 
     private data class RawGraphQLError @JsonCreator constructor(
