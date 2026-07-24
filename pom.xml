@@ -16,10 +16,10 @@
     <!-- Keep all these in sync with adoptium-api-versions -->
     <properties>
         <coroutine.version>1.7.1</coroutine.version>
-        <jacoco.version>0.8.14</jacoco.version>
+        <jacoco.version>0.8.15</jacoco.version>
         <jdk.version>17</jdk.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <kotlin.version>2.3.21</kotlin.version>
+        <kotlin.version>2.4.10</kotlin.version>
         <maven.antrun-plugin.version>3.2.0</maven.antrun-plugin.version>
         <maven.assembly-plugin.version>3.8.0</maven.assembly-plugin.version>
         <maven.build-helper-plugin.version>3.6.1</maven.build-helper-plugin.version>
@@ -32,25 +32,25 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.testSource>17</maven.compiler.testSource>
         <maven.compiler.testTarget>17</maven.compiler.testTarget>
-        <maven.dependency-plugin.version>3.10.0</maven.dependency-plugin.version>
+        <maven.dependency-plugin.version>3.11.0</maven.dependency-plugin.version>
         <maven.dependency-versions-check-plugin.version>2.0.4</maven.dependency-versions-check-plugin.version>
         <maven.deploy-plugin.version>3.1.4</maven.deploy-plugin.version>
         <maven.directory-maven-plugin.version>1.0</maven.directory-maven-plugin.version>
-        <maven.enforcer-plugin.version>3.6.2</maven.enforcer-plugin.version>
+        <maven.enforcer-plugin.version>3.6.3</maven.enforcer-plugin.version>
         <maven.exec-plugin.version>3.6.3</maven.exec-plugin.version>
-        <maven.filtering-plugin.version>3.5.0</maven.filtering-plugin.version>
-        <maven.help-plugin.version>3.5.1</maven.help-plugin.version>
+        <maven.filtering-plugin.version>3.5.1</maven.filtering-plugin.version>
+        <maven.help-plugin.version>3.5.2</maven.help-plugin.version>
         <maven.install-plugin.version>3.1.4</maven.install-plugin.version>
         <maven.jacoco-plugin.version>0.8.10</maven.jacoco-plugin.version>
-        <maven.jar-plugin.version>3.5.0</maven.jar-plugin.version>
+        <maven.jar-plugin.version>3.5.1</maven.jar-plugin.version>
         <maven.javadoc-plugin.version>3.12.0</maven.javadoc-plugin.version>
         <maven.jdepend-plugin.version>2.2.0</maven.jdepend-plugin.version>
         <maven.jdeprscan-plugin.version>3.0.0</maven.jdeprscan-plugin.version>
         <maven.jdeps-plugin.version>3.2.0</maven.jdeps-plugin.version>
         <maven.jxr-plugin.version>3.6.0</maven.jxr-plugin.version>
         <maven.license-plugin.version>2.7.1</maven.license-plugin.version>
-        <maven.openapi-generator-maven-plugin.version>7.22.0</maven.openapi-generator-maven-plugin.version>
-        <maven.pitest-plugin.version>1.23.1</maven.pitest-plugin.version>
+        <maven.openapi-generator-maven-plugin.version>7.24.0</maven.openapi-generator-maven-plugin.version>
+        <maven.pitest-plugin.version>1.25.8</maven.pitest-plugin.version>
         <maven.pmd-plugin.version>3.28.0</maven.pmd-plugin.version>
         <maven.project-info-reports-plugin.version>3.9.0</maven.project-info-reports-plugin.version>
         <maven.rat-plugin.version>0.18</maven.rat-plugin.version>
@@ -59,8 +59,8 @@
         <maven.scm-plugin.version>2.2.1</maven.scm-plugin.version>
         <maven.site-plugin.version>4.0.0-M16</maven.site-plugin.version>
         <maven.source-plugin.version>3.4.0</maven.source-plugin.version>
-        <maven.spotbugs-plugin.version>4.9.8.3</maven.spotbugs-plugin.version>
-        <maven.surefire-plugin.version>3.5.5</maven.surefire-plugin.version>
+        <maven.spotbugs-plugin.version>4.10.3.0</maven.spotbugs-plugin.version>
+        <maven.surefire-plugin.version>3.5.6</maven.surefire-plugin.version>
         <maven.swaggerhub-maven-plugin.version>1.0.10</maven.swaggerhub-maven-plugin.version>
         <maven.tidy-plugin.version>1.4.0</maven.tidy-plugin.version>
         <maven.toolchains-plugin.version>3.2.0</maven.toolchains-plugin.version>
@@ -74,7 +74,7 @@
         <spotbugs.version>4.7.3</spotbugs.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.35.3</quarkus.version>
+        <quarkus.version>3.38.0</quarkus.version>
     </properties>
 
     <modules>
@@ -660,4 +660,13 @@
             </plugin>
         </plugins>
     </reporting>
+
+    <profiles>
+        <profile>
+            <id>staging-checker</id>
+            <modules>
+                <module>adoptium-api-v3-staging-checker</module>
+            </modules>
+        </profile>
+    </profiles>
 </project>
