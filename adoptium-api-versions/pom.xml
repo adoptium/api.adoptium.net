@@ -392,18 +392,13 @@
             <dependency>
                 <groupId>com.expediagroup</groupId>
                 <artifactId>graphql-kotlin-ktor-client</artifactId>
-                <version>9.2.0</version>
+                <version>10.1.2</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.jetbrains.kotlinx</groupId>
                         <artifactId>kotlinx-serialization-json-jvm</artifactId>
                     </exclusion>
                 </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>com.expediagroup</groupId>
-                <artifactId>graphql-kotlin-client-jackson</artifactId>
-                <version>9.2.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
