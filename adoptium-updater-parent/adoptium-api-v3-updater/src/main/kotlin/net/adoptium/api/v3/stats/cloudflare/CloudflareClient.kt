@@ -51,13 +51,18 @@ class CloudflareClient @Inject constructor(
 
         // GraphQL query with variables - static constant for reuse
         // Pagination uses clientRequestPath_gt to filter out first page
+        // datetime is NOT included in dimensions so each unique path appears only once
+        // (counts aggregated across the entire date range), making clientRequestPath_gt
+        // pagination correct. Previously, ordering by [datetime_ASC, clientRequestPath_ASC]
+        // with clientRequestPath_gt pagination caused data loss for entries with later
+        // datetimes but paths <= the last path from the previous page.
         private const val GRAPHQL_QUERY = """
             query (${'$'}zoneTag: String!, ${'$'}limit: Int!, ${'$'}startDate: Time!, ${'$'}endDate: Time!, ${'$'}lastPath: String) {
                 viewer {
                     zones(filter: { zoneTag: ${'$'}zoneTag }) {
                         httpRequestsAdaptiveGroups(
                             limit: ${'$'}limit,
-                            orderBy: [datetime_ASC, clientRequestPath_ASC],
+                            orderBy: [clientRequestPath_ASC],
                             filter: {
                                 datetime_geq: ${'$'}startDate,
                                 datetime_lt: ${'$'}endDate,
@@ -78,7 +83,6 @@ class CloudflareClient @Inject constructor(
                         ) {
                             count
                             dimensions {
-                                datetime
                                 clientRequestPath
                             }
                         }

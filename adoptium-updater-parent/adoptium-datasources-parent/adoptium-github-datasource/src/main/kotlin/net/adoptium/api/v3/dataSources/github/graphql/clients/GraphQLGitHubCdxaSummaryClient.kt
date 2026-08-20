@@ -28,18 +28,33 @@ open class GraphQLGitHubCdxaSummaryClient @Inject constructor(
           graphQLGitHubInterface.queryApi(query::withCursor, null)
         } catch (e: java.lang.Exception) {
             LOGGER.error("Exception on cdxa summary query $org/$repo/$directory :"+e)
-            return null
+           /* 
+            * Re-throwing here makes transient GraphQL/API failures visible to the caller instead of collapsing them 
+            * into null. That matters because callers were interpreting null as “no CDXAs exist” and deleting persisted 
+            * records, whereas an exception preserves the current DB state and allows retry/recovery higher up.
+            */
+            throw e
         }
 
         val ghCdxaRepoSummary: GHCdxaRepoSummaryData? = try {
           if (result == null || result?.data == null) {
-            return null
+            /*
+             * This keeps the valid “no summary / folder missing” path returning null, while separating it from actual 
+             * request failures. In other words, empty data is still treated as an empty result, but transport/query errors 
+             * are no longer mistaken for absence of CDXAs.
+             */
+            null
           } else {
             result.data
           }
         } catch (e: java.lang.Exception) {
             LOGGER.error("Exception mapping cdxa summary query response $org/$repo/$directory :"+e+" query result: "+result)
-            return null
+           /*
+            * Same rationale as above: if response parsing/mapping fails, that is an operational error, not a 
+            * legitimate empty result. Re-throwing prevents malformed or partial responses from triggering the 
+            * same deletion path as a real “nothing found” case.
+            */
+            throw e
         }
 
         return ghCdxaRepoSummary
