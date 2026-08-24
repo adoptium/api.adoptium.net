@@ -1,23 +1,24 @@
 package net.adoptium.api.v3.stats.cloudflare
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
-import net.adoptium.api.v3.dataSources.HttpClientFactory
+import jakarta.inject.Named
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.suspendCancellableCoroutine
+import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.config.APIConfig
+import net.adoptium.api.v3.dataSources.HttpClientFactory
 import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.concurrent.FutureCallback
 import org.apache.http.entity.StringEntity
 import org.apache.http.nio.client.HttpAsyncClient
-import jakarta.inject.Named
-import kotlinx.coroutines.delay
-import net.adoptium.api.v3.TimeSource
 import org.slf4j.LoggerFactory
+import tools.jackson.databind.json.JsonMapper
 import java.time.ZonedDateTime
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Exception hierarchy for Cloudflare API errors
@@ -47,7 +48,7 @@ class CloudflareClient @Inject constructor(
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
 
-        private val mapper = ObjectMapper()
+        private val mapper = JsonMapper.builder().build()
 
         // GraphQL query with variables - static constant for reuse
         // Pagination uses clientRequestPath_gt to filter out first page
@@ -56,17 +57,17 @@ class CloudflareClient @Inject constructor(
         // pagination correct. Previously, ordering by [datetime_ASC, clientRequestPath_ASC]
         // with clientRequestPath_gt pagination caused data loss for entries with later
         // datetimes but paths <= the last path from the previous page.
-        private const val GRAPHQL_QUERY = """
-            query (${'$'}zoneTag: String!, ${'$'}limit: Int!, ${'$'}startDate: Time!, ${'$'}endDate: Time!, ${'$'}lastPath: String) {
+        private const val GRAPHQL_QUERY = $$"""
+            query ($zoneTag: String!, $limit: Int!, $startDate: Time!, $endDate: Time!, $lastPath: String) {
                 viewer {
-                    zones(filter: { zoneTag: ${'$'}zoneTag }) {
+                    zones(filter: { zoneTag: $zoneTag }) {
                         httpRequestsAdaptiveGroups(
-                            limit: ${'$'}limit,
+                            limit: $limit,
                             orderBy: [clientRequestPath_ASC],
                             filter: {
-                                datetime_geq: ${'$'}startDate,
-                                datetime_lt: ${'$'}endDate,
-                                clientRequestPath_gt: ${'$'}lastPath,
+                                datetime_geq: $startDate,
+                                datetime_lt: $endDate,
+                                clientRequestPath_gt: $lastPath,
                                 clientRequestHTTPHost: "packages.adoptium.net",
                                 OR: [
                                     {
@@ -198,7 +199,7 @@ class CloudflareClient @Inject constructor(
             entity = StringEntity(query)
         }
 
-        val response: HttpResponse = suspendCoroutine { continuation ->
+        val response: HttpResponse = suspendCancellableCoroutine { continuation ->
             httpClient.execute(request, object : FutureCallback<HttpResponse> {
                 override fun completed(result: HttpResponse?) {
                     if (result == null) {
@@ -270,7 +271,7 @@ class CloudflareClient @Inject constructor(
         val newRetryCount = retryCount + 1
         val delayMs = BASE_RETRY_DELAY_MS * delayMultiplier * newRetryCount
         LOGGER.warn("(attempt $newRetryCount/$MAX_RETRY_ATTEMPTS), retrying in ${delayMs}ms: ${e.message}")
-        delay(delayMs)
+        delay(delayMs.milliseconds)
         return newRetryCount
     }
 }

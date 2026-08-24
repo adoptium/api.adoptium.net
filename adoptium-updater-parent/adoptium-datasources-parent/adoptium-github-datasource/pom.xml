@@ -48,6 +48,10 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>com.expediagroup</groupId>
+            <artifactId>graphql-kotlin-client-jackson</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.kohsuke</groupId>
             <artifactId>github-api</artifactId>
             <version>1.330</version>
@@ -72,7 +76,7 @@
             <artifactId>jakarta.ws.rs-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
+            <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
         </dependency>
     </dependencies>

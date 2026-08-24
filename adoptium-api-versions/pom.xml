@@ -9,7 +9,7 @@
 
     <properties>
         <coroutine.version>1.11.0</coroutine.version>
-        <jackson.version>2.22.1</jackson.version>
+        <jackson.version>3.2.2</jackson.version>
         <jackson-annotations.version>2.22</jackson-annotations.version>
         <jdk.version>17</jdk.version>
         <mongo.version>5.1.2</mongo.version>
@@ -88,27 +88,27 @@
 
             <!-- JSON processing via Jackson libs -->
             <dependency>
-                <groupId>com.fasterxml.jackson.module</groupId>
+                <groupId>tools.jackson.module</groupId>
                 <artifactId>jackson-module-kotlin</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-jsr310</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <groupId>tools.jackson.datatype</groupId>
                 <artifactId>jackson-datatype-jakarta-jsonp</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <groupId>tools.jackson.dataformat</groupId>
                 <artifactId>jackson-dataformat-xml</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
+                <groupId>tools.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>tools.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
@@ -328,11 +328,6 @@
 
             <!-- Additional dependencies used by marketplace-->
             <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-jdk8</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>
                 <version>6.1.2</version>
@@ -399,6 +394,11 @@
                         <artifactId>kotlinx-serialization-json-jvm</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.expediagroup</groupId>
+                <artifactId>graphql-kotlin-client-jackson</artifactId>
+                <version>10.1.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
