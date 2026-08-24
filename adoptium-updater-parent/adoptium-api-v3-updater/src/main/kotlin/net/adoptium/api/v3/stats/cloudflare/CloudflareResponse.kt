@@ -1,6 +1,6 @@
 package net.adoptium.api.v3.stats.cloudflare
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import org.slf4j.LoggerFactory
 
 
@@ -37,7 +37,7 @@ data class CloudflareResponse(
     val data: Set<CloudflarePackageStats> = sortedSetOf()
 ) {
     companion object {
-        private val mapper = ObjectMapper()
+        private val mapper = JsonMapper.builder().build()
 
         @JvmStatic
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
@@ -53,12 +53,12 @@ data class CloudflareResponse(
                 return emptyList()
             }
 
-            return errorsNode.map { errorNode ->
-                val message = errorNode.path(ResponseKey.MESSAGE).asText() ?: "Unknown error"
-                val path = errorNode.path("path").map { it.asText() }
-                val timestamp = errorNode.path(ResponseKey.EXTENSIONS).path(ResponseKey.TIMESTAMP).asText()
+            return errorsNode.values().asSequence().map { errorNode ->
+                val message = errorNode.path(ResponseKey.MESSAGE).asString("Unknown error")
+                val path = errorNode.path("path").values().asSequence().map { it.asString() }.toList()
+                val timestamp = errorNode.path(ResponseKey.EXTENSIONS).path(ResponseKey.TIMESTAMP).asString()
                 GraphQLError(message, path, timestamp)
-            }
+            }.toList()
         }
 
         /**
@@ -159,8 +159,8 @@ data class CloudflareResponse(
                         continue
                     }
 
-                    val datetimeStr = dimensions.path(ResponseKey.DATETIME).asText()
-                    val path = dimensions.path(ResponseKey.PATH).asText()
+                    val datetimeStr = dimensions.path(ResponseKey.DATETIME).asString()
+                    val path = dimensions.path(ResponseKey.PATH).asString()
                     if (path.isNullOrBlank()) {
                         LOGGER.warn("There is a group with missing information $group")
                         continue
