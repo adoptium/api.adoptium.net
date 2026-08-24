@@ -200,7 +200,7 @@ class CloudflareClient @Inject constructor(
         }
 
         val response: HttpResponse = suspendCancellableCoroutine { continuation ->
-            httpClient.execute(request, object : FutureCallback<HttpResponse> {
+            val requestFuture = httpClient.execute(request, object : FutureCallback<HttpResponse> {
                 override fun completed(result: HttpResponse?) {
                     if (result == null) {
                         continuation.resumeWithException(Exception("No response body"))
@@ -221,6 +221,9 @@ class CloudflareClient @Inject constructor(
                     continuation.resumeWithException(Exception("Request cancelled"))
                 }
             })
+            continuation.invokeOnCancellation {
+                requestFuture.cancel(true)
+            }
         }
 
         val statusCode = response.statusLine.statusCode
