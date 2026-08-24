@@ -17,8 +17,8 @@
     <properties>
         <coroutine.version>1.7.1</coroutine.version>
         <jacoco.version>0.8.15</jacoco.version>
-        <jdk.version>17</jdk.version>
-        <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
+        <jdk.version>25</jdk.version>
+        <kotlin.compiler.jvmTarget>25</kotlin.compiler.jvmTarget>
         <kotlin.version>2.4.10</kotlin.version>
         <maven.antrun-plugin.version>3.2.0</maven.antrun-plugin.version>
         <maven.assembly-plugin.version>3.8.0</maven.assembly-plugin.version>
@@ -27,11 +27,11 @@
         <maven.checkstyle-plugin.version>3.3.0</maven.checkstyle-plugin.version>
         <maven.clean-plugin.version>3.5.0</maven.clean-plugin.version>
         <maven.compiler-plugin.version>3.15.0</maven.compiler-plugin.version>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.release>17</maven.compiler.release>
-        <maven.compiler.target>17</maven.compiler.target>
-        <maven.compiler.testSource>17</maven.compiler.testSource>
-        <maven.compiler.testTarget>17</maven.compiler.testTarget>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.release>25</maven.compiler.release>
+        <maven.compiler.target>25</maven.compiler.target>
+        <maven.compiler.testSource>25</maven.compiler.testSource>
+        <maven.compiler.testTarget>25</maven.compiler.testTarget>
         <maven.dependency-plugin.version>3.11.0</maven.dependency-plugin.version>
         <maven.dependency-versions-check-plugin.version>2.0.4</maven.dependency-versions-check-plugin.version>
         <maven.deploy-plugin.version>3.1.4</maven.deploy-plugin.version>
@@ -59,7 +59,7 @@
         <maven.scm-plugin.version>2.2.1</maven.scm-plugin.version>
         <maven.site-plugin.version>4.0.0-M16</maven.site-plugin.version>
         <maven.source-plugin.version>3.4.0</maven.source-plugin.version>
-        <maven.spotbugs-plugin.version>4.10.3.0</maven.spotbugs-plugin.version>
+        <maven.spotbugs-plugin.version>4.10.4.0</maven.spotbugs-plugin.version>
         <maven.surefire-plugin.version>3.5.6</maven.surefire-plugin.version>
         <maven.swaggerhub-maven-plugin.version>1.0.10</maven.swaggerhub-maven-plugin.version>
         <maven.tidy-plugin.version>1.4.0</maven.tidy-plugin.version>
@@ -74,7 +74,7 @@
         <spotbugs.version>4.7.3</spotbugs.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.38.2</quarkus.version>
+        <quarkus.version>3.39.0</quarkus.version>
     </properties>
 
     <modules>
