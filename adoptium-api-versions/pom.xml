@@ -11,12 +11,12 @@
         <coroutine.version>1.11.0</coroutine.version>
         <jackson.version>3.2.2</jackson.version>
         <jackson-annotations.version>2.22</jackson-annotations.version>
-        <jdk.version>17</jdk.version>
+        <jdk.version>25</jdk.version>
         <mongo.version>5.1.2</mongo.version>
-        <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
+        <kotlin.compiler.jvmTarget>25</kotlin.compiler.jvmTarget>
         <kotlin.version>2.4.10</kotlin.version>
         <logback.version>1.6.3</logback.version>
-        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.release>25</maven.compiler.release>
         <maven.version>3.9.16</maven.version>
         <maven.project-info-reports-plugin.version>3.9.0</maven.project-info-reports-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
