@@ -9,20 +9,20 @@
 
     <properties>
         <coroutine.version>1.11.0</coroutine.version>
-        <jackson.version>2.21.3</jackson.version>
-        <jackson-annotations.version>2.21</jackson-annotations.version>
-        <jdk.version>17</jdk.version>
+        <jackson.version>3.2.2</jackson.version>
+        <jackson-annotations.version>2.22</jackson-annotations.version>
+        <jdk.version>25</jdk.version>
         <mongo.version>5.1.2</mongo.version>
-        <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <kotlin.version>2.3.21</kotlin.version>
-        <logback.version>1.5.32</logback.version>
-        <maven.compiler.release>17</maven.compiler.release>
+        <kotlin.compiler.jvmTarget>25</kotlin.compiler.jvmTarget>
+        <kotlin.version>2.4.10</kotlin.version>
+        <logback.version>1.6.3</logback.version>
+        <maven.compiler.release>25</maven.compiler.release>
         <maven.version>3.9.16</maven.version>
         <maven.project-info-reports-plugin.version>3.9.0</maven.project-info-reports-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.35.3</quarkus.version>
-        <rest-assured.version>6.0.0</rest-assured.version>
+        <quarkus.version>3.39.1</quarkus.version>
+        <rest-assured.version>6.0.1</rest-assured.version>
     </properties>
 
     <build>
@@ -38,7 +38,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.6.2</version>
+                <version>3.6.3</version>
                 <executions>
                     <execution>
                         <id>enforce</id>
@@ -74,7 +74,7 @@
             <dependency>
                 <groupId>io.ktor</groupId>
                 <artifactId>ktor-bom</artifactId>
-                <version>3.5.0</version>
+                <version>3.5.2</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -88,27 +88,27 @@
 
             <!-- JSON processing via Jackson libs -->
             <dependency>
-                <groupId>com.fasterxml.jackson.module</groupId>
+                <groupId>tools.jackson.module</groupId>
                 <artifactId>jackson-module-kotlin</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-jsr310</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <groupId>tools.jackson.datatype</groupId>
                 <artifactId>jackson-datatype-jakarta-jsonp</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <groupId>tools.jackson.dataformat</groupId>
                 <artifactId>jackson-dataformat-xml</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
+                <groupId>tools.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>tools.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
@@ -122,7 +122,7 @@
             <dependency>
                 <groupId>io.mockk</groupId>
                 <artifactId>mockk-jvm</artifactId>
-                <version>1.14.9</version>
+                <version>1.14.11</version>
                 <scope>test</scope>
             </dependency>
 
@@ -187,7 +187,7 @@
             <dependency>
                 <groupId>org.mongodb</groupId>
                 <artifactId>mongodb-driver-kotlin-coroutine</artifactId>
-                <version>5.7.0</version>
+                <version>5.11.0</version>
             </dependency>
 
             <dependency>
@@ -198,7 +198,7 @@
             <dependency>
                 <groupId>de.flapdoodle.embed</groupId>
                 <artifactId>de.flapdoodle.embed.mongo</artifactId>
-                <version>4.24.0</version>
+                <version>4.33.0</version>
                 <scope>test</scope>
             </dependency>
 
@@ -245,7 +245,7 @@
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq</artifactId>
-                <version>3.21.4</version>
+                <version>3.21.7</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -261,7 +261,7 @@
             <dependency>
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>applicationinsights-runtime-attach</artifactId>
-                <version>3.7.8</version>
+                <version>3.7.9</version>
             </dependency>
             <dependency>
                 <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
@@ -271,7 +271,7 @@
             <dependency>
                 <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
                 <artifactId>opentelemetry-javaagent-netty-4.1</artifactId>
-                <version>2.27.0-alpha</version>
+                <version>2.31.1-alpha</version>
             </dependency>
             <dependency>
                 <groupId>org.jboss.weld</groupId>
@@ -298,12 +298,12 @@
             <dependency>
                 <groupId>io.quarkiverse.logging.logback</groupId>
                 <artifactId>quarkus-logging-logback</artifactId>
-                <version>1.1.2</version>
+                <version>1.2.0</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkiverse.logging.logback</groupId>
                 <artifactId>quarkus-logging-logback-impl</artifactId>
-                <version>1.1.2</version>
+                <version>1.2.0</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkus</groupId>
@@ -328,26 +328,21 @@
 
             <!-- Additional dependencies used by marketplace-->
             <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-jdk8</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>
-                <version>6.0.3</version>
+                <version>6.1.3</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-server</artifactId>
-                <version>12.1.9</version>
+                <version>12.1.12</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-client</artifactId>
-                <version>12.1.9</version>
+                <version>12.1.12</version>
             </dependency>
             <dependency>
                 <groupId>org.bouncycastle</groupId>
@@ -367,7 +362,7 @@
             <dependency>
                 <groupId>jakarta.json.bind</groupId>
                 <artifactId>jakarta.json.bind-api</artifactId>
-                <version>3.0.1</version>
+                <version>3.0.3</version>
             </dependency>
             <dependency>
                 <groupId>jakarta.ws.rs</groupId>
@@ -392,7 +387,7 @@
             <dependency>
                 <groupId>com.expediagroup</groupId>
                 <artifactId>graphql-kotlin-ktor-client</artifactId>
-                <version>9.2.0</version>
+                <version>10.2.2</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.jetbrains.kotlinx</groupId>
@@ -403,7 +398,7 @@
             <dependency>
                 <groupId>com.expediagroup</groupId>
                 <artifactId>graphql-kotlin-client-jackson</artifactId>
-                <version>9.2.0</version>
+                <version>10.2.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -1,17 +1,18 @@
 package net.adoptium.api.v3
 
-import com.fasterxml.jackson.dataformat.xml.XmlMapper
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.MapperFeature
-import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.MapperFeature
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.dataformat.xml.XmlMapper
+import tools.jackson.module.kotlin.KotlinFeature
+import tools.jackson.module.kotlin.KotlinModule
 
 object XmlMapper {
 
-    val mapper: ObjectMapper = XmlMapper(JacksonXmlModule().apply {
-            setDefaultUseWrapper(false)
-        }).registerKotlinModule()
-        .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    val mapper: ObjectMapper = XmlMapper.builder()
+        .defaultUseWrapper(false)
+        .addModule(KotlinModule.Builder().disable(KotlinFeature.StrictNullChecks).build())
+        .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
+        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        .build()
 }
