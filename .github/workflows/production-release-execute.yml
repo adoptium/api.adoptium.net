@@ -1,0 +1,163 @@
+name: Production Release — Execute
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Maven Release
+    runs-on: ubuntu-latest
+    outputs:
+      release_version: ${{ steps.versions.outputs.release_version }}
+      development_version: ${{ steps.versions.outputs.development_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up JDK
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Maven release:prepare
+        run: |
+          ./mvnw release:prepare -B \
+            -DpushChanges=false \
+            -DlocalCheckout=true \
+            -Darguments="-Padoptium,-adoptopenjdk"
+      - name: Read versions from release.properties
+        id: versions
+        run: |
+          RELEASE_VERSION=$(grep -E '^project\.rel\.' release.properties | head -n 1 | cut -d= -f2)
+          DEVELOPMENT_VERSION=$(grep -E '^project\.dev\.' release.properties | head -n 1 | cut -d= -f2)
+          SCM_TAG=$(grep -E '^scm\.tag=' release.properties | cut -d= -f2)
+          echo "release_version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "development_version=$DEVELOPMENT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "scm_tag=$SCM_TAG" >> "$GITHUB_OUTPUT"
+          echo "Release version: $RELEASE_VERSION"
+          echo "Development version: $DEVELOPMENT_VERSION"
+          echo "SCM tag: $SCM_TAG"
+
+      - name: Create release branch
+        run: git checkout -b "release/${{ steps.versions.outputs.release_version }}"
+
+      - name: Maven release:perform
+        run: ./mvnw release:perform -B -DlocalCheckout=true -Dgoals=install -Darguments="-Padoptium,-adoptopenjdk"
+
+      - name: Push release branch
+        run: git push origin "release/${{ steps.versions.outputs.release_version }}"
+
+  pull-request-to-main:
+    name: PR release → main
+    needs: release
+    runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.create-pr.outputs.pr_number }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: release/${{ needs.release.outputs.release_version }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Pull Request to main
+        id: create-pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "## Release v${{ needs.release.outputs.release_version }}"
+            echo ""
+            echo "### Release commits"
+            echo "- \`release:prepare\` set version to \`${{ needs.release.outputs.release_version }}\`"
+            echo "- \`release:perform\` completed successfully"
+            echo "- Next development version: \`${{ needs.release.outputs.development_version }}\`"
+            echo ""
+            echo "### After merging"
+            echo "Once both this PR and the production PR are merged, a release tag will be created automatically."
+          } > pr-body.md
+
+          PR_URL=$(gh pr create \
+            --repo "${{ github.repository }}" \
+            --head "release/${{ needs.release.outputs.release_version }}" \
+            --base main \
+            --title "Release v${{ needs.release.outputs.release_version }}" \
+            --body-file pr-body.md \
+            --label "release")
+
+          PR_NUM="${PR_URL##*/}"
+          echo "pr_number=$PR_NUM" >> "$GITHUB_OUTPUT"
+
+  pull-request-to-prod:
+    name: PR release → production
+    needs: release
+    runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.create-pr.outputs.pr_number }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: release/${{ needs.release.outputs.release_version }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Pull Request to production
+        id: create-pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "## Deploy v${{ needs.release.outputs.release_version }} to production"
+            echo ""
+            echo "Merging release \`${{ needs.release.outputs.release_version }}\` into \`production\`."
+            echo ""
+            echo "The staging-live checker will run automatically on this PR to verify"
+            echo "there are no unexpected differences between staging and production."
+            echo ""
+            echo "### After merging"
+            echo "Once both this PR and the main PR are merged, a release tag will be created automatically."
+          } > pr-body.md
+
+          PR_URL=$(gh pr create \
+            --repo "${{ github.repository }}" \
+            --head "release/${{ needs.release.outputs.release_version }}" \
+            --base production \
+            --title "Deploy v${{ needs.release.outputs.release_version }} to production" \
+            --body-file pr-body.md \
+            --label "release" \
+            --label "production")
+
+          PR_NUM="${PR_URL##*/}"
+          echo "pr_number=$PR_NUM" >> "$GITHUB_OUTPUT"
+
+  notify:
+    name: Post summary
+    needs:
+      - release
+      - pull-request-to-main
+      - pull-request-to-prod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "## Release v${{ needs.release.outputs.release_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Maven release completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ PR #${{ needs.pull-request-to-main.outputs.pr_number }} created → main" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ PR #${{ needs.pull-request-to-prod.outputs.pr_number }} created → production (staging checker will run)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Next:** Review staging checker results on the prod PR, then merge both PRs to trigger tagging." >> $GITHUB_STEP_SUMMARY

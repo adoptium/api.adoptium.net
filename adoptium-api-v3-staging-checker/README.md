@@ -67,3 +67,8 @@ java -cp ...jar net.adoptium.api.v3.checker.StagingLiveChecker \
 - `0` — All URL checks passed.
 - `1` — One or more URL checks failed. Failed URLs are listed in the summary output.
 
+## Release process
+
+The staging checker is invoked as a release gate by the production release
+workflow. See [docs/RELEASE.md](../docs/RELEASE.md) for the full release
+flow and the workflows that orchestrate it.
