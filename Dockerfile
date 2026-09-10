@@ -1,4 +1,4 @@
-FROM eclipse-temurin:25 AS build
+FROM eclipse-temurin:26 AS build
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl unzip && \
@@ -12,7 +12,7 @@ COPY . /tmp/build
 
 RUN ./mvnw clean install -Padoptium
 
-FROM eclipse-temurin:25
+FROM eclipse-temurin:26
 
 RUN mkdir -p /deployments
 
