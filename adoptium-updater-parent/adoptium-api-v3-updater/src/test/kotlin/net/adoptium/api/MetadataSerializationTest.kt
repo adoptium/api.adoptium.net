@@ -1,6 +1,6 @@
 package net.adoptium.api
 
-import com.fasterxml.jackson.databind.node.ObjectNode
+import tools.jackson.databind.node.ObjectNode
 import org.junit.jupiter.api.Assertions.assertEquals
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHMetaData

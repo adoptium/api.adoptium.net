@@ -1,60 +1,66 @@
-version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "daily"
-  # Maintain dependencies for GitHub composite Actions (/.github/actions)
-  # Waiting for supporting wildcards see https://github.com/dependabot/dependabot-core/issues/5137
-  - package-ecosystem: "github-actions"
-    directory: "/.github/actions/azure-login"
-    schedule:
-      interval: "daily"
-  - package-ecosystem: "github-actions"
-    directory: "/.github/actions/do-login"
-    schedule:
-      interval: "daily"
-  - package-ecosystem: "github-actions"
-    directory: "/.github/actions/docker-build"
-    schedule:
-      interval: "daily"
-  - package-ecosystem: "maven"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    groups:
-      graphql-kotlin:
-        patterns:
-          - "com.expediagroup:graphql-kotlin-*"
-      maven-core:
-        patterns:
-          - "org.apache.maven:maven-*"
-      jackson:
-        patterns:
-          - "com.fasterxml.jackson.*:jackson-*"
-      jetty:
-        patterns:
-          - "org.eclipse.jetty:*"
-      jwt:
-        patterns:
-          - "io.jsonwebtoken:jjwt-*"
-      logback:
-        patterns:
-          - "ch.qos.logback:*"
-      jakarta-apis:
-        patterns:
-          - "jakarta.*:*"
-      rest-assured:
-        patterns:
-          - "io.rest-assured:*"
-      quarkus-logging:
-        patterns:
-          - "io.quarkiverse.logging.logback:*"
-  - package-ecosystem: docker
-    directory: "/"
-    schedule:
-      interval: "daily"
-  - package-ecosystem: docker
-    directory: "/deploy"
-    schedule:
-      interval: "daily"
+- directory: /
+  ignore:
+  - dependency-name: "github/gh-aw-actions/**" # Managed by gh aw compile. Version-locked to the gh-aw compiler; do not bump.
+  package-ecosystem: github-actions
+  schedule:
+    interval: daily
+- directory: /.github/actions/azure-login
+  ignore:
+  - dependency-name: "github/gh-aw-actions/**" # Managed by gh aw compile. Version-locked to the gh-aw compiler; do not bump.
+  package-ecosystem: github-actions
+  schedule:
+    interval: daily
+- directory: /.github/actions/do-login
+  ignore:
+  - dependency-name: "github/gh-aw-actions/**" # Managed by gh aw compile. Version-locked to the gh-aw compiler; do not bump.
+  package-ecosystem: github-actions
+  schedule:
+    interval: daily
+- directory: /.github/actions/docker-build
+  ignore:
+  - dependency-name: "github/gh-aw-actions/**" # Managed by gh aw compile. Version-locked to the gh-aw compiler; do not bump.
+  package-ecosystem: github-actions
+  schedule:
+    interval: daily
+- directory: /
+  groups:
+    graphql-kotlin:
+      patterns:
+      - com.expediagroup:graphql-kotlin-*
+    jackson:
+      patterns:
+      - com.fasterxml.jackson.*:jackson-*
+    jakarta-apis:
+      patterns:
+      - jakarta.*:*
+    jetty:
+      patterns:
+      - org.eclipse.jetty:*
+    jwt:
+      patterns:
+      - io.jsonwebtoken:jjwt-*
+    logback:
+      patterns:
+      - ch.qos.logback:*
+    maven-core:
+      patterns:
+      - org.apache.maven:maven-*
+    quarkus-logging:
+      patterns:
+      - io.quarkiverse.logging.logback:*
+    rest-assured:
+      patterns:
+      - io.rest-assured:*
+  package-ecosystem: maven
+  schedule:
+    interval: daily
+- directory: /
+  package-ecosystem: docker
+  schedule:
+    interval: daily
+- directory: /deploy
+  package-ecosystem: docker
+  schedule:
+    interval: daily
+version: 2

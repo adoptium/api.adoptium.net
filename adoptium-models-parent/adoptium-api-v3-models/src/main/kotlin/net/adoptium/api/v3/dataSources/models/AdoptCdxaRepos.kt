@@ -1,21 +1,14 @@
 package net.adoptium.api.v3.dataSources.models
 
 import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import net.adoptium.api.v3.dataSources.SortMethod
-import net.adoptium.api.v3.dataSources.SortOrder
 import net.adoptium.api.v3.models.Architecture
+import net.adoptium.api.v3.models.Cdxa
 import net.adoptium.api.v3.models.ImageType
 import net.adoptium.api.v3.models.JvmImpl
 import net.adoptium.api.v3.models.OperatingSystem
-import net.adoptium.api.v3.models.Project
 import net.adoptium.api.v3.models.Vendor
-import net.adoptium.api.v3.models.Cdxa
 import java.time.Instant
-import java.time.ZonedDateTime
-import java.util.function.Predicate
 
 class AdoptCdxaRepos {
 
@@ -84,19 +77,6 @@ class AdoptCdxaRepos {
         return AdoptCdxaRepos(updated, lastModified)
     }
 
-    fun removeCdxa(att: Cdxa): AdoptCdxaRepos {
-        val updated = repos.filter { it.id != att.id }
-        return AdoptCdxaRepos(updated, lastModified)
-    }
-
-    fun removeCdxas(cdxas: List<Cdxa>): AdoptCdxaRepos {
-        if (cdxas.isEmpty()) {
-            return this
-        }
-        return cdxas
-            .fold(this) { repos, newAtt -> repos.removeCdxa(newAtt) }
-    }
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -111,7 +91,7 @@ class AdoptCdxaRepos {
 
     override fun hashCode(): Int {
         var result = repos.hashCode()
-        result = 31 * result + (lastModified?.hashCode() ?: 0)
+        result = 31 * result + lastModified.hashCode()
         return result
     }
 }

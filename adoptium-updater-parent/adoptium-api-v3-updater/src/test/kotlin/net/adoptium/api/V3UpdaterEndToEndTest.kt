@@ -465,6 +465,29 @@ class V3UpdaterEndToEndTest {
     }
 
     @Test
+    fun `cdxa summary query failure does not delete CDXAs`() {
+        runBlocking {
+            val cdxaRepo = AdoptCdxaReposTestDataGenerator.generate()
+
+            // Simulate a failure in getCdxaSummary (e.g., spurious HTTP 401)
+            val getCdxaSummary: ((String, String, String) -> GHCdxaRepoSummaryData?) = { org, repo, directory ->
+                LOGGER.info("getCdxaSummary: simulating failure for $org/$repo/$directory")
+                throw Exception("Simulated HTTP 401 Unauthorized error for $org/$repo/$directory")
+            }
+
+            val getCdxaByName: ((String, String, String) -> GHCdxa?) = { _, _, _ ->
+                null
+            }
+
+            val updatedRepo = runCdxaUpdateTest(cdxaRepo, getCdxaSummary, getCdxaByName)
+
+            // CDXAs must NOT be deleted when the summary query fails
+            assertTrue(updatedRepo.repos.size == cdxaRepo.repos.size)
+            assertTrue(updatedRepo == cdxaRepo)
+        }
+    }
+
+    @Test
     fun `removed release disappears`() {
         runBlocking {
             val repo = AdoptReposTestDataGenerator.generate()

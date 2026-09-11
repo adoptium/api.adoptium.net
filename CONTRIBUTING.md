@@ -26,7 +26,7 @@ For more details related to deployment of the API, see [the deployment section](
 
 ### Pre-Requisites
 
-[Java 17](https://adoptium.net/releases.html?variant=openjdk17) is a requirement to build the project.
+[Java 25](https://adoptium.net/temurin/releases/?version=25) is required to build the project.
 
 ### Optional Set-up
 
