@@ -62,7 +62,7 @@
         <maven.spotbugs-plugin.version>4.10.4.1</maven.spotbugs-plugin.version>
         <maven.surefire-plugin.version>3.6.0</maven.surefire-plugin.version>
         <maven.swaggerhub-maven-plugin.version>1.0.10</maven.swaggerhub-maven-plugin.version>
-        <maven.tidy-plugin.version>1.4.0</maven.tidy-plugin.version>
+        <maven.tidy-plugin.version>1.4.1</maven.tidy-plugin.version>
         <maven.toolchains-plugin.version>3.3.0</maven.toolchains-plugin.version>
         <maven.version>3.9.16</maven.version>
         <maven.versions-plugin.version>2.22.0</maven.versions-plugin.version>
