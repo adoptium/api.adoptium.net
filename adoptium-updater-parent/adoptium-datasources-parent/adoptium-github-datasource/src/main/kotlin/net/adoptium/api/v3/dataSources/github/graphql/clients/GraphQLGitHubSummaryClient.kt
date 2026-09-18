@@ -56,10 +56,10 @@ open class GraphQLGitHubSummaryClient @Inject constructor(
 
         override val query: String
             get() =
-                """
-                        query(${'$'}cursorPointer:String) {
-                            repository(owner:"$owner", name:"$repoName") {
-                                releases(first:50, after:${'$'}cursorPointer, orderBy: {field: CREATED_AT, direction: DESC}) {
+                $$"""
+                        query($cursorPointer:String) {
+                            repository(owner:"$$owner", name:"$$repoName") {
+                                releases(first:50, after:$cursorPointer, orderBy: {field: CREATED_AT, direction: DESC}) {
                                     nodes {
                                         id,
                                         publishedAt,
