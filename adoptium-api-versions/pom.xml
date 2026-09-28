@@ -9,7 +9,7 @@
 
     <properties>
         <coroutine.version>1.11.0</coroutine.version>
-        <jackson.version>3.2.2</jackson.version>
+        <jackson.version>3.2.3</jackson.version>
         <jackson-annotations.version>2.22</jackson-annotations.version>
         <jdk.version>25</jdk.version>
         <mongo.version>5.1.2</mongo.version>
