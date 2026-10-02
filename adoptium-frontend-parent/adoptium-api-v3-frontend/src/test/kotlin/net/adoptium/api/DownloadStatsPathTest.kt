@@ -149,9 +149,11 @@ class DownloadStatsPathTest : FrontendTest() {
             .toCompletableFuture()
             .get().entity as DownloadStats
 
-        assertEquals(170L, stats.total_downloads.total)
+        val packageBaselineTotal = DownloadStatsInterface.PACKAGE_DOWNLOAD_BASELINE_2026_05_28.values.sum()
+        assertEquals(170L + packageBaselineTotal, stats.total_downloads.total)
         assertEquals(100L, stats.total_downloads.docker_pulls)
         assertEquals(70L, stats.total_downloads.github_downloads)
+        assertEquals(packageBaselineTotal, stats.total_downloads.package_downloads)
         assertEquals(30L, stats.github_downloads[8])
         assertEquals(40L, stats.github_downloads[11])
         assertEquals(60L, stats.docker_pulls["a-repo-name"])

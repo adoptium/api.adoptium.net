@@ -6,7 +6,6 @@ import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.CloudflarePackageDownloadStatsDbEntry
 import org.slf4j.LoggerFactory
-import java.time.ZoneId
 
 @ApplicationScoped
 open class CloudflareStatsCalculator @Inject constructor(
@@ -34,29 +33,30 @@ open class CloudflareStatsCalculator @Inject constructor(
 
     suspend fun updateDb() {
         try {
-            val endDate = TimeSource.now()
+            // Fetch complete previous day data (midnight yesterday to midnight today)
+            // This ensures we always get a full day of data and avoids partial/duplicate entries
+            val endDate = TimeSource.now().toLocalDate().atStartOfDay(TimeSource.ZONE)
             val startDate = endDate.minusDays(1)
 
             LOGGER.info("Fetching CloudFlare package stats from $startDate to $endDate")
 
             val response = cloudFlareClient.fetchDownloadStats(startDate, endDate)
 
-
+            // Group by version only (datetime is no longer part of the Cloudflare response
+            // since it's been removed from the query dimensions for correct pagination)
             val stats = response.data
                 .mapNotNull { stats ->
                     val version = extractVersionFromPath(stats.path)
                     version?.let { stats to version }
                 }
-                .groupingBy { (stats, version) ->
-                    stats.datetime.atZone(TimeSource.ZONE) to version
-                }
+                .groupingBy { (_, version) -> version }
                 .fold(0L) { currentTotal, element ->
                     currentTotal + element.first.count
                 }
-                .map { (key, totalDownloads) ->
+                .map { (version, totalDownloads) ->
                     CloudflarePackageDownloadStatsDbEntry(
-                        date = key.first,
-                        feature_version = key.second,
+                        date = endDate,
+                        feature_version = version,
                         downloads = totalDownloads
                     )
                 }
