@@ -38,30 +38,34 @@ open class AdoptReleaseNotes @Inject constructor(
             .getReleases()
             .filter { it.release_type == ReleaseType.ga }
             .forEach {
-                val id = GitHubId(it.id)
-                val releaseNotesFile = adoptRepository.getReleaseFilesForId(id)
-                    ?.firstOrNull { ghAsset -> ghAsset.name.contains("release-notes") }
+                try {
+                    val id = GitHubId(it.id)
+                    val releaseNotesFile = adoptRepository.getReleaseFilesForId(id)
+                        ?.firstOrNull { ghAsset -> ghAsset.name.contains("release-notes") }
 
-                if (releaseNotesFile != null) {
-                    val releaseNotesList = getReleaseNotesFor(releaseNotesFile)
-                    if (releaseNotesList != null) {
-                        val releaseNotes = ReleaseNotes(
-                            it.version_data,
-                            it.vendor,
-                            id.id,
-                            it.release_name,
-                            releaseNotesList
-                        )
+                    if (releaseNotesFile != null) {
+                        val releaseNotesList = getReleaseNotesFor(releaseNotesFile)
+                        if (releaseNotesList != null) {
+                            val releaseNotes = ReleaseNotes(
+                                it.version_data,
+                                it.vendor,
+                                id.id,
+                                it.release_name,
+                                releaseNotesList
+                            )
 
-                        LOGGER.info("Adding release info for: " + it.release_name)
-                        database.putReleaseNote(releaseNotes)
+                            LOGGER.info("Adding release info for: " + it.release_name)
+                            database.putReleaseNote(releaseNotes)
+                        }
                     }
+                } catch (e: Exception) {
+                    LOGGER.error("Failed to update release notes for ${it.release_name}", e)
                 }
             }
     }
 
     private suspend fun getReleaseNotesFor(releaseNotesFile: GHAsset): List<ReleaseNote>? {
-        val releaseNoteContents = gitHubHtmlClient.getUrl(releaseNotesFile.downloadUrl)
+        val releaseNoteContents = gitHubHtmlClient.getUrl(releaseNotesFile.downloadUrl) ?: return null
         return UpdaterJsonMapper.mapper.readValue(releaseNoteContents, releaseNoteListType)
     }
 }

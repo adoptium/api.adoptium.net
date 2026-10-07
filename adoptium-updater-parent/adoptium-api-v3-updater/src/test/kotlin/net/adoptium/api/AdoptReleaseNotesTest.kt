@@ -115,6 +115,14 @@ class AdoptReleaseNotesTest : BaseTest() {
             notes.updateReleaseNotes(adoptRepos)
             Assertions.assertEquals(count, persistence.releaseNotes.size)
             Assertions.assertTrue(persistence.releaseNotes.all { it.release_notes.size == 1 })
+
+            val storedNotes = persistence.releaseNotes.toList()
+            for (contents in listOf("invalid-json", null)) {
+                coEvery { htmlClient.getUrl("a-download-url") } returns contents
+                notes.updateReleaseNotes(adoptRepos)
+                Assertions.assertEquals(storedNotes, persistence.releaseNotes)
+            }
+            coVerify(exactly = count * 4) { htmlClient.getUrl("a-download-url") }
         }
     }
 
