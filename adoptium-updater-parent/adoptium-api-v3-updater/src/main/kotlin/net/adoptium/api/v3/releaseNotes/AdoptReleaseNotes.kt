@@ -1,7 +1,6 @@
 package net.adoptium.api.v3.releaseNotes
 
 import jakarta.enterprise.context.ApplicationScoped
-import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.AdoptRepository
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.github.GitHubHtmlClient
@@ -38,11 +37,6 @@ open class AdoptReleaseNotes @Inject constructor(
             .allReleases
             .getReleases()
             .filter { it.release_type == ReleaseType.ga }
-            .filter {
-                runBlocking {
-                    !hasRelease(GitHubId(it.id))
-                }
-            }
             .forEach {
                 val id = GitHubId(it.id)
                 val releaseNotesFile = adoptRepository.getReleaseFilesForId(id)
@@ -69,9 +63,5 @@ open class AdoptReleaseNotes @Inject constructor(
     private suspend fun getReleaseNotesFor(releaseNotesFile: GHAsset): List<ReleaseNote>? {
         val releaseNoteContents = gitHubHtmlClient.getUrl(releaseNotesFile.downloadUrl)
         return UpdaterJsonMapper.mapper.readValue(releaseNoteContents, releaseNoteListType)
-    }
-
-    private suspend fun hasRelease(gitHubId: GitHubId): Boolean {
-        return database.hasReleaseNotesForGithubId(gitHubId)
     }
 }

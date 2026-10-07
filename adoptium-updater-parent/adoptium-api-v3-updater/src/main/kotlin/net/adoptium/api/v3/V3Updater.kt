@@ -124,7 +124,10 @@ class V3Updater @Inject constructor(
                 val updatedRepo = adoptReposBuilder.incrementalUpdate(
                     toUpdateTmp,
                     oldRepo,
-                    database::getGhReleaseMetadata
+                    onReleasesUpdated = {
+                        adoptReleaseNotes.updateReleaseNotes(AdoptRepos(emptyList()).addAll(it))
+                    },
+                    gitHubMetadataSupplier = database::getGhReleaseMetadata
                 )
 
                 if (updatedRepo != oldRepo) {
