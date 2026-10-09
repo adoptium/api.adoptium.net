@@ -71,49 +71,40 @@ Response:
 
 data class GHCdxaRepoSummary @JsonCreator constructor(
     @JsonProperty("data") val data: GHCdxaRepoSummaryData
-) {
-}
+)
 
 data class GHCdxaRepoSummaryData @JsonCreator constructor(
     @JsonProperty("repository") val repository: GHCdxaRepoSummaryRepository?,
     @JsonProperty("rateLimit") override val rateLimit: RateLimit
-) : HasRateLimit(rateLimit) {
-}
+) : HasRateLimit(rateLimit)
 
 data class GHCdxaRepoSummaryRepository @JsonCreator constructor(
     @JsonProperty("defaultBranchRef") val defaultBranchRef: GHCdxaRepoSummaryDefaultBranchRef?,
     @JsonProperty("object") val att_object: GHCdxaRepoSummaryObject?
-) {
-}
+)
 
 data class GHCdxaRepoSummaryDefaultBranchRef @JsonCreator constructor(
-    @JsonProperty("target")             var target: GHCdxaRepoSummaryDefaultBranchRefTarget?
-) {
-}
+    @JsonProperty("target") var target: GHCdxaRepoSummaryDefaultBranchRefTarget?
+)
 
 data class GHCdxaRepoSummaryDefaultBranchRefTarget @JsonCreator constructor(
-    @JsonProperty("history")            var history: GHCdxaRepoSummaryDefaultBranchRefHistory?
-) {
-}
+    @JsonProperty("history") var history: GHCdxaRepoSummaryDefaultBranchRefHistory?
+)
 
 data class GHCdxaRepoSummaryDefaultBranchRefHistory @JsonCreator constructor(
-    @JsonProperty("nodes")              var nodes: List<GHCdxaRepoSummaryDefaultBranchRefNode>?
-) {
-}
+    @JsonProperty("nodes") var nodes: List<GHCdxaRepoSummaryDefaultBranchRefNode>?
+)
 
 data class GHCdxaRepoSummaryDefaultBranchRefNode @JsonCreator constructor(
-    @JsonProperty("committedDate")      var committedDate: String?
-) {
-}
+    @JsonProperty("committedDate") var committedDate: String?
+)
 
 data class GHCdxaRepoSummaryObject @JsonCreator constructor(
-    @JsonProperty("entries")            var entries: List<GHCdxaRepoSummaryEntry>?
-) { 
-}
+    @JsonProperty("entries") var entries: List<GHCdxaRepoSummaryEntry>?
+)
 
 data class GHCdxaRepoSummaryEntry @JsonCreator constructor(
-    @JsonProperty("name")   val name: String,
-    @JsonProperty("type")   val type: String
-) { 
-}
+    @JsonProperty("name") val name: String,
+    @JsonProperty("type") val type: String
+)
 
