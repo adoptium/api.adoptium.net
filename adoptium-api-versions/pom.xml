@@ -377,7 +377,7 @@
             <dependency>
                 <groupId>jakarta.enterprise</groupId>
                 <artifactId>jakarta.enterprise.cdi-api</artifactId>
-                <version>4.1.0</version>
+                <version>5.0.0</version>
             </dependency>
             <dependency>
                 <groupId>net.adoptium.api</groupId>
@@ -387,7 +387,7 @@
             <dependency>
                 <groupId>com.expediagroup</groupId>
                 <artifactId>graphql-kotlin-ktor-client</artifactId>
-                <version>10.2.2</version>
+                <version>11.0.0</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.jetbrains.kotlinx</groupId>
@@ -398,7 +398,7 @@
             <dependency>
                 <groupId>com.expediagroup</groupId>
                 <artifactId>graphql-kotlin-client-jackson</artifactId>
-                <version>10.2.2</version>
+                <version>11.0.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
