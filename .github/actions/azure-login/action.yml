@@ -25,7 +25,7 @@ runs:
     run: az acr login --name adoptopenjdkacr
 
   - name: Set the target Azure Kubernetes Service (AKS) cluster.
-    uses: azure/aks-set-context@60623acbdcbbdcf799ad50a1adf8703874339f8b # v5.0.0
+    uses: azure/aks-set-context@883bdc8d8d1d0fd87e66cc4ba6f0b618f9eb5281 # v5.0.1
     with:
       resource-group: adoptium-api
       cluster-name: adoptium-api
