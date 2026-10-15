@@ -46,6 +46,16 @@ class AdoptReposBuilderSplitReleaseTest {
     }
 
     @Test
+    fun `overlapping selectors fetch only one complete upstream snapshot`() {
+        checkRefresh(updated = true, explicit = true, binaryCountChanged = true, young = true, ea = true)
+    }
+
+    @Test
+    fun `latest EA polling does not refetch a selected release mapped to no splits`() {
+        checkRefresh(explicit = true, ea = true, empty = true)
+    }
+
+    @Test
     fun `failed refresh keeps existing split releases`() {
         checkRefresh(updated = true, failed = true)
     }
@@ -76,6 +86,7 @@ class AdoptReposBuilderSplitReleaseTest {
         binaryCountChanged: Boolean = false,
         young: Boolean = false,
         failed: Boolean = false,
+        empty: Boolean = false,
         unrelatedId: String = "unrelated",
         ea: Boolean = false
     ) = runBlocking {
@@ -93,8 +104,12 @@ class AdoptReposBuilderSplitReleaseTest {
         )
         val repository = mockk<AdoptRepository>()
         coEvery { repository.getSummary(8) } returns summary
-        coEvery { repository.getReleaseById(GitHubId("rolling")) } returns
-            if (failed) ReleaseResult(error = "Failed to fetch") else ReleaseResult(current)
+        // A second fetch would represent a different upstream snapshot. Never mix it
+        // with the first, even when all selectors match the same upstream release.
+        coEvery { repository.getReleaseById(GitHubId("rolling")) } returnsMany listOf(
+            if (failed) ReleaseResult(error = "Failed to fetch") else ReleaseResult(if (empty) emptyList() else current),
+            ReleaseResult(listOf(release("rolling.later", refreshedTime, releaseType)))
+        )
         val builder = AdoptReposBuilder(repository, mockk<VersionSupplier>())
 
         val after = builder.incrementalUpdate(if (explicit) setOf(old.release_name) else emptySet(), before) {
@@ -102,7 +117,7 @@ class AdoptReposBuilderSplitReleaseTest {
         }
 
         val shouldFetch = updated || explicit || binaryCountChanged || young || ea
-        val expected = if (shouldFetch && !failed) current + unrelated else listOf(old, obsolete, unrelated)
+        val expected = if (shouldFetch && !failed && !empty) current + unrelated else listOf(old, obsolete, unrelated)
         assertEquals(expected.associateBy { it.id }, after.getFeatureRelease(8)!!.releases.nodes)
         assertEquals(listOf(old, obsolete, unrelated).associateBy { it.id }, before.getFeatureRelease(8)!!.releases.nodes)
         coVerify(exactly = if (shouldFetch) 1 else 0) { repository.getReleaseById(GitHubId("rolling")) }

@@ -1,8 +1,20 @@
 package net.adoptium.api
 
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
+import net.adoptium.api.testDoubles.InMemoryInternalDbStore
+import net.adoptium.api.v3.AdoptReposBuilder
+import net.adoptium.api.v3.AdoptRepository
+import net.adoptium.api.v3.dataSources.VersionSupplier
+import net.adoptium.api.v3.dataSources.github.CachedGitHubHtmlClient
+import net.adoptium.api.v3.dataSources.github.GitHubHtmlClient
+import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import net.adoptium.api.v3.dataSources.models.FeatureRelease
+import net.adoptium.api.v3.dataSources.models.Releases
+import net.adoptium.api.v3.mapping.adopt.AdoptBinaryMapper
+import net.adoptium.api.v3.mapping.adopt.AdoptReleaseMapperFactory
 import net.adoptium.api.v3.dataSources.DefaultUpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.HttpClientFactory
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
@@ -13,6 +25,7 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.models.ReleaseType
+import net.adoptium.api.v3.models.Vendor
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
 import org.apache.http.ProtocolVersion
@@ -24,6 +37,8 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.util.UUID
 
 @AddPackages(value = [DefaultUpdaterHtmlClient::class, HttpClientFactory::class])
@@ -140,6 +155,52 @@ class AdoptReleaseMapperTest : BaseTest() {
             assertEquals(1, release.result!![0].download_count)
             assertEquals(2, release.result!![1].download_count)
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["missing", "invalid", "exception"])
+    fun `incomplete metadata refresh preserves both stored split groups`(failure: String) = runBlocking {
+        val assets = buildGhAssets(listOf(
+            "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz" to "",
+            "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz.json" to "1",
+            "OpenJDK8U-jre_x64_linux_hotspot-2.tar.gz" to "",
+            "OpenJDK8U-jre_x64_linux_hotspot-2.tar.gz.json" to "2"
+        ))
+        val upstream = formGhRelease(assets)
+        val cached = CachedGitHubHtmlClient(InMemoryInternalDbStore(), mockClient())
+        var fail = false
+        val client = object : GitHubHtmlClient {
+            override suspend fun getUrl(url: String): String? = cached.getUrl(url)
+            override suspend fun getAsset(asset: GHAsset): String? {
+                if (fail && asset.downloadUrl == "2") {
+                    return when (failure) {
+                        "missing" -> null
+                        "invalid" -> "not JSON"
+                        else -> throw IllegalStateException("Metadata retrieval failed")
+                    }
+                }
+                return cached.getAsset(asset)
+            }
+        }
+        val mapper = AdoptReleaseMapperFactory(AdoptBinaryMapper(client), client).get(Vendor.eclipse)
+        val previous = mapper.toAdoptRelease(upstream).result!!
+        assertEquals(2, previous.size)
+        val before = AdoptRepos(listOf(FeatureRelease(8, Releases(previous))))
+        val repository = mockk<AdoptRepository>()
+        coEvery { repository.getSummary(8) } returns GHSummaryTestDataGenerator.generateGHRepositorySummary(
+            GHSummaryTestDataGenerator.generateGHRepository(before))
+        fail = true
+        val failed = mapper.toAdoptRelease(upstream)
+        assertFalse(failed.succeeded())
+        assertNull(failed.result)
+        coEvery { repository.getReleaseById(upstream.id) } returns failed
+
+        val after = AdoptReposBuilder(repository, mockk<VersionSupplier>())
+            .incrementalUpdate(setOf(upstream.name), before) { null }
+
+        assertEquals(previous.associateBy { it.id }, after.getFeatureRelease(8)!!.releases.nodes)
+        fail = false
+        assertEquals(2, mapper.toAdoptRelease(upstream).result!!.size)
     }
 
     private fun mockClient() = object : UpdaterHtmlClient {

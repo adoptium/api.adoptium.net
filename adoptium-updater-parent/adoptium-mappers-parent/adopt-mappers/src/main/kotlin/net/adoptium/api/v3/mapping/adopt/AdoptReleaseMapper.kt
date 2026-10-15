@@ -2,6 +2,7 @@ package net.adoptium.api.v3.mapping.adopt
 
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.adoptium.api.v3.ReleaseResult
@@ -72,7 +73,16 @@ private class AdoptReleaseMapper(
         val timestamp = parseDate(ghRelease.publishedAt)
         val updatedAt = parseDate(ghRelease.updatedAt)
 
-        val ghAssetsWithMetadata = associateMetadataWithBinaries(ghRelease.releaseAssets)
+        val ghAssetsWithMetadata = try {
+            associateMetadataWithBinaries(ghRelease.releaseAssets)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // An existing sidecar is required for a complete split snapshot. Do not
+            // exclude the release permanently: a later refresh can retry it.
+            LOGGER.error("Failed to retrieve metadata for $releaseName", e)
+            return ReleaseResult(error = "Failed to retrieve metadata for $releaseName")
+        }
         val sourcePackage = getSourcePackage(ghRelease, ghAssetsWithMetadata)
         val releaseNotes = getReleaseNotesPackage(ghRelease.releaseAssets.assets)
         val aqavitResultsLink = getAqavitLink(ghRelease.releaseAssets.assets)
@@ -264,20 +274,14 @@ private class AdoptReleaseMapper(
             .filter(::isReleaseAsset)
             .firstOrNull { // remove .json for matching, case: sbom.json with sbom-metadata.json 
                 metadataAsset.name.startsWith(it.name.removeSuffix(".json"))
-            }
+            } ?: return null
 
         val metadataString = htmlClient.getAsset(metadataAsset)
-        if (binaryAsset != null && metadataString != null) {
-            try {
-                return withContext(Dispatchers.IO) {
-                    val metadata = UpdaterJsonMapper.mapper.readValue(metadataString, GHMetaData::class.java)
-                    return@withContext Pair(binaryAsset, metadata)
-                }
-            } catch (e: Exception) {
-                LOGGER.error("Failed to read metadata for asset ${metadataAsset.name} ${metadataAsset.downloadUrl}", e)
-            }
+            ?: throw IllegalStateException("Required metadata unavailable: ${metadataAsset.downloadUrl}")
+        return withContext(Dispatchers.IO) {
+            val metadata = UpdaterJsonMapper.mapper.readValue(metadataString, GHMetaData::class.java)
+            Pair(binaryAsset, metadata)
         }
-        return null
     }
 
     private fun isReleaseAsset(asset: GHAsset) = (

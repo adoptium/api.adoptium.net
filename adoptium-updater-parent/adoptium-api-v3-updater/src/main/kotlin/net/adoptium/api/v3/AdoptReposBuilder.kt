@@ -68,12 +68,15 @@ class AdoptReposBuilder @Inject constructor(
             val youngReleases = getYoungReleases(summary, pruned)
             val explicitlyAdded = getExplicitlyAddedReleases(summary, toUpdate)
 
-            val selectedReleases = newReleases +
+            val selectedSummaries = newReleases +
                 updatedReleases +
                 youngReleases +
                 explicitlyAdded +
                 binaryCountChanged
-            val refreshedReleases = selectedReleases + getLatestEaReleases(summary, pruned, selectedReleases)
+            val selectedReleases = selectedSummaries.distinctBy { it.id }.flatMap { getReleaseById(it) }
+            val refreshedReleases = selectedReleases + getLatestEaReleases(
+                summary, pruned, selectedReleases, selectedSummaries.map { it.id }.toSet()
+            )
             val refreshedIds = refreshedReleases.map { GitHubId(it.id) }.toSet()
 
             // A rolling release can acquire new version-based split IDs. Replace all
@@ -87,22 +90,22 @@ class AdoptReposBuilder @Inject constructor(
                 .add(refreshedReleases)
         } else {
             val newReleases = getNewReleases(summary, FeatureRelease(entry.key, emptyList()))
-            FeatureRelease(entry.key, Releases(newReleases))
+            FeatureRelease(entry.key, Releases(newReleases.distinctBy { it.id }.flatMap { getReleaseById(it) }))
         }
     }
 
-    private suspend fun getUpdatedReleases(summary: GHRepositorySummary, pruned: FeatureRelease): List<Release> {
+    private fun getUpdatedReleases(summary: GHRepositorySummary, pruned: FeatureRelease): List<GHReleaseSummary> {
         return summary.releases.releases
             .filter { !excluded.contains(it.id) }
             .filter { pruned.releases.hasReleaseBeenUpdated(it.id, it.getUpdatedTime()) }
             .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
-            .flatMap { getReleaseById(it) }
     }
 
     private suspend fun getLatestEaReleases(
         summary: GHRepositorySummary,
         pruned: FeatureRelease,
-        selectedReleases: List<Release>
+        selectedReleases: List<Release>,
+        selectedIds: Set<GitHubId>
     ): List<Release> {
         val latestEaIds = (pruned.releases.nodes.values + selectedReleases)
             .filter { it.release_type == ReleaseType.ea }
@@ -113,30 +116,29 @@ class AdoptReposBuilder @Inject constructor(
                 GitHubId(latest.id)
             }
             .toSet()
-        val selectedIds = selectedReleases.map { GitHubId(it.id) }.toSet()
         // Replacing an asset need not change its parent release's timestamp or count.
         // Always check the latest published EA per repository and feature version;
         // getYoungReleases already covers releases published in the last seven days.
         return summary.releases.releases
             .filter { it.id in latestEaIds && it.id !in selectedIds && it.id !in excluded }
             .filter { isReleaseOldEnough(it.publishedAt) }
+            .distinctBy { it.id }
             .flatMap { getReleaseById(it) }
     }
 
     private suspend fun binaryCountHasChanged(
         summary: GHRepositorySummary,
         gitHubMetadataSupplier: suspend (GitHubId) -> GHReleaseMetadata?
-    ): List<Release> {
+    ): List<GHReleaseSummary> {
         return summary.releases.releases
             .filter { !excluded.contains(it.id) }
             .filter {
                 gitHubMetadataSupplier(it.id)?.totalBinaryCount?.equals(it.releaseAssets.totalCount)?.not() ?: false
             }
             .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
-            .flatMap { getReleaseById(it) }
     }
 
-    private suspend fun getYoungReleases(summary: GHRepositorySummary, pruned: FeatureRelease): List<Release> {
+    private fun getYoungReleases(summary: GHRepositorySummary, pruned: FeatureRelease): List<GHReleaseSummary> {
         val eaIds = pruned.releases.nodes.values
             .filter { it.release_type == ReleaseType.ea }
             .map { GitHubId(it.id) }
@@ -150,13 +152,12 @@ class AdoptReposBuilder @Inject constructor(
                     (it.id !in eaIds && ChronoUnit.DAYS.between(it.getUpdatedTime(), TimeSource.now()).absoluteValue < 7)
             }
             .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
-            .flatMap { getReleaseById(it) }
     }
 
     /**
      * Fetches releases from github that have been explicitly requested by the user for an update
      */
-    private suspend fun getExplicitlyAddedReleases(summary: GHRepositorySummary, releaseNames: Set<String>): List<Release> {
+    private fun getExplicitlyAddedReleases(summary: GHRepositorySummary, releaseNames: Set<String>): List<GHReleaseSummary> {
         return releaseNames
             .flatMap { name ->
                 val allReleases = summary.releases.releases
@@ -164,24 +165,22 @@ class AdoptReposBuilder @Inject constructor(
                     .filter { !excluded.contains(it.id) } // Filter out excluded releases
                     .filter { name == it.name } // Find release with the requested name
                     .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
-                    .flatMap {
+                    .onEach {
                         LOGGER.info("Updating ${it.name}")
-                        getReleaseById(it) // fetch release from Github
                     }
 
                 if (releases.isEmpty()) {
                     LOGGER.warn("Failed to match update name $name")
                 }
-                releases // return all updated split releases
+                releases
             }
     }
 
-    private suspend fun getNewReleases(summary: GHRepositorySummary, currentRelease: FeatureRelease): List<Release> {
+    private fun getNewReleases(summary: GHRepositorySummary, currentRelease: FeatureRelease): List<GHReleaseSummary> {
         return summary.releases.releases
             .filter { !excluded.contains(it.id) }
             .filter { !currentRelease.releases.hasReleaseId(it.id) }
             .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
-            .flatMap { getReleaseById(it) }
     }
 
     private fun isReleaseOldEnough(timestamp: String): Boolean {

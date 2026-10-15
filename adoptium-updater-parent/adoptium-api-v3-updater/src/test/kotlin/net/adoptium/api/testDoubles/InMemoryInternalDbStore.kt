@@ -15,8 +15,13 @@ import java.util.concurrent.ConcurrentHashMap
 @ApplicationScoped
 class InMemoryInternalDbStore : InternalDbStore {
     private val cache = ConcurrentHashMap<String, CacheDbEntry>()
-    override fun putCachedWebpage(url: String, lastModified: String?, date: ZonedDateTime, data: String?): Job {
-        cache[url] = CacheDbEntry(url, lastModified, date, data, date)
+    override fun putCachedWebpage(url: String, lastModified: String?, date: ZonedDateTime, data: String?, accessedAt: ZonedDateTime?): Job {
+        cache.compute(url) { _, entry ->
+            val lastAccessed = entry?.lastAccessed
+            val usage = if (accessedAt == null) lastAccessed ?: date
+                else if (lastAccessed == null || lastAccessed.isBefore(accessedAt)) accessedAt else lastAccessed
+            CacheDbEntry(url, lastModified, date, data, usage)
+        }
         return Job().apply { complete() }
     }
 

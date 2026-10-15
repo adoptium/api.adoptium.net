@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.TimeSource
+import net.adoptium.api.testDoubles.InMemoryInternalDbStore
 import net.adoptium.api.v3.dataSources.mongo.CacheDbEntry
 import net.adoptium.api.v3.dataSources.mongo.InternalDbStoreImpl
 import net.adoptium.api.v3.dataSources.persitence.mongo.MongoClient
@@ -93,6 +94,50 @@ class InternalDbStoreTests : MongoTest() {
 
         assertEquals(1L, store.evictUnusedCache(now.plusDays(20)))
         assertNull(store.getCachedWebpage("checked-only"))
+    }
+
+    @Test
+    fun `background content replacement preserves usage in both stores`() = runBlocking {
+        for (store in listOf(InternalDbStoreImpl(mongoClient), InMemoryInternalDbStore())) {
+            val now = TimeSource.now()
+            val old = now.minusDays(20)
+            store.putCachedWebpage("background-200", "old", old, "old body").join()
+            store.putCachedWebpage("background-200", "new", now, "new body").join()
+
+            assertEquals(0L, store.evictUnusedCache(old.plusDays(30).minusSeconds(1)))
+            assertEquals(1L, store.evictUnusedCache(old.plusDays(30)))
+        }
+    }
+
+    @Test
+    fun `delayed content writes cannot overwrite newer access in either store`() = runBlocking {
+        for (store in listOf(InternalDbStoreImpl(mongoClient), InMemoryInternalDbStore())) {
+            val old = TimeSource.now().minusDays(20)
+            store.putCachedWebpage("delayed", null, old, "old").join()
+            val accessed = store.getCachedWebpage("delayed")!!.lastAccessed!!
+
+            // Apply an older demand write and then a background write after the read.
+            store.putCachedWebpage("delayed", "demand", old.plusDays(1), "demand", old.plusDays(1)).join()
+            store.putCachedWebpage("delayed", "background", old.plusDays(2), "background").join()
+
+            assertEquals(0L, store.evictUnusedCache(accessed.plusDays(30).minusSeconds(1)))
+            val entry = store.getCachedWebpage("delayed")!!
+            assertTrue(!entry.lastAccessed!!.isBefore(accessed))
+            assertEquals("background", entry.data)
+            assertEquals("background", entry.lastModified)
+            assertEquals(old.plusDays(2), entry.lastChecked)
+        }
+    }
+
+    @Test
+    fun `demand writes advance access without a cache read in both stores`() = runBlocking {
+        for (store in listOf(InternalDbStoreImpl(mongoClient), InMemoryInternalDbStore())) {
+            val now = TimeSource.now()
+            store.putCachedWebpage("direct-demand", null, now.minusDays(20), "old").join()
+            store.putCachedWebpage("direct-demand", null, now, "new", now).join()
+            assertEquals(0L, store.evictUnusedCache(now.plusDays(29)))
+            assertEquals(1L, store.evictUnusedCache(now.plusDays(30)))
+        }
     }
 
     @Test
