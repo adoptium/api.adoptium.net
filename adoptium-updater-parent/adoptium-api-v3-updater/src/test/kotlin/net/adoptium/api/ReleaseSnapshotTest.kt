@@ -16,6 +16,7 @@ import net.adoptium.api.v3.ReleaseIncludeFilter
 import net.adoptium.api.v3.ReleaseResult
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.V3Updater
+import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.APIDataStoreImpl
 import net.adoptium.api.v3.dataSources.ReleaseVersionResolver
 import net.adoptium.api.v3.dataSources.UpdatableVersionSupplier
@@ -186,7 +187,7 @@ class ReleaseSnapshotTest {
         })) }
         val client = client()
         coEvery { client.getUrl("$msi.json") } throws IllegalStateException("Installer metadata must not be fetched")
-        val mapper = factory(client).get(Vendor.eclipse)
+        val mapper = factory(client).get(Vendor.getDefault())
         val mapped = mapper.toAdoptRelease(release).result!!
         val expected = when (format) { "source" -> 60L; "multi" -> 37L; else -> 30L }
         assertEquals(expected, mapped.sumOf { it.download_count })
@@ -205,19 +206,25 @@ class ReleaseSnapshotTest {
     fun `full update publishes installer downloads with existing nonzero statistics`() = runBlocking {
         val zip = "OpenJDK8U-jdk_x64_windows_hotspot-1.zip"
         val msi = zip.removeSuffix(".zip") + ".msi"
+        val (owner, repoName) = if (Vendor.getDefault() == Vendor.adoptopenjdk) {
+            "AdoptOpenJDK" to "openjdk8-binaries"
+        } else {
+            "adoptium" to "temurin8-binaries"
+        }
         val release = upstream(listOf(zip, "$zip.json", msi, "$msi.json")).let {
-            it.copy(releaseAssets = it.releaseAssets.copy(assets = it.releaseAssets.assets.map { asset ->
+            it.copy(url = "https://github.com/$owner/$repoName/releases/tag/${it.name}",
+                releaseAssets = it.releaseAssets.copy(assets = it.releaseAssets.assets.map { asset ->
                 asset.copy(downloadCount = when (asset.name) { zip -> 11; msi -> 20; else -> 0 })
             }))
         }
         val github = mockk<GitHubApi>()
         val ghRepo = GHRepository(GHReleases(listOf(release), PageInfo(false, null)))
         coEvery { github.getRepository(any(), any(), any()) } answers {
-            if (secondArg<String>() == "temurin8-binaries") ghRepo else GHRepository(GHReleases(emptyList(), PageInfo(false, null)))
+            if (firstArg<String>() == owner && secondArg<String>() == repoName) ghRepo else GHRepository(GHReleases(emptyList(), PageInfo(false, null)))
         }
         coEvery { github.getRepositorySummary(any(), any()) } answers {
             GHSummaryTestDataGenerator.generateGHRepositorySummary(
-                if (secondArg<String>() == "temurin8-binaries") ghRepo else GHRepository(GHReleases(emptyList(), PageInfo(false, null))))
+                if (firstArg<String>() == owner && secondArg<String>() == repoName) ghRepo else GHRepository(GHReleases(emptyList(), PageInfo(false, null))))
         }
         coEvery { github.getReleaseById(release.id) } returns release
         val previous = repos(emptyList())
@@ -225,7 +232,14 @@ class ReleaseSnapshotTest {
         database.addGithubDownloadStatsEntries(listOf(GitHubDownloadStatsDbEntry(TimeSource.now().minusDays(1), 30, null, 8)))
         val versions = versions()
         val builder = AdoptReposBuilder(AdoptRepositoryImpl(github, factory(client())), versions)
-        val updated = updater(builder, database, versions).runUpdate(previous, AtomicBoolean(true), mockk())
+        val updateAdoptOpenJdk = APIConfig.UPDATE_ADOPTOPENJDK
+        val updated = try {
+            // Legacy repositories are intentionally excluded from normal full updates.
+            APIConfig.UPDATE_ADOPTOPENJDK = true
+            updater(builder, database, versions).runUpdate(previous, AtomicBoolean(true), mockk())
+        } finally {
+            APIConfig.UPDATE_ADOPTOPENJDK = updateAdoptOpenJdk
+        }
         assertEquals(31L, GitHubDownloadStatsCalculator.getStats(updated).single().downloads)
         assertEquals(31L, GitHubDownloadStatsCalculator.getStats(database.repos).single().downloads)
         coVerify(atLeast = 1) { database.updateAllRepos(any(), any()) }
