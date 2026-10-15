@@ -81,7 +81,7 @@ private class AdoptReleaseMapper(
             // An existing sidecar is required for a complete split snapshot. Do not
             // exclude the release permanently: a later refresh can retry it.
             LOGGER.error("Failed to retrieve metadata for $releaseName", e)
-            return ReleaseResult(error = "Failed to retrieve metadata for $releaseName")
+            return ReleaseResult(error = "Failed to retrieve metadata for $releaseName", retryable = true)
         }
         val sourcePackage = getSourcePackage(ghRelease, ghAssetsWithMetadata)
         val releaseNotes = getReleaseNotesPackage(ghRelease.releaseAssets.assets)

@@ -193,8 +193,12 @@ class AdoptReposBuilder @Inject constructor(
         return if (result != null && result.succeeded()) {
             result.result!!
         } else {
-            LOGGER.info("Excluding ${it.id.id} from update")
-            excluded.add(it.id)
+            if (result?.retryable == true) {
+                LOGGER.info("Deferring ${it.id.id} until a later update")
+            } else {
+                LOGGER.info("Excluding ${it.id.id} from update")
+                excluded.add(it.id)
+            }
             emptyList()
         }
     }

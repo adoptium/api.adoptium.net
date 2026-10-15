@@ -1,6 +1,7 @@
 package net.adoptium.api
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
@@ -36,6 +37,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -78,6 +80,7 @@ class AdoptReleaseMapperTest : BaseTest() {
 
             val result = createAdoptReleaseMapper().toAdoptRelease(ghRelease)
             assertFalse(result.succeeded())
+            assertFalse(result.retryable)
             assertNotNull(result.error)
             assertNull(result.result)
         }
@@ -192,15 +195,26 @@ class AdoptReleaseMapperTest : BaseTest() {
         fail = true
         val failed = mapper.toAdoptRelease(upstream)
         assertFalse(failed.succeeded())
+        assertTrue(failed.retryable)
         assertNull(failed.result)
         coEvery { repository.getReleaseById(upstream.id) } returns failed
 
-        val after = AdoptReposBuilder(repository, mockk<VersionSupplier>())
-            .incrementalUpdate(setOf(upstream.name), before) { null }
+        val builder = AdoptReposBuilder(repository, mockk<VersionSupplier>())
+        val after = builder.incrementalUpdate(setOf(upstream.name), before) { null }
 
         assertEquals(previous.associateBy { it.id }, after.getFeatureRelease(8)!!.releases.nodes)
+        coVerify(exactly = 1) { repository.getReleaseById(upstream.id) }
         fail = false
-        assertEquals(2, mapper.toAdoptRelease(upstream).result!!.size)
+        val recovered = mapper.toAdoptRelease(upstream)
+        assertTrue(recovered.succeeded())
+        assertFalse(recovered.retryable)
+        assertEquals(2, recovered.result!!.size)
+        coEvery { repository.getReleaseById(upstream.id) } returns recovered
+
+        val retried = builder.incrementalUpdate(setOf(upstream.name), after) { null }
+
+        assertEquals(recovered.result!!.associateBy { it.id }, retried.getFeatureRelease(8)!!.releases.nodes)
+        coVerify(exactly = 2) { repository.getReleaseById(upstream.id) }
     }
 
     private fun mockClient() = object : UpdaterHtmlClient {
