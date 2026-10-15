@@ -56,6 +56,16 @@ class AdoptReposBuilderSplitReleaseTest {
     }
 
     @Test
+    fun `successful empty selected GA refresh removes every existing split`() {
+        checkRefresh(explicit = true, empty = true)
+    }
+
+    @Test
+    fun `failed selected EA refresh preserves splits without refetching`() {
+        checkRefresh(explicit = true, ea = true, failed = true)
+    }
+
+    @Test
     fun `failed refresh keeps existing split releases`() {
         checkRefresh(updated = true, failed = true)
     }
@@ -73,6 +83,11 @@ class AdoptReposBuilderSplitReleaseTest {
     @Test
     fun `latest old EA refreshes despite unchanged release timestamp and asset count`() {
         checkRefresh(ea = true)
+    }
+
+    @Test
+    fun `successful empty latest-only EA refresh removes every existing split`() {
+        checkRefresh(ea = true, empty = true)
     }
 
     @Test
@@ -117,7 +132,11 @@ class AdoptReposBuilderSplitReleaseTest {
         }
 
         val shouldFetch = updated || explicit || binaryCountChanged || young || ea
-        val expected = if (shouldFetch && !failed && !empty) current + unrelated else listOf(old, obsolete, unrelated)
+        val expected = when {
+            !shouldFetch || failed -> listOf(old, obsolete, unrelated)
+            empty -> listOf(unrelated)
+            else -> current + unrelated
+        }
         assertEquals(expected.associateBy { it.id }, after.getFeatureRelease(8)!!.releases.nodes)
         assertEquals(listOf(old, obsolete, unrelated).associateBy { it.id }, before.getFeatureRelease(8)!!.releases.nodes)
         coVerify(exactly = if (shouldFetch) 1 else 0) { repository.getReleaseById(GitHubId("rolling")) }

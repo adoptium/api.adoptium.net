@@ -30,6 +30,8 @@ class AdoptReposBuilder @Inject constructor(
 
     private val excluded: MutableSet<GitHubId> = HashSet()
 
+    private data class ReleaseRefresh(val id: GitHubId, val releases: List<Release>)
+
     suspend fun incrementalUpdate(
         toUpdate: Set<String>,
         repo: AdoptRepos,
@@ -73,24 +75,26 @@ class AdoptReposBuilder @Inject constructor(
                 youngReleases +
                 explicitlyAdded +
                 binaryCountChanged
-            val selectedReleases = selectedSummaries.distinctBy { it.id }.flatMap { getReleaseById(it) }
-            val refreshedReleases = selectedReleases + getLatestEaReleases(
-                summary, pruned, selectedReleases, selectedSummaries.map { it.id }.toSet()
+            val selectedRefreshes = selectedSummaries.distinctBy { it.id }.mapNotNull { getReleaseById(it) }
+            val refreshes = selectedRefreshes + getLatestEaReleases(
+                summary, pruned, selectedRefreshes.flatMap { it.releases }, selectedSummaries.map { it.id }.toSet()
             )
-            val refreshedIds = refreshedReleases.map { GitHubId(it.id) }.toSet()
+            val refreshedIds = refreshes.map { it.id }.toSet()
 
             // A rolling release can acquire new version-based split IDs. Replace all
             // old snapshots of each refreshed GitHub release, not just matching split IDs.
+            // Successful empty snapshots remove old splits too; failed fetches retain them.
             FeatureRelease(
                 entry.key,
                 Releases(
                     pruned.releases.nodes.filterValues { GitHubId(it.id) !in refreshedIds }
                 )
             )
-                .add(refreshedReleases)
+                .add(refreshes.flatMap { it.releases })
         } else {
             val newReleases = getNewReleases(summary, FeatureRelease(entry.key, emptyList()))
-            FeatureRelease(entry.key, Releases(newReleases.distinctBy { it.id }.flatMap { getReleaseById(it) }))
+            val refreshes = newReleases.distinctBy { it.id }.mapNotNull { getReleaseById(it) }
+            FeatureRelease(entry.key, Releases(refreshes.flatMap { it.releases }))
         }
     }
 
@@ -106,7 +110,7 @@ class AdoptReposBuilder @Inject constructor(
         pruned: FeatureRelease,
         selectedReleases: List<Release>,
         selectedIds: Set<GitHubId>
-    ): List<Release> {
+    ): List<ReleaseRefresh> {
         val latestEaIds = (pruned.releases.nodes.values + selectedReleases)
             .filter { it.release_type == ReleaseType.ea }
             .groupBy { it.vendor to it.release_link.substringBefore("/releases/") }
@@ -123,7 +127,7 @@ class AdoptReposBuilder @Inject constructor(
             .filter { it.id in latestEaIds && it.id !in selectedIds && it.id !in excluded }
             .filter { isReleaseOldEnough(it.publishedAt) }
             .distinctBy { it.id }
-            .flatMap { getReleaseById(it) }
+            .mapNotNull { getReleaseById(it) }
     }
 
     private suspend fun binaryCountHasChanged(
@@ -188,10 +192,10 @@ class AdoptReposBuilder @Inject constructor(
         return ChronoUnit.MINUTES.between(created, TimeSource.now()).absoluteValue > 10
     }
 
-    private suspend fun getReleaseById(it: GHReleaseSummary): List<Release> {
+    private suspend fun getReleaseById(it: GHReleaseSummary): ReleaseRefresh? {
         val result = adoptRepository.getReleaseById(it.id)
         return if (result != null && result.succeeded()) {
-            result.result!!
+            ReleaseRefresh(it.id, result.result!!)
         } else {
             if (result?.retryable == true) {
                 LOGGER.info("Deferring ${it.id.id} until a later update")
@@ -199,7 +203,7 @@ class AdoptReposBuilder @Inject constructor(
                 LOGGER.info("Excluding ${it.id.id} from update")
                 excluded.add(it.id)
             }
-            emptyList()
+            null
         }
     }
 
