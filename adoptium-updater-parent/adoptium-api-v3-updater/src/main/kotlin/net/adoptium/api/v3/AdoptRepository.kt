@@ -115,7 +115,10 @@ open class AdoptRepositoryImpl @Inject constructor(
         val releaseSummaries = getDataForEachRepo(
             version,
             ReleaseIncludeFilter.INCLUDE_ALL
-        ) { _: Vendor, owner: String, repoName: String -> client.getRepositorySummary(owner, repoName) }
+        ) { vendor: Vendor, owner: String, repoName: String ->
+            val summary = client.getRepositorySummary(owner, repoName)
+            summary.copy(releases = summary.releases.copy(releases = summary.releases.releases.map { it.copy(vendor = vendor) }))
+        }
             .await()
             .filterNotNull()
             .flatMap { it.releases.releases }

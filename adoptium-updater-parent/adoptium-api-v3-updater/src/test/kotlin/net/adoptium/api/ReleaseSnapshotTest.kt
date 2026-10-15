@@ -66,8 +66,9 @@ class ReleaseSnapshotTest {
          "scmRef":"test","version_data":"jdk8u","sha256":"checksum"}
     """.trimIndent()
 
-    private fun client(): GitHubHtmlClient = mockk<GitHubHtmlClient>().also {
-        coEvery { it.getUrl(any()) } answers { metadata(if (firstArg<String>().contains("-2")) 2 else 1) }
+    private fun client(): GitHubHtmlClient = mockk<GitHubHtmlClient>().also { client ->
+        coEvery { client.getUrl(any()) } answers { metadata(if (firstArg<String>().contains("-2")) 2 else 1) }
+        coEvery { client.getAsset(any()) } coAnswers { client.getUrl(firstArg<GHAsset>().downloadUrl) }
     }
 
     private fun factory(client: GitHubHtmlClient) = AdoptReleaseMapperFactory(AdoptBinaryMapper(client), client)

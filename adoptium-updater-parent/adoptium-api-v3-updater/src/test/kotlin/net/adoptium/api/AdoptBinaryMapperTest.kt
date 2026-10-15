@@ -39,6 +39,10 @@ class AdoptBinaryMapperTest {
     @BeforeEach
     fun beforeEach() {
         clearMocks(fakeGithubHtmlClient)
+        coEvery { fakeGithubHtmlClient.getUrl(any()) } returns "checksum filename"
+        coEvery { fakeGithubHtmlClient.getAsset(any()) } coAnswers {
+            fakeGithubHtmlClient.getUrl(firstArg<GHAsset>().downloadUrl)
+        }
     }
 
     val jdk = GHAsset(

@@ -7,6 +7,7 @@ import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.github.graphql.models.GitHubIdDeserializer
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.models.GitHubId
+import net.adoptium.api.v3.models.Vendor
 import java.time.Instant
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -27,7 +28,10 @@ data class GHReleaseSummary @JsonCreator constructor(
     @JsonProperty("publishedAt") val publishedAt: String,
     @JsonProperty("updatedAt") val updatedAt: String,
     @JsonProperty("name") val name: String,
-    @JsonProperty("releaseAssets") val releaseAssets: GHAssetsSummary
+    @JsonProperty("releaseAssets") val releaseAssets: GHAssetsSummary,
+    @JsonProperty("url") val url: String? = null,
+    @JsonProperty("isPrerelease") val isPrerelease: Boolean? = null,
+    val vendor: Vendor? = null
 ) {
 
     fun getUpdatedTime(): ZonedDateTime {

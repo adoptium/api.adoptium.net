@@ -62,6 +62,8 @@ open class GraphQLGitHubSummaryClient @Inject constructor(
                                 releases(first:50, after:$cursorPointer, orderBy: {field: CREATED_AT, direction: DESC}) {
                                     nodes {
                                         id,
+                                        url,
+                                        isPrerelease,
                                         publishedAt,
                                         updatedAt,
                                         name,

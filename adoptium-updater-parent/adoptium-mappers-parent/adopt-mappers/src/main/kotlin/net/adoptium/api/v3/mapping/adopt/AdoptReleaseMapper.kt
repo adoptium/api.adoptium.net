@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory
 import java.security.MessageDigest
 import java.time.ZonedDateTime
 import java.util.*
-import java.util.regex.Pattern
 
 @ApplicationScoped
 open class AdoptReleaseMapperFactory @Inject constructor(
@@ -59,7 +58,7 @@ private class AdoptReleaseMapper(
     }
 
     override suspend fun toAdoptRelease(ghRelease: GHRelease): ReleaseResult {
-        val releaseType: ReleaseType = formReleaseType(ghRelease)
+        val releaseType = releaseType(ghRelease.name, ghRelease.url, ghRelease.isPrerelease)
 
         val releaseLink = ghRelease.url
         val releaseName = ghRelease.name
@@ -216,28 +215,6 @@ private class AdoptReleaseMapper(
         )
     }
 
-    private fun formReleaseType(release: GHRelease): ReleaseType {
-        // TODO fix me before the year 2100
-        val dateMatcher =
-            """.*(20[0-9]{2}-[0-9]{2}-[0-9]{2}|20[0-9]{6}).*"""
-        val hasDate = Pattern.compile(dateMatcher).matcher(release.name)
-
-        return if (release.url.matches(Regex(".*/(temurin|openjdk|semeru)[0-9]+-binaries/.*"))) {
-            // Can trust isPrerelease from -binaries repos
-            if (release.isPrerelease) {
-                ReleaseType.ea
-            } else {
-                ReleaseType.ga
-            }
-        } else {
-            if (hasDate.matches()) {
-                ReleaseType.ea
-            } else {
-                ReleaseType.ga
-            }
-        }
-    }
-
     private fun parseVersionInfo(release: GHRelease, release_name: String): VersionData {
         return try {
             VersionParser.parse(release_name)
@@ -272,7 +249,7 @@ private class AdoptReleaseMapper(
             "Required binary metadata missing"
         }
         return sidecars.associate { (binary, metadata) ->
-            val body = checkNotNull(htmlClient.getUrl(metadata.downloadUrl)) { "Metadata unavailable: ${metadata.name}" }
+            val body = checkNotNull(htmlClient.getAsset(metadata)) { "Metadata unavailable: ${metadata.name}" }
             binary to withContext(Dispatchers.IO) {
                 UpdaterJsonMapper.mapper.readValue(body, GHMetaData::class.java)
             }

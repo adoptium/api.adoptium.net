@@ -11,6 +11,7 @@ import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.Releases
 import net.adoptium.api.v3.mapping.ReleaseMapper
 import net.adoptium.api.v3.models.GHReleaseMetadata
+import net.adoptium.api.v3.models.ReleaseType
 import org.slf4j.LoggerFactory
 import java.time.temporal.ChronoUnit
 import kotlin.math.absoluteValue
@@ -47,6 +48,24 @@ class AdoptReposBuilder @Inject constructor(
         val ids = summaries.map { it.id }.toSet()
         val pruned = entry.value.releases.nodes.filterValues { GitHubId(it.id) in ids }
         val current = pruned.values.groupBy { GitHubId(it.id) }
+        fun isEa(summary: GHReleaseSummary): Boolean {
+            val previous = current[summary.id]?.firstOrNull()
+            val url = summary.url
+            val prerelease = summary.isPrerelease
+            return if (url != null && prerelease != null) {
+                ReleaseMapper.releaseType(summary.name, url, prerelease) == ReleaseType.ea
+            } else previous?.release_type == ReleaseType.ea
+        }
+        val eaIds = summaries.filter(::isEa).map { it.id }.toSet()
+        val latestEaIds = summaries.filter { it.id in eaIds }
+            .groupBy { summary ->
+                val previous = current[summary.id]?.firstOrNull()
+                (summary.vendor ?: previous?.vendor) to
+                    (summary.url ?: previous?.release_link).orEmpty().substringBefore("/releases/")
+            }
+            .values.map { group ->
+                group.maxWith(compareBy<GHReleaseSummary> { it.getPublishedTime().toInstant() }.thenBy { it.id.id }).id
+            }.toSet()
 
         // Select upstream IDs before fetching: overlapping selectors must not fetch
         // different snapshots of the same rolling release during a single update.
@@ -55,7 +74,7 @@ class AdoptReposBuilder @Inject constructor(
             isReleaseOldEnough(summary.publishedAt) && (
                 previous == null ||
                     previous.any { ChronoUnit.SECONDS.between(it.updated_at.dateTime, summary.getUpdatedTime()) != 0L } ||
-                    isYoung(summary) || summary.name in toUpdate ||
+                    summary.id in latestEaIds || isYoung(summary, summary.id in eaIds) || summary.name in toUpdate ||
                     (gitHubMetadataSupplier(summary.id)?.totalBinaryCount?.let { it != summary.releaseAssets.totalCount } ?: false)
                 )
         }
@@ -77,9 +96,9 @@ class AdoptReposBuilder @Inject constructor(
             .add(replacements.values.filter { it.succeeded() }.flatMap { it.result!! })
     }
 
-    private fun isYoung(summary: GHReleaseSummary): Boolean =
+    private fun isYoung(summary: GHReleaseSummary, isEa: Boolean): Boolean =
         ChronoUnit.DAYS.between(summary.getPublishedTime(), TimeSource.now()).absoluteValue < 7 ||
-            ChronoUnit.DAYS.between(summary.getUpdatedTime(), TimeSource.now()).absoluteValue < 7
+            (!isEa && ChronoUnit.DAYS.between(summary.getUpdatedTime(), TimeSource.now()).absoluteValue < 7)
 
     private fun isReleaseOldEnough(timestamp: String): Boolean {
         val created = ReleaseMapper.parseDate(timestamp)

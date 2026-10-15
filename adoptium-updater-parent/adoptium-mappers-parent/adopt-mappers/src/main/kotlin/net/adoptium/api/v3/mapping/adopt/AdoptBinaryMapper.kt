@@ -93,14 +93,15 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         val binaryName = binaryAsset.name
         val binaryLink = binaryAsset.downloadUrl
         val binarySize = binaryAsset.size
-        val binaryChecksumLink = getCheckSumLink(fullAssetList, binaryName)
+        val checksumAsset = getChecksumAsset(fullAssetList, binaryName)
+        val binaryChecksumLink = checksumAsset?.downloadUrl
         val signatureLink = getSignatureLink(fullAssetList, binaryAsset.name)
 
-        val binaryChecksum: String? =
+        val binaryChecksum: String? = binaryAsset.sha256() ?:
             if (binaryMetadata != null && binaryMetadata.sha256.isNotEmpty()) {
                 binaryMetadata.sha256
             } else {
-                getChecksum(binaryChecksumLink)
+                getChecksum(checksumAsset)
             }
 
         val metadataLink = getMetadataLink(fullAssetList, binaryName)
@@ -131,11 +132,9 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         return if (installer == null) {
             null
         } else {
-            val checkSumLink = getCheckSumLink(fullAssetList, installer.name)
-            var checksum: String? = null
-            if (checkSumLink != null) {
-                checksum = getChecksum(checkSumLink)
-            }
+            val checksumAsset = getChecksumAsset(fullAssetList, installer.name)
+            val checkSumLink = checksumAsset?.downloadUrl
+            val checksum = installer.sha256() ?: getChecksum(checksumAsset)
 
             val metadataLink = getMetadataLink(fullAssetList, installer.name)
             val signatureLink = getSignatureLink(fullAssetList, installer.name)
@@ -153,7 +152,7 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         }
     }
 
-    private fun getCheckSumLink(fullAssetList: List<GHAsset>, binary_name: String): String? {
+    private fun getChecksumAsset(fullAssetList: List<GHAsset>, binary_name: String): GHAsset? {
         val nameWithoutExtension = removeExtensionFromName(binary_name)
 
         return fullAssetList
@@ -161,7 +160,7 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
                 asset.name == "$binary_name.sha256.txt" ||
                     asset.name == binary_name.split(".")[0] + ".sha256.txt" ||
                     asset.name == "$nameWithoutExtension.sha256.txt"
-            }?.downloadUrl
+            }
     }
 
     private fun getMetadataLink(fullAssetList: List<GHAsset>, binary_name: String): String? {
@@ -277,22 +276,12 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         }
     }
 
-    private suspend fun getChecksum(binary_checksum_link: String?): String? {
-        try {
-            if (!binary_checksum_link.isNullOrEmpty()) {
-                LOGGER.debug("Pulling checksum for $binary_checksum_link")
-                val checksum = gitHubHtmlClient.getUrl(binary_checksum_link)
-                if (checksum != null) {
-                    val tokens = checksum.split(" ")
-                    if (tokens.size > 1) {
-                        return tokens[0]
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            LOGGER.warn("Failed to fetch checksum $binary_checksum_link", e)
+    private suspend fun getChecksum(asset: GHAsset?): String? {
+        if (asset == null) return null
+        val checksum = checkNotNull(gitHubHtmlClient.getAsset(asset)) { "Checksum unavailable: ${asset.name}" }
+        return checksum.trim().split(Regex("\\s+")).first().also {
+            check(it.isNotEmpty()) { "Empty checksum: ${asset.name}" }
         }
-        return null
     }
 
     private fun getSignatureLink(assets: List<GHAsset>, binary_name: String): String? {
