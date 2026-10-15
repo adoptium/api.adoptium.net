@@ -266,7 +266,7 @@ private class AdoptReleaseMapper(
                 metadataAsset.name.startsWith(it.name.removeSuffix(".json"))
             }
 
-        val metadataString = htmlClient.getUrl(metadataAsset.downloadUrl)
+        val metadataString = htmlClient.getAsset(metadataAsset)
         if (binaryAsset != null && metadataString != null) {
             try {
                 return withContext(Dispatchers.IO) {

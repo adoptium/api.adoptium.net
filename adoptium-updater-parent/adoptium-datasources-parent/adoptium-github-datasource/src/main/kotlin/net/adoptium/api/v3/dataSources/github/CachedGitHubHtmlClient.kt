@@ -13,18 +13,25 @@ import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.DefaultUpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.UrlRequest
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.mongo.CacheDbEntry
 import net.adoptium.api.v3.dataSources.mongo.InternalDbStore
 import org.slf4j.LoggerFactory
+import java.security.MessageDigest
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.util.HexFormat
 import java.util.Locale
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 
 interface GitHubHtmlClient {
     suspend fun getUrl(url: String): String?
+
+    suspend fun getUrl(url: String, updatedAt: ZonedDateTime): String? = getUrl(url)
+
+    suspend fun getAsset(asset: GHAsset): String? = getUrl(asset.downloadUrl)
 }
 
 @ApplicationScoped
@@ -64,6 +71,28 @@ open class CachedGitHubHtmlClient @Inject constructor(
         }
     }
 
+    override suspend fun getUrl(url: String, updatedAt: ZonedDateTime): String? {
+        val cachedEntry = internalDbStore.getCachedWebpage(url)
+        val lastChecked = cachedEntry?.lastChecked
+        if (cachedEntry == null || lastChecked == null || lastChecked.isBefore(updatedAt)) {
+            // Rolling EA assets reuse URLs. Read the new contents before mapping the
+            // release rather than returning stale data while refreshing in the background.
+            return get(UrlRequest(url))
+        }
+        return getUrl(url)
+    }
+
+    override suspend fun getAsset(asset: GHAsset): String? {
+        val cacheKey = if (asset.id != null || asset.digest != null) {
+            "${asset.downloadUrl}#github-asset=${asset.id.orEmpty()};digest=${asset.digest.orEmpty()}"
+        } else {
+            // No reliable version token: do not trust a URL-only cached snapshot.
+            return get(UrlRequest(asset.downloadUrl))
+        }
+        val cached = internalDbStore.getCachedWebpage(cacheKey)?.data
+        return cached ?: get(UrlRequest(asset.downloadUrl), cacheKey, asset.digest)
+    }
+
     private fun shouldUpdate(cachedEntry: CacheDbEntry): Boolean {
         val lastModified = if (cachedEntry.lastModified != null) {
             ZonedDateTime.parse(cachedEntry.lastModified, LAST_MODIFIED_PARSER)
@@ -93,7 +122,7 @@ open class CachedGitHubHtmlClient @Inject constructor(
         }
     }
 
-    private suspend fun get(request: UrlRequest): String? {
+    private suspend fun get(request: UrlRequest, cacheKey: String = request.url, digest: String? = null): String? {
         // Retry up to 10 times
         for (retryCount in 1..10) {
             try {
@@ -101,16 +130,24 @@ open class CachedGitHubHtmlClient @Inject constructor(
                 val response = updaterHtmlClient.getFullResponse(request)
 
                 if (response?.statusLine?.statusCode == 304) {
-                    internalDbStore.updateCheckedTime(request.url, TimeSource.now())
+                    check(request.lastModified != null) { "Unexpected 304 for an uncached asset" }
+                    internalDbStore.updateCheckedTime(cacheKey, TimeSource.now())
                     // asset has not updated
                     return null
                 }
 
-                val body = DefaultUpdaterHtmlClient.extractBody(response)
+                val body = if (digest != null && response != null) {
+                    val bytes = response.entity.content.use { it.readBytes() }
+                    val actualDigest = "sha256:" + HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes))
+                    check(actualDigest.equals(digest, ignoreCase = true)) { "Asset digest mismatch for ${request.url}" }
+                    bytes.toString(Charsets.UTF_8)
+                } else {
+                    DefaultUpdaterHtmlClient.extractBody(response)
+                } ?: return null
 
                 val lastModified = response?.getFirstHeader("Last-Modified")?.value
 
-                internalDbStore.putCachedWebpage(request.url, lastModified, TimeSource.now(), body)
+                internalDbStore.putCachedWebpage(cacheKey, lastModified, TimeSource.now(), body)
                 LOGGER.debug("Got ${request.url}")
                 return body
             } catch (e: Exception) {

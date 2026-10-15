@@ -12,6 +12,7 @@ import net.adoptium.api.v3.dataSources.models.Releases
 import net.adoptium.api.v3.mapping.ReleaseMapper
 import net.adoptium.api.v3.models.GHReleaseMetadata
 import net.adoptium.api.v3.models.Release
+import net.adoptium.api.v3.models.ReleaseType
 import org.slf4j.LoggerFactory
 import java.time.temporal.ChronoUnit
 import kotlin.math.absoluteValue
@@ -64,15 +65,26 @@ class AdoptReposBuilder @Inject constructor(
             val newReleases = getNewReleases(summary, pruned)
             val updatedReleases = getUpdatedReleases(summary, pruned)
             val binaryCountChanged = binaryCountHasChanged(summary, gitHubMetadataSupplier)
-            val youngReleases = getYoungReleases(summary)
+            val youngReleases = getYoungReleases(summary, pruned)
             val explicitlyAdded = getExplicitlyAddedReleases(summary, toUpdate)
 
-            pruned
-                .add(newReleases)
-                .add(updatedReleases)
-                .add(youngReleases)
-                .add(explicitlyAdded)
-                .add(binaryCountChanged)
+            val selectedReleases = newReleases +
+                updatedReleases +
+                youngReleases +
+                explicitlyAdded +
+                binaryCountChanged
+            val refreshedReleases = selectedReleases + getLatestEaReleases(summary, pruned, selectedReleases)
+            val refreshedIds = refreshedReleases.map { GitHubId(it.id) }.toSet()
+
+            // A rolling release can acquire new version-based split IDs. Replace all
+            // old snapshots of each refreshed GitHub release, not just matching split IDs.
+            FeatureRelease(
+                entry.key,
+                Releases(
+                    pruned.releases.nodes.filterValues { GitHubId(it.id) !in refreshedIds }
+                )
+            )
+                .add(refreshedReleases)
         } else {
             val newReleases = getNewReleases(summary, FeatureRelease(entry.key, emptyList()))
             FeatureRelease(entry.key, Releases(newReleases))
@@ -84,6 +96,30 @@ class AdoptReposBuilder @Inject constructor(
             .filter { !excluded.contains(it.id) }
             .filter { pruned.releases.hasReleaseBeenUpdated(it.id, it.getUpdatedTime()) }
             .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
+            .flatMap { getReleaseById(it) }
+    }
+
+    private suspend fun getLatestEaReleases(
+        summary: GHRepositorySummary,
+        pruned: FeatureRelease,
+        selectedReleases: List<Release>
+    ): List<Release> {
+        val latestEaIds = (pruned.releases.nodes.values + selectedReleases)
+            .filter { it.release_type == ReleaseType.ea }
+            .groupBy { it.vendor to it.release_link.substringBefore("/releases/") }
+            .values
+            .map { releases ->
+                val latest = releases.maxWith(compareBy<Release> { it.timestamp.dateTime.toInstant() }.thenBy { it.id })
+                GitHubId(latest.id)
+            }
+            .toSet()
+        val selectedIds = selectedReleases.map { GitHubId(it.id) }.toSet()
+        // Replacing an asset need not change its parent release's timestamp or count.
+        // Always check the latest published EA per repository and feature version;
+        // getYoungReleases already covers releases published in the last seven days.
+        return summary.releases.releases
+            .filter { it.id in latestEaIds && it.id !in selectedIds && it.id !in excluded }
+            .filter { isReleaseOldEnough(it.publishedAt) }
             .flatMap { getReleaseById(it) }
     }
 
@@ -100,13 +136,18 @@ class AdoptReposBuilder @Inject constructor(
             .flatMap { getReleaseById(it) }
     }
 
-    private suspend fun getYoungReleases(summary: GHRepositorySummary): List<Release> {
+    private suspend fun getYoungReleases(summary: GHRepositorySummary, pruned: FeatureRelease): List<Release> {
+        val eaIds = pruned.releases.nodes.values
+            .filter { it.release_type == ReleaseType.ea }
+            .map { GitHubId(it.id) }
+            .toSet()
         return summary.releases.releases
             .filter { !excluded.contains(it.id) }
             .filter {
-                // Re-pull data if the release is less than 7 days old
+                // Re-pull releases published in the last week. Only GA releases also
+                // use recent edits: otherwise edits can re-enable the entire EA history.
                 ChronoUnit.DAYS.between(it.getPublishedTime(), TimeSource.now()).absoluteValue < 7 ||
-                    ChronoUnit.DAYS.between(it.getUpdatedTime(), TimeSource.now()).absoluteValue < 7
+                    (it.id !in eaIds && ChronoUnit.DAYS.between(it.getUpdatedTime(), TimeSource.now()).absoluteValue < 7)
             }
             .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
             .flatMap { getReleaseById(it) }
@@ -117,9 +158,9 @@ class AdoptReposBuilder @Inject constructor(
      */
     private suspend fun getExplicitlyAddedReleases(summary: GHRepositorySummary, releaseNames: Set<String>): List<Release> {
         return releaseNames
-            .mapNotNull { name ->
+            .flatMap { name ->
                 val allReleases = summary.releases.releases
-                val release = allReleases
+                val releases = allReleases
                     .filter { !excluded.contains(it.id) } // Filter out excluded releases
                     .filter { name == it.name } // Find release with the requested name
                     .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
@@ -127,12 +168,11 @@ class AdoptReposBuilder @Inject constructor(
                         LOGGER.info("Updating ${it.name}")
                         getReleaseById(it) // fetch release from Github
                     }
-                    .firstOrNull()
 
-                if (release == null) {
+                if (releases.isEmpty()) {
                     LOGGER.warn("Failed to match update name $name")
                 }
-                release // return updated release
+                releases // return all updated split releases
             }
     }
 

@@ -59,6 +59,8 @@ open class GraphQLGitHubReleaseClient @Inject constructor(
                                         resourcePath,
                                         releaseAssets(first:50) {
                                             nodes {
+                                                id,
+                                                digest,
                                                 downloadCount,
                                                 updatedAt,
                                                 name,

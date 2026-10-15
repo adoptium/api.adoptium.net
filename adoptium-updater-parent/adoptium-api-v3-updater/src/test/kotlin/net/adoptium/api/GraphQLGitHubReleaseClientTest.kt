@@ -12,6 +12,7 @@ import net.adoptium.api.v3.AdoptRepositoryImpl
 import net.adoptium.api.v3.ReleaseResult
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.config.Ecosystem
+import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.github.GitHubHtmlClient
 import net.adoptium.api.v3.dataSources.github.graphql.GraphQLGitHubClient
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubInterface
@@ -24,6 +25,7 @@ import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubCdxaS
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubCdxaClient
 import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLRequest
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssetNode
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHReleaseResult
@@ -33,6 +35,7 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.QueryData
 import net.adoptium.api.v3.dataSources.github.graphql.models.QuerySummaryData
 import net.adoptium.api.v3.dataSources.github.graphql.models.RateLimit
+import net.adoptium.api.v3.dataSources.github.graphql.models.ReleaseQueryData
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHAssetsSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleaseSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleasesSummary
@@ -47,6 +50,7 @@ import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.models.VersionData
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
@@ -97,6 +101,7 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
                     val builder = mockk<GraphQLClientResponse<F>>()
 
                     assert(query.query?.contains("a-github-id") == true)
+                    assertTrue(Regex("nodes\\s*\\{\\s*id,\\s*digest,").containsMatchIn(query.query.orEmpty()))
                     every { builder.data } returns GHReleaseResult(response, RateLimit(0, 5000)) as F
                     every { builder.errors } returns null
                     return builder
@@ -122,6 +127,7 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
 
                     assert(query.query?.contains("a-repo-name") == true)
 
+                    assertTrue(Regex("nodes\\s*\\{\\s*id,\\s*digest,").containsMatchIn(query.query.orEmpty()))
                     every { builder.data } returns QueryData(repo, RateLimit(0, 5000)) as F
                     every { builder.errors } returns null
                     return builder
@@ -214,6 +220,53 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
 
             assertEquals(2, repo.releases.releases.size)
         }
+    }
+
+    @Test
+    fun `asset identity and digest are preserved across asset pages`() = runBlocking {
+        val firstAsset = source.assets.first().copy(id = "asset-first", digest = "sha256:first")
+        val secondAsset = source.assets.last().copy(id = "asset-second", digest = "sha256:second")
+        val firstPage = response.copy(releaseAssets = GHAssets(listOf(firstAsset), PageInfo(true, "asset-page-2"), 2))
+        var requests = 0
+        val graphQLRequest = object : GraphQLRequest {
+            override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> {
+                requests++
+                assertTrue(Regex("nodes\\s*\\{\\s*id,\\s*digest,").containsMatchIn(query.query.orEmpty()))
+                val data = if (query.responseType() == GHReleaseResult::class) {
+                    GHReleaseResult(firstPage, RateLimit(0, 5000))
+                } else {
+                    assertEquals("asset-page-2", (query.variables as Map<String, String>)["cursorPointer"])
+                    ReleaseQueryData(
+                        GHAssetNode(GHAssets(listOf(secondAsset), PageInfo(false, null), 2)), RateLimit(0, 5000)
+                    )
+                }
+                val result = mockk<GraphQLClientResponse<F>>()
+                every { result.data } returns data as F
+                every { result.errors } returns null
+                return result
+            }
+        }
+        val graphQL = GraphQLGitHubInterface(graphQLRequest, mockkHttpClient())
+        val client = GraphQLGitHubReleaseClient(graphQL, GraphQLGitHubReleaseRequest(graphQL))
+
+        val assets = client.getReleaseById(GitHubId("1"))!!.releaseAssets.assets
+
+        assertEquals(listOf(firstAsset, secondAsset), assets)
+        assertEquals(2, requests)
+    }
+
+    @Test
+    fun `asset responses deserialize with and without identity fields`() {
+        val fields = """"name":"checksum","size":1,"downloadUrl":"url","downloadCount":0,"updatedAt":"2013-02-27T19:35:32Z""""
+        val legacy = UpdaterJsonMapper.mapper.readValue("{$fields}", GHAsset::class.java)
+        val current = UpdaterJsonMapper.mapper.readValue(
+            """{$fields,"id":"asset-id","digest":"sha256:digest"}""", GHAsset::class.java
+        )
+
+        assertEquals(null, legacy.id)
+        assertEquals(null, legacy.digest)
+        assertEquals("asset-id", current.id)
+        assertEquals("sha256:digest", current.digest)
     }
 
     @TestFactory
