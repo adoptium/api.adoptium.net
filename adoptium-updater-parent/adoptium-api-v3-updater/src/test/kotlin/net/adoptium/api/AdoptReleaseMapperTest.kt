@@ -245,23 +245,52 @@ class AdoptReleaseMapperTest : BaseTest() {
         coVerify(exactly = 2) { repository.getReleaseById(upstream.id) }
     }
 
-    @Test
-    fun `metadata completeness ignores sources installers unsupported and excluded assets`() = runBlocking {
+    @ParameterizedTest
+    @ValueSource(strings = ["missing", "invalid", "exception"])
+    fun `metadata completeness ignores sources installers unsupported and excluded assets`(failure: String) = runBlocking {
         val assets = buildGhAssets(listOf(
             "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz" to "",
             "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz.json" to "1",
             "OpenJDK8U-sources-1.tar.gz" to "sources",
+            "OpenJDK8U-sources-1.tar.gz.json" to "source-metadata",
             "OpenJDK8U-jre_x64_windows_hotspot-1.msi" to "installer",
+            "OpenJDK8U-jre_x64_windows_hotspot-1.msi.json" to "ignored-metadata",
             "OpenJDK8U-jre_x64_linux_hotspot-1.tar.xz" to "unsupported",
+            "OpenJDK8U-jre_x64_linux_hotspot-1.tar.xz.json" to "ignored-metadata",
             "corretto-1.tar.gz" to "excluded",
-            "AQAvitTapFiles-1.tar.gz" to "excluded"
+            "corretto-1.tar.gz.json" to "ignored-metadata",
+            "AQAvitTapFiles-1.tar.gz" to "excluded",
+            "AQAvitTapFiles-1.tar.gz.json" to "ignored-metadata"
         ))
-        val result = createAdoptReleaseMapper(mockClient()).toAdoptRelease(formGhRelease(assets))
+        val cached = CachedGitHubHtmlClient(InMemoryInternalDbStore(), mockClient())
+        val metadata = cached.getUrl("1")!!
+        var sourceMetadataFetched = false
+        val client = spyk(object : GitHubHtmlClient {
+            override suspend fun getUrl(url: String): String? = cached.getUrl(url)
+            override suspend fun getAsset(asset: GHAsset): String? = when (asset.downloadUrl) {
+                "ignored-metadata" -> when (failure) {
+                    "missing" -> null
+                    "invalid" -> "not JSON"
+                    else -> throw IllegalStateException("Ignored metadata retrieval failed")
+                }
+                "source-metadata" -> {
+                    sourceMetadataFetched = true
+                    metadata.replace("\"binary_type\": \"jre\"", "\"binary_type\": \"sources\"")
+                }
+                "1" -> metadata
+                else -> cached.getAsset(asset)
+            }
+        })
+        val mapper = AdoptReleaseMapperFactory(AdoptBinaryMapper(client), client).get(Vendor.eclipse)
+        val result = mapper.toAdoptRelease(formGhRelease(assets))
 
         assertTrue(result.succeeded())
         assertFalse(result.retryable)
-        assertEquals(1, result.result!!.single().binaries.size)
+        assertEquals(setOf("OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz", "OpenJDK8U-sources-1.tar.gz"),
+            result.result!!.single().binaries.map { it.`package`.name }.toSet())
         assertEquals("sources", result.result!!.single().source!!.link)
+        assertTrue(sourceMetadataFetched)
+        coVerify(exactly = 0) { client.getAsset(match { it.downloadUrl == "ignored-metadata" }) }
     }
 
     @ParameterizedTest

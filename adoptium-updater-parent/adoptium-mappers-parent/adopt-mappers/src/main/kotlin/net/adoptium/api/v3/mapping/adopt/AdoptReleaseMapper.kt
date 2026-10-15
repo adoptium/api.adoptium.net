@@ -291,6 +291,12 @@ private class AdoptReleaseMapper(
                 metadataAsset.name.startsWith(it.name.removeSuffix(".json"))
             } ?: return null
 
+        // Ignored assets must not make a supported-binary snapshot fail. Source
+        // metadata is still needed to identify the release's source package.
+        if (!adoptBinaryMapper.isSupportedBinaryAsset(binaryAsset) && !binaryAsset.name.contains("-sources")) {
+            return null
+        }
+
         val metadataString = htmlClient.getAsset(metadataAsset)
             ?: throw IllegalStateException("Required metadata unavailable: ${metadataAsset.downloadUrl}")
         return withContext(Dispatchers.IO) {
