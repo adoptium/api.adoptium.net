@@ -1,5 +1,7 @@
 package net.adoptium.api
 
+import com.expediagroup.graphql.client.types.GraphQLClientRequest
+import com.expediagroup.graphql.client.types.GraphQLClientResponse
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -19,12 +21,22 @@ import net.adoptium.api.v3.dataSources.ReleaseVersionResolver
 import net.adoptium.api.v3.dataSources.UpdatableVersionSupplier
 import net.adoptium.api.v3.dataSources.github.GitHubApi
 import net.adoptium.api.v3.dataSources.github.GitHubHtmlClient
+import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubInterface
+import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubReleaseClient
+import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubReleaseRequest
+import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLGitHubRepositoryClient
+import net.adoptium.api.v3.dataSources.github.graphql.clients.GraphQLRequest
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHReleaseResult
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHReleases
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRepository
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
+import net.adoptium.api.v3.dataSources.github.graphql.models.HasRateLimit
+import net.adoptium.api.v3.dataSources.github.graphql.models.QueryData
+import net.adoptium.api.v3.dataSources.github.graphql.models.RateLimit
+import net.adoptium.api.v3.dataSources.github.graphql.models.ReleaseQueryData
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
@@ -32,8 +44,10 @@ import net.adoptium.api.v3.dataSources.models.Releases
 import net.adoptium.api.v3.mapping.adopt.AdoptBinaryMapper
 import net.adoptium.api.v3.mapping.adopt.AdoptReleaseMapperFactory
 import net.adoptium.api.v3.models.GHReleaseMetadata
+import net.adoptium.api.v3.models.GitHubDownloadStatsDbEntry
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.Vendor
+import net.adoptium.api.v3.stats.GitHubDownloadStatsCalculator
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -42,6 +56,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import tools.jackson.databind.json.JsonMapper
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -78,6 +93,142 @@ class ReleaseSnapshotTest {
         coEvery { it.getSummary(8) } returns GHSummaryTestDataGenerator.generateGHRepositorySummary(
             GHRepository(GHReleases(listOf(upstream, upstream), PageInfo(false, "")))
         )
+    }
+
+    private fun versions() = mockk<UpdatableVersionSupplier>().also {
+        every { it.getAllVersions() } returns arrayOf(8)
+        every { it.getLtsVersions() } returns arrayOf(8)
+        every { it.getTipVersion() } returns 8
+        coEvery { it.updateVersions() } returns Unit
+    }
+
+    private fun updater(builder: AdoptReposBuilder, database: InMemoryApiPersistence, versions: UpdatableVersionSupplier) =
+        V3Updater(builder, mockk(), APIDataStoreImpl(database), database, mockk(relaxed = true),
+            ReleaseVersionResolver(versions), mockk(relaxed = true), versions)
+
+    @ParameterizedTest
+    @ValueSource(strings = ["null-response", "missing-data", "missing-node", "decode"])
+    fun `failed second asset page preserves every split and aborts full publication`(failure: String) = runBlocking {
+        val complete = upstream()
+        val factory = factory(client())
+        val previous = repos(factory.get(Vendor.eclipse).toAdoptRelease(complete).result!!)
+        val prefix = upstream(listOf(first, "$first.json"))
+        // A complete pair on the retained page maps successfully, but is not a complete snapshot.
+        assertTrue(factory.get(Vendor.eclipse).toAdoptRelease(prefix).succeeded())
+        val paged = prefix.copy(releaseAssets = prefix.releaseAssets.copy(pageInfo = PageInfo(true, "page-two")))
+        val request = object : GraphQLRequest {
+            override suspend fun <T : Any> request(query: GraphQLClientRequest<T>): GraphQLClientResponse<T> {
+                val data = when (query.responseType()) {
+                    GHReleaseResult::class -> GHReleaseResult(paged, RateLimit(0, 5000))
+                    QueryData::class -> QueryData(GHRepository(GHReleases(listOf(paged), PageInfo(false, null))), RateLimit(0, 5000))
+                    else -> when (failure) {
+                        "decode" -> JsonMapper.builder().build().readValue("[]", ReleaseQueryData::class.java)
+                        "missing-node" -> ReleaseQueryData(null, RateLimit(0, 5000))
+                        else -> null
+                    }
+                }
+                return mockk<GraphQLClientResponse<T>>().also {
+                    every { it.data } returns (data as T?)
+                    every { it.errors } returns null
+                }
+            }
+        }
+        val transport = object : GraphQLGitHubInterface(request, mockk()) {
+            override suspend fun <F : HasRateLimit> queryApi(
+                requestEntityBuilder: (String?) -> GraphQLClientRequest<F>, cursor: String?
+            ): GraphQLClientResponse<F>? {
+                if (cursor != null && failure == "null-response") return null
+                return super.queryApi(requestEntityBuilder, cursor)
+            }
+        }
+        val assets = GraphQLGitHubReleaseRequest(transport)
+        val releaseClient = GraphQLGitHubReleaseClient(transport, assets)
+        val repoClient = GraphQLGitHubRepositoryClient(transport, assets)
+        val github = mockk<GitHubApi>()
+        coEvery { github.getReleaseById(complete.id) } coAnswers { releaseClient.getReleaseById(complete.id) }
+        coEvery { github.getRepositorySummary(any(), any()) } answers {
+            GHSummaryTestDataGenerator.generateGHRepositorySummary(GHRepository(GHReleases(
+                if (secondArg<String>() == "temurin8-binaries") listOf(complete) else emptyList(), PageInfo(false, null))))
+        }
+        coEvery { github.getRepository(any(), any(), any()) } coAnswers {
+            if (secondArg<String>() == "temurin8-binaries") repoClient.getRepository("adoptium", "temurin8-binaries") { _, _ -> true }
+            else GHRepository(GHReleases(emptyList(), PageInfo(false, null)))
+        }
+        val versions = versions()
+        val builder = AdoptReposBuilder(AdoptRepositoryImpl(github, factory), versions)
+        assertEquals(nodes(previous), nodes(builder.incrementalUpdate(setOf(complete.name), previous) { null }))
+        val error = assertThrows(Exception::class.java) { runBlocking { builder.build(ReleaseIncludeFilter.INCLUDE_ALL) } }
+        assertTrue(error.message!!.contains(when (failure) {
+            "null-response" -> "GraphQL page unavailable"
+            "missing-data" -> "No data returned"
+            "missing-node" -> "Release asset page unavailable"
+            else -> "Unable to decode GraphQL page"
+        }))
+        val database = spyk(InMemoryApiPersistence(previous, mockk()))
+        assertNull(database.getLatestGithubStatsForFeatureVersion(8))
+        updater(builder, database, versions).runUpdate(previous, AtomicBoolean(true), mockk())
+        assertEquals(nodes(previous), nodes(database.repos))
+        coVerify(exactly = 0) { database.updateAllRepos(any(), any()) }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["metadata", "legacy", "source", "multi"])
+    fun `downloads include excluded assets once without fetching installer metadata`(format: String) = runBlocking {
+        val zip = "OpenJDK8U-jdk_x64_windows_hotspot-1.zip"
+        val msi = zip.removeSuffix(".zip") + ".msi"
+        val source = "OpenJDK8U-sources-1.tar.gz"
+        val names = listOf(zip, msi, "$msi.json", "unrelated.txt") +
+            (if (format == "legacy") emptyList() else listOf("$zip.json")) +
+            (if (format == "source") listOf(source) else emptyList()) +
+            (if (format == "multi") listOf(second, "$second.json", sbom, sbom.removeSuffix(".json") + "-metadata.json") else emptyList())
+        val release = upstream(names).let { it.copy(releaseAssets = it.releaseAssets.copy(assets = it.releaseAssets.assets.map { asset ->
+            asset.copy(downloadCount = when (asset.name) { zip -> 10; msi -> 20; source -> 30; second -> 7; else -> 100 })
+        })) }
+        val client = client()
+        coEvery { client.getUrl("$msi.json") } throws IllegalStateException("Installer metadata must not be fetched")
+        val mapper = factory(client).get(Vendor.eclipse)
+        val mapped = mapper.toAdoptRelease(release).result!!
+        val expected = when (format) { "source" -> 60L; "multi" -> 37L; else -> 30L }
+        assertEquals(expected, mapped.sumOf { it.download_count })
+        assertEquals(expected, GitHubDownloadStatsCalculator.getStats(repos(mapped)).single().downloads)
+        if (format == "multi") {
+            assertEquals(listOf(30L, 7L), mapped.map { it.download_count })
+            val reversed = mapper.toAdoptRelease(release.copy(releaseAssets = release.releaseAssets.copy(assets = release.releaseAssets.assets.reversed()))).result!!
+            assertEquals(mapped.associate { it.id to it.download_count }, reversed.associate { it.id to it.download_count })
+        }
+        assertFalse(mapped.flatMap { it.binaries.toList() }.any { it.`package`.name == msi || it.`package`.name == source })
+        if (format == "source") assertEquals(source, mapped.single().source!!.name)
+        coVerify(exactly = 0) { client.getUrl("$msi.json") }
+    }
+
+    @Test
+    fun `full update publishes installer downloads with existing nonzero statistics`() = runBlocking {
+        val zip = "OpenJDK8U-jdk_x64_windows_hotspot-1.zip"
+        val msi = zip.removeSuffix(".zip") + ".msi"
+        val release = upstream(listOf(zip, "$zip.json", msi, "$msi.json")).let {
+            it.copy(releaseAssets = it.releaseAssets.copy(assets = it.releaseAssets.assets.map { asset ->
+                asset.copy(downloadCount = when (asset.name) { zip -> 11; msi -> 20; else -> 0 })
+            }))
+        }
+        val github = mockk<GitHubApi>()
+        val ghRepo = GHRepository(GHReleases(listOf(release), PageInfo(false, null)))
+        coEvery { github.getRepository(any(), any(), any()) } answers {
+            if (secondArg<String>() == "temurin8-binaries") ghRepo else GHRepository(GHReleases(emptyList(), PageInfo(false, null)))
+        }
+        coEvery { github.getRepositorySummary(any(), any()) } answers {
+            GHSummaryTestDataGenerator.generateGHRepositorySummary(
+                if (secondArg<String>() == "temurin8-binaries") ghRepo else GHRepository(GHReleases(emptyList(), PageInfo(false, null))))
+        }
+        coEvery { github.getReleaseById(release.id) } returns release
+        val previous = repos(emptyList())
+        val database = spyk(InMemoryApiPersistence(previous, mockk()))
+        database.addGithubDownloadStatsEntries(listOf(GitHubDownloadStatsDbEntry(TimeSource.now().minusDays(1), 30, null, 8)))
+        val versions = versions()
+        val builder = AdoptReposBuilder(AdoptRepositoryImpl(github, factory(client())), versions)
+        val updated = updater(builder, database, versions).runUpdate(previous, AtomicBoolean(true), mockk())
+        assertEquals(31L, GitHubDownloadStatsCalculator.getStats(updated).single().downloads)
+        assertEquals(31L, GitHubDownloadStatsCalculator.getStats(database.repos).single().downloads)
+        coVerify(atLeast = 1) { database.updateAllRepos(any(), any()) }
     }
 
     @ParameterizedTest
@@ -254,11 +405,7 @@ class ReleaseSnapshotTest {
             )))
         }
         coEvery { github.getReleaseById(complete.id) } answers { current }
-        val versions = mockk<UpdatableVersionSupplier>()
-        every { versions.getAllVersions() } returns arrayOf(8)
-        every { versions.getLtsVersions() } returns arrayOf(8)
-        every { versions.getTipVersion() } returns 8
-        coEvery { versions.updateVersions() } returns Unit
+        val versions = versions()
         val builder = AdoptReposBuilder(AdoptRepositoryImpl(github, factory), versions)
         val previous = builder.build(ReleaseIncludeFilter.INCLUDE_ALL)
         assertEquals(2, nodes(previous).size)
@@ -272,8 +419,7 @@ class ReleaseSnapshotTest {
         }
         assertThrows(IllegalStateException::class.java) { runBlocking { builder.build(ReleaseIncludeFilter.INCLUDE_ALL) } }
         val database = spyk(InMemoryApiPersistence(previous, mockk()))
-        val updater = V3Updater(builder, mockk(), APIDataStoreImpl(database), database, mockk(relaxed = true),
-            ReleaseVersionResolver(versions), mockk(relaxed = true), versions)
+        val updater = updater(builder, database, versions)
         // No download statistics: the stats guard cannot hide a partial snapshot.
         assertNull(database.getLatestGithubStatsForFeatureVersion(8))
         assertEquals(previous, updater.runUpdate(previous, AtomicBoolean(true), mockk()))

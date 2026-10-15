@@ -52,29 +52,25 @@ open class GraphQLGitHubInterface @Inject constructor(
             if (!hasNext(response)) {
                 return listOf()
             } else {
-                cursor = getCursor(response)
+                cursor = checkNotNull(getCursor(response)) { "Missing GraphQL continuation cursor" }
+                check(cursor.isNotBlank() && cursor != initialCursor) { "GraphQL continuation did not advance" }
             }
         }
 
-        val result = queryApi(requestEntityBuilder, cursor)
+        val result = checkNotNull(queryApi(requestEntityBuilder, cursor)) { "GraphQL page unavailable" }
 
-        if (result == null) {
-            LOGGER.warn("No data returned")
+        if (repoDoesNotExist(result)) {
+            check(response == null && initialCursor == null) { "Repository disappeared during pagination" }
             return emptyList()
         }
-
-        if (repoDoesNotExist(result)) return listOf()
+        check(result.errors.isNullOrEmpty()) { "Incomplete GraphQL page: ${result.errors}" }
 
         selfRateLimit(result)
 
-        if (result.data == null) {
-            LOGGER.warn("No data returned")
-            return emptyList()
-        }
+        val data = checkNotNull(result.data) { "GraphQL page data unavailable" }
+        val newData = extract(data)
 
-        val newData = extract(result.data!!)
-
-        val more = getAll(requestEntityBuilder, extract, hasNext, getCursor, initialCursor, result.data)
+        val more = getAll(requestEntityBuilder, extract, hasNext, getCursor, cursor, data)
 
         return newData.plus(more)
     }
@@ -195,8 +191,7 @@ open class GraphQLGitHubInterface @Inject constructor(
                 }
 
             } catch (e: MismatchedInputException) {
-                LOGGER.info("MismatchedInputException: $e")
-                return null
+                throw IllegalStateException("Unable to decode GraphQL page", e)
             } catch (e: Exception) {
                 LOGGER.error("Query failed", e)
                 throw e

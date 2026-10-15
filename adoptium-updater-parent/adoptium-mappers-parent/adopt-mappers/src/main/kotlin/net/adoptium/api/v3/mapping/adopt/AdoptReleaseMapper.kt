@@ -67,6 +67,9 @@ private class AdoptReleaseMapper(
         val updatedAt = parseDate(ghRelease.updatedAt)
 
         val supportedAssets = ghRelease.releaseAssets.assets.filter(adoptBinaryMapper::isSupportedBinaryAsset)
+        // Installers, sources and other excluded archives still contribute to historical
+        // download totals, without requiring their metadata to select binaries.
+        val ungroupedDownloads = downloadCount(ghRelease.releaseAssets.assets.filterNot { it in supportedAssets })
         val ghAssetsWithMetadata = try {
             associateMetadataWithBinaries(ghRelease.releaseAssets, supportedAssets)
         } catch (e: CancellationException) {
@@ -87,7 +90,8 @@ private class AdoptReleaseMapper(
 
             val releases = ghAssetsGroupedByVersion
                 .entries
-                .map { ghAssetsForVersion: Map.Entry<String, List<Map.Entry<GHAsset, GHMetaData>>> ->
+                .sortedBy { group -> group.value.maxOf { it.value.version.toApiVersion() } }
+                .mapIndexed { index, ghAssetsForVersion ->
                     val version = ghAssetsForVersion.value
                         .sortedBy { ghAssetWithMetadata -> ghAssetWithMetadata.value.version.toApiVersion() }
                         .last().value.version.toApiVersion()
@@ -95,7 +99,9 @@ private class AdoptReleaseMapper(
                     val ghAssets: List<GHAsset> = ghAssetsForVersion.value.map { ghAssetWithMetadata -> ghAssetWithMetadata.key }
                     val id = generateIdForSplitRelease(version, ghRelease)
 
-                    toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghRelease.releaseAssets.assets, sourcePackage, releaseNotes, aqavitResultsLink)
+                    // Stable attribution: ungrouped downloads belong to the lowest version
+                    // split exactly once, independent of GitHub asset/page ordering.
+                    toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghRelease.releaseAssets.assets, sourcePackage, releaseNotes, aqavitResultsLink, if (index == 0) ungroupedDownloads else 0)
                 }
                 .ifEmpty {
                     try {
@@ -104,7 +110,7 @@ private class AdoptReleaseMapper(
                         val ghAssets = supportedAssets
                         val id = ghRelease.id.id
 
-                        return@ifEmpty listOf(toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghRelease.releaseAssets.assets, sourcePackage, releaseNotes, aqavitResultsLink))
+                        return@ifEmpty listOf(toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghRelease.releaseAssets.assets, sourcePackage, releaseNotes, aqavitResultsLink, ungroupedDownloads))
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
@@ -186,18 +192,13 @@ private class AdoptReleaseMapper(
         fullGhAssetList: List<GHAsset>,
         sourcePackage: SourcePackage?,
         releaseNotes: ReleaseNotesPackage?,
-        aqavitResultsLink: String?
+        aqavitResultsLink: String?,
+        ungroupedDownloads: Long
     ): Release {
         LOGGER.debug("Getting binaries $releaseName")
         val binaries = adoptBinaryMapper.toSelectedBinaryList(ghAssets, fullGhAssetList, ghAssetWithMetadata)
         check(binaries.size == ghAssets.size) { "Incomplete binaries for $releaseName" }
         LOGGER.debug("Done Getting binaries $releaseName")
-
-        val downloadCount = ghAssets
-            .filter { asset ->
-                BinaryMapper.BINARY_EXTENSIONS.any { asset.name.endsWith(it) }
-            }
-            .sumOf { it.downloadCount }
 
         return Release(
             id,
@@ -207,7 +208,7 @@ private class AdoptReleaseMapper(
             DateTime(timestamp),
             DateTime(updatedAt),
             binaries.toTypedArray(),
-            downloadCount,
+            downloadCount(ghAssets) + ungroupedDownloads,
             vendor,
             version,
             sourcePackage,
@@ -215,6 +216,10 @@ private class AdoptReleaseMapper(
             aqavitResultsLink
         )
     }
+
+    private fun downloadCount(assets: List<GHAsset>): Long = assets
+        .filter { asset -> BinaryMapper.BINARY_EXTENSIONS.any { asset.name.endsWith(it) } }
+        .sumOf { it.downloadCount }
 
     private fun formReleaseType(release: GHRelease): ReleaseType {
         // TODO fix me before the year 2100
