@@ -2,6 +2,7 @@ package net.adoptium.api.v3.mapping.adopt
 
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.adoptium.api.v3.ReleaseResult
@@ -11,7 +12,6 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHMetaData
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
-import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.mapping.BinaryMapper
 import net.adoptium.api.v3.mapping.ReleaseMapper
 import net.adoptium.api.v3.models.DateTime
@@ -58,13 +58,7 @@ private class AdoptReleaseMapper(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    private val excludedReleases: MutableSet<GitHubId> = mutableSetOf()
-
     override suspend fun toAdoptRelease(ghRelease: GHRelease): ReleaseResult {
-        if (excludedReleases.contains(ghRelease.id)) {
-            return ReleaseResult(error = "Excluded")
-        }
-
         val releaseType: ReleaseType = formReleaseType(ghRelease)
 
         val releaseLink = ghRelease.url
@@ -72,7 +66,15 @@ private class AdoptReleaseMapper(
         val timestamp = parseDate(ghRelease.publishedAt)
         val updatedAt = parseDate(ghRelease.updatedAt)
 
-        val ghAssetsWithMetadata = associateMetadataWithBinaries(ghRelease.releaseAssets)
+        val supportedAssets = ghRelease.releaseAssets.assets.filter(adoptBinaryMapper::isSupportedBinaryAsset)
+        val ghAssetsWithMetadata = try {
+            associateMetadataWithBinaries(ghRelease.releaseAssets, supportedAssets)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            LOGGER.warn("Incomplete metadata for $releaseName", e)
+            return ReleaseResult(error = "Incomplete metadata for $releaseName")
+        }
         val sourcePackage = getSourcePackage(ghRelease, ghAssetsWithMetadata)
         val releaseNotes = getReleaseNotesPackage(ghRelease.releaseAssets.assets)
         val aqavitResultsLink = getAqavitLink(ghRelease.releaseAssets.assets)
@@ -80,6 +82,7 @@ private class AdoptReleaseMapper(
         try {
             val ghAssetsGroupedByVersion = ghAssetsWithMetadata
                 .entries
+                .filter { it.key in supportedAssets }
                 .groupBy(this@AdoptReleaseMapper::getReleaseVersion)
 
             val releases = ghAssetsGroupedByVersion
@@ -98,10 +101,12 @@ private class AdoptReleaseMapper(
                     try {
                         // if we have no metadata resort to parsing release names
                         val version = parseVersionInfo(ghRelease, releaseName)
-                        val ghAssets = ghRelease.releaseAssets.assets
+                        val ghAssets = supportedAssets
                         val id = ghRelease.id.id
 
-                        return@ifEmpty listOf(toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghAssets, sourcePackage, releaseNotes, aqavitResultsLink))
+                        return@ifEmpty listOf(toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghRelease.releaseAssets.assets, sourcePackage, releaseNotes, aqavitResultsLink))
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         throw FailedToParse("Failed to parse version $releaseName", e)
                     }
@@ -109,10 +114,11 @@ private class AdoptReleaseMapper(
                 .filter { updatedRelease -> !excludeRelease(ghRelease, updatedRelease) }
 
             return ReleaseResult(result = releases)
-        } catch (e: FailedToParse) {
-            excludedReleases.add(ghRelease.id)
-            LOGGER.error("Failed to parse $releaseName")
-            return ReleaseResult(error = "Failed to parse $releaseName")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            LOGGER.warn("Failed to map $releaseName", e)
+            return ReleaseResult(error = "Failed to map $releaseName")
         }
     }
 
@@ -135,8 +141,6 @@ private class AdoptReleaseMapper(
     }
 
     private fun excludeRelease(ghRelease: GHRelease, release: Release): Boolean {
-        if (excludedReleases.contains(ghRelease.id)) return true
-
         return if (release.release_type == ReleaseType.ea) {
             // remove all 14.0.1+7.1 and 15.0.0+24.1 nightlies - https://github.com/AdoptOpenJDK/openjdk-api-v3/issues/213
             // also ignore jdk-2021-01-13-07-01
@@ -145,8 +149,6 @@ private class AdoptReleaseMapper(
                 release.release_name == "jdk-2021-01-13-07-01" ||
                 release.release_name == "jdk17u-2022-05-27-19-32-beta"
             ) {
-                // Found an excluded release, mark it for future reference
-                excludedReleases.add(ghRelease.id)
                 true
             } else {
                 false
@@ -187,7 +189,8 @@ private class AdoptReleaseMapper(
         aqavitResultsLink: String?
     ): Release {
         LOGGER.debug("Getting binaries $releaseName")
-        val binaries = adoptBinaryMapper.toBinaryList(ghAssets, fullGhAssetList, ghAssetWithMetadata)
+        val binaries = adoptBinaryMapper.toSelectedBinaryList(ghAssets, fullGhAssetList, ghAssetWithMetadata)
+        check(binaries.size == ghAssets.size) { "Incomplete binaries for $releaseName" }
         LOGGER.debug("Done Getting binaries $releaseName")
 
         val downloadCount = ghAssets
@@ -248,42 +251,33 @@ private class AdoptReleaseMapper(
         }
     }
 
-    private suspend fun associateMetadataWithBinaries(releaseAssets: GHAssets): Map<GHAsset, GHMetaData> {
-        return releaseAssets
-            .assets
-            .filter { (it.name.endsWith(".json") && !it.name.contains("sbom")) || (it.name.contains("sbom") && it.name.endsWith("-metadata.json")) }
-            .mapNotNull { metadataAsset ->
-                pairUpBinaryAndMetadata(releaseAssets, metadataAsset)
-            }
-            .toMap()
-    }
-
-    private suspend fun pairUpBinaryAndMetadata(releaseAssets: GHAssets, metadataAsset: GHAsset): Pair<GHAsset, GHMetaData>? {
-        val binaryAsset = releaseAssets
-            .assets
-            .filter(::isReleaseAsset)
-            .firstOrNull { // remove .json for matching, case: sbom.json with sbom-metadata.json 
-                metadataAsset.name.startsWith(it.name.removeSuffix(".json"))
-            }
-
-        val metadataString = htmlClient.getUrl(metadataAsset.downloadUrl)
-        if (binaryAsset != null && metadataString != null) {
-            try {
-                return withContext(Dispatchers.IO) {
-                    val metadata = UpdaterJsonMapper.mapper.readValue(metadataString, GHMetaData::class.java)
-                    return@withContext Pair(binaryAsset, metadata)
+    private suspend fun associateMetadataWithBinaries(releaseAssets: GHAssets, supportedAssets: List<GHAsset>): Map<GHAsset, GHMetaData> {
+        val sources = releaseAssets.assets.filter { it.name.contains("-sources") && it.name.endsWith(".tar.gz") }
+        val candidates = supportedAssets + sources
+        // Match exact sidecar names before fetching. Excluded archives, installers,
+        // and unrelated JSON must never affect a supported binary's snapshot.
+        val sidecars = releaseAssets.assets.mapNotNull { metadata ->
+            val binary = candidates.firstOrNull { asset ->
+                if (asset.name.endsWith(".json")) {
+                    metadata.name == asset.name.removeSuffix(".json") + "-metadata.json"
+                } else {
+                    metadata.name == asset.name + ".json"
                 }
-            } catch (e: Exception) {
-                LOGGER.error("Failed to read metadata for asset ${metadataAsset.name} ${metadataAsset.downloadUrl}", e)
+            }
+            binary?.let { it to metadata }
+        }
+        // No relevant metadata is the legacy naming-based format (including Semeru).
+        if (sidecars.isEmpty()) return emptyMap()
+        check(supportedAssets.all { asset -> sidecars.any { it.first == asset } }) {
+            "Required binary metadata missing"
+        }
+        return sidecars.associate { (binary, metadata) ->
+            val body = checkNotNull(htmlClient.getUrl(metadata.downloadUrl)) { "Metadata unavailable: ${metadata.name}" }
+            binary to withContext(Dispatchers.IO) {
+                UpdaterJsonMapper.mapper.readValue(body, GHMetaData::class.java)
             }
         }
-        return null
     }
-
-    private fun isReleaseAsset(asset: GHAsset) = (
-        !asset.name.endsWith(".json")
-            || asset.name.contains("sbom") && !asset.name.endsWith("-metadata.json")
-        )
 
     private fun getFeatureVersion(release: GHRelease): VersionData {
         return VersionParser.parse(release.name)

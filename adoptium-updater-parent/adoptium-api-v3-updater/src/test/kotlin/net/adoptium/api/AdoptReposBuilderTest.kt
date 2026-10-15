@@ -104,9 +104,10 @@ class AdoptReposBuilderTest : BaseTest() {
             coEvery { adoptRepo.getReleaseById(GitHubId(AdoptRepositoryStub.toAddSemiYoungRelease.id)) } returns ReleaseResult(listOf(AdoptRepositoryStub.toAddSemiYoungRelease))
 
             val updatedRepo = adoptReposBuilder.incrementalUpdate(emptySet(), repo) { null }
+            coVerify(exactly = 1) { adoptRepo.getReleaseById(GitHubId(AdoptRepositoryStub.toAddSemiYoungRelease.id)) }
             adoptReposBuilder.incrementalUpdate(emptySet(), updatedRepo) { null }
 
-            coVerify(exactly = 3) { adoptRepo.getReleaseById(GitHubId(AdoptRepositoryStub.toAddSemiYoungRelease.id)) }
+            coVerify(exactly = 2) { adoptRepo.getReleaseById(GitHubId(AdoptRepositoryStub.toAddSemiYoungRelease.id)) }
         }
     }
 
