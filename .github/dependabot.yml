@@ -1,5 +1,9 @@
 updates:
 - directory: /
+  groups:
+    codeql:
+      patterns:
+      - "github/codeql-action/*"
   ignore:
   - dependency-name: "github/gh-aw-actions/**" # Managed by gh aw compile. Version-locked to the gh-aw compiler; do not bump.
   package-ecosystem: github-actions
