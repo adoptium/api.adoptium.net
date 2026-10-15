@@ -4,7 +4,6 @@ import com.expediagroup.graphql.client.types.GraphQLClientRequest
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHCdxaRepoSummaryData
-import net.adoptium.api.v3.dataSources.models.GitHubId
 import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
 
@@ -27,7 +26,7 @@ open class GraphQLGitHubCdxaSummaryClient @Inject constructor(
         val result = try {
           graphQLGitHubInterface.queryApi(query::withCursor, null)
         } catch (e: java.lang.Exception) {
-            LOGGER.error("Exception on cdxa summary query $org/$repo/$directory :"+e)
+            LOGGER.error("Exception on cdxa summary query $org/$repo/$directory :$e")
            /* 
             * Re-throwing here makes transient GraphQL/API failures visible to the caller instead of collapsing them 
             * into null. That matters because callers were interpreting null as “no CDXAs exist” and deleting persisted 
@@ -37,7 +36,7 @@ open class GraphQLGitHubCdxaSummaryClient @Inject constructor(
         }
 
         val ghCdxaRepoSummary: GHCdxaRepoSummaryData? = try {
-          if (result == null || result?.data == null) {
+          if (result?.data == null) {
             /*
              * This keeps the valid “no summary / folder missing” path returning null, while separating it from actual 
              * request failures. In other words, empty data is still treated as an empty result, but transport/query errors 
@@ -48,7 +47,7 @@ open class GraphQLGitHubCdxaSummaryClient @Inject constructor(
             result.data
           }
         } catch (e: java.lang.Exception) {
-            LOGGER.error("Exception mapping cdxa summary query response $org/$repo/$directory :"+e+" query result: "+result)
+            LOGGER.error("Exception mapping cdxa summary query response $org/$repo/$directory :$e query result: $result")
            /*
             * Same rationale as above: if response parsing/mapping fails, that is an operational error, not a 
             * legitimate empty result. Re-throwing prevents malformed or partial responses from triggering the 
@@ -70,11 +69,11 @@ open class GraphQLGitHubCdxaSummaryClient @Inject constructor(
             get() =
                 """
     query {
-      repository(owner: "${org}", name: "${repo}") {
+      repository(owner: "$org", name: "$repo") {
         defaultBranchRef {
           target {
             ... on Commit {
-              history(first: 1, path: "./${directory}") {
+              history(first: 1, path: "./$directory") {
                 nodes {
                   committedDate
                 }
@@ -82,7 +81,7 @@ open class GraphQLGitHubCdxaSummaryClient @Inject constructor(
             }
           }
         }
-        object(expression: "HEAD:${directory}") {
+        object(expression: "HEAD:$directory") {
           ... on Tree {
             entries {
               name

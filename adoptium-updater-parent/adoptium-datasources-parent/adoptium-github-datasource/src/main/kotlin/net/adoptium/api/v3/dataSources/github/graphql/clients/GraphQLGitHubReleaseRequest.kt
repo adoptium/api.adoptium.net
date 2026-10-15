@@ -64,10 +64,10 @@ open class GraphQLGitHubReleaseRequest @Inject constructor(
 
         override val query: String
             get() =
-                """query(${'$'}cursorPointer:String) {
-                              node(id:"${releaseId.id}") {
+                $$"""query($cursorPointer:String) {
+                              node(id:"$${releaseId.id}") {
                                 ... on Release {
-                                    releaseAssets(first:50, after:${'$'}cursorPointer) {
+                                    releaseAssets(first:50, after:$cursorPointer) {
                                         nodes {
                                             downloadCount,
                                             updatedAt,
