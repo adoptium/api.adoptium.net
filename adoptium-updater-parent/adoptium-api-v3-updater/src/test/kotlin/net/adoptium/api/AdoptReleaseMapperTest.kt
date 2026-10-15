@@ -138,7 +138,11 @@ class AdoptReleaseMapperTest : BaseTest() {
             val ghRelease = formGhRelease(source)
             val release = createAdoptReleaseMapper(mockClient()).toAdoptRelease(ghRelease)
 
+            assertTrue(release.succeeded())
+            assertFalse(release.retryable)
             assertEquals(2, release.result?.size)
+            assertEquals(source.assets.filterNot { it.name.endsWith("-metadata.json") || it.name.endsWith(".tar.gz.json") }
+                .map { it.name }.toSet(), release.result!!.flatMap { it.binaries.toList() }.map { it.`package`.name }.toSet())
         }
     }
 
@@ -172,14 +176,21 @@ class AdoptReleaseMapperTest : BaseTest() {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["missing", "invalid", "exception", "missing-node"])
+    @ValueSource(strings = ["missing", "invalid", "exception", "missing-node", "missing-sbom-node"])
     fun `incomplete metadata refresh preserves both stored split groups`(failure: String) = runBlocking {
-        val assets = buildGhAssets(listOf(
+        val secondAsset = if (failure == "missing-sbom-node") {
+            "OpenJDK8U-sbom_aarch64_alpine-linux_hotspot_2022-06-17-23-30.json"
+        } else "OpenJDK8U-jre_x64_linux_hotspot-2.tar.gz"
+        val secondMetadata = if (failure == "missing-sbom-node") {
+            secondAsset.removeSuffix(".json") + "-metadata.json"
+        } else "$secondAsset.json"
+        val assetNames = listOf(
             "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz" to "",
             "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz.json" to "1",
-            "OpenJDK8U-jre_x64_linux_hotspot-2.tar.gz" to "",
-            "OpenJDK8U-jre_x64_linux_hotspot-2.tar.gz.json" to "2"
-        ))
+            secondAsset to "",
+            secondMetadata to "2"
+        )
+        val assets = buildGhAssets(assetNames)
         val upstream = formGhRelease(assets)
         val cached = CachedGitHubHtmlClient(InMemoryInternalDbStore(), mockClient())
         var fail = false
@@ -199,17 +210,15 @@ class AdoptReleaseMapperTest : BaseTest() {
         val mapper = AdoptReleaseMapperFactory(AdoptBinaryMapper(client), client).get(Vendor.eclipse)
         val previous = mapper.toAdoptRelease(upstream).result!!
         assertEquals(2, previous.size)
+        val expectedBinaries = setOf(assetNames.first().first, secondAsset)
+        assertEquals(expectedBinaries, previous.flatMap { it.binaries.toList() }.map { it.`package`.name }.toSet())
         val before = AdoptRepos(listOf(FeatureRelease(8, Releases(previous))))
         val repository = mockk<AdoptRepository>()
         coEvery { repository.getSummary(8) } returns GHSummaryTestDataGenerator.generateGHRepositorySummary(
             GHSummaryTestDataGenerator.generateGHRepository(before))
         fail = true
-        val incomplete = if (failure == "missing-node") {
-            formGhRelease(buildGhAssets(listOf(
-                "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz" to "",
-                "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz.json" to "1",
-                "OpenJDK8U-jre_x64_linux_hotspot-2.tar.gz" to ""
-            )))
+        val incomplete = if (failure == "missing-node" || failure == "missing-sbom-node") {
+            formGhRelease(buildGhAssets(assetNames.dropLast(1)))
         } else upstream
         val failed = mapper.toAdoptRelease(incomplete)
         assertFalse(failed.succeeded())
@@ -227,6 +236,7 @@ class AdoptReleaseMapperTest : BaseTest() {
         assertTrue(recovered.succeeded())
         assertFalse(recovered.retryable)
         assertEquals(2, recovered.result!!.size)
+        assertEquals(expectedBinaries, recovered.result!!.flatMap { it.binaries.toList() }.map { it.`package`.name }.toSet())
         coEvery { repository.getReleaseById(upstream.id) } returns recovered
 
         val retried = builder.incrementalUpdate(setOf(upstream.name), after) { null }

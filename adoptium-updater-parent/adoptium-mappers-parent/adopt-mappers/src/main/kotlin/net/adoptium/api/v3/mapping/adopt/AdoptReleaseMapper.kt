@@ -268,11 +268,11 @@ private class AdoptReleaseMapper(
             .toMap()
 
         // Legacy releases (including Semeru) may have no metadata at all. Once
-        // metadata is used for grouping, every supported archive must be accounted
+        // metadata is used for grouping, every supported release asset must be accounted
         // for, even when its sidecar node is temporarily absent from GitHub.
         if (assetsWithMetadata.isNotEmpty()) {
             val missingMetadata = releaseAssets.assets.filter { asset ->
-                BinaryMapper.ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } &&
+                isReleaseAsset(asset) &&
                     adoptBinaryMapper.isSupportedBinaryAsset(asset) &&
                     !asset.name.contains("-sources") && asset !in assetsWithMetadata
             }
