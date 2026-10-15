@@ -4,12 +4,20 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
+import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.testDoubles.InMemoryInternalDbStore
 import net.adoptium.api.v3.AdoptReposBuilder
 import net.adoptium.api.v3.AdoptRepository
+import net.adoptium.api.v3.AdoptRepositoryImpl
+import net.adoptium.api.v3.V3Updater
+import net.adoptium.api.v3.dataSources.APIDataStoreImpl
+import net.adoptium.api.v3.dataSources.ReleaseVersionResolver
+import net.adoptium.api.v3.dataSources.UpdatableVersionSupplier
 import net.adoptium.api.v3.dataSources.VersionSupplier
 import net.adoptium.api.v3.dataSources.github.CachedGitHubHtmlClient
+import net.adoptium.api.v3.dataSources.github.GitHubApi
 import net.adoptium.api.v3.dataSources.github.GitHubHtmlClient
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
@@ -23,6 +31,8 @@ import net.adoptium.api.v3.dataSources.UrlRequest
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHReleases
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHRepository
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.models.ReleaseType
@@ -42,6 +52,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 
 @AddPackages(value = [DefaultUpdaterHtmlClient::class, HttpClientFactory::class])
 class AdoptReleaseMapperTest : BaseTest() {
@@ -161,7 +172,7 @@ class AdoptReleaseMapperTest : BaseTest() {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["missing", "invalid", "exception"])
+    @ValueSource(strings = ["missing", "invalid", "exception", "missing-node"])
     fun `incomplete metadata refresh preserves both stored split groups`(failure: String) = runBlocking {
         val assets = buildGhAssets(listOf(
             "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz" to "",
@@ -193,7 +204,14 @@ class AdoptReleaseMapperTest : BaseTest() {
         coEvery { repository.getSummary(8) } returns GHSummaryTestDataGenerator.generateGHRepositorySummary(
             GHSummaryTestDataGenerator.generateGHRepository(before))
         fail = true
-        val failed = mapper.toAdoptRelease(upstream)
+        val incomplete = if (failure == "missing-node") {
+            formGhRelease(buildGhAssets(listOf(
+                "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz" to "",
+                "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz.json" to "1",
+                "OpenJDK8U-jre_x64_linux_hotspot-2.tar.gz" to ""
+            )))
+        } else upstream
+        val failed = mapper.toAdoptRelease(incomplete)
         assertFalse(failed.succeeded())
         assertTrue(failed.retryable)
         assertNull(failed.result)
@@ -215,6 +233,117 @@ class AdoptReleaseMapperTest : BaseTest() {
 
         assertEquals(recovered.result!!.associateBy { it.id }, retried.getFeatureRelease(8)!!.releases.nodes)
         coVerify(exactly = 2) { repository.getReleaseById(upstream.id) }
+    }
+
+    @Test
+    fun `metadata completeness ignores sources installers unsupported and excluded assets`() = runBlocking {
+        val assets = buildGhAssets(listOf(
+            "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz" to "",
+            "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz.json" to "1",
+            "OpenJDK8U-sources-1.tar.gz" to "sources",
+            "OpenJDK8U-jre_x64_windows_hotspot-1.msi" to "installer",
+            "OpenJDK8U-jre_x64_linux_hotspot-1.tar.xz" to "unsupported",
+            "corretto-1.tar.gz" to "excluded",
+            "AQAvitTapFiles-1.tar.gz" to "excluded"
+        ))
+        val result = createAdoptReleaseMapper(mockClient()).toAdoptRelease(formGhRelease(assets))
+
+        assertTrue(result.succeeded())
+        assertFalse(result.retryable)
+        assertEquals(1, result.result!!.single().binaries.size)
+        assertEquals("sources", result.result!!.single().source!!.link)
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["legacy", "semeru"])
+    fun `metadata free legacy release still falls back to names`(kind: String) = runBlocking {
+        val upstream = if (kind == "semeru") {
+            val assets = SemeruMapperTest.allGhAssets.filterNot { it.name.endsWith(".json") }
+            formGhRelease(GHAssets(assets, PageInfo(false, ""), assets.size)).copy(
+                name = "jdk8u302-b08_openj9-0.27.0",
+                url = "https://github.com/ibmruntimes/semeru8-binaries/releases/tag/jdk8u302-b08_openj9-0.27.0"
+            )
+        } else formGhRelease(buildGhAssets(listOf(
+            "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz" to "",
+            "OpenJDK8U-jre_x64_linux_hotspot-2.tar.gz" to ""
+        )))
+        val cached = CachedGitHubHtmlClient(InMemoryInternalDbStore(), mockkHttpClient())
+        val mapper = AdoptReleaseMapperFactory(AdoptBinaryMapper(cached), cached)
+            .get(if (kind == "semeru") Vendor.ibm else Vendor.eclipse)
+        val result = mapper.toAdoptRelease(upstream)
+
+        assertTrue(result.succeeded())
+        assertFalse(result.retryable)
+        assertEquals("1", result.result!!.single().id)
+        assertEquals(if (kind == "semeru") 1 else 2, result.result!!.single().binaries.size)
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["missing", "missing-node"])
+    fun `full update aborts on retryable metadata failure and recovers`(failure: String) = runBlocking {
+        val assetNames = listOf(
+            "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz" to "",
+            "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz.json" to "1",
+            "OpenJDK8U-jre_x64_linux_hotspot-2.tar.gz" to "",
+            "OpenJDK8U-jre_x64_linux_hotspot-2.tar.gz.json" to "2"
+        )
+        fun upstream(incomplete: Boolean) = GHRelease(
+            GitHubId("1"), "jdk8u242-b02", false,
+            "2013-02-27T19:35:32Z", "2013-02-27T19:35:32Z",
+            buildGhAssets(if (incomplete && failure == "missing-node") assetNames.dropLast(1) else assetNames),
+            "8", "https://github.com/adoptium/temurin8-binaries/releases/tag/jdk8u242-b02"
+        )
+        val cached = CachedGitHubHtmlClient(InMemoryInternalDbStore(), mockClient())
+        var fail = false
+        val metadata = mutableMapOf<String, String?>()
+        val client = object : GitHubHtmlClient {
+            override suspend fun getUrl(url: String): String? = cached.getUrl(url)
+            override suspend fun getAsset(asset: GHAsset): String? =
+                if (fail && failure == "missing" && asset.downloadUrl == "2") null
+                else metadata.getOrPut(asset.name) { cached.getAsset(asset) }
+        }
+        val factory = AdoptReleaseMapperFactory(AdoptBinaryMapper(client), client)
+        val previous = factory.get(Vendor.eclipse).toAdoptRelease(upstream(false)).result!!
+        assertEquals(2, previous.size)
+        val before = AdoptRepos(listOf(FeatureRelease(8, Releases(previous))))
+        val gitHub = mockk<GitHubApi>()
+        coEvery { gitHub.getRepository(any(), any(), any()) } answers {
+            GHRepository(GHReleases(if (secondArg<String>() == "temurin8-binaries") listOf(upstream(fail)) else emptyList(), PageInfo(false, "")))
+        }
+        coEvery { gitHub.getRepositorySummary(any(), any()) } answers {
+            GHSummaryTestDataGenerator.generateGHRepositorySummary(GHRepository(GHReleases(
+                if (secondArg<String>() == "temurin8-binaries") listOf(upstream(fail)) else emptyList(), PageInfo(false, "")
+            )))
+        }
+        coEvery { gitHub.getReleaseById(GitHubId("1")) } answers { upstream(fail) }
+        val versions = mockk<UpdatableVersionSupplier>()
+        every { versions.getAllVersions() } returns arrayOf(8)
+        every { versions.getLtsVersions() } returns arrayOf(8)
+        every { versions.getTipVersion() } returns 8
+        coEvery { versions.updateVersions() } returns Unit
+        val database = spyk(InMemoryApiPersistence(before, mockk()))
+        val updater = V3Updater(
+            AdoptReposBuilder(AdoptRepositoryImpl(gitHub, factory), versions), mockk(),
+            APIDataStoreImpl(database), database, mockk(relaxed = true),
+            ReleaseVersionResolver(versions), mockk(relaxed = true), versions
+        )
+
+        // No recorded download stats: the stats guard cannot protect these splits.
+        assertNull(database.getLatestGithubStatsForFeatureVersion(8))
+        fail = true
+        val after = updater.runUpdate(before, AtomicBoolean(true), mockk())
+
+        assertEquals(before, after)
+        assertEquals(previous.associateBy { it.id }, database.repos.getFeatureRelease(8)!!.releases.nodes)
+        coVerify(exactly = 0) { database.updateAllRepos(any(), any()) }
+        coVerify(exactly = 1) { database.getLatestGithubStatsForFeatureVersion(any()) }
+
+        fail = false
+        val recovered = updater.runUpdate(after, AtomicBoolean(true), mockk())
+
+        assertEquals(previous.associateBy { it.id }, recovered.getFeatureRelease(8)!!.releases.nodes)
+        assertEquals(recovered, database.repos)
+        coVerify(exactly = 2) { database.updateAllRepos(any(), any()) }
     }
 
     private fun mockClient() = object : UpdaterHtmlClient {

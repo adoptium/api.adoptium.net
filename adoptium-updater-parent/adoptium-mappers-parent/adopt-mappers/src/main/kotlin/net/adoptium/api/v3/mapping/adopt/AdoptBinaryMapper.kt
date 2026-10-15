@@ -40,8 +40,7 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
     suspend fun toBinaryList(ghBinaryAssets: List<GHAsset>, allGhAssets: List<GHAsset>, ghAssetsWithMetadata: Map<GHAsset, GHMetaData>): List<Binary> {
         // probably whitelist rather than black list
         return ghBinaryAssets
-            .filter(this::isBinaryAsset)
-            .filter { asset -> EXCLUDED.all { excluded -> !asset.name.contains(excluded) } }
+            .filter(this::isSupportedBinaryAsset)
             .map { asset -> assetToBinaryAsync(asset, ghAssetsWithMetadata, allGhAssets) }
             .mapNotNull { it.await() }
     }
@@ -177,7 +176,9 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         return BINARY_ASSET_WHITELIST.foldRight(binary_name) { extension, name -> name.removeSuffix(extension) }
     }
 
-    private fun isBinaryAsset(asset: GHAsset) = ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } || (asset.name.endsWith(".json") && asset.name.contains("-sbom_"))
+    internal fun isSupportedBinaryAsset(asset: GHAsset) =
+        (ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } || (asset.name.endsWith(".json") && asset.name.contains("-sbom_"))) &&
+            EXCLUDED.none { asset.name.contains(it) }
 
     private fun binaryFromName(
         asset: GHAsset,

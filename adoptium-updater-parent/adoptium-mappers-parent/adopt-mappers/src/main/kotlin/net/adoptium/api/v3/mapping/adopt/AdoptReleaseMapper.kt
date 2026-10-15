@@ -78,7 +78,7 @@ private class AdoptReleaseMapper(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            // An existing sidecar is required for a complete split snapshot. Do not
+            // Required sidecars must form a complete split snapshot. Do not
             // exclude the release permanently: a later refresh can retry it.
             LOGGER.error("Failed to retrieve metadata for $releaseName", e)
             return ReleaseResult(error = "Failed to retrieve metadata for $releaseName", retryable = true)
@@ -259,13 +259,28 @@ private class AdoptReleaseMapper(
     }
 
     private suspend fun associateMetadataWithBinaries(releaseAssets: GHAssets): Map<GHAsset, GHMetaData> {
-        return releaseAssets
+        val assetsWithMetadata = releaseAssets
             .assets
             .filter { (it.name.endsWith(".json") && !it.name.contains("sbom")) || (it.name.contains("sbom") && it.name.endsWith("-metadata.json")) }
             .mapNotNull { metadataAsset ->
                 pairUpBinaryAndMetadata(releaseAssets, metadataAsset)
             }
             .toMap()
+
+        // Legacy releases (including Semeru) may have no metadata at all. Once
+        // metadata is used for grouping, every supported archive must be accounted
+        // for, even when its sidecar node is temporarily absent from GitHub.
+        if (assetsWithMetadata.isNotEmpty()) {
+            val missingMetadata = releaseAssets.assets.filter { asset ->
+                BinaryMapper.ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } &&
+                    adoptBinaryMapper.isSupportedBinaryAsset(asset) &&
+                    !asset.name.contains("-sources") && asset !in assetsWithMetadata
+            }
+            check(missingMetadata.isEmpty()) {
+                "Required metadata missing for: ${missingMetadata.joinToString { it.name }}"
+            }
+        }
+        return assetsWithMetadata
     }
 
     private suspend fun pairUpBinaryAndMetadata(releaseAssets: GHAssets, metadataAsset: GHAsset): Pair<GHAsset, GHMetaData>? {

@@ -123,16 +123,15 @@ open class AdoptRepositoryImpl @Inject constructor(
             .getRepository(owner, repoName) { updatedAt, isPrerelease -> filter.filter(vendor, updatedAt, isPrerelease) }
             .getReleases()
             .flatMap {
-                try {
-                    val result = getMapperForRepo(it.url).toAdoptRelease(it)
-                    if (result.succeeded()) {
-                        result.result!!
-                    } else {
-                        return@flatMap emptyList<Release>()
-                    }
+                val result = try {
+                    getMapperForRepo(it.url).toAdoptRelease(it)
                 } catch (e: Exception) {
                     return@flatMap emptyList<Release>()
                 }
+                // Do not publish a partial full build: the updater replaces all
+                // selected old releases, including every split of this upstream ID.
+                check(!result.retryable) { "Retryable mapping failure for ${it.id.id}: ${result.error}" }
+                if (result.succeeded()) result.result!! else emptyList<Release>()
             }
             .filter { excludeReleases(it) }
     }
