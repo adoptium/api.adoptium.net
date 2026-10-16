@@ -23,13 +23,122 @@ import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.models.VersionData
+import net.adoptium.api.v3.mapping.ReleaseMapper
+import net.adoptium.api.v3.mapping.upstream.UpstreamReleaseMapper
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 class AdoptReposBuilderEaPollingTest {
     private val now = TimeSource.now().withNano(0)
+
+    @Test
+    fun `date free upstream names use mapper classification and poll old latest EA`() = runBlocking {
+        val ea = release("jdk8u302-b08", now.minusDays(30), repository = "openjdk8-upstream-binaries", vendor = Vendor.openjdk)
+        val ga = release("OpenJDK 8u302 GA Release", now.minusDays(20), repository = "openjdk8-upstream-binaries", vendor = Vendor.openjdk, type = ReleaseType.ga)
+        val namedEa = release("OpenJDK 8u242 EA Release", now.minusDays(40), repository = "openjdk8-upstream-binaries", vendor = Vendor.openjdk)
+        // The upstream mapper uses the name, even when GitHub says prerelease=false.
+        for (release in listOf(ea, ga, namedEa)) {
+            assertEquals(release.release_type, ReleaseMapper.releaseType(release.release_name, release.release_link, false))
+        }
+        val gh = GHRelease(GitHubId(ea.id), ea.release_name, false,
+            summary(ea).publishedAt, summary(ea).updatedAt, GHAssets(emptyList(), PageInfo(false, null), 0), "", ea.release_link)
+        assertEquals(ReleaseType.ea, UpstreamReleaseMapper.toAdoptRelease(gh).result!!.single().release_type)
+        checkPolling(listOf(ea, ga, namedEa), setOf(ea.id), prerelease = false)
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [false, true])
+    fun `unchanged completed outcomes are not new and summary changes invalidate them`(excluded: Boolean) = runBlocking {
+        val old = release("old", now.minusDays(40), type = ReleaseType.ga)
+        var current = summary(old)
+        val repository = mockk<AdoptRepository>()
+        coEvery { repository.getSummary(8) } answers {
+            GHRepositorySummary(GHReleasesSummary(listOf(current), PageInfo(false, null)))
+        }
+        coEvery { repository.getReleaseById(GitHubId(old.id)) } returns
+            if (excluded) ReleaseResult(error = "Excluded", retryable = false) else ReleaseResult(emptyList())
+        val builder = AdoptReposBuilder(repository, mockk())
+        var snapshot = repo(listOf(old))
+        suspend fun update(requested: Set<String> = emptySet()) {
+            // Persistence can still have old metadata after every split was removed.
+            snapshot = builder.incrementalUpdate(requested, snapshot) { GHReleaseMetadata(999, it) }
+            assertEquals(emptyMap<String, Release>(), snapshot.allReleases.nodes)
+        }
+        update(setOf(old.release_name))
+        repeat(3) { update() }
+        coVerify(exactly = 1) { repository.getReleaseById(any()) }
+        val changes: List<(GHReleaseSummary) -> GHReleaseSummary> = listOf(
+            { it.copy(updatedAt = DateTimeFormatter.ISO_INSTANT.format(now.minusDays(20))) },
+            { it.copy(publishedAt = DateTimeFormatter.ISO_INSTANT.format(now.minusDays(30))) },
+            { it.copy(name = "renamed") },
+            { it.copy(releaseAssets = GHAssetsSummary(2)) },
+            { it.copy(url = it.url!!.replace("temurin8", "openjdk8")) },
+            { it.copy(vendor = Vendor.adoptopenjdk) },
+            { it.copy(isPrerelease = null) }
+        )
+        changes.forEachIndexed { index, change ->
+            current = change(current)
+            update()
+            update()
+            coVerify(exactly = index + 2) { repository.getReleaseById(any()) }
+        }
+        // An explicit failed retry must clear the remembered completion and retry next cycle.
+        coEvery { repository.getReleaseById(any()) } returns ReleaseResult(error = "Transient")
+        update(setOf(current.name))
+        update()
+        coVerify(exactly = 10) { repository.getReleaseById(any()) }
+        coEvery { repository.getReleaseById(any()) } returns ReleaseResult(listOf(old))
+        snapshot = builder.incrementalUpdate(emptySet(), snapshot) { null }
+        assertEquals(repo(listOf(old)), snapshot)
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["latest-ea", "recent-ea", "recent-ga", "edited-ga"])
+    fun `empty snapshots retain periodic refreshes but permanent exclusions do not`(trigger: String) = runBlocking {
+        val old = release("empty", if (trigger.startsWith("recent")) now.minusDays(2) else now.minusDays(30),
+            type = if (trigger.endsWith("ga")) ReleaseType.ga else ReleaseType.ea,
+            updated = if (trigger == "edited-ga") now.minusDays(1) else now.minusDays(20))
+        val latest = release("latest", now.minusDays(10))
+        for (excluded in listOf(false, true)) {
+            val repository = mockk<AdoptRepository>()
+            coEvery { repository.getSummary(8) } returns GHRepositorySummary(GHReleasesSummary(
+                (if (trigger == "recent-ea") listOf(old, latest) else listOf(old)).map(::summary), PageInfo(false, null)))
+            coEvery { repository.getReleaseById(any()) } returns
+                if (excluded) ReleaseResult(error = "Excluded", retryable = false) else ReleaseResult(emptyList())
+            val builder = AdoptReposBuilder(repository, mockk())
+            var snapshot = repo(listOf(old))
+            repeat(3) { snapshot = builder.incrementalUpdate(emptySet(), snapshot) { null } }
+            coVerify(exactly = if (excluded) 1 else 3) { repository.getReleaseById(GitHubId(old.id)) }
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [false, true])
+    fun `completed outcomes are forgotten when an upstream ID disappears`(excluded: Boolean) = runBlocking {
+        val old = release("old", now.minusDays(30), type = ReleaseType.ga)
+        var summaries = listOf(summary(old))
+        val repository = mockk<AdoptRepository>()
+        coEvery { repository.getSummary(8) } answers { GHRepositorySummary(GHReleasesSummary(summaries, PageInfo(false, null))) }
+        coEvery { repository.getReleaseById(any()) } returns
+            if (excluded) ReleaseResult(error = "Excluded", retryable = false) else ReleaseResult(emptyList())
+        val builder = AdoptReposBuilder(repository, mockk())
+        var snapshot = repo(listOf(old))
+        snapshot = builder.incrementalUpdate(setOf(old.release_name), snapshot) { null }
+        summaries = emptyList()
+        snapshot = builder.incrementalUpdate(emptySet(), snapshot) { null }
+        summaries = listOf(summary(old))
+        builder.incrementalUpdate(emptySet(), snapshot) { null }
+        coVerify(exactly = 2) { repository.getReleaseById(any()) }
+        builder.incrementalUpdate(emptySet(), AdoptRepos(emptyList())) { null }
+        builder.incrementalUpdate(emptySet(), snapshot) { null }
+        coVerify(exactly = 3) { repository.getReleaseById(any()) }
+    }
 
     @Test
     fun `a thousand edited historical EAs only fetch the latest published EA on each cycle`() {
@@ -114,11 +223,13 @@ class AdoptReposBuilderEaPollingTest {
 
     private fun checkPolling(
         releases: List<Release>, expected: Set<String>, current: List<Release> = releases,
-        requested: Set<String> = emptySet(), countChanged: String? = null, repeatCycle: Boolean = true
+        requested: Set<String> = emptySet(), countChanged: String? = null, repeatCycle: Boolean = true,
+        prerelease: Boolean? = null
     ) = runBlocking {
         val repository = mockk<AdoptRepository>()
         coEvery { repository.getSummary(any()) } answers {
-            GHRepositorySummary(GHReleasesSummary(current.filter { it.version_data.major == firstArg<Int>() }.map(::summary), PageInfo(false, null)))
+            GHRepositorySummary(GHReleasesSummary(current.filter { it.version_data.major == firstArg<Int>() }
+                .map { summary(it).let { summary -> if (prerelease == null) summary else summary.copy(isPrerelease = prerelease) } }, PageInfo(false, null)))
         }
         coEvery { repository.getReleaseById(any()) } answers {
             ReleaseResult(current.filter { GitHubId(it.id) == firstArg<GitHubId>() })

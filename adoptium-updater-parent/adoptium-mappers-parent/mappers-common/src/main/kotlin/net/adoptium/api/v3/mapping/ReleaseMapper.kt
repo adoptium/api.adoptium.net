@@ -12,7 +12,13 @@ abstract class ReleaseMapper {
     abstract suspend fun toAdoptRelease(ghRelease: GHRelease): ReleaseResult
 
     companion object {
+        fun upstreamReleaseType(name: String): ReleaseType =
+            if (name.contains(" GA ")) ReleaseType.ga else ReleaseType.ea
+
         fun releaseType(name: String, url: String, isPrerelease: Boolean): ReleaseType {
+            if (url.matches(Regex(".*/openjdk[0-9]+-upstream-binaries/.*"))) {
+                return upstreamReleaseType(name)
+            }
             val ea = if (url.matches(Regex(".*/(temurin|openjdk|semeru)[0-9]+-binaries/.*"))) {
                 isPrerelease
             } else {

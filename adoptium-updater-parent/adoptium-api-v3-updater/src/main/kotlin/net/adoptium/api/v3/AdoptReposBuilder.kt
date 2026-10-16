@@ -27,11 +27,17 @@ class AdoptReposBuilder @Inject constructor(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
+    // Only outcomes with no stored splits need extra state. Summary equality includes
+    // upstream ID, repository URL, vendor, timestamps, name, prerelease and asset count.
+    private data class CompletedOutcome(val summary: GHReleaseSummary, val excluded: Boolean)
+    private val completedOutcomes = mutableMapOf<Int, MutableMap<GitHubId, CompletedOutcome>>()
+
     suspend fun incrementalUpdate(
         toUpdate: Set<String>,
         repo: AdoptRepos,
         gitHubMetadataSupplier: suspend (GitHubId) -> GHReleaseMetadata?,
     ): AdoptRepos {
+        completedOutcomes.keys.retainAll(repo.repos.keys)
         val updated = repo
             .repos
             .map { entry -> getUpdatedFeatureRelease(toUpdate, entry, gitHubMetadataSupplier) }
@@ -48,6 +54,11 @@ class AdoptReposBuilder @Inject constructor(
         val ids = summaries.map { it.id }.toSet()
         val pruned = entry.value.releases.nodes.filterValues { GitHubId(it.id) in ids }
         val current = pruned.values.groupBy { GitHubId(it.id) }
+        val completed = completedOutcomes.getOrPut(entry.key) { mutableMapOf() }
+        val summariesById = summaries.associateBy { it.id }
+        completed.entries.removeAll { (id, outcome) ->
+            outcome.summary != summariesById[id] || id in current
+        }
         fun isEa(summary: GHReleaseSummary): Boolean {
             val previous = current[summary.id]?.firstOrNull()
             val url = summary.url
@@ -71,14 +82,21 @@ class AdoptReposBuilder @Inject constructor(
         // different snapshots of the same rolling release during a single update.
         val selected = summaries.filter { summary ->
             val previous = current[summary.id]
-            isReleaseOldEnough(summary.publishedAt) && (
-                previous == null ||
-                    previous.any { ChronoUnit.SECONDS.between(it.updated_at.dateTime, summary.getUpdatedTime()) != 0L } ||
-                    summary.id in latestEaIds || isYoung(summary, summary.id in eaIds) || summary.name in toUpdate ||
-                    (gitHubMetadataSupplier(summary.id)?.totalBinaryCount?.let { it != summary.releaseAssets.totalCount } ?: false)
-                )
+            val outcome = completed[summary.id]
+            if (!isReleaseOldEnough(summary.publishedAt)) return@filter false
+            if (summary.name in toUpdate) return@filter true
+            if (outcome?.excluded == true) return@filter false
+            (previous == null && outcome == null) ||
+                previous.orEmpty().any { ChronoUnit.SECONDS.between(it.updated_at.dateTime, summary.getUpdatedTime()) != 0L } ||
+                summary.id in latestEaIds || isYoung(summary, summary.id in eaIds) ||
+                // Completed empty snapshots use their summary's asset count, not stale
+                // metadata left over from the removed splits. Summary changes invalidate above.
+                (outcome == null && (gitHubMetadataSupplier(summary.id)?.totalBinaryCount
+                    ?.let { it != summary.releaseAssets.totalCount } ?: false))
         }
         val outcomes = selected.associate { summary ->
+            // A failed retry must not leave an old exclusion/empty result suppressing recovery.
+            completed.remove(summary.id)
             val result = try {
                 adoptRepository.getReleaseById(summary.id) ?: ReleaseResult(error = "Release unavailable")
             } catch (e: CancellationException) {
@@ -92,6 +110,11 @@ class AdoptReposBuilder @Inject constructor(
         // Only complete snapshots (including empty ones) and explicit permanent
         // exclusions replace all old splits. Retryable failures preserve them.
         val replacements = outcomes.filterValues { it.succeeded() || !it.retryable }
+        replacements.forEach { (id, result) ->
+            if (!result.succeeded() || result.result!!.isEmpty()) {
+                completed[id] = CompletedOutcome(summariesById.getValue(id), !result.succeeded())
+            }
+        }
         return FeatureRelease(entry.key, Releases(pruned.filterValues { GitHubId(it.id) !in replacements }))
             .add(replacements.values.filter { it.succeeded() }.flatMap { it.result!! })
     }
@@ -114,6 +137,8 @@ class AdoptReposBuilder @Inject constructor(
                 checkNotNull(adoptRepository.getRelease(version, filter)) { "Incomplete feature release $version" }
             }
             .associateBy { it.featureVersion }
+        // A successful full build starts a new snapshot; failures retain incremental state.
+        completedOutcomes.clear()
         LOGGER.info("DONE")
         return AdoptRepos(reposMap)
     }
