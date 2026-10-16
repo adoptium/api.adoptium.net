@@ -88,12 +88,12 @@ open class CachedGitHubHtmlClient @Inject constructor(
             while (true) {
                 val request = workList.take()
                 LOGGER.debug("Enqueuing ${request.url} ${request.lastModified} ${workList.size}")
-                get(request)
+                get(request, accessedAt = null)
             }
         }
     }
 
-    private suspend fun get(request: UrlRequest): String? {
+    private suspend fun get(request: UrlRequest, accessedAt: ZonedDateTime? = TimeSource.now()): String? {
         // Retry up to 10 times
         for (retryCount in 1..10) {
             try {
@@ -110,7 +110,7 @@ open class CachedGitHubHtmlClient @Inject constructor(
 
                 val lastModified = response?.getFirstHeader("Last-Modified")?.value
 
-                internalDbStore.putCachedWebpage(request.url, lastModified, TimeSource.now(), body)
+                internalDbStore.putCachedWebpage(request.url, lastModified, TimeSource.now(), body, accessedAt).join()
                 LOGGER.debug("Got ${request.url}")
                 return body
             } catch (e: Exception) {

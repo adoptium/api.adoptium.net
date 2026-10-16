@@ -4,12 +4,10 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import java.time.Instant
 
 class CloudflareResponseTest {
 
     companion object {
-        private val TEST_DATETIME = Instant.parse("2025-03-24T00:00:00Z")
         private val SAMPLE_RESPONSE = """
             {
               "data": {
@@ -20,15 +18,13 @@ class CloudflareResponseTest {
                         {
                           "count": 84,
                           "dimensions": {
-                            "clientRequestPath": "/artifactory/apk/alpine/main/x86_64/temurin-21-jdk-21.0.10_p7-r0.apk",
-                            "datetime": "2026-02-25T00:00:00Z"
+                            "clientRequestPath": "/artifactory/apk/alpine/main/x86_64/temurin-21-jdk-21.0.10_p7-r0.apk"
                           }
                         },
                         {
                           "count": 58,
                           "dimensions": {
-                            "clientRequestPath": "/artifactory/apk/alpine/main/x86_64/temurin-21-jre-21.0.10_p7-r0.apk",
-                            "datetime": "2026-02-25T00:00:00Z"
+                            "clientRequestPath": "/artifactory/apk/alpine/main/x86_64/temurin-21-jre-21.0.10_p7-r0.apk"
                           }
                         }              
                       ]
@@ -100,8 +96,7 @@ class CloudflareResponseTest {
                       "httpRequestsAdaptiveGroups": [
                         {
                           "dimensions": {
-                            "clientRequestPath": "/test.apk",
-                            "datetime": "2026-02-25T00:00:00Z"
+                            "clientRequestPath": "/test.apk"
                           }
                         }
                       ]
@@ -152,15 +147,13 @@ class CloudflareResponseTest {
                         {
                           "count": 0,
                           "dimensions": {
-                            "clientRequestPath": "/zero.apk",
-                            "datetime": "2026-02-25T00:00:00Z"
+                            "clientRequestPath": "/zero.apk"
                           }
                         },
                         {
                           "count": 100,
                           "dimensions": {
-                            "clientRequestPath": "/valid.apk",
-                            "datetime": "2026-02-25T00:00:00Z"
+                            "clientRequestPath": "/valid.apk"
                           }
                         }
                       ]
@@ -189,15 +182,13 @@ class CloudflareResponseTest {
                         {
                           "count": 84,
                           "dimensions": {
-                            "clientRequestPath": "",
-                            "datetime": "2026-02-25T00:00:00Z"
+                            "clientRequestPath": ""
                           }
                         },
                         {
                           "count": 100,
                           "dimensions": {
-                            "clientRequestPath": "/valid.apk",
-                            "datetime": "2026-02-25T00:00:00Z"
+                            "clientRequestPath": "/valid.apk"
                           }
                         }
                       ]
@@ -214,7 +205,7 @@ class CloudflareResponseTest {
     }
 
     @Test
-    fun `from json should handle entries with blank datetime`() {
+    fun `from json should handle entries without datetime dimension`() {
         val json = """
             {
               "data": {
@@ -225,15 +216,13 @@ class CloudflareResponseTest {
                         {
                           "count": 84,
                           "dimensions": {
-                            "clientRequestPath": "/test.apk",
-                            "datetime": ""
+                            "clientRequestPath": "/test.apk"
                           }
                         },
                         {
                           "count": 100,
                           "dimensions": {
-                            "clientRequestPath": "/valid.apk",
-                            "datetime": "2026-02-25T00:00:00Z"
+                            "clientRequestPath": "/valid.apk"
                           }
                         }
                       ]
@@ -245,8 +234,9 @@ class CloudflareResponseTest {
         """.trimIndent()
 
         val response = CloudflareResponse.fromJson(json)
-        assertEquals(1, response.data.size)
-        assertEquals("/valid.apk", response.data.first().path)
+        assertEquals(2, response.data.size)
+        assertTrue(response.data.any { it.path == "/test.apk" && it.count == 84L })
+        assertTrue(response.data.any { it.path == "/valid.apk" && it.count == 100L })
     }
 
     @Test
@@ -261,8 +251,7 @@ class CloudflareResponseTest {
                         {
                           "count": 50,
                           "dimensions": {
-                            "clientRequestPath": "/zone1.apk",
-                            "datetime": "2026-02-25T00:00:00Z"
+                            "clientRequestPath": "/zone1.apk"
                           }
                         }
                       ]
@@ -272,8 +261,7 @@ class CloudflareResponseTest {
                         {
                           "count": 75,
                           "dimensions": {
-                            "clientRequestPath": "/zone2.apk",
-                            "datetime": "2026-02-25T00:00:00Z"
+                            "clientRequestPath": "/zone2.apk"
                           }
                         }
                       ]
@@ -292,17 +280,17 @@ class CloudflareResponseTest {
 
     @Test
     fun `merge two pages keep only unique elements`() {
-        val commonItem = CloudflarePackageStats(TEST_DATETIME, 150, "/path/one.apk")
+        val commonItem = CloudflarePackageStats(150, "/path/one.apk")
         val firstPage = CloudflareResponse(
             setOf(
                 commonItem,
-                CloudflarePackageStats(TEST_DATETIME, 200, "/path/two.deb")
+                CloudflarePackageStats(200, "/path/two.deb")
             )
         )
         val secondPage = CloudflareResponse(
             setOf(
                 commonItem,
-                CloudflarePackageStats(TEST_DATETIME, 300, "/path/three.rpm")
+                CloudflarePackageStats(300, "/path/three.rpm")
             )
         )
 
@@ -320,7 +308,7 @@ class CloudflareResponseTest {
     fun `merge should handle empty responses`() {
         val empty = CloudflareResponse(emptySet())
         val nonEmpty = CloudflareResponse(
-            setOf(CloudflarePackageStats(TEST_DATETIME, 100, "/test.apk"))
+            setOf(CloudflarePackageStats(100, "/test.apk"))
         )
 
         assertEquals(0, empty.merge(empty).data.size)
@@ -329,7 +317,7 @@ class CloudflareResponseTest {
     }
 
     @Test
-    fun `from json should truncate datetime to minute precision`() {
+    fun `from json should parse entries without datetime dimension`() {
         val json = """
             {
               "data": {
@@ -340,15 +328,13 @@ class CloudflareResponseTest {
                         {
                           "count": 5,
                           "dimensions": {
-                            "clientRequestPath": "/test.apk",
-                            "datetime": "2026-03-11T00:00:11Z"
+                            "clientRequestPath": "/test1.apk"
                           }
                         },
                         {
                           "count": 10,
                           "dimensions": {
-                            "clientRequestPath": "/test.apk",
-                            "datetime": "2026-03-11T00:00:12Z"
+                            "clientRequestPath": "/test2.apk"
                           }
                         }
                       ]
@@ -361,9 +347,8 @@ class CloudflareResponseTest {
 
         val response = CloudflareResponse.fromJson(json)
         assertEquals(2, response.data.size)
-        // Both should be truncated to the same minute
-        val expectedDateTime = Instant.parse("2026-03-11T00:00:00Z")
-        assertTrue(response.data.all { it.datetime == expectedDateTime })
+        assertTrue(response.data.any { it.path == "/test1.apk" && it.count == 5L })
+        assertTrue(response.data.any { it.path == "/test2.apk" && it.count == 10L })
     }
 
 }

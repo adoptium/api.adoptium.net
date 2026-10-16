@@ -3,7 +3,7 @@ package net.adoptium.api.v3.dataSources.models
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import tools.jackson.databind.annotation.JsonDeserialize
 import net.adoptium.api.v3.dataSources.SortMethod
 import net.adoptium.api.v3.dataSources.SortOrder
 import net.adoptium.api.v3.models.Binary
@@ -38,7 +38,7 @@ class AdoptRepos {
     }
 
     fun getFeatureRelease(version: Int): FeatureRelease? {
-        return repos.get(version)
+        return repos[version]
     }
 
     constructor(list: List<FeatureRelease>) : this(
