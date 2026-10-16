@@ -72,8 +72,11 @@ class InternalDbStoreTests : MongoTest() {
     @Test
     fun `Mongo and in-memory stores retain demand but not background usage`() = runBlocking {
         val client = MongoClient()
-        client.getDatabase().getCollection<Document>("web-cache").deleteMany(Document())
-        for (store in listOf<InternalDbStore>(InternalDbStoreImpl(client), InMemoryInternalDbStore())) {
+        val raw = client.getDatabase().getCollection<Document>("web-cache")
+        raw.deleteMany(Document())
+        val mongoStore = InternalDbStoreImpl(client)
+        raw.dropIndex("lastAccessed_1")
+        for (store in listOf<InternalDbStore>(mongoStore, InMemoryInternalDbStore())) {
             val now = TimeSource.now().truncatedTo(ChronoUnit.MILLIS)
             val cutoff = now.minusDays(30)
             store.putCachedWebpage("at-cutoff", null, now, "body", cutoff).join()
