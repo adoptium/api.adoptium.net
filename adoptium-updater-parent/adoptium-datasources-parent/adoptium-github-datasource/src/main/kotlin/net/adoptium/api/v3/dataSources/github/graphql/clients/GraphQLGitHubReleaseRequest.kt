@@ -22,18 +22,20 @@ open class GraphQLGitHubReleaseRequest @Inject constructor(
     }
 
     open suspend fun getAllReleaseAssets(release: GHRelease): GHRelease {
+        if (!release.releaseAssets.pageInfo.hasNextPage) return release
+        val cursor = checkNotNull(release.releaseAssets.pageInfo.endCursor) { "Missing asset continuation cursor" }
+        check(cursor.isNotBlank()) { "Empty asset continuation cursor" }
         val query = GetMoreReleaseAssetsQuery(release.id)
 
         LOGGER.debug("Getting release assets ${release.id.id}")
         val moreAssets = graphQLGitHubInterface.getAll(
             query::withCursor,
             { asset ->
-                if (asset.assetNode == null) listOf()
-                else asset.assetNode.releaseAssets.assets
+                checkNotNull(asset.assetNode) { "Release asset page unavailable" }.releaseAssets.assets
             },
             { it.assetNode!!.releaseAssets.pageInfo.hasNextPage },
             { it.assetNode!!.releaseAssets.pageInfo.endCursor },
-            release.releaseAssets.pageInfo.endCursor,
+            cursor,
             null
         )
 
