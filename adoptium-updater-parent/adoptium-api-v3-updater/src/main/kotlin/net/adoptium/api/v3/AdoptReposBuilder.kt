@@ -16,6 +16,11 @@ import org.slf4j.LoggerFactory
 import java.time.temporal.ChronoUnit
 import kotlin.math.absoluteValue
 
+class IncrementalUpdateResult (
+    val newRepoValue: AdoptRepos,
+    val updatedReleases: List<Release>
+)
+
 @ApplicationScoped
 class AdoptReposBuilder @Inject constructor(
     private var adoptRepository: AdoptRepository,
@@ -33,12 +38,17 @@ class AdoptReposBuilder @Inject constructor(
         toUpdate: Set<String>,
         repo: AdoptRepos,
         gitHubMetadataSupplier: suspend (GitHubId) -> GHReleaseMetadata?,
-    ): AdoptRepos {
-        val updated = repo
+    ): IncrementalUpdateResult {
+        val releases = repo
             .repos
             .map { entry -> getUpdatedFeatureRelease(toUpdate, entry, repo, gitHubMetadataSupplier) }
 
-        return AdoptRepos(updated)
+        val newReleases = releases.map { it.first }
+        val updatedReleases = releases
+            .flatMap { it.second.getReleases() }
+            .distinct()
+
+        return IncrementalUpdateResult(AdoptRepos(newReleases), updatedReleases)
     }
 
     private suspend fun getUpdatedFeatureRelease(
@@ -46,7 +56,7 @@ class AdoptReposBuilder @Inject constructor(
         entry: Map.Entry<Int, FeatureRelease>,
         repo: AdoptRepos,
         gitHubMetadataSupplier: suspend (GitHubId) -> GHReleaseMetadata?,
-    ): FeatureRelease {
+    ): Pair<FeatureRelease, Releases> {
         val summary = adoptRepository.getSummary(entry.key)
 
         // Update cycle
@@ -67,15 +77,26 @@ class AdoptReposBuilder @Inject constructor(
             val youngReleases = getYoungReleases(summary)
             val explicitlyAdded = getExplicitlyAddedReleases(summary, toUpdate)
 
-            pruned
+            val fullRelease = pruned
                 .add(newReleases)
                 .add(updatedReleases)
                 .add(youngReleases)
                 .add(explicitlyAdded)
                 .add(binaryCountChanged)
+
+            val updated = FeatureRelease(entry.key, Releases(emptyList()))
+                .add(newReleases)
+                .add(updatedReleases)
+                .add(youngReleases)
+                .add(explicitlyAdded)
+                .add(binaryCountChanged)
+                .releases
+
+            return Pair(fullRelease, updated)
         } else {
             val newReleases = getNewReleases(summary, FeatureRelease(entry.key, emptyList()))
-            FeatureRelease(entry.key, Releases(newReleases))
+            val featureRelease = FeatureRelease(entry.key, Releases(newReleases))
+            return Pair(featureRelease, Releases(newReleases))
         }
     }
 
