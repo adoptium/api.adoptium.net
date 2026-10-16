@@ -21,7 +21,7 @@ object UpstreamReleaseMapper : ReleaseMapper() {
     private val LOGGER = LoggerFactory.getLogger(this::class.java)
 
     override suspend fun toAdoptRelease(ghRelease: GHRelease): ReleaseResult {
-        val release_type: ReleaseType = if (ghRelease.name.contains(" GA ")) ReleaseType.ga else ReleaseType.ea
+        val release_type = upstreamReleaseType(ghRelease.name)
 
         val releaseLink = ghRelease.url
         val releaseName = ghRelease.name

@@ -40,7 +40,7 @@ class AdoptReleaseMapperTest : BaseTest() {
     val checksum = GHAsset(
         name = "OpenJDK8U-jre_x64_linux_hotspot-123244354325.tar.gz.sha256.txt",
         size = 1L,
-        downloadUrl = "",
+        downloadUrl = "OpenJDK8U-jre_x64_linux_hotspot-123244354325.tar.gz.sha256.txt",
         downloadCount = 1L,
         updatedAt = "2013-02-27T19:35:32Z"
     )

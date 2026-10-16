@@ -2,6 +2,7 @@ package net.adoptium.api.v3.mapping.adopt
 
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -37,10 +38,11 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
 
 
     suspend fun toBinaryList(ghBinaryAssets: List<GHAsset>, allGhAssets: List<GHAsset>, ghAssetsWithMetadata: Map<GHAsset, GHMetaData>): List<Binary> {
-        // probably whitelist rather than black list
+        return toSelectedBinaryList(ghBinaryAssets.filter(::isSupportedBinaryAsset), allGhAssets, ghAssetsWithMetadata)
+    }
+
+    internal suspend fun toSelectedBinaryList(ghBinaryAssets: List<GHAsset>, allGhAssets: List<GHAsset>, ghAssetsWithMetadata: Map<GHAsset, GHMetaData>): List<Binary> {
         return ghBinaryAssets
-            .filter(this::isBinaryAsset)
-            .filter { asset -> EXCLUDED.all { excluded -> !asset.name.contains(excluded) } }
             .map { asset -> assetToBinaryAsync(asset, ghAssetsWithMetadata, allGhAssets) }
             .mapNotNull { it.await() }
     }
@@ -78,6 +80,8 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
                 } else {
                     return@async binaryFromName(ghBinaryAsset, `package`, downloadCount, updatedAt, installer, heapSize, cLib)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 LOGGER.error("Failed to fetch binary ${ghBinaryAsset.name}", e)
                 return@async null
@@ -89,14 +93,15 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         val binaryName = binaryAsset.name
         val binaryLink = binaryAsset.downloadUrl
         val binarySize = binaryAsset.size
-        val binaryChecksumLink = getCheckSumLink(fullAssetList, binaryName)
+        val checksumAsset = getChecksumAsset(fullAssetList, binaryName)
+        val binaryChecksumLink = checksumAsset?.downloadUrl
         val signatureLink = getSignatureLink(fullAssetList, binaryAsset.name)
 
-        val binaryChecksum: String? =
+        val binaryChecksum: String? = binaryAsset.sha256() ?:
             if (binaryMetadata != null && binaryMetadata.sha256.isNotEmpty()) {
                 binaryMetadata.sha256
             } else {
-                getChecksum(binaryChecksumLink)
+                getChecksum(checksumAsset)
             }
 
         val metadataLink = getMetadataLink(fullAssetList, binaryName)
@@ -127,11 +132,9 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         return if (installer == null) {
             null
         } else {
-            val checkSumLink = getCheckSumLink(fullAssetList, installer.name)
-            var checksum: String? = null
-            if (checkSumLink != null) {
-                checksum = getChecksum(checkSumLink)
-            }
+            val checksumAsset = getChecksumAsset(fullAssetList, installer.name)
+            val checkSumLink = checksumAsset?.downloadUrl
+            val checksum = installer.sha256() ?: getChecksum(checksumAsset)
 
             val metadataLink = getMetadataLink(fullAssetList, installer.name)
             val signatureLink = getSignatureLink(fullAssetList, installer.name)
@@ -149,7 +152,7 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         }
     }
 
-    private fun getCheckSumLink(fullAssetList: List<GHAsset>, binary_name: String): String? {
+    private fun getChecksumAsset(fullAssetList: List<GHAsset>, binary_name: String): GHAsset? {
         val nameWithoutExtension = removeExtensionFromName(binary_name)
 
         return fullAssetList
@@ -157,7 +160,7 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
                 asset.name == "$binary_name.sha256.txt" ||
                     asset.name == binary_name.split(".")[0] + ".sha256.txt" ||
                     asset.name == "$nameWithoutExtension.sha256.txt"
-            }?.downloadUrl
+            }
     }
 
     private fun getMetadataLink(fullAssetList: List<GHAsset>, binary_name: String): String? {
@@ -175,7 +178,10 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         return BINARY_ASSET_WHITELIST.foldRight(binary_name) { extension, name -> name.removeSuffix(extension) }
     }
 
-    private fun isBinaryAsset(asset: GHAsset) = ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } || (asset.name.endsWith(".json") && asset.name.contains("-sbom_"))
+    internal fun isSupportedBinaryAsset(asset: GHAsset) =
+        (ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } ||
+            (asset.name.endsWith(".json") && asset.name.contains("-sbom_") && !asset.name.endsWith("-metadata.json"))) &&
+            !asset.name.contains("-sources") && EXCLUDED.none { asset.name.contains(it) }
 
     private fun binaryFromName(
         asset: GHAsset,
@@ -270,22 +276,12 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         }
     }
 
-    private suspend fun getChecksum(binary_checksum_link: String?): String? {
-        try {
-            if (!binary_checksum_link.isNullOrEmpty()) {
-                LOGGER.debug("Pulling checksum for $binary_checksum_link")
-                val checksum = gitHubHtmlClient.getUrl(binary_checksum_link)
-                if (checksum != null) {
-                    val tokens = checksum.split(" ")
-                    if (tokens.size > 1) {
-                        return tokens[0]
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            LOGGER.warn("Failed to fetch checksum $binary_checksum_link", e)
+    private suspend fun getChecksum(asset: GHAsset?): String? {
+        if (asset == null) return null
+        val checksum = checkNotNull(gitHubHtmlClient.getAsset(asset)) { "Checksum unavailable: ${asset.name}" }
+        return checksum.trim().split(Regex("\\s+")).first().also {
+            check(it.isNotEmpty()) { "Empty checksum: ${asset.name}" }
         }
-        return null
     }
 
     private fun getSignatureLink(assets: List<GHAsset>, binary_name: String): String? {
