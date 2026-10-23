@@ -171,6 +171,29 @@ class InternalDbStoreTests : MongoTest() {
     }
 
     @Test
+    fun `legacy missing and null usage get grace only once without changing content`() = runBlocking {
+        val old = TimeSource.now().minusYears(1)
+        for (url in listOf("missing", "null")) {
+            val entry = Document("url", url).append("data", "body")
+                .append("lastChecked", Date.from(old.toInstant()))
+            if (url == "null") entry.append("lastAccessed", null)
+            collection.insertOne(entry)
+        }
+        val before = TimeSource.now().toInstant().toEpochMilli()
+        InternalDbStoreImpl(mongoClient)
+        val after = TimeSource.now().toInstant().toEpochMilli()
+        val migrated = collection.find().toList().associateBy { it.getString("url") }
+        for (url in listOf("missing", "null")) {
+            val entry = migrated.getValue(url)
+            assertTrue(entry.getDate("lastAccessed").time in before..after)
+            assertEquals("body", entry.getString("data"))
+            assertEquals(Date.from(old.toInstant()), entry.getDate("lastChecked"))
+        }
+        InternalDbStoreImpl(mongoClient)
+        assertEquals(migrated, collection.find().toList().associateBy { it.getString("url") })
+    }
+
+    @Test
     fun `initialization does not reset existing last access timestamps`() = runBlocking {
         val now = TimeSource.now()
         val accessed = Date.from(now.minusDays(20).toInstant())

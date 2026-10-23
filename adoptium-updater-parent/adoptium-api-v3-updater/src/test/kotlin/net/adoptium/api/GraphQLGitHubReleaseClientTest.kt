@@ -12,6 +12,7 @@ import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.CancellationException
 import net.adoptium.api.v3.AdoptRepositoryImpl
+import net.adoptium.api.v3.AdoptRepository
 import net.adoptium.api.v3.AdoptReposBuilder
 import net.adoptium.api.v3.V3Updater
 import net.adoptium.api.v3.ReleaseResult
@@ -38,6 +39,7 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHReleaseResult
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHReleases
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRepository
+import net.adoptium.api.v3.dataSources.github.graphql.models.HasRateLimit
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.QueryData
 import net.adoptium.api.v3.dataSources.github.graphql.models.QuerySummaryData
@@ -619,6 +621,58 @@ class GraphQLGitHubReleaseClientTest : BaseTest() {
 
             assertEquals(expected, after.getFeatureRelease(11)!!.releases.getReleases().toList())
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["null-response", "missing-data", "missing-repository", "not-found", "missing-cursor", "repeated-cursor"])
+    fun `incomplete summary pagination never returns a prefix`(failure: String) = runBlocking {
+        var calls = 0
+        val transport = object : GraphQLGitHubInterface(mockk(), mockk()) {
+            override suspend fun <F : HasRateLimit> queryApi(
+                requestEntityBuilder: (String?) -> GraphQLClientRequest<F>, cursor: String?
+            ): GraphQLClientResponse<F>? {
+                check(++calls <= 3) { "Pagination failed to stop" }
+                if (cursor != null && failure == "null-response") return null
+                val page = if (failure == "missing-cursor") PageInfo(true, null) else PageInfo(true, "next")
+                val data = if (cursor == null || failure == "repeated-cursor") QuerySummaryData(
+                    GHRepositorySummary(GHReleasesSummary(
+                        listOf(GHReleaseSummary(GitHubId("kept"), "2013-02-27T19:35:32Z", "2013-02-27T19:35:32Z", "kept", GHAssetsSummary(1))), page)),
+                    RateLimit(0, 5000)
+                ) else if (failure == "missing-repository") QuerySummaryData(null, RateLimit(0, 5000)) else null
+                return mockk<GraphQLClientResponse<F>>().also { result ->
+                    every { result.data } returns (data as F?)
+                    if (cursor != null && failure == "not-found") {
+                        every { result.errors } returns listOf(mockk { every { message } returns "Could not resolve to a Repository" })
+                    } else every { result.errors } returns null
+                }
+            }
+        }
+        val summaryClient = GraphQLGitHubSummaryClient(transport)
+        val repository = mockk<AdoptRepository>()
+        coEvery { repository.getSummary(any()) } coAnswers { summaryClient.getRepositorySummary("adoptium", "test") }
+        val previous = AdoptReposTestDataGenerator.generate()
+        val versions = mockk<VersionSupplier> {
+            every { getAllVersions() } returns previous.repos.keys.toTypedArray()
+        }
+        assertThrows(Exception::class.java) {
+            runBlocking { AdoptReposBuilder(repository, versions).incrementalUpdate(emptySet(), previous) { null } }
+        }
+        assertEquals(if (failure == "missing-cursor") 1 else 2, calls)
+    }
+
+    @Test
+    fun `explicit absent repository is empty only on the initial request`() = runBlocking {
+        val request = object : GraphQLRequest {
+            override suspend fun <F : Any> request(query: GraphQLClientRequest<F>): GraphQLClientResponse<F> =
+                mockk<GraphQLClientResponse<F>>().also { result ->
+                    every { result.data } returns null
+                    every { result.errors } returns listOf(mockk { every { message } returns "Could not resolve to a Repository" })
+                }
+        }
+        val transport = GraphQLGitHubInterface(request, mockk())
+        assertEquals(emptyList<GHReleaseSummary>(), GraphQLGitHubSummaryClient(transport).getRepositorySummary("adoptium", "absent").releases.releases)
+        assertEquals(emptyList<GHRelease>(), GraphQLGitHubRepositoryClient(transport, GraphQLGitHubReleaseRequest(transport))
+            .getRepository("adoptium", "absent") { _, _ -> true }.releases.releases)
     }
 
     private fun setupFilterTest(): AdoptRepositoryImpl {

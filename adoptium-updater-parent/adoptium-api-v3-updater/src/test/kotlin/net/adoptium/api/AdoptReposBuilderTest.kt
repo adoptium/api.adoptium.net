@@ -13,6 +13,7 @@ import net.adoptium.api.v3.dataSources.VersionSupplier
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.models.GHReleaseMetadata
+import net.adoptium.api.v3.models.ReleaseType
 import org.jboss.weld.junit5.auto.EnableAutoWeld
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -23,8 +24,8 @@ class AdoptReposBuilderTest : BaseTest() {
     companion object {
         private val stub = AdoptRepositoryStub()
         private val adoptReposBuilder: AdoptReposBuilder = AdoptReposBuilder(stub, UpdatableVersionSupplierStub())
-        private var before: AdoptRepos = stub.repo
-        private var updated: AdoptRepos = runBlocking {
+        private val before: AdoptRepos = stub.repo
+        private val updated: AdoptRepos = runBlocking {
             adoptReposBuilder.incrementalUpdate(emptySet(), before) { null }
         }
     }
@@ -36,12 +37,19 @@ class AdoptReposBuilderTest : BaseTest() {
             val adoptRepo = spyk(adoptRepository)
             val adoptReposBuilder = AdoptReposBuilder(adoptRepo, UpdatableVersionSupplierStub())
 
-            adoptReposBuilder.incrementalUpdate(setOf(before.repos[8]?.releases?.nodeList?.first()?.release_name!!), before) { null }
+            // Choose an unchanged GA to avoid automatic EA polling and map-order assumptions.
+            val toUpdate = before.getFeatureRelease(8)!!.releases.nodes.values.first {
+                it.release_type == ReleaseType.ga &&
+                    it.id != adoptRepository.toRemove.id && it.id != adoptRepository.originalToUpdate.id
+            }
+            val id = GitHubId(toUpdate.id)
 
-            val toUpdate = updated.getFeatureRelease(8)!!.releases.nodes.values.take(AdoptRepositoryStub.unchangedIndex).last()
+            val firstUpdate = adoptReposBuilder.incrementalUpdate(emptySet(), before) { null }
+            coVerify(exactly = 0) { adoptRepo.getReleaseById(id) }
 
-            updated = adoptReposBuilder.incrementalUpdate(setOf(toUpdate.release_name), before) { null }
-            coVerify(exactly = 1) { adoptRepo.getReleaseById(match { it.id == toUpdate.id }) }
+            val explicitlyUpdated = adoptReposBuilder.incrementalUpdate(setOf(toUpdate.release_name), firstUpdate) { null }
+            coVerify(exactly = 1) { adoptRepo.getReleaseById(id) }
+            assertTrue { explicitlyUpdated.getFeatureRelease(8)!!.releases.hasReleaseId(id) }
         }
     }
 
@@ -105,9 +113,8 @@ class AdoptReposBuilderTest : BaseTest() {
 
             val updatedRepo = adoptReposBuilder.incrementalUpdate(emptySet(), repo) { null }
             coVerify(exactly = 1) { adoptRepo.getReleaseById(GitHubId(AdoptRepositoryStub.toAddSemiYoungRelease.id)) }
-            coVerify(exactly = 1) { adoptRepo.getReleaseById(GitHubId(AdoptRepositoryStub.toAddSemiYoungRelease.id)) }
             adoptReposBuilder.incrementalUpdate(emptySet(), updatedRepo) { null }
-            coVerify(exactly = 2) { adoptRepo.getReleaseById(GitHubId(AdoptRepositoryStub.toAddSemiYoungRelease.id)) }
+
             coVerify(exactly = 2) { adoptRepo.getReleaseById(GitHubId(AdoptRepositoryStub.toAddSemiYoungRelease.id)) }
         }
     }

@@ -66,6 +66,7 @@ open class GraphQLGitHubInterface @Inject constructor(
             }
             return emptyList()
         }
+        check(result.errors.isNullOrEmpty()) { "Incomplete GraphQL page: ${result.errors}" }
 
         selfRateLimit(result)
 
