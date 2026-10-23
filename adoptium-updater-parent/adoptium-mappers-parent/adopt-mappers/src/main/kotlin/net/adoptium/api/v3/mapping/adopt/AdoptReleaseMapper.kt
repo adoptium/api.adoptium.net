@@ -59,10 +59,14 @@ private class AdoptReleaseMapper(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    private val excludedReleases: MutableSet<GitHubId> = mutableSetOf()
+    private val unparsableReleases: MutableSet<GitHubId> = mutableSetOf()
 
     override suspend fun toAdoptRelease(ghRelease: GHRelease): ReleaseResult {
-        if (excludedReleases.contains(ghRelease.id)) {
+        if (ghRelease.releaseAssets.pageInfo.hasNextPage) {
+            LOGGER.error("Incomplete asset listing for ${ghRelease.id.id}")
+            return ReleaseResult(error = "Incomplete asset listing", retryable = true)
+        }
+        if (unparsableReleases.contains(ghRelease.id)) {
             return ReleaseResult(error = "Excluded")
         }
 
@@ -73,8 +77,11 @@ private class AdoptReleaseMapper(
         val timestamp = parseDate(ghRelease.publishedAt)
         val updatedAt = parseDate(ghRelease.updatedAt)
 
+        val supportedAssets = ghRelease.releaseAssets.assets.filter {
+            isReleaseAsset(it) && adoptBinaryMapper.isSupportedBinaryAsset(it)
+        }
         val ghAssetsWithMetadata = try {
-            associateMetadataWithBinaries(ghRelease.releaseAssets)
+            associateMetadataWithBinaries(ghRelease.releaseAssets, supportedAssets)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -83,6 +90,8 @@ private class AdoptReleaseMapper(
             LOGGER.error("Failed to retrieve metadata for $releaseName", e)
             return ReleaseResult(error = "Failed to retrieve metadata for $releaseName", retryable = true)
         }
+        val selectedAssets = supportedAssets.filter { !it.name.contains("-sources") || it in ghAssetsWithMetadata }
+        val ungroupedDownloads = downloadCount(ghRelease.releaseAssets.assets.filterNot { it in selectedAssets })
         val sourcePackage = getSourcePackage(ghRelease, ghAssetsWithMetadata)
         val releaseNotes = getReleaseNotesPackage(ghRelease.releaseAssets.assets)
         val aqavitResultsLink = getAqavitLink(ghRelease.releaseAssets.assets)
@@ -90,39 +99,37 @@ private class AdoptReleaseMapper(
         try {
             val ghAssetsGroupedByVersion = ghAssetsWithMetadata
                 .entries
+                .filter { it.key in selectedAssets }
                 .groupBy(this@AdoptReleaseMapper::getReleaseVersion)
 
             val releases = ghAssetsGroupedByVersion
                 .entries
-                .map { ghAssetsForVersion: Map.Entry<String, List<Map.Entry<GHAsset, GHMetaData>>> ->
-                    val version = ghAssetsForVersion.value
-                        .sortedBy { ghAssetWithMetadata -> ghAssetWithMetadata.value.version.toApiVersion() }
-                        .last().value.version.toApiVersion()
+                .sortedBy { group -> group.value.maxOf { it.value.version.toApiVersion() } }
+                .mapIndexed { index, ghAssetsForVersion ->
+                    val version = ghAssetsForVersion.value.maxOf { it.value.version.toApiVersion() }
 
                     val ghAssets: List<GHAsset> = ghAssetsForVersion.value.map { ghAssetWithMetadata -> ghAssetWithMetadata.key }
                     val id = generateIdForSplitRelease(version, ghRelease)
 
-                    toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghRelease.releaseAssets.assets, sourcePackage, releaseNotes, aqavitResultsLink)
+                    // Attribute ungrouped downloads to the lowest version once,
+                    // independent of the order GitHub returns its assets.
+                    toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghRelease.releaseAssets.assets, sourcePackage, releaseNotes, aqavitResultsLink, if (index == 0) ungroupedDownloads else 0)
                 }
                 .ifEmpty {
-                    try {
-                        // if we have no metadata resort to parsing release names
-                        val version = parseVersionInfo(ghRelease, releaseName)
-                        val ghAssets = ghRelease.releaseAssets.assets
-                        val id = ghRelease.id.id
-
-                        return@ifEmpty listOf(toRelease(releaseName, ghAssets, ghAssetsWithMetadata, id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghAssets, sourcePackage, releaseNotes, aqavitResultsLink))
-                    } catch (e: Exception) {
-                        throw FailedToParse("Failed to parse version $releaseName", e)
-                    }
+                    val version = VersionParser.parse(releaseName)
+                    listOf(toRelease(releaseName, selectedAssets, ghAssetsWithMetadata, ghRelease.id.id, releaseType, releaseLink, timestamp, updatedAt, vendor, version, ghRelease.releaseAssets.assets, sourcePackage, releaseNotes, aqavitResultsLink, ungroupedDownloads))
                 }
-                .filter { updatedRelease -> !excludeRelease(ghRelease, updatedRelease) }
 
-            return ReleaseResult(result = releases)
+            return ReleaseResult(result = releases.filterNot(::excludeRelease))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: FailedToParse) {
-            excludedReleases.add(ghRelease.id)
-            LOGGER.error("Failed to parse $releaseName")
+            unparsableReleases.add(ghRelease.id)
+            LOGGER.error("Failed to parse $releaseName", e)
             return ReleaseResult(error = "Failed to parse $releaseName")
+        } catch (e: Exception) {
+            LOGGER.error("Failed to map $releaseName", e)
+            return ReleaseResult(error = "Failed to map $releaseName", retryable = true)
         }
     }
 
@@ -144,26 +151,15 @@ private class AdoptReleaseMapper(
         return "${version.major}.${version.minor}.${version.security}.${version.build}.${version.adopt_build_number}.${version.pre}"
     }
 
-    private fun excludeRelease(ghRelease: GHRelease, release: Release): Boolean {
-        if (excludedReleases.contains(ghRelease.id)) return true
-
-        return if (release.release_type == ReleaseType.ea) {
+    private fun excludeRelease(release: Release): Boolean {
+        return release.release_type == ReleaseType.ea && (
             // remove all 14.0.1+7.1 and 15.0.0+24.1 nightlies - https://github.com/AdoptOpenJDK/openjdk-api-v3/issues/213
             // also ignore jdk-2021-01-13-07-01
-            if (release.version_data.semver.startsWith("14.0.1+7.1.") ||
+            release.version_data.semver.startsWith("14.0.1+7.1.") ||
                 release.version_data.semver.startsWith("15.0.0+24.1.") ||
                 release.release_name == "jdk-2021-01-13-07-01" ||
                 release.release_name == "jdk17u-2022-05-27-19-32-beta"
-            ) {
-                // Found an excluded release, mark it for future reference
-                excludedReleases.add(ghRelease.id)
-                true
-            } else {
-                false
-            }
-        } else {
-            false
-        }
+            )
     }
 
     private fun generateIdForSplitRelease(version: VersionData, release: GHRelease): String {
@@ -194,17 +190,16 @@ private class AdoptReleaseMapper(
         fullGhAssetList: List<GHAsset>,
         sourcePackage: SourcePackage?,
         releaseNotes: ReleaseNotesPackage?,
-        aqavitResultsLink: String?
+        aqavitResultsLink: String?,
+        ungroupedDownloads: Long
     ): Release {
         LOGGER.debug("Getting binaries $releaseName")
-        val binaries = adoptBinaryMapper.toBinaryList(ghAssets, fullGhAssetList, ghAssetWithMetadata)
+        val mapped = adoptBinaryMapper.mapBinaries(ghAssets, fullGhAssetList, ghAssetWithMetadata)
+        check(mapped.size == ghAssets.size && mapped.all { it.binary != null || it.checksumMismatch }) {
+            "Incomplete binaries for $releaseName"
+        }
+        val binaries = mapped.mapNotNull { it.binary }
         LOGGER.debug("Done Getting binaries $releaseName")
-
-        val downloadCount = ghAssets
-            .filter { asset ->
-                BinaryMapper.BINARY_EXTENSIONS.any { asset.name.endsWith(it) }
-            }
-            .sumOf { it.downloadCount }
 
         return Release(
             id,
@@ -214,7 +209,7 @@ private class AdoptReleaseMapper(
             DateTime(timestamp),
             DateTime(updatedAt),
             binaries.toTypedArray(),
-            downloadCount,
+            downloadCount(ghAssets) + ungroupedDownloads,
             vendor,
             version,
             sourcePackage,
@@ -222,6 +217,10 @@ private class AdoptReleaseMapper(
             aqavitResultsLink
         )
     }
+
+    private fun downloadCount(assets: List<GHAsset>): Long = assets
+        .filter { asset -> BinaryMapper.BINARY_EXTENSIONS.any { asset.name.endsWith(it) } }
+        .sumOf { it.downloadCount }
 
     private fun formReleaseType(release: GHRelease): ReleaseType {
         // TODO fix me before the year 2100
@@ -245,20 +244,7 @@ private class AdoptReleaseMapper(
         }
     }
 
-    private fun parseVersionInfo(release: GHRelease, release_name: String): VersionData {
-        return try {
-            VersionParser.parse(release_name)
-        } catch (e: FailedToParse) {
-            try {
-                getFeatureVersion(release)
-            } catch (e: Exception) {
-                LOGGER.warn("Failed to parse ${release.name}")
-                throw e
-            }
-        }
-    }
-
-    private suspend fun associateMetadataWithBinaries(releaseAssets: GHAssets): Map<GHAsset, GHMetaData> {
+    private suspend fun associateMetadataWithBinaries(releaseAssets: GHAssets, supportedAssets: List<GHAsset>): Map<GHAsset, GHMetaData> {
         val assetsWithMetadata = releaseAssets
             .assets
             .filter { (it.name.endsWith(".json") && !it.name.contains("sbom")) || (it.name.contains("sbom") && it.name.endsWith("-metadata.json")) }
@@ -271,10 +257,8 @@ private class AdoptReleaseMapper(
         // metadata is used for grouping, every supported release asset must be accounted
         // for, even when its sidecar node is temporarily absent from GitHub.
         if (assetsWithMetadata.isNotEmpty()) {
-            val missingMetadata = releaseAssets.assets.filter { asset ->
-                isReleaseAsset(asset) &&
-                    adoptBinaryMapper.isSupportedBinaryAsset(asset) &&
-                    !asset.name.contains("-sources") && asset !in assetsWithMetadata
+            val missingMetadata = supportedAssets.filter { asset ->
+                !asset.name.contains("-sources") && asset !in assetsWithMetadata
             }
             check(missingMetadata.isEmpty()) {
                 "Required metadata missing for: ${missingMetadata.joinToString { it.name }}"
@@ -309,10 +293,6 @@ private class AdoptReleaseMapper(
         !asset.name.endsWith(".json")
             || asset.name.contains("sbom") && !asset.name.endsWith("-metadata.json")
         )
-
-    private fun getFeatureVersion(release: GHRelease): VersionData {
-        return VersionParser.parse(release.name)
-    }
 
     private fun getSourcePackage(release: GHRelease, ghAssetsWithMetadata: Map<GHAsset, GHMetaData>): SourcePackage? {
         val sources = ghAssetsWithMetadata

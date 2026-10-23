@@ -29,8 +29,6 @@ import java.util.concurrent.LinkedBlockingQueue
 interface GitHubHtmlClient {
     suspend fun getUrl(url: String): String?
 
-    suspend fun getUrl(url: String, updatedAt: ZonedDateTime): String? = getUrl(url)
-
     suspend fun getAsset(asset: GHAsset): String? = getUrl(asset.downloadUrl)
 }
 
@@ -69,17 +67,6 @@ open class CachedGitHubHtmlClient @Inject constructor(
             }
             cachedEntry.data
         }
-    }
-
-    override suspend fun getUrl(url: String, updatedAt: ZonedDateTime): String? {
-        val cachedEntry = internalDbStore.getCachedWebpage(url)
-        val lastChecked = cachedEntry?.lastChecked
-        if (cachedEntry == null || lastChecked == null || lastChecked.isBefore(updatedAt)) {
-            // Rolling EA assets reuse URLs. Read the new contents before mapping the
-            // release rather than returning stale data while refreshing in the background.
-            return get(UrlRequest(url))
-        }
-        return getUrl(url)
     }
 
     override suspend fun getAsset(asset: GHAsset): String? {

@@ -63,13 +63,14 @@ class Releases {
     }
 
     fun retain(gitHubId: List<GitHubId>): Releases {
-        return Releases(nodes.filterKeys { adoptId -> gitHubId.any { adoptId.startsWith(it.id) } })
+        val retainedIds = gitHubId.toSet()
+        return Releases(nodes.filterKeys { adoptId -> GitHubId(adoptId) in retainedIds })
     }
 
     fun hasReleaseId(gitHubId: GitHubId): Boolean {
         return nodes
             .keys
-            .any { release -> release.startsWith(gitHubId.id) }
+            .any { release -> GitHubId(release) == gitHubId }
     }
 
     fun hasReleaseBeenUpdated(
@@ -77,7 +78,7 @@ class Releases {
         updatedAt: ZonedDateTime
     ): Boolean {
         return nodes
-            .filter { it.key.startsWith(gitHubId.id) }
+            .filter { GitHubId(it.key) == gitHubId }
             .any {
                 ChronoUnit.SECONDS.between(it.value.updated_at.dateTime, updatedAt) != 0L
             }

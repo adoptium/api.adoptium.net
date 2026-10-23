@@ -2,7 +2,9 @@ package net.adoptium.api
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.AdoptReposBuilder
 import net.adoptium.api.v3.AdoptRepository
@@ -20,7 +22,13 @@ import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.models.VersionData
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.time.ZonedDateTime
 
 class AdoptReposBuilderSplitReleaseTest {
@@ -95,6 +103,130 @@ class AdoptReposBuilderSplitReleaseTest {
         checkRefresh(ea = true, failed = true)
     }
 
+    @Test
+    fun `null fetch preserves splits and retries the next incremental update`() = runBlocking {
+        val old = release("rolling.old", TimeSource.now().minusDays(20), ReleaseType.ea)
+        val current = release("rolling.new", TimeSource.now().minusDays(20), ReleaseType.ea)
+        val before = repo(listOf(old))
+        val summary = GHSummaryTestDataGenerator.generateGHRepositorySummary(
+            GHSummaryTestDataGenerator.generateGHRepository(before)
+        )
+        val repository = mockk<AdoptRepository>()
+        coEvery { repository.getSummary(8) } returns summary
+        coEvery { repository.getReleaseById(GitHubId("rolling")) } returnsMany listOf(null, ReleaseResult(listOf(current)))
+        val builder = AdoptReposBuilder(repository, mockk<VersionSupplier> {
+            every { getAllVersions() } returns arrayOf(8)
+        })
+
+        val deferred = builder.incrementalUpdate(emptySet(), before) { null }
+        assertEquals(before, deferred)
+
+        val recovered = builder.incrementalUpdate(emptySet(), deferred) { null }
+        assertEquals(listOf(current).associateBy { it.id }, recovered.getFeatureRelease(8)!!.releases.nodes)
+        coVerify(exactly = 2) { repository.getReleaseById(GitHubId("rolling")) }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `one EA fetch exception preserves its splits while other EAs update and later retries`(explicit: Boolean) = runBlocking {
+        val time = TimeSource.now().minusDays(20)
+        fun ea(id: String): Release = release(id, time, ReleaseType.ea, GitHubId(id).id)
+        val healthyBefore = ea("healthy-before.old")
+        val failed = ea("failing.old")
+        val failedSplit = ea("failing.second")
+        val healthyAfter = ea("healthy-after.old")
+        val before = repo(listOf(healthyBefore, failed, failedSplit, healthyAfter))
+        val summary = GHSummaryTestDataGenerator.generateGHRepositorySummary(
+            GHSummaryTestDataGenerator.generateGHRepository(repo(listOf(healthyBefore, failed, healthyAfter)))
+        )
+        val repository = mockk<AdoptRepository>()
+        coEvery { repository.getSummary(8) } returns summary
+        val refreshedBefore = ea("healthy-before.new")
+        val refreshedAfter = ea("healthy-after.new")
+        val recovered = ea("failing.new")
+        coEvery { repository.getReleaseById(GitHubId("healthy-before")) } returns ReleaseResult(listOf(refreshedBefore))
+        coEvery { repository.getReleaseById(GitHubId("failing")) } throws IllegalStateException("Asset pagination failed")
+        coEvery { repository.getReleaseById(GitHubId("healthy-after")) } returns ReleaseResult(listOf(refreshedAfter))
+        val builder = AdoptReposBuilder(repository, mockk<VersionSupplier> {
+            every { getAllVersions() } returns arrayOf(8)
+        })
+        val requested = if (explicit) setOf(healthyBefore.release_name, failed.release_name, healthyAfter.release_name) else emptySet()
+
+        val after = builder.incrementalUpdate(requested, before) { null }
+
+        assertEquals(listOf(refreshedBefore, failed, failedSplit, refreshedAfter).associateBy { it.id },
+            after.getFeatureRelease(8)!!.releases.nodes)
+        assertEquals(listOf(healthyBefore, failed, failedSplit, healthyAfter).associateBy { it.id },
+            before.getFeatureRelease(8)!!.releases.nodes)
+        coVerify(exactly = 1) { repository.getReleaseById(GitHubId("healthy-before")) }
+        coVerify(exactly = 1) { repository.getReleaseById(GitHubId("failing")) }
+        coVerify(exactly = 1) { repository.getReleaseById(GitHubId("healthy-after")) }
+        coEvery { repository.getReleaseById(GitHubId("failing")) } returns ReleaseResult(listOf(recovered))
+
+        val retried = builder.incrementalUpdate(requested, after) { null }
+
+        assertEquals(listOf(refreshedBefore, recovered, refreshedAfter).associateBy { it.id },
+            retried.getFeatureRelease(8)!!.releases.nodes)
+        coVerify(exactly = 2) { repository.getReleaseById(GitHubId("failing")) }
+    }
+
+    @Test
+    fun `release refresh cancellation propagates instead of being treated as a failed EA`() {
+        val old = release("rolling.old", TimeSource.now().minusDays(20), ReleaseType.ea)
+        val before = repo(listOf(old))
+        val summary = GHSummaryTestDataGenerator.generateGHRepositorySummary(
+            GHSummaryTestDataGenerator.generateGHRepository(before)
+        )
+        val repository = mockk<AdoptRepository>()
+        coEvery { repository.getSummary(8) } returns summary
+        val cancellation = CancellationException("Update cancelled")
+        coEvery { repository.getReleaseById(GitHubId("rolling")) } throws cancellation
+        val builder = AdoptReposBuilder(repository, mockk<VersionSupplier> {
+            every { getAllVersions() } returns arrayOf(8)
+        })
+
+        val thrown = assertThrows(CancellationException::class.java) {
+            runBlocking { builder.incrementalUpdate(setOf(old.release_name), before) { null } }
+        }
+
+        assertSame(cancellation, thrown)
+        assertEquals(listOf(old).associateBy { it.id }, before.getFeatureRelease(8)!!.releases.nodes)
+    }
+
+    @Test
+    fun `pruning removes deleted releases sharing an upstream ID prefix`() = runBlocking {
+        val time = TimeSource.now().minusDays(20)
+        val retained = release("rolling.one", time)
+        val retainedSplit = release("rolling.two", time)
+        val deleted = release("rolling-long.deleted", time)
+        val before = repo(listOf(retained, retainedSplit, deleted))
+        val summary = GHSummaryTestDataGenerator.generateGHRepositorySummary(
+            GHSummaryTestDataGenerator.generateGHRepository(repo(listOf(retained)))
+        )
+        val repository = mockk<AdoptRepository>()
+        coEvery { repository.getSummary(8) } returns summary
+        val builder = AdoptReposBuilder(repository, mockk<VersionSupplier> {
+            every { getAllVersions() } returns arrayOf(8)
+        })
+
+        val after = builder.incrementalUpdate(emptySet(), before) { null }
+
+        assertEquals(listOf(retained, retainedSplit).associateBy { it.id }, after.getFeatureRelease(8)!!.releases.nodes)
+        coVerify(exactly = 0) { repository.getReleaseById(any()) }
+    }
+
+    @Test
+    fun `upstream ID lookup and timestamp comparison use exact normalized IDs`() {
+        val time = TimeSource.now().minusDays(20)
+        val releases = Releases(listOf(release("rolling-long.split", time)))
+
+        assertFalse(releases.hasReleaseId(GitHubId("rolling")))
+        assertFalse(releases.hasReleaseBeenUpdated(GitHubId("rolling"), time.plusDays(1)))
+        assertTrue(releases.hasReleaseId(GitHubId("rolling-long")))
+        assertTrue(releases.hasReleaseBeenUpdated(GitHubId("rolling-long"), time.plusDays(1)))
+        assertFalse(releases.hasReleaseBeenUpdated(GitHubId("rolling-long"), time))
+    }
+
     private fun checkRefresh(
         updated: Boolean = false,
         explicit: Boolean = false,
@@ -125,7 +257,9 @@ class AdoptReposBuilderSplitReleaseTest {
             if (failed) ReleaseResult(error = "Failed to fetch") else ReleaseResult(if (empty) emptyList() else current),
             ReleaseResult(listOf(release("rolling.later", refreshedTime, releaseType)))
         )
-        val builder = AdoptReposBuilder(repository, mockk<VersionSupplier>())
+        val builder = AdoptReposBuilder(repository, mockk<VersionSupplier> {
+            every { getAllVersions() } returns arrayOf(8)
+        })
 
         val after = builder.incrementalUpdate(if (explicit) setOf(old.release_name) else emptySet(), before) {
             if (binaryCountChanged && it == GitHubId("rolling")) GHReleaseMetadata(100, it) else null
@@ -147,9 +281,14 @@ class AdoptReposBuilderSplitReleaseTest {
         return AdoptRepos(listOf(FeatureRelease(8, Releases(releases))))
     }
 
-    private fun release(id: String, updatedAt: ZonedDateTime, releaseType: ReleaseType = ReleaseType.ga): Release {
+    private fun release(
+        id: String,
+        updatedAt: ZonedDateTime,
+        releaseType: ReleaseType = ReleaseType.ga,
+        repository: String = "temurin8-binaries"
+    ): Release {
         return Release(
-            id, releaseType, "https://github.com/adoptium/temurin8-binaries/releases/tag/${GitHubId(id).id}",
+            id, releaseType, "https://github.com/adoptium/$repository/releases/tag/${GitHubId(id).id}",
             GitHubId(id).id, DateTime(TimeSource.now().minusDays(30)), DateTime(updatedAt),
             emptyArray(), 0, Vendor.eclipse,
             VersionData(8, 0, 512, "beta", 0, 5, id.substringAfter('.'), "1.8.0_512-beta-b05")

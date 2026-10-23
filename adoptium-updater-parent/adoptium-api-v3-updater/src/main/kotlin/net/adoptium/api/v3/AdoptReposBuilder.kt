@@ -2,6 +2,7 @@ package net.adoptium.api.v3
 
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import kotlinx.coroutines.CancellationException
 import net.adoptium.api.v3.dataSources.VersionSupplier
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleaseSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
@@ -37,9 +38,10 @@ class AdoptReposBuilder @Inject constructor(
         repo: AdoptRepos,
         gitHubMetadataSupplier: suspend (GitHubId) -> GHReleaseMetadata?,
     ): AdoptRepos {
-        val updated = repo
-            .repos
-            .map { entry -> getUpdatedFeatureRelease(toUpdate, entry, repo, gitHubMetadataSupplier) }
+        val versions = (repo.repos.keys + versionSupplier.getAllVersions())
+            .associateWith { version -> repo.getFeatureRelease(version) ?: FeatureRelease(version, emptyList()) }
+        val updated = versions
+            .map { entry -> getUpdatedFeatureRelease(toUpdate, entry, gitHubMetadataSupplier) }
 
         return AdoptRepos(updated)
     }
@@ -47,7 +49,6 @@ class AdoptReposBuilder @Inject constructor(
     private suspend fun getUpdatedFeatureRelease(
         toUpdate: Set<String>,
         entry: Map.Entry<Int, FeatureRelease>,
-        repo: AdoptRepos,
         gitHubMetadataSupplier: suspend (GitHubId) -> GHReleaseMetadata?,
     ): FeatureRelease {
         val summary = adoptRepository.getSummary(entry.key)
@@ -56,46 +57,39 @@ class AdoptReposBuilder @Inject constructor(
         // 1) remove missing ones
         // 2) add new ones
         // 3) fix updated
-        val existingRelease = repo.getFeatureRelease(entry.key)
-        return if (existingRelease != null) {
-            val ids = summary.releases.getIds()
+        val ids = summary.releases.getIds()
 
-            // keep only release ids that still exist
-            val pruned = existingRelease.retain(ids)
+        // keep only release ids that still exist
+        val pruned = entry.value.retain(ids)
 
-            // Find newly added releases
-            val newReleases = getNewReleases(summary, pruned)
-            val updatedReleases = getUpdatedReleases(summary, pruned)
-            val binaryCountChanged = binaryCountHasChanged(summary, gitHubMetadataSupplier)
-            val youngReleases = getYoungReleases(summary, pruned)
-            val explicitlyAdded = getExplicitlyAddedReleases(summary, toUpdate)
+        // Find newly added releases
+        val newReleases = getNewReleases(summary, pruned)
+        val updatedReleases = getUpdatedReleases(summary, pruned)
+        val binaryCountChanged = binaryCountHasChanged(summary, gitHubMetadataSupplier)
+        val youngReleases = getYoungReleases(summary, pruned)
+        val explicitlyAdded = getExplicitlyAddedReleases(summary, toUpdate)
 
-            val selectedSummaries = newReleases +
-                updatedReleases +
-                youngReleases +
-                explicitlyAdded +
-                binaryCountChanged
-            val selectedRefreshes = selectedSummaries.distinctBy { it.id }.mapNotNull { getReleaseById(it) }
-            val refreshes = selectedRefreshes + getLatestEaReleases(
-                summary, pruned, selectedRefreshes.flatMap { it.releases }, selectedSummaries.map { it.id }.toSet()
+        val selectedSummaries = newReleases +
+            updatedReleases +
+            youngReleases +
+            explicitlyAdded +
+            binaryCountChanged
+        val selectedRefreshes = selectedSummaries.distinctBy { it.id }.mapNotNull { getReleaseById(it) }
+        val refreshes = selectedRefreshes + getLatestEaReleases(
+            summary, pruned, selectedRefreshes.flatMap { it.releases }, selectedSummaries.map { it.id }.toSet()
+        )
+        val refreshedIds = refreshes.map { it.id }.toSet()
+
+        // A rolling release can acquire new version-based split IDs. Replace all
+        // old snapshots of each refreshed GitHub release, not just matching split IDs.
+        // Successful empty snapshots remove old splits too; failed fetches retain them.
+        return FeatureRelease(
+            entry.key,
+            Releases(
+                pruned.releases.nodes.filterValues { GitHubId(it.id) !in refreshedIds }
             )
-            val refreshedIds = refreshes.map { it.id }.toSet()
-
-            // A rolling release can acquire new version-based split IDs. Replace all
-            // old snapshots of each refreshed GitHub release, not just matching split IDs.
-            // Successful empty snapshots remove old splits too; failed fetches retain them.
-            FeatureRelease(
-                entry.key,
-                Releases(
-                    pruned.releases.nodes.filterValues { GitHubId(it.id) !in refreshedIds }
-                )
-            )
-                .add(refreshes.flatMap { it.releases })
-        } else {
-            val newReleases = getNewReleases(summary, FeatureRelease(entry.key, emptyList()))
-            val refreshes = newReleases.distinctBy { it.id }.mapNotNull { getReleaseById(it) }
-            FeatureRelease(entry.key, Releases(refreshes.flatMap { it.releases }))
-        }
+        )
+            .add(refreshes.flatMap { it.releases })
     }
 
     private fun getUpdatedReleases(summary: GHRepositorySummary, pruned: FeatureRelease): List<GHReleaseSummary> {
@@ -193,11 +187,18 @@ class AdoptReposBuilder @Inject constructor(
     }
 
     private suspend fun getReleaseById(it: GHReleaseSummary): ReleaseRefresh? {
-        val result = adoptRepository.getReleaseById(it.id)
+        val result = try {
+            adoptRepository.getReleaseById(it.id)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            LOGGER.warn("Failed to refresh ${it.id.id}; deferring until a later update", e)
+            return null
+        }
         return if (result != null && result.succeeded()) {
             ReleaseRefresh(it.id, result.result!!)
         } else {
-            if (result?.retryable == true) {
+            if (result == null || result.retryable) {
                 LOGGER.info("Deferring ${it.id.id} until a later update")
             } else {
                 LOGGER.info("Excluding ${it.id.id} from update")

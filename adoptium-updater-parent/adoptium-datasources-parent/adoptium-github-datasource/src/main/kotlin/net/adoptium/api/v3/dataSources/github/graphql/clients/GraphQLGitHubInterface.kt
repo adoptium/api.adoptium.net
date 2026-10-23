@@ -52,29 +52,27 @@ open class GraphQLGitHubInterface @Inject constructor(
             if (!hasNext(response)) {
                 return listOf()
             } else {
-                cursor = getCursor(response)
+                cursor = checkNotNull(getCursor(response)) { "Missing GraphQL continuation cursor" }
+                check(cursor.isNotBlank() && cursor != initialCursor) { "GraphQL continuation did not advance" }
             }
         }
 
         val result = queryApi(requestEntityBuilder, cursor)
+            ?: throw IllegalStateException("No data returned for GraphQL page at cursor $cursor")
 
-        if (result == null) {
-            LOGGER.warn("No data returned")
+        if (repoDoesNotExist(result)) {
+            check(response == null && initialCursor == null) {
+                "Repository disappeared during GraphQL pagination at cursor $cursor"
+            }
             return emptyList()
         }
-
-        if (repoDoesNotExist(result)) return listOf()
 
         selfRateLimit(result)
 
-        if (result.data == null) {
-            LOGGER.warn("No data returned")
-            return emptyList()
-        }
+        val data = checkNotNull(result.data) { "No data returned for GraphQL page at cursor $cursor" }
+        val newData = extract(data)
 
-        val newData = extract(result.data!!)
-
-        val more = getAll(requestEntityBuilder, extract, hasNext, getCursor, initialCursor, result.data)
+        val more = getAll(requestEntityBuilder, extract, hasNext, getCursor, cursor, data)
 
         return newData.plus(more)
     }

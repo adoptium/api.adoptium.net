@@ -2,7 +2,9 @@ package net.adoptium.api
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryInternalDbStore
 import net.adoptium.api.v3.AdoptReposBuilder
@@ -13,6 +15,7 @@ import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.UrlRequest
 import net.adoptium.api.v3.dataSources.VersionSupplier
 import net.adoptium.api.v3.dataSources.github.CachedGitHubHtmlClient
+import net.adoptium.api.v3.dataSources.github.GitHubHtmlClient
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHMetaData
@@ -29,7 +32,13 @@ import org.apache.http.HttpVersion
 import org.apache.http.entity.StringEntity
 import org.apache.http.message.BasicHttpResponse
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.time.ZonedDateTime
@@ -37,45 +46,6 @@ import java.time.format.DateTimeFormatter
 import java.util.HexFormat
 
 class GitHubAssetCacheRefreshTest {
-
-    @Test
-    fun `changed asset contents are returned immediately despite recent cache check`() = runBlocking {
-        val now = TimeSource.now().withNano(0)
-        val store = InMemoryInternalDbStore()
-        cache(store, "checksum", "old-checksum", now)
-        val http = mockk<UpdaterHtmlClient>()
-        coEvery { http.getFullResponse(UrlRequest("checksum")) } returns response("new-checksum", now.minusHours(1))
-        val client = CachedGitHubHtmlClient(store, http)
-
-        assertEquals("new-checksum", client.getUrl("checksum", now.minusHours(1)))
-        assertEquals("new-checksum", store.getCachedWebpage("checksum")!!.data)
-        assertEquals("new-checksum", client.getUrl("checksum", now.minusHours(1)))
-        coVerify(exactly = 1) { http.getFullResponse(UrlRequest("checksum")) }
-    }
-
-    @Test
-    fun `unchanged asset contents reuse the cache`() = runBlocking {
-        val now = TimeSource.now().withNano(0)
-        val store = InMemoryInternalDbStore()
-        cache(store, "checksum", "cached-checksum", now)
-        val http = mockk<UpdaterHtmlClient>()
-        val client = CachedGitHubHtmlClient(store, http)
-
-        assertEquals("cached-checksum", client.getUrl("checksum", now.minusHours(3)))
-        coVerify(exactly = 0) { http.getFullResponse(any()) }
-    }
-
-    @Test
-    fun `timestamp aware cache miss fetches asset contents`() = runBlocking {
-        val now = TimeSource.now().withNano(0)
-        val store = InMemoryInternalDbStore()
-        val http = mockk<UpdaterHtmlClient>()
-        coEvery { http.getFullResponse(UrlRequest("checksum")) } returns response("new-checksum", now.minusHours(1))
-        val client = CachedGitHubHtmlClient(store, http)
-
-        assertEquals("new-checksum", client.getUrl("checksum", now.minusHours(1)))
-        assertEquals("new-checksum", store.getCachedWebpage("checksum")!!.data)
-    }
 
     @Test
     fun `replacement asset ID invalidates cache even with unchanged timestamp and absent digest`() = runBlocking {
@@ -203,23 +173,239 @@ class GitHubAssetCacheRefreshTest {
     }
 
     @Test
-    fun `binary digests take precedence over stale metadata and checksum sidecars`() = runBlocking {
+    fun `matching binary digests metadata and checksum sidecars are published`() = runBlocking {
         val now = TimeSource.now().withNano(0)
         val archive = asset("OpenJDK8U-jdk_x64_windows_hotspot_8u512b05-ea.zip", now, "archive", digest("archive bytes"))
         val installer = asset(archive.name.removeSuffix(".zip") + ".msi", now, "installer", digest("installer bytes"))
         val archiveChecksum = asset("${archive.name}.sha256.txt", now)
         val installerChecksum = asset("${installer.name}.sha256.txt", now)
-        val oldMetadata = UpdaterJsonMapper.mapper.readValue(metadata("stale-sidecar-checksum"), GHMetaData::class.java)
+        val archiveHash = archive.digest!!.removePrefix("sha256:")
+        val installerHash = installer.digest!!.removePrefix("sha256:")
+        val currentMetadata = UpdaterJsonMapper.mapper.readValue(metadata(archiveHash), GHMetaData::class.java)
+        val installerMetadataBody = metadata(installerHash)
+        val installerMetadata = asset("${installer.name}.json", now, "installer-metadata", digest(installerMetadataBody))
         val http = mockk<UpdaterHtmlClient>()
+        coEvery { http.getFullResponse(UrlRequest(archiveChecksum.downloadUrl)) } returns
+            response("$archiveHash ${archive.name}", now)
+        coEvery { http.getFullResponse(UrlRequest(installerChecksum.downloadUrl)) } returns
+            response("$installerHash ${installer.name}", now)
+        coEvery { http.getFullResponse(UrlRequest(installerMetadata.downloadUrl)) } returns response(installerMetadataBody, now)
         val mapper = AdoptBinaryMapper(CachedGitHubHtmlClient(InMemoryInternalDbStore(), http))
 
         val binary = mapper.toBinaryList(
-            listOf(archive), listOf(archive, installer, archiveChecksum, installerChecksum), mapOf(archive to oldMetadata)
+            listOf(archive), listOf(archive, installer, archiveChecksum, installerChecksum, installerMetadata), mapOf(archive to currentMetadata)
         ).single()
 
         assertEquals(digest("archive bytes").removePrefix("sha256:"), binary.`package`.checksum)
         assertEquals(digest("installer bytes").removePrefix("sha256:"), binary.installer!!.checksum)
-        coVerify(exactly = 0) { http.getFullResponse(any()) }
+        assertEquals(installerMetadata.downloadUrl, binary.installer!!.metadata_link)
+        coVerify(exactly = 3) { http.getFullResponse(any()) }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["metadata", "sidecar", "legacy", "split", "all", "mixed-failure"])
+    fun `checksum disagreements exclude only affected binaries and can recover`(scenario: String) = runBlocking {
+        val now = TimeSource.now().minusDays(1)
+        val hash = "a".repeat(64)
+        val otherHash = "b".repeat(64)
+        val good = asset("OpenJDK8U-jdk_x64_linux_hotspot_8u512b05-ea.tar.gz", now, "good", "sha256:$hash")
+            .copy(downloadCount = 5)
+        val bad = asset("OpenJDK8U-jdk_aarch64_linux_hotspot_8u512b05-ea.tar.gz", now, "bad", "sha256:$hash")
+            .copy(downloadCount = 7)
+        val binaries = listOf(good, bad)
+        val client = mockk<GitHubHtmlClient>()
+        val sidecars = binaries.map { asset("${it.name}.sha256.txt", now) }
+        val metadataAssets = if (scenario == "legacy") emptyList() else binaries.map { asset("${it.name}.json", now) }
+        fun metadataBody(binary: GHAsset, checksum: String): String {
+            val body = metadata(checksum)
+            return if (scenario == "split" && binary == bad) body.replace("\"build\": 5", "\"build\": 6") else body
+        }
+        for ((index, binary) in binaries.withIndex()) {
+            val mismatch = binary == bad || scenario == "all"
+            val sidecarHash = if (mismatch && scenario in setOf("sidecar", "legacy")) otherHash else hash
+            coEvery { client.getAsset(sidecars[index]) } returns "$sidecarHash  ${binary.name}\n"
+            if (metadataAssets.isNotEmpty()) {
+                val metadataHash = if (mismatch && scenario !in setOf("sidecar", "legacy")) otherHash else hash
+                coEvery { client.getAsset(metadataAssets[index]) } returns metadataBody(binary, metadataHash)
+            }
+        }
+        val mapper = AdoptReleaseMapperFactory(AdoptBinaryMapper(client), client).get(Vendor.eclipse)
+        val releaseTime = DateTimeFormatter.ISO_INSTANT.format(now)
+        val upstream = GHRelease(
+            GitHubId("checksums"), "jdk8u512-b05-ea-beta", true, releaseTime, releaseTime,
+            GHAssets(binaries.map {
+                if (scenario == "mixed-failure" && it == good) it.copy(updatedAt = "invalid-date") else it
+            } + sidecars + metadataAssets, PageInfo(false, null), 0), "",
+            "https://github.com/adoptium/temurin8-binaries/releases/tag/jdk8u512-b05-ea-beta"
+        )
+
+        val excluded = mapper.toAdoptRelease(upstream)
+
+        if (scenario == "mixed-failure") {
+            assertFalse(excluded.succeeded())
+            assertTrue(excluded.retryable)
+            assertNull(excluded.result)
+            return@runBlocking
+        }
+        assertTrue(excluded.succeeded())
+        assertFalse(excluded.retryable)
+        assertEquals(
+            if (scenario == "all") emptyList() else listOf(good.name),
+            excluded.result!!.flatMap { it.binaries.toList() }.map { it.`package`.name }
+        )
+        assertEquals(12L, excluded.result!!.sumOf { it.download_count })
+        assertEquals(if (scenario == "split") 2 else 1, excluded.result!!.size)
+        for ((index, binary) in binaries.withIndex()) {
+            coEvery { client.getAsset(sidecars[index]) } returns "$hash ${binary.name}"
+            if (metadataAssets.isNotEmpty()) {
+                coEvery { client.getAsset(metadataAssets[index]) } returns metadataBody(binary, hash)
+            }
+        }
+        val recovered = mapper.toAdoptRelease(upstream)
+        assertTrue(recovered.succeeded())
+        assertEquals(binaries.map { it.name }.toSet(), recovered.result!!.flatMap { it.binaries.toList() }.map { it.`package`.name }.toSet())
+    }
+
+    @Test
+    fun `installer checksum disagreement excludes only the installer`() = runBlocking {
+        val now = TimeSource.now()
+        val hash = "a".repeat(64)
+        val archive = asset("OpenJDK8U-jdk_x64_windows_hotspot_8u512b05-ea.zip", now, "archive", "sha256:$hash")
+        val installer = asset(archive.name.removeSuffix(".zip") + ".msi", now, "installer", "sha256:$hash")
+        val checksum = asset("${installer.name}.sha256.txt", now)
+        val client = mockk<GitHubHtmlClient>()
+        coEvery { client.getAsset(checksum) } returns "${"b".repeat(64)} ${installer.name}"
+
+        val binary = AdoptBinaryMapper(client).toBinaryList(
+            listOf(archive), listOf(archive, installer, checksum), emptyMap()
+        ).single()
+
+        assertEquals(hash, binary.`package`.checksum)
+        assertNull(binary.installer)
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = [
+        "msi-matching", "pkg-matching", "msi-mismatch", "pkg-mismatch",
+        "msi-no-sidecar", "pkg-no-sidecar", "msi-absent", "pkg-absent",
+        "msi-unavailable", "pkg-invalid", "msi-exception", "pkg-fallback", "msi-exact"
+    ])
+    fun `installer asset metadata participates in checksum verification without changing archive mapping`(scenario: String) = runBlocking {
+        val (extension, outcome) = scenario.split("-", limit = 2)
+        val now = TimeSource.now().minusDays(1)
+        val archiveHash = "a".repeat(64)
+        val installerHash = "b".repeat(64)
+        val archiveName = if (extension == "msi") {
+            "OpenJDK8U-jdk_x64_windows_hotspot_8u512b05-ea.zip"
+        } else {
+            "OpenJDK8U-jdk_x64_mac_hotspot_8u512b05-ea.tar.gz"
+        }
+        val archive = asset(archiveName, now, "archive", "sha256:$archiveHash")
+        val installer = asset(archiveName.substringBefore(".") + ".$extension", now, "installer",
+            if (outcome == "fallback") null else "sha256:$installerHash")
+        val archiveMetadata = asset("${archive.name}.json", now, "archive-metadata")
+        val installerMetadata = asset("${installer.name}.json", now, "installer-metadata")
+        val checksum = asset("${installer.name}.sha256.txt", now)
+        val genericMetadata = asset("${installer.name.substringBefore(".")}.json", now)
+        val client = mockk<GitHubHtmlClient>()
+        coEvery { client.getAsset(archiveMetadata) } returns metadata(archiveHash)
+        var metadataHash = if (outcome in setOf("mismatch", "no-sidecar")) "c".repeat(64) else installerHash
+        var metadataFailure = outcome
+        coEvery { client.getAsset(installerMetadata) } answers {
+            when (metadataFailure) {
+                "unavailable" -> null
+                "invalid" -> "not JSON"
+                "exception" -> throw IllegalStateException("Installer metadata retrieval failed")
+                else -> metadata(metadataHash).replace("\"build\": 5", "\"build\": 99")
+            }
+        }
+        coEvery { client.getAsset(checksum) } returns "$installerHash ${installer.name}"
+        coEvery { client.getAsset(genericMetadata) } returns metadata(archiveHash)
+        val metadataAssets = (if (outcome == "exact") listOf(genericMetadata) else emptyList()) +
+            listOf(archiveMetadata) + if (outcome == "absent") emptyList() else listOf(installerMetadata)
+        val checksumAssets = if (outcome in setOf("no-sidecar", "fallback")) emptyList() else listOf(checksum)
+        val time = DateTimeFormatter.ISO_INSTANT.format(now)
+        val upstream = GHRelease(
+            GitHubId("installer"), "jdk8u512-b05-ea-beta", true, time, time,
+            GHAssets(listOf(archive, installer) + metadataAssets + checksumAssets, PageInfo(false, null), 0),
+            "", "https://github.com/adoptium/temurin8-binaries/releases/tag/jdk8u512-b05-ea-beta"
+        )
+        val mapper = AdoptReleaseMapperFactory(AdoptBinaryMapper(client), client).get(Vendor.eclipse)
+
+        val result = mapper.toAdoptRelease(upstream)
+
+        assertTrue(result.succeeded())
+        assertFalse(result.retryable)
+        val release = result.result!!.single()
+        assertEquals(5, release.version_data.build)
+        val binary = release.binaries.single()
+        assertEquals(archiveHash, binary.`package`.checksum)
+        val excluded = outcome in setOf("mismatch", "no-sidecar", "unavailable", "invalid", "exception")
+        if (excluded) {
+            assertNull(binary.installer)
+            metadataHash = installerHash
+            metadataFailure = "matching"
+            val recovered = mapper.toAdoptRelease(upstream)
+            assertTrue(recovered.succeeded())
+            assertEquals(installerHash, recovered.result!!.single().binaries.single().installer!!.checksum)
+        } else {
+            assertEquals(installerHash, binary.installer!!.checksum)
+            assertEquals(if (outcome == "absent") null else installerMetadata.downloadUrl, binary.installer!!.metadata_link)
+        }
+        coVerify(exactly = if (outcome == "absent") 0 else if (excluded) 2 else 1) {
+            client.getAsset(installerMetadata)
+        }
+        coVerify(exactly = 0) { client.getAsset(genericMetadata) }
+    }
+
+    @Test
+    fun `installer metadata cancellation propagates instead of publishing an unchecked installer`() {
+        val now = TimeSource.now()
+        val archive = asset("OpenJDK8U-jdk_x64_windows_hotspot_8u512b05-ea.zip", now)
+        val installer = asset(archive.name.removeSuffix(".zip") + ".msi", now)
+        val metadata = asset("${installer.name}.json", now)
+        val client = mockk<GitHubHtmlClient>()
+        coEvery { client.getAsset(metadata) } throws CancellationException("Cancelled installer metadata")
+
+        val thrown = assertThrows(CancellationException::class.java) {
+            runBlocking {
+                AdoptBinaryMapper(client).toBinaryList(listOf(archive), listOf(archive, installer, metadata), emptyMap())
+            }
+        }
+
+        assertEquals("Cancelled installer metadata", thrown.message)
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["hash", "filename", "tabs"])
+    fun `checksum comparison accepts case and common sidecar formats`(format: String) = runBlocking {
+        val now = TimeSource.now()
+        val hash = "a".repeat(64)
+        val archive = asset("OpenJDK8U-jdk_x64_linux_hotspot_8u512b05-ea.tar.gz", now, "archive", "sha256:$hash")
+        val checksum = asset("${archive.name}.sha256.txt", now)
+        val client = mockk<GitHubHtmlClient>()
+        coEvery { client.getAsset(checksum) } returns when (format) {
+            "hash" -> "${hash.uppercase()}\n"
+            "tabs" -> "${hash.uppercase()}\t${archive.name}\n"
+            else -> "${hash.uppercase()}  *${archive.name}\n"
+        }
+        val binary = AdoptBinaryMapper(client).toBinaryList(listOf(archive), listOf(archive, checksum), emptyMap()).single()
+        assertEquals(hash, binary.`package`.checksum)
+    }
+
+    @Test
+    fun `unavailable optional checksum sidecar does not exclude a binary`() = runBlocking {
+        val now = TimeSource.now()
+        val hash = "a".repeat(64)
+        val archive = asset("OpenJDK8U-jdk_x64_linux_hotspot_8u512b05-ea.tar.gz", now, "archive", "sha256:$hash")
+        val checksum = asset("${archive.name}.sha256.txt", now)
+        val client = mockk<GitHubHtmlClient>()
+        coEvery { client.getAsset(checksum) } returns null
+
+        val binary = AdoptBinaryMapper(client).toBinaryList(listOf(archive), listOf(archive, checksum), emptyMap()).single()
+
+        assertEquals(hash, binary.`package`.checksum)
+        coVerify(exactly = 1) { client.getAsset(checksum) }
     }
 
     @Test
@@ -239,13 +425,16 @@ class GitHubAssetCacheRefreshTest {
     }
 
     @Test
-    fun `incremental update detects replaced binary on old EA release with unchanged metadata and timestamps`() = runBlocking {
+    fun `incremental update excludes a replaced binary with stale metadata and recovers`() = runBlocking {
         val oldTime = TimeSource.now().minusDays(40).withNano(0)
         val archive = asset("OpenJDK8U-jdk_x64_linux_hotspot_8u512b05-ea.tar.gz", oldTime, "archive-old", digest("old bytes"))
-        val metadataBody = metadata("stale-sidecar-checksum")
+        val metadataBody = metadata(archive.digest!!.removePrefix("sha256:"))
+        val replacementMetadataBody = metadata(digest("new bytes").removePrefix("sha256:"))
         val metadataAsset = asset("${archive.name}.json", oldTime, "metadata-unchanged", digest(metadataBody))
         val http = mockk<UpdaterHtmlClient>()
-        coEvery { http.getFullResponse(UrlRequest(metadataAsset.downloadUrl)) } returns response(metadataBody, oldTime)
+        coEvery { http.getFullResponse(UrlRequest(metadataAsset.downloadUrl)) } returnsMany listOf(
+            response(metadataBody, oldTime), response(replacementMetadataBody, oldTime)
+        )
         val client = CachedGitHubHtmlClient(InMemoryInternalDbStore(), http)
         val mapper = AdoptReleaseMapperFactory(AdoptBinaryMapper(client), client).get(Vendor.eclipse)
         val releaseTime = DateTimeFormatter.ISO_INSTANT.format(oldTime)
@@ -256,21 +445,30 @@ class GitHubAssetCacheRefreshTest {
         )
         val before = AdoptRepos(listOf(FeatureRelease(8, Releases(mapper.toAdoptRelease(original).result!!))))
         val replacement = archive.copy(id = "archive-replaced", digest = digest("new bytes"))
-        val updated = original.copy(releaseAssets = GHAssets(listOf(replacement, metadataAsset), PageInfo(false, null), 2))
+        var updated = original.copy(releaseAssets = GHAssets(listOf(replacement, metadataAsset), PageInfo(false, null), 2))
         val summary = GHSummaryTestDataGenerator.generateGHRepositorySummary(
             GHSummaryTestDataGenerator.generateGHRepository(before)
         )
         val repository = mockk<AdoptRepository>()
         coEvery { repository.getSummary(8) } returns summary
         coEvery { repository.getReleaseById(GitHubId("rolling")) } coAnswers { mapper.toAdoptRelease(updated) }
-        val builder = AdoptReposBuilder(repository, mockk<VersionSupplier>())
+        val builder = AdoptReposBuilder(repository, mockk<VersionSupplier> {
+            every { getAllVersions() } returns arrayOf(8)
+        })
 
         val after = builder.incrementalUpdate(emptySet(), before) { null }
 
         assertEquals(digest("old bytes").removePrefix("sha256:"), before.allReleases.getReleases().single().binaries.single().`package`.checksum)
-        assertEquals(digest("new bytes").removePrefix("sha256:"), after.allReleases.getReleases().single().binaries.single().`package`.checksum)
+        assertTrue(after.allReleases.getReleases().single().binaries.isEmpty())
         coVerify(exactly = 1) { repository.getReleaseById(GitHubId("rolling")) }
         coVerify(exactly = 1) { http.getFullResponse(UrlRequest(metadataAsset.downloadUrl)) }
+
+        val replacementMetadata = metadataAsset.copy(id = "metadata-replaced", digest = digest(replacementMetadataBody))
+        updated = updated.copy(releaseAssets = GHAssets(listOf(replacement, replacementMetadata), PageInfo(false, null), 2))
+        val recovered = builder.incrementalUpdate(emptySet(), after) { null }
+        assertEquals(digest("new bytes").removePrefix("sha256:"), recovered.allReleases.getReleases().single().binaries.single().`package`.checksum)
+        coVerify(exactly = 2) { repository.getReleaseById(GitHubId("rolling")) }
+        coVerify(exactly = 2) { http.getFullResponse(UrlRequest(metadataAsset.downloadUrl)) }
     }
 
     private fun cache(store: InMemoryInternalDbStore, url: String, body: String, now: ZonedDateTime) {

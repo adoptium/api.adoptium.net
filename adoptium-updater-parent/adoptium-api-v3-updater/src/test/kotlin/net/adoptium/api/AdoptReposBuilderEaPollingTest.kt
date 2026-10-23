@@ -2,12 +2,15 @@ package net.adoptium.api
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.AdoptReposBuilder
 import net.adoptium.api.v3.AdoptRepository
 import net.adoptium.api.v3.ReleaseResult
+import net.adoptium.api.v3.ReleaseIncludeFilter
 import net.adoptium.api.v3.TimeSource
+import net.adoptium.api.v3.V3Updater
 import net.adoptium.api.v3.dataSources.VersionSupplier
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
@@ -21,10 +24,53 @@ import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.models.VersionData
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.time.ZonedDateTime
 
 class AdoptReposBuilderEaPollingTest {
     private val now = TimeSource.now().withNano(0)
+
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `incremental discovery recovers an EA-only version omitted by a full build`(keepHealthyVersion: Boolean) = runBlocking {
+        val ea = release("java27-ea", now.minusDays(1), major = 27)
+        val healthy = if (keepHealthyVersion) {
+            listOf(release("java8-ga", now.minusDays(30), releaseType = ReleaseType.ga))
+        } else emptyList()
+        val before = repo(healthy + ea)
+        val repository = mockk<AdoptRepository>()
+        coEvery { repository.getRelease(any(), any()) } answers {
+            val major = firstArg<Int>()
+            FeatureRelease(major, Releases(healthy.filter { it.version_data.major == major }))
+        }
+        coEvery { repository.getSummary(any()) } answers {
+            val major = firstArg<Int>()
+            GHSummaryTestDataGenerator.generateGHRepositorySummary(
+                GHSummaryTestDataGenerator.generateGHRepository(repo((healthy + ea).filter { it.version_data.major == major }))
+            )
+        }
+        coEvery { repository.getReleaseById(GitHubId(ea.id)) } returnsMany listOf(
+            ReleaseResult(error = "Metadata unavailable", retryable = true),
+            ReleaseResult(listOf(ea))
+        )
+        val versions = mockk<VersionSupplier>()
+        every { versions.getAllVersions() } returns before.repos.keys.toTypedArray()
+        val builder = AdoptReposBuilder(repository, versions)
+        val rebuilt = builder.build(ReleaseIncludeFilter.INCLUDE_ALL)
+        val omitted = V3Updater.copyOldReleasesIntoNewRepo(before, rebuilt, ReleaseIncludeFilter.INCLUDE_ALL)
+        assertEquals(repo(healthy), omitted)
+
+        every { versions.getAllVersions() } returns arrayOf(27, 27)
+        val deferred = builder.incrementalUpdate(emptySet(), omitted) { null }
+        assertEquals(healthy.associateBy { it.id }, deferred.allReleases.nodes)
+        val recovered = builder.incrementalUpdate(emptySet(), deferred) { null }
+
+        assertEquals(repo(healthy + ea), recovered)
+        coVerify(exactly = 2) { repository.getSummary(27) }
+        coVerify(exactly = if (keepHealthyVersion) 2 else 0) { repository.getSummary(8) }
+        coVerify(exactly = 2) { repository.getReleaseById(any()) }
+    }
 
     @Test
     fun `a thousand historical EAs only fetch the latest old EA`() {
@@ -160,7 +206,9 @@ class AdoptReposBuilderEaPollingTest {
             val id = firstArg<GitHubId>()
             ReleaseResult(current.filter { GitHubId(it.id) == id })
         }
-        val builder = AdoptReposBuilder(repository, mockk<VersionSupplier>())
+        val builder = AdoptReposBuilder(repository, mockk<VersionSupplier> {
+            every { getAllVersions() } returns before.repos.keys.toTypedArray()
+        })
 
         val after = builder.incrementalUpdate(requested, before) {
             if (it.id == countChanged) GHReleaseMetadata(999, it) else null
