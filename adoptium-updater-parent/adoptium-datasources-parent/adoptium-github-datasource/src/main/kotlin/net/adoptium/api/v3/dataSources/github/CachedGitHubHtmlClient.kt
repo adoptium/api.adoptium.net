@@ -2,6 +2,7 @@ package net.adoptium.api.v3.dataSources.github
 
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.GlobalScope
@@ -13,18 +14,23 @@ import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.DefaultUpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.UrlRequest
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.mongo.CacheDbEntry
 import net.adoptium.api.v3.dataSources.mongo.InternalDbStore
 import org.slf4j.LoggerFactory
+import java.security.MessageDigest
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.util.HexFormat
 import java.util.Locale
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 
 interface GitHubHtmlClient {
     suspend fun getUrl(url: String): String?
+
+    suspend fun getAsset(asset: GHAsset): String? = getUrl(asset.downloadUrl)
 }
 
 @ApplicationScoped
@@ -64,6 +70,17 @@ open class CachedGitHubHtmlClient @Inject constructor(
         }
     }
 
+    override suspend fun getAsset(asset: GHAsset): String? {
+        val cacheKey = if (asset.id != null || asset.digest != null) {
+            "${asset.downloadUrl}#github-asset=${asset.id.orEmpty()};digest=${asset.digest.orEmpty()}"
+        } else {
+            // No reliable version token: do not trust a URL-only cached snapshot.
+            return get(UrlRequest(asset.downloadUrl))
+        }
+        val cached = internalDbStore.getCachedWebpage(cacheKey)?.data
+        return cached ?: get(UrlRequest(asset.downloadUrl), cacheKey, asset.digest)
+    }
+
     private fun shouldUpdate(cachedEntry: CacheDbEntry): Boolean {
         val lastModified = if (cachedEntry.lastModified != null) {
             ZonedDateTime.parse(cachedEntry.lastModified, LAST_MODIFIED_PARSER)
@@ -93,7 +110,7 @@ open class CachedGitHubHtmlClient @Inject constructor(
         }
     }
 
-    private suspend fun get(request: UrlRequest, accessedAt: ZonedDateTime? = TimeSource.now()): String? {
+    private suspend fun get(request: UrlRequest, cacheKey: String = request.url, digest: String? = null, accessedAt: ZonedDateTime? = TimeSource.now()): String? {
         // Retry up to 10 times
         for (retryCount in 1..10) {
             try {
@@ -101,18 +118,28 @@ open class CachedGitHubHtmlClient @Inject constructor(
                 val response = updaterHtmlClient.getFullResponse(request)
 
                 if (response?.statusLine?.statusCode == 304) {
-                    internalDbStore.updateCheckedTime(request.url, TimeSource.now())
+                    check(request.lastModified != null) { "Unexpected 304 for an uncached asset" }
+                    internalDbStore.updateCheckedTime(cacheKey, TimeSource.now())
                     // asset has not updated
                     return null
                 }
 
-                val body = DefaultUpdaterHtmlClient.extractBody(response)
+                val body = if (digest != null && response != null) {
+                    val bytes = response.entity.content.use { it.readBytes() }
+                    val actualDigest = "sha256:" + HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes))
+                    check(actualDigest.equals(digest, ignoreCase = true)) { "Asset digest mismatch for ${request.url}" }
+                    bytes.toString(Charsets.UTF_8)
+                } else {
+                    DefaultUpdaterHtmlClient.extractBody(response)
+                } ?: return null
 
                 val lastModified = response?.getFirstHeader("Last-Modified")?.value
 
-                internalDbStore.putCachedWebpage(request.url, lastModified, TimeSource.now(), body, accessedAt).join()
+                internalDbStore.putCachedWebpage(cacheKey, lastModified, TimeSource.now(), body, accessedAt)
                 LOGGER.debug("Got ${request.url}")
                 return body
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 LOGGER.error("Failed to read data retrying $retryCount ${request.url}", e)
                 delay(1000)

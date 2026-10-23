@@ -13,6 +13,7 @@ import net.adoptium.api.v3.dataSources.VersionSupplier
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.models.GHReleaseMetadata
+import net.adoptium.api.v3.models.ReleaseType
 import org.jboss.weld.junit5.auto.EnableAutoWeld
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -36,10 +37,10 @@ class AdoptReposBuilderTest : BaseTest() {
             val adoptRepo = spyk(adoptRepository)
             val adoptReposBuilder = AdoptReposBuilder(adoptRepo, UpdatableVersionSupplierStub())
 
-            // Choose an old, unchanged release rather than relying on map order
-            // after snapshot replacement has removed and reinserted releases.
+            // Choose an unchanged GA to avoid automatic EA polling and map-order assumptions.
             val toUpdate = before.getFeatureRelease(8)!!.releases.nodes.values.first {
-                it.id != adoptRepository.toRemove.id && it.id != adoptRepository.originalToUpdate.id
+                it.release_type == ReleaseType.ga &&
+                    it.id != adoptRepository.toRemove.id && it.id != adoptRepository.originalToUpdate.id
             }
             val id = GitHubId(toUpdate.id)
 

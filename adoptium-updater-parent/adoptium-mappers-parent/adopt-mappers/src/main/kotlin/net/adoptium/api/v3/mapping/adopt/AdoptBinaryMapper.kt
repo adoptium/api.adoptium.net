@@ -6,6 +6,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.github.GitHubHtmlClient
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHMetaData
@@ -34,24 +35,29 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         private const val TEMURIN = "temurin"
 
         private val EXCLUDED = listOf("corretto", "AQAvitTapFiles")
+        private val SHA256_DIGEST = Regex("sha256:([0-9a-f]{64})", RegexOption.IGNORE_CASE)
     }
 
+    internal data class BinaryMappingResult(val binary: Binary?, val checksumMismatch: Boolean = false)
 
     suspend fun toBinaryList(ghBinaryAssets: List<GHAsset>, allGhAssets: List<GHAsset>, ghAssetsWithMetadata: Map<GHAsset, GHMetaData>): List<Binary> {
-        return toSelectedBinaryList(ghBinaryAssets.filter(::isSupportedBinaryAsset), allGhAssets, ghAssetsWithMetadata)
+        return mapBinaries(ghBinaryAssets, allGhAssets, ghAssetsWithMetadata).mapNotNull { it.binary }
     }
 
-    internal suspend fun toSelectedBinaryList(ghBinaryAssets: List<GHAsset>, allGhAssets: List<GHAsset>, ghAssetsWithMetadata: Map<GHAsset, GHMetaData>): List<Binary> {
+    internal suspend fun mapBinaries(ghBinaryAssets: List<GHAsset>, allGhAssets: List<GHAsset>, ghAssetsWithMetadata: Map<GHAsset, GHMetaData>): List<BinaryMappingResult> {
         return ghBinaryAssets
+            .filter(this::isSupportedBinaryAsset)
             .map { asset -> assetToBinaryAsync(asset, ghAssetsWithMetadata, allGhAssets) }
-            .mapNotNull { it.await() }
+            .map { it.await() }
     }
+
+    private class ChecksumMismatchException(message: String) : IllegalStateException(message)
 
     private fun assetToBinaryAsync(
         ghBinaryAsset: GHAsset,
         ghAssetsWithMetadata: Map<GHAsset, GHMetaData>,
         allGhAssets: List<GHAsset>
-    ): Deferred<Binary?> {
+    ): Deferred<BinaryMappingResult> {
         return GlobalScope.async {
             try {
                 val updatedAt = getUpdatedTime(ghBinaryAsset)
@@ -62,12 +68,12 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
 
                 val cLib = getEnumFromFileNameNullable(ghBinaryAsset.name, CLib.entries.toTypedArray(), null)
 
-                val installer = getInstaller(ghBinaryAsset, allGhAssets)
                 val `package` = getPackage(allGhAssets, ghBinaryAsset, binaryMetadata)
+                val installer = getInstaller(ghBinaryAsset, allGhAssets, ghAssetsWithMetadata)
                 val downloadCount = `package`.download_count + (installer?.download_count ?: 0)
 
-                if (binaryMetadata != null) {
-                    return@async binaryFromMetadata(
+                val binary = if (binaryMetadata != null) {
+                    binaryFromMetadata(
                         ghBinaryAsset,
                         binaryMetadata,
                         `package`,
@@ -78,13 +84,17 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
                         cLib
                     )
                 } else {
-                    return@async binaryFromName(ghBinaryAsset, `package`, downloadCount, updatedAt, installer, heapSize, cLib)
+                    binaryFromName(ghBinaryAsset, `package`, downloadCount, updatedAt, installer, heapSize, cLib)
                 }
+                BinaryMappingResult(binary)
             } catch (e: CancellationException) {
                 throw e
+            } catch (e: ChecksumMismatchException) {
+                LOGGER.error("Excluding binary ${ghBinaryAsset.name}: ${e.message}")
+                BinaryMappingResult(null, checksumMismatch = true)
             } catch (e: Exception) {
                 LOGGER.error("Failed to fetch binary ${ghBinaryAsset.name}", e)
-                return@async null
+                BinaryMappingResult(null)
             }
         }
     }
@@ -93,15 +103,10 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         val binaryName = binaryAsset.name
         val binaryLink = binaryAsset.downloadUrl
         val binarySize = binaryAsset.size
-        val binaryChecksumLink = getCheckSumLink(fullAssetList, binaryName)
+        val binaryChecksumAsset = getChecksumAsset(fullAssetList, binaryName)
         val signatureLink = getSignatureLink(fullAssetList, binaryAsset.name)
 
-        val binaryChecksum: String? =
-            if (binaryMetadata != null && binaryMetadata.sha256.isNotEmpty()) {
-                binaryMetadata.sha256
-            } else {
-                getChecksum(binaryChecksumLink)
-            }
+        val binaryChecksum = getVerifiedChecksum(binaryAsset, binaryMetadata?.sha256, binaryChecksumAsset)
 
         val metadataLink = getMetadataLink(fullAssetList, binaryName)
 
@@ -110,14 +115,18 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
             binaryLink,
             binarySize,
             binaryChecksum,
-            binaryChecksumLink,
+            binaryChecksumAsset?.downloadUrl,
             binaryAsset.downloadCount,
             signature_link = signatureLink,
             metadata_link = metadataLink
         )
     }
 
-    private suspend fun getInstaller(binaryAsset: GHAsset, fullAssetList: List<GHAsset>): Installer? {
+    private suspend fun getInstaller(
+        binaryAsset: GHAsset,
+        fullAssetList: List<GHAsset>,
+        ghAssetsWithMetadata: Map<GHAsset, GHMetaData>
+    ): Installer? {
 
         val nameWithoutExtension =
             BINARY_ASSET_WHITELIST.fold(binaryAsset.name) { assetName, extension -> assetName.replace(extension, "") }
@@ -131,13 +140,26 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         return if (installer == null) {
             null
         } else {
-            val checkSumLink = getCheckSumLink(fullAssetList, installer.name)
-            var checksum: String? = null
-            if (checkSumLink != null) {
-                checksum = getChecksum(checkSumLink)
+            val checksumAsset = getChecksumAsset(fullAssetList, installer.name)
+            val metadataAsset = getMetadataAsset(fullAssetList, installer.name)
+            val checksum = try {
+                val metadata = ghAssetsWithMetadata[installer] ?: metadataAsset?.let { asset ->
+                    val content = checkNotNull(gitHubHtmlClient.getAsset(asset)) {
+                        "Installer metadata unavailable: ${asset.downloadUrl}"
+                    }
+                    UpdaterJsonMapper.mapper.readValue(content, GHMetaData::class.java)
+                }
+                getVerifiedChecksum(installer, metadata?.sha256, checksumAsset)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: ChecksumMismatchException) {
+                LOGGER.error("Excluding installer ${installer.name}: ${e.message}")
+                return null
+            } catch (e: Exception) {
+                LOGGER.error("Excluding installer ${installer.name} after metadata/checksum validation failed", e)
+                return null
             }
 
-            val metadataLink = getMetadataLink(fullAssetList, installer.name)
             val signatureLink = getSignatureLink(fullAssetList, installer.name)
 
             Installer(
@@ -145,34 +167,57 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
                 installer.downloadUrl,
                 installer.size,
                 checksum,
-                checkSumLink,
+                checksumAsset?.downloadUrl,
                 installer.downloadCount,
                 signature_link = signatureLink,
-                metadata_link = metadataLink
+                metadata_link = metadataAsset?.downloadUrl
             )
         }
     }
 
-    private fun getCheckSumLink(fullAssetList: List<GHAsset>, binary_name: String): String? {
+    private fun getDigestChecksum(asset: GHAsset): String? {
+        return SHA256_DIGEST.matchEntire(asset.digest.orEmpty())?.groupValues?.get(1)?.lowercase()
+    }
+
+    private suspend fun getVerifiedChecksum(asset: GHAsset, metadataChecksum: String?, checksumAsset: GHAsset?): String? {
+        val githubChecksum = getDigestChecksum(asset)
+        val metadata = metadataChecksum?.takeIf { it.isNotBlank() }
+        val sidecar = if (githubChecksum != null || metadata == null) getChecksum(checksumAsset) else null
+        if (githubChecksum != null) {
+            for ((source, checksum) in listOf("metadata" to metadata, "checksum sidecar" to sidecar)) {
+                if (checksum != null && !githubChecksum.equals(checksum.trim(), ignoreCase = true)) {
+                    throw ChecksumMismatchException(
+                        "SHA-256 mismatch for ${asset.downloadUrl}: GitHub=$githubChecksum, $source=$checksum"
+                    )
+                }
+            }
+        }
+        return githubChecksum ?: metadata ?: sidecar
+    }
+
+    private fun getChecksumAsset(fullAssetList: List<GHAsset>, binary_name: String): GHAsset? {
         val nameWithoutExtension = removeExtensionFromName(binary_name)
 
-        return fullAssetList
-            .firstOrNull { asset ->
-                asset.name == "$binary_name.sha256.txt" ||
-                    asset.name == binary_name.split(".")[0] + ".sha256.txt" ||
+        return fullAssetList.firstOrNull { it.name == "$binary_name.sha256.txt" }
+            ?: fullAssetList.firstOrNull { asset ->
+                asset.name == binary_name.split(".")[0] + ".sha256.txt" ||
                     asset.name == "$nameWithoutExtension.sha256.txt"
-            }?.downloadUrl
+            }
     }
 
     private fun getMetadataLink(fullAssetList: List<GHAsset>, binary_name: String): String? {
+        return getMetadataAsset(fullAssetList, binary_name)?.downloadUrl
+    }
+
+    private fun getMetadataAsset(fullAssetList: List<GHAsset>, binary_name: String): GHAsset? {
         val nameWithoutExtension = removeExtensionFromName(binary_name)
 
-        return fullAssetList
+        return fullAssetList.firstOrNull { it.name == "$binary_name.json" }
+            ?: fullAssetList
             .firstOrNull { asset ->
-                asset.name == "$binary_name.json" ||
-                    asset.name == binary_name.split(".")[0] + ".json" ||
+                asset.name == binary_name.split(".")[0] + ".json" ||
                     asset.name == "$nameWithoutExtension.json"
-            }?.downloadUrl
+            }
     }
 
     private fun removeExtensionFromName(binary_name: String): String {
@@ -180,9 +225,8 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
     }
 
     internal fun isSupportedBinaryAsset(asset: GHAsset) =
-        (ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } ||
-            (asset.name.endsWith(".json") && asset.name.contains("-sbom_") && !asset.name.endsWith("-metadata.json"))) &&
-            !asset.name.contains("-sources") && EXCLUDED.none { asset.name.contains(it) }
+        (ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } || (asset.name.endsWith(".json") && asset.name.contains("-sbom_"))) &&
+            EXCLUDED.none { asset.name.contains(it) }
 
     private fun binaryFromName(
         asset: GHAsset,
@@ -277,20 +321,19 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         }
     }
 
-    private suspend fun getChecksum(binary_checksum_link: String?): String? {
+    private suspend fun getChecksum(checksumAsset: GHAsset?): String? {
         try {
-            if (!binary_checksum_link.isNullOrEmpty()) {
-                LOGGER.debug("Pulling checksum for $binary_checksum_link")
-                val checksum = gitHubHtmlClient.getUrl(binary_checksum_link)
+            if (checksumAsset != null && checksumAsset.downloadUrl.isNotEmpty()) {
+                LOGGER.debug("Pulling checksum for ${checksumAsset.downloadUrl}")
+                val checksum = gitHubHtmlClient.getAsset(checksumAsset)
                 if (checksum != null) {
-                    val tokens = checksum.split(" ")
-                    if (tokens.size > 1) {
-                        return tokens[0]
-                    }
+                    return checksum.trim().takeIf { it.isNotEmpty() }?.split(Regex("\\s+"))?.first()
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            LOGGER.warn("Failed to fetch checksum $binary_checksum_link", e)
+            LOGGER.warn("Failed to fetch checksum ${checksumAsset?.downloadUrl}", e)
         }
         return null
     }

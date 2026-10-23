@@ -18,8 +18,11 @@ import net.adoptium.api.v3.dataSources.UpdatableVersionSupplier
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
+import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.Release
+import net.adoptium.api.v3.models.ReleaseType
+import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.releaseNotes.AdoptReleaseNotes
 import net.adoptium.api.v3.stats.GitHubDownloadStatsCalculator
 import net.adoptium.api.v3.stats.StatsInterface
@@ -456,7 +459,7 @@ class V3Updater @Inject constructor(
 
                 val dataInDb = mutex.withLock {
                     runBlocking {
-                        if (!validateStats(repo)) {
+                        if (!validateStats(repo, currentRepo)) {
                             LOGGER.error("Stats do not look correct, not saving update")
                             throw InvalidUpdateException("Stats are not sane")
                         }
@@ -526,16 +529,26 @@ class V3Updater @Inject constructor(
 
     class InvalidUpdateException(message: String) : Exception(message)
 
-    private suspend fun validateStats(repo: AdoptRepos): Boolean {
+    private suspend fun validateStats(repo: AdoptRepos, currentRepo: AdoptRepos): Boolean {
         return GitHubDownloadStatsCalculator
             .getStats(repo)
             .filter { newEntry ->
                 val lastDownloads = database.getLatestGithubStatsForFeatureVersion(newEntry.feature_version)?.downloads ?: 0
+                val newReleases = repo.repos.getValue(newEntry.feature_version).releases
+                val omittedEaDownloads = currentRepo.getFeatureRelease(newEntry.feature_version)?.releases?.getReleases()
+                    ?.filter {
+                        it.release_type == ReleaseType.ea && it.vendor == Vendor.getDefault() &&
+                            !newReleases.hasReleaseId(GitHubId(it.id))
+                    }
+                    ?.sumOf { it.download_count } ?: 0
+                // Full builds may omit failed EAs without invalidating an otherwise
+                // healthy rebuild. Do not exempt losses from retained EAs or GAs.
+                val comparableDownloads = newEntry.downloads + omittedEaDownloads
 
-                if (lastDownloads > newEntry.downloads) {
-                    LOGGER.error("Stats for ${newEntry.feature_version} are lower than the latest in the db $lastDownloads > ${newEntry.downloads}")
+                if (lastDownloads > comparableDownloads) {
+                    LOGGER.error("Stats for ${newEntry.feature_version} are lower than the latest in the db $lastDownloads > $comparableDownloads (omitted EA downloads: $omittedEaDownloads)")
                 }
-                return@filter lastDownloads > newEntry.downloads
+                return@filter lastDownloads > comparableDownloads
             }
             .isEmpty()
     }

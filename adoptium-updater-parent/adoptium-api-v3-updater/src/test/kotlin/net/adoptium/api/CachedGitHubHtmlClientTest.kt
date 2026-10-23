@@ -16,12 +16,14 @@ import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.UrlRequest
 import net.adoptium.api.v3.dataSources.github.CachedGitHubHtmlClient
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.mongo.CacheDbEntry
 import net.adoptium.api.v3.dataSources.mongo.InternalDbStore
 import org.apache.http.HttpVersion
 import org.apache.http.entity.StringEntity
 import org.apache.http.message.BasicHttpResponse
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DynamicTest
@@ -100,19 +102,51 @@ class CachedGitHubHtmlClientTest {
 
         assertEquals("foo", cacheDbEntry.url)
         assertNull(cacheDbEntry.lastChecked)
-        assertNull(cacheDbEntry.lastAccessed)
+    }
+
+    @Test
+    fun `background HTTP 200 updates content without recording demand usage`() = runBlocking {
+        val memory = InMemoryInternalDbStore()
+        val modified = CachedGitHubHtmlClient.LAST_MODIFIED_PARSER.format(TimeSource.now().minusDays(20))
+        memory.putCachedWebpage("background", modified, TimeSource.now().minusDays(2), "old")
+        val written = CompletableDeferred<ZonedDateTime?>()
+        val store = recordingStore(memory, written)
+        val http = mockk<UpdaterHtmlClient>()
+        coEvery { http.getFullResponse(UrlRequest("background", modified)) } returns response("new")
+        val client = CachedGitHubHtmlClient(store, http)
+
+        assertEquals("old", client.getUrl("background"))
+        assertNull(withTimeout(5000) { written.await() })
+        assertEquals("new", memory.getCachedWebpage("background")!!.data)
+    }
+
+    @Test
+    fun `direct unversioned asset fetch records demand usage without a cache read`() = runBlocking {
+        val memory = InMemoryInternalDbStore()
+        val now = TimeSource.now()
+        memory.putCachedWebpage("direct", null, now.minusDays(20), "old")
+        val written = CompletableDeferred<ZonedDateTime?>()
+        val store = recordingStore(memory, written)
+        val http = mockk<UpdaterHtmlClient>()
+        coEvery { http.getFullResponse(UrlRequest("direct")) } returns response("new")
+        val client = CachedGitHubHtmlClient(store, http)
+        val asset = GHAsset("metadata.json", 1, "direct", 0, "2013-02-27T19:35:32Z")
+
+        assertEquals("new", client.getAsset(asset))
+        val accessedAt = withTimeout(5000) { written.await() }
+        assertNotNull(accessedAt)
+        assertTrue(!accessedAt!!.isBefore(now))
+        assertEquals(accessedAt, memory.peekCachedWebpage("direct")!!.lastAccessed)
     }
 
     @Test
     fun `uncached demand fetch initializes usage`() = runBlocking {
         val store = InMemoryInternalDbStore()
         val http = mockk<UpdaterHtmlClient>()
-        coEvery { http.getFullResponse(UrlRequest("demand")) } returns
-            BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "OK").apply { entity = StringEntity("body") }
+        coEvery { http.getFullResponse(UrlRequest("demand")) } returns response("body")
         val before = TimeSource.now()
         assertEquals("body", CachedGitHubHtmlClient(store, http).getUrl("demand"))
-        assertEquals(0L, store.evictUnusedCache(before.minusDays(30)))
-        assertTrue(!store.getCachedWebpage("demand")!!.lastAccessed!!.isBefore(before))
+        assertTrue(!store.peekCachedWebpage("demand")!!.lastAccessed!!.isBefore(before))
     }
 
     @TestFactory
@@ -150,11 +184,24 @@ class CachedGitHubHtmlClientTest {
                 assertTrue(!demandUsage!!.isBefore(now), "Cache hits are demand reads")
                 releaseResponse.complete(Unit)
                 withTimeout(5000) { validated.await() }
-                // The refresh has finished; usage must still be exactly the original demand touch.
-                assertEquals(1L, backing.evictUnusedCache(demandUsage!!))
+                assertEquals(demandUsage, backing.peekCachedWebpage("background")!!.lastAccessed)
             }
         }
     }.stream()
+
+    private fun recordingStore(memory: InternalDbStore, written: CompletableDeferred<ZonedDateTime?>): InternalDbStore {
+        return object : InternalDbStore by memory {
+            override fun putCachedWebpage(url: String, lastModified: String?, date: ZonedDateTime, data: String?, accessedAt: ZonedDateTime?): Job {
+                return memory.putCachedWebpage(url, lastModified, date, data, accessedAt).also {
+                    it.invokeOnCompletion { written.complete(accessedAt) }
+                }
+            }
+        }
+    }
+
+    private fun response(body: String) = BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "OK").apply {
+        entity = StringEntity(body)
+    }
 
     private fun performRequest(modifiedTime: String?, lastChecked: ZonedDateTime, expectUpdate: Boolean) {
         runBlocking {

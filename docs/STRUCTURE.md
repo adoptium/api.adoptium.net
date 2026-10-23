@@ -24,8 +24,22 @@ The updater periodically polls for new data, and stores that data into the DB. T
     - A full refresh of all data from the various sources
     - Performed when the updater starts and then every 24 hours there-after. 
 1. Incremental
-    - A refresh of only newly added or modified files.
-    - Performed every 6 minutes
+    - A refresh of new or changed releases, recent releases, and the latest EA per repository and Java feature version.
+    - Scheduled with a 6-minute delay after the preceding incremental execution finishes.
+
+The replacement unit is a complete upstream GitHub release, including all API
+version splits. A failed incremental EA refresh retains its previous complete
+snapshot, while a full rebuild omits that failed EA rather than carrying its old
+splits forward. Other releases continue updating, and failed new EAs remain
+unpublished. Full builds still abort on GA failures or repository-wide release-list
+retrieval/pagination failures.
+Incremental discovery includes supported Java versions absent from the stored
+catalogue, so omitting a version's only EA does not prevent later recovery.
+See [ADR 8: release snapshot update semantics and failure isolation](adr/0008-release-snapshot-update-semantics.md)
+for the [assumptions and scope](adr/0008-release-snapshot-update-semantics.md#assumptions-and-scope),
+decisions, selection rules, exclusions and failure-mode table, including
+a [behaviour comparison with upstream/main](adr/0008-release-snapshot-update-semantics.md#behaviour-comparison-with-upstreammain)
+at the recorded baseline.
  
 The sources of data for the API are:
 
@@ -52,12 +66,22 @@ The updater interacts with the GitHub API using the [V4 GraphQL interface](https
 Once we have obtained the data through the GitHub API the Upstream (for the upstream OpenJDK project) and Adoptium mappers which map the
 GitHub data into Adoptium API models.
 It does this by iterating through the list of repos and releases, for each binary asset download its metadata or checksum and parse their contents in order to extract the data.
-If metadata is not available then we attempt to extract the relevant data by parsing the file name.
+Genuinely metadata-free legacy releases fall back to release-name and filename parsing.
+When a release uses metadata, missing required sidecars or failed binary mappings
+reject that upstream snapshot rather than publishing the remaining binaries.
+Checksum disagreements are an explicit exception: log an error and omit only the
+binary whose GitHub SHA-256 conflicts with metadata or a checksum sidecar. An
+installer disagreement omits only the installer. Installer metadata assets are
+also read for checksum verification, without making them a prerequisite for
+mapping the associated archive.
 CycloneDX Attestation resources are also iterated through by querying using GitHub GraphQL queries on the "Cdxa github repositories".
 
 In order to speed up access and reduce bandwidth we use Mongo as a cache for this data.
-When we require data such as the metadata file or checksum, that data will be provided by the cache (assuming it is present).
-An asynchronous refresh of cache will be scheduled to make sure it is up to date.
+Metadata and checksum assets use cache keys containing their URL and available
+GitHub asset identity/digest. Replaced assets are fetched on demand; assets without
+identity information are fetched rather than trusted from a URL-only cache.
+Other URL-cached resources can still be refreshed asynchronously. Entries expire
+after 30 days without demand access; background validation does not extend retention.
 
 ### DockerHub
 The DockerHub repositories are only required for displaying stats.

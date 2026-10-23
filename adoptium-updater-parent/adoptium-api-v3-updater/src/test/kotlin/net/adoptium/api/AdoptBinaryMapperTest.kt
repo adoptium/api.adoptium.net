@@ -197,7 +197,7 @@ class AdoptBinaryMapperTest {
                 Pair(installerAsset, installerMetadata)
             )
 
-            coEvery { fakeGithubHtmlClient.getUrl("http://installer-checksum-link") } returns "installer-checksum archive.msi"
+            coEvery { fakeGithubHtmlClient.getAsset(installerChecksumAsset) } returns "installer-checksum archive.msi"
 
             val actualBinaries = adoptBinaryMapper.toBinaryList(ghBinaryAssets, fullGhAssetList, ghBinaryAssetsWithMetadata)
 
