@@ -30,7 +30,6 @@ interface InternalDbStore {
     fun putCachedWebpage(url: String, lastModified: String?, date: ZonedDateTime, data: String?, accessedAt: ZonedDateTime? = null): Job
     suspend fun getCachedWebpage(url: String): CacheDbEntry?
     suspend fun updateCheckedTime(url: String, dateTime: ZonedDateTime)
-    suspend fun evictUnusedCache(now: ZonedDateTime = TimeSource.now()): Long
 }
 
 @ApplicationScoped
@@ -87,12 +86,5 @@ open class InternalDbStoreImpl @Inject constructor(mongoClient: MongoClient) : M
                 BsonDocument("lastChecked", BsonDateTime(dateTime.toInstant().toEpochMilli()))
             )
         )
-    }
-
-    override suspend fun evictUnusedCache(now: ZonedDateTime): Long {
-        val cutoff = now.minusDays(InternalDbStore.CACHE_RETENTION_DAYS)
-        return webCache.deleteMany(
-            Document("lastAccessed", Document($$"$lte", Date.from(cutoff.toInstant())))
-        ).deletedCount
     }
 }

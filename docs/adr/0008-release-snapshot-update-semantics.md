@@ -306,10 +306,12 @@ Missing or unavailable optional checksum data does not by itself exclude a
 binary. Validation of a sidecar's own downloaded bytes is separate from checking
 that the hash written inside it agrees with GitHub's digest for the binary.
 
-Cache retention is thirty days since demand access. Background HTTP validation
-does not extend demand retention; old entries without usage history receive one
-retention-period grace. Cache writes remain asynchronous; this decision does not
-introduce a durable-cache-write prerequisite for publishing a release.
+Cache retention is thirty days since demand access, enforced asynchronously by
+MongoDB's TTL index on `lastAccessed`, not by an application eviction loop.
+Background HTTP validation does not extend demand retention; old entries without
+usage history receive one retention-period grace. Cache writes remain
+asynchronous; this decision does not introduce a durable-cache-write prerequisite
+for publishing a release.
 
 Release download counts include installer and other eligible ungrouped-asset
 downloads exactly once. Attribute ungrouped downloads to the lowest-version
@@ -340,9 +342,9 @@ release edit, asset-count change or a full update's filters.
 
 Re-evaluated on 2026-10-23 against the local `upstream/main` reference at commit
 `d9836348`. The compared branch includes that commit via merge commit `32afbfd2`,
-plus subsequent checksum-lookup and cancellation fixes. This replaces the earlier
-comparison against `77a4d8b0`; it is a fixed-baseline comparison, not a claim about
-later changes to either branch.
+plus subsequent checksum-lookup, cancellation and cache API cleanup changes. This
+replaces the earlier comparison against `77a4d8b0`; it is a fixed-baseline
+comparison, not a claim about later changes to either branch.
 
 | Area | Upstream at `d9836348` | Current code |
 | --- | --- | --- |
@@ -402,10 +404,9 @@ Additional implementation differences from this baseline are:
   being retried or converted into an unavailable checksum at those boundaries.
 - The internal cache-write API defaults to a background write (`accessedAt=null`);
   demand HTTP fetches explicitly pass their access time. Upstream defaults to a
-  demand write. Cache eviction accepts the current time and calculates the
-  thirty-day cutoff internally, whereas upstream accepts the cutoff itself.
-  These API differences do not change the shared thirty-day demand-retention
-  policy.
+  demand write. The unused manual eviction API present upstream has been removed;
+  production expiration in both versions relies on MongoDB's TTL index. These
+  API differences do not change the shared thirty-day demand-retention policy.
 - GraphQL decoding mismatches are logged and returned as `null` by the query
   helper, then rejected as missing page data by the paginated reader. Upstream
   throws a decoding exception directly; neither path accepts a partial listing.

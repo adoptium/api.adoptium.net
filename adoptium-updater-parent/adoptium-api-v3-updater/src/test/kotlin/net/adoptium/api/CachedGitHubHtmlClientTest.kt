@@ -133,8 +133,10 @@ class CachedGitHubHtmlClientTest {
         val asset = GHAsset("metadata.json", 1, "direct", 0, "2013-02-27T19:35:32Z")
 
         assertEquals("new", client.getAsset(asset))
-        assertNotNull(withTimeout(5000) { written.await() })
-        assertEquals(0L, memory.evictUnusedCache(now.plusDays(29)))
+        val accessedAt = withTimeout(5000) { written.await() }
+        assertNotNull(accessedAt)
+        assertTrue(!accessedAt!!.isBefore(now))
+        assertEquals(accessedAt, memory.peekCachedWebpage("direct")!!.lastAccessed)
     }
 
     @Test
@@ -144,8 +146,7 @@ class CachedGitHubHtmlClientTest {
         coEvery { http.getFullResponse(UrlRequest("demand")) } returns response("body")
         val before = TimeSource.now()
         assertEquals("body", CachedGitHubHtmlClient(store, http).getUrl("demand"))
-        assertEquals(0L, store.evictUnusedCache(before))
-        assertTrue(!store.getCachedWebpage("demand")!!.lastAccessed!!.isBefore(before))
+        assertTrue(!store.peekCachedWebpage("demand")!!.lastAccessed!!.isBefore(before))
     }
 
     @TestFactory
@@ -183,7 +184,7 @@ class CachedGitHubHtmlClientTest {
                 assertTrue(!demandUsage!!.isBefore(now), "Cache hits are demand reads")
                 releaseResponse.complete(Unit)
                 withTimeout(5000) { validated.await() }
-                assertEquals(1L, backing.evictUnusedCache(demandUsage!!.plusDays(30)))
+                assertEquals(demandUsage, backing.peekCachedWebpage("background")!!.lastAccessed)
             }
         }
     }.stream()

@@ -7,12 +7,12 @@ import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.testDoubles.InMemoryInternalDbStore
 import net.adoptium.api.v3.dataSources.mongo.CacheDbEntry
+import net.adoptium.api.v3.dataSources.mongo.InternalDbStore
 import net.adoptium.api.v3.dataSources.mongo.InternalDbStoreImpl
 import net.adoptium.api.v3.dataSources.persitence.mongo.MongoClient
 import org.bson.Document
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -57,17 +57,6 @@ class InternalDbStoreTests : MongoTest() {
     }
 
     @Test
-    fun `unused entries expire at the thirty day boundary`() = runBlocking {
-        val store = InternalDbStoreImpl(mongoClient)
-        val now = TimeSource.now()
-        store.putCachedWebpage("boundary", null, now, "data").join()
-
-        assertEquals(0L, store.evictUnusedCache(now.plusDays(30).minusSeconds(1)))
-        assertEquals(1L, store.evictUnusedCache(now.plusDays(30)))
-        assertNull(store.getCachedWebpage("boundary"))
-    }
-
-    @Test
     fun `cache reads retain actively used entries without changing validation time`() = runBlocking {
         val store = InternalDbStoreImpl(mongoClient)
         val now = TimeSource.now()
@@ -79,21 +68,21 @@ class InternalDbStoreTests : MongoTest() {
 
         assertEquals(old, active.lastChecked)
         assertTrue(!active.lastAccessed!!.isBefore(now))
-        assertEquals(1L, store.evictUnusedCache(now.plusDays(20)))
-        assertEquals("active data", store.getCachedWebpage("active")!!.data)
-        assertNull(store.getCachedWebpage("unused"))
+        assertEquals("active data", active.data)
+        assertEquals(old, readWithoutAccess(store, "unused")!!.lastAccessed)
     }
 
     @Test
-    fun `HTTP revalidation does not keep unused entries alive`() = runBlocking {
+    fun `HTTP revalidation preserves last access`() = runBlocking {
         val store = InternalDbStoreImpl(mongoClient)
         val now = TimeSource.now()
         store.putCachedWebpage("checked-only", null, now.minusDays(20), "data").join()
 
         store.updateCheckedTime("checked-only", now)
 
-        assertEquals(1L, store.evictUnusedCache(now.plusDays(20)))
-        assertNull(store.getCachedWebpage("checked-only"))
+        val entry = readWithoutAccess(store, "checked-only")!!
+        assertEquals(now, entry.lastChecked)
+        assertEquals(now.minusDays(20), entry.lastAccessed)
     }
 
     @Test
@@ -104,8 +93,10 @@ class InternalDbStoreTests : MongoTest() {
             store.putCachedWebpage("background-200", "old", old, "old body").join()
             store.putCachedWebpage("background-200", "new", now, "new body").join()
 
-            assertEquals(0L, store.evictUnusedCache(old.plusDays(30).minusSeconds(1)))
-            assertEquals(1L, store.evictUnusedCache(old.plusDays(30)))
+            val entry = readWithoutAccess(store, "background-200")!!
+            assertEquals(old, entry.lastAccessed)
+            assertEquals(now, entry.lastChecked)
+            assertEquals("new body", entry.data)
         }
     }
 
@@ -120,9 +111,8 @@ class InternalDbStoreTests : MongoTest() {
             store.putCachedWebpage("delayed", "demand", old.plusDays(1), "demand", old.plusDays(1)).join()
             store.putCachedWebpage("delayed", "background", old.plusDays(2), "background").join()
 
-            assertEquals(0L, store.evictUnusedCache(accessed.plusDays(30).minusSeconds(1)))
-            val entry = store.getCachedWebpage("delayed")!!
-            assertTrue(!entry.lastAccessed!!.isBefore(accessed))
+            val entry = readWithoutAccess(store, "delayed")!!
+            assertEquals(accessed, entry.lastAccessed)
             assertEquals("background", entry.data)
             assertEquals("background", entry.lastModified)
             assertEquals(old.plusDays(2), entry.lastChecked)
@@ -135,8 +125,9 @@ class InternalDbStoreTests : MongoTest() {
             val now = TimeSource.now()
             store.putCachedWebpage("direct-demand", null, now.minusDays(20), "old").join()
             store.putCachedWebpage("direct-demand", null, now, "new", now).join()
-            assertEquals(0L, store.evictUnusedCache(now.plusDays(29)))
-            assertEquals(1L, store.evictUnusedCache(now.plusDays(30)))
+            val entry = readWithoutAccess(store, "direct-demand")!!
+            assertEquals(now, entry.lastAccessed)
+            assertEquals("new", entry.data)
         }
     }
 
@@ -162,12 +153,10 @@ class InternalDbStoreTests : MongoTest() {
             .append("lastChecked", Date.from(now.minusDays(60).toInstant()))
             .append("data", "legacy data"))
 
-        val store = InternalDbStoreImpl(mongoClient)
+        InternalDbStoreImpl(mongoClient)
         val document = collection.find(Document("url", "legacy")).firstOrNull()!!
 
         assertTrue(!document.getDate("lastAccessed").toInstant().isBefore(now.toInstant()))
-        assertEquals(0L, store.evictUnusedCache(now.plusDays(29)))
-        assertEquals(1L, store.evictUnusedCache(now.plusDays(31)))
     }
 
     @Test
@@ -202,10 +191,17 @@ class InternalDbStoreTests : MongoTest() {
             .append("lastAccessed", accessed)
             .append("data", "data"))
 
-        val store = InternalDbStoreImpl(mongoClient)
+        InternalDbStoreImpl(mongoClient)
         val document = collection.find(Document("url", "existing")).firstOrNull()!!
 
         assertEquals(accessed, document.getDate("lastAccessed"))
-        assertEquals(1L, store.evictUnusedCache(now.plusDays(11)))
     }
+
+    private suspend fun readWithoutAccess(store: InternalDbStore, url: String): CacheDbEntry? =
+        if (store is InMemoryInternalDbStore) {
+            store.peekCachedWebpage(url)
+        } else {
+            mongoClient.getDatabase().getCollection<CacheDbEntry>("web-cache")
+                .find(Document("url", url)).firstOrNull()
+        }
 }

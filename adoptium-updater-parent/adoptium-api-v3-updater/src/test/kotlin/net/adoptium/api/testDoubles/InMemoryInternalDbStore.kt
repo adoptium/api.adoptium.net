@@ -37,12 +37,5 @@ class InMemoryInternalDbStore : InternalDbStore {
         cache.computeIfPresent(url) { _, entry -> entry.copy(lastChecked = dateTime) }
     }
 
-    override suspend fun evictUnusedCache(now: ZonedDateTime): Long {
-        val cutoff = now.minusDays(InternalDbStore.CACHE_RETENTION_DAYS)
-        val before = cache.size
-        cache.entries.removeIf { (_, entry) ->
-            entry.lastAccessed?.let { !it.isAfter(cutoff) } == true
-        }
-        return (before - cache.size).toLong()
-    }
+    internal fun peekCachedWebpage(url: String): CacheDbEntry? = cache[url]
 }
