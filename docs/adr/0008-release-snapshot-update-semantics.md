@@ -2,6 +2,8 @@
 
 Date: 2026-10-22
 
+Last reviewed: 2026-10-23
+
 ## Status
 
 Accepted
@@ -63,9 +65,10 @@ for the explicit per-artifact checksum exclusions described below.
 GA failures and repository-wide listing failures still abort a full-build attempt;
 EA failure isolation does not relax those boundaries.
 
-Version-parsing failures retain the current implementation's lifetime blacklist.
-This is a compatibility constraint, not an assumption that malformed releases
-cannot be corrected upstream or a promise that they will recover automatically.
+Version-parsing failures retain this branch's mapper-lifetime blacklist. This
+differs from `upstream/main`, where these mapping failures are retryable. It is
+an explicit branch policy, not an assumption that malformed releases cannot be
+corrected upstream or a promise that they will recover automatically.
 
 ## Decision
 
@@ -166,6 +169,11 @@ required metadata, including SBOM metadata. Metadata sidecars themselves are not
 binaries. Installer, unsupported-asset and excluded-asset metadata is not required
 for binary grouping.
 
+Release-grouping metadata association uses prefix matching, unlike upstream's
+exact sidecar-name matching. Installer metadata is loaded separately and prefers
+an exact full-filename match before legacy naming fallbacks; it does not
+participate in version grouping.
+
 Source packages retain their special treatment: source archives without metadata
 can be exposed as source packages without being selected as binaries. Source
 metadata is still read when present and applicable.
@@ -188,7 +196,9 @@ archives to calculate their digests.
 Known release-policy exclusions are evaluated against the current mapped
 snapshot, not cached indefinitely by upstream ID. In particular,
 `jdk-11.0.13'+8` remains excluded for EAs in both full and incremental updates.
-The existing EA-only scope of this filter is unchanged.
+The same EA-only repository filter includes `jdk17u-2022-05-27-19-32-beta`.
+This retains the branch's post-mapping EA-only scope; it differs from
+`upstream/main`, which rejects both upstream names before mapping, including GAs.
 
 If filtering produces no releases, it is a successful empty snapshot and removes
 old incremental splits.
@@ -197,15 +207,15 @@ Checksum-disagreement exclusions are also evaluated on each selected refresh,
 not permanently blacklisted. A later refresh can restore the binary once its
 checksums agree.
 
-Version-parsing failures retain their existing non-retryable treatment. The
+Version-parsing failures are non-retryable in this implementation. The
 Adopt release mapper remembers an unparsable upstream ID for the lifetime of
 that mapper. Correcting its upstream name or metadata does not clear that set;
 restarting the updater clears it. Full builds clear the builder's incremental
 exclusion set, but not the mapper's parsing-failure set.
 
-This parsing behaviour is retained compatibility, not a new promise that parsing
-errors are recoverable. Changing it to retryable behaviour requires a separate
-policy decision.
+This parsing behaviour is a retained branch policy, not shared upstream
+behaviour or a promise that parsing errors are recoverable. Aligning it with
+upstream's retryable behaviour requires a separate policy decision.
 
 ### 6. Isolate EA failures during full builds
 
@@ -264,6 +274,11 @@ nonempty metadata SHA-256 and any retrieved checksum-sidecar value. Fetch an
 available checksum sidecar for this comparison even when GitHub or metadata
 already provides a checksum. Compare hexadecimal values case-insensitively;
 checksum sidecars may contain a bare hash or a hash followed by a filename.
+Prefer the exact `<asset-name>.sha256.txt` sidecar before legacy basename
+aliases, independently of asset order. Legacy aliases remain supported when no
+exact sidecar exists. Cancellation during sidecar retrieval propagates through
+the asset-cache and checksum-mapping boundaries; it is not treated as an
+unavailable optional checksum.
 
 If either value disagrees with GitHub, log an error identifying the asset and
 the conflicting checksums, and exclude only that binary. For an installer
@@ -323,12 +338,13 @@ release edit, asset-count change or a full update's filters.
 
 ## Behaviour comparison with upstream/main
 
-This comparison was recorded on 2026-10-22 and updated on 2026-10-23 against the
-local `upstream/main` reference at commit `77a4d8b0`. "Current code" includes the
-local uncommitted implementation changes. This is a fixed-baseline comparison, not a
-claim about subsequent changes to upstream.
+Re-evaluated on 2026-10-23 against the local `upstream/main` reference at commit
+`d9836348`. The compared branch includes that commit via merge commit `32afbfd2`,
+plus subsequent checksum-lookup and cancellation fixes. This replaces the earlier
+comparison against `77a4d8b0`; it is a fixed-baseline comparison, not a claim about
+later changes to either branch.
 
-| Area | Upstream at `77a4d8b0` | Current code |
+| Area | Upstream at `d9836348` | Current code |
 | --- | --- | --- |
 | EA failure during a full update | An EA mapping/required-metadata failure or asset-pagination exception aborts that full-build attempt. | Log and omit the entire failed EA, including previous splits, while rebuilding other releases. GA failures still abort. |
 | Full-update download-count guard | Reject a feature-version download-total decrease without allowing for omitted EAs. | Allow the previous download counts of EAs now absent from the rebuild. Retained-EA and GA losses receive no allowance. |
@@ -336,37 +352,68 @@ claim about subsequent changes to upstream.
 | Feature-version discovery | Incremental updates visit only versions in the stored catalogue. | Visit the union of stored and supported versions, allowing an EA-only version omitted by a full rebuild to recover incrementally. |
 | Older, recently edited EAs | Repeatedly refresh them while their edit timestamp remains within seven days. | An actual timestamp change still triggers refresh, but recent edits alone no longer repeatedly select older, already-known EAs. Recent publication still does. |
 | Non-retryable incremental failures | Remove their previous splits. No builder exclusion set prevents subsequent selection. | Retain previous splits and suppress further incremental attempts until a full build clears the builder exclusion set. |
-| Unparsable release versions | Mapping failure is retryable by default. | Remember the upstream ID as non-retryable for the mapper's lifetime. Correcting the upstream release does not clear that memory; restarting the updater does. |
+| Unparsable release versions | Mapping failure is retryable by default; there is no mapper-lifetime parsing blacklist. | Remember the upstream ID as non-retryable for the mapper's lifetime. Correcting the upstream release does not clear that memory; restarting the updater does. |
 | Metadata/checksum cache freshness | Use URL-based caching. Replacing an asset at the same URL can reuse cached content until validation refreshes it. | Key asset reads by URL plus GitHub asset ID/digest. Identity changes cause misses; assets without either identity field are fetched on demand. |
 | Checksums | Use metadata SHA-256, then checksum sidecars. | Compare a valid GitHub SHA-256 with available metadata/sidecar checksums and exclude only the affected artifact on disagreement. Otherwise prefer GitHub, then the existing fallbacks. Downloaded sidecars with supplied digests are validated before use/caching. |
+| Installer metadata | Do not load installer metadata for validation; use its checksum sidecar for the installer checksum. | Load matching installer metadata through the asset-aware cache and include its SHA-256 in agreement checks. Missing metadata assets are allowed; listed metadata that cannot be read or parsed excludes only the installer, not its archive. |
 | Cache writes | Wait for the cache write before returning fetched content. | Write asynchronously; release publication does not wait for cache persistence. |
-| `jdk-11.0.13'+8` exclusion | Reject the upstream name before mapping, including GA releases. | Filter successfully mapped EA results only. An empty filtered result removes old incremental splits; GA releases are not excluded by this rule. |
+| Known tag exclusions | Reject `jdk-11.0.13'+8` and `jdk17u-2022-05-27-19-32-beta` before mapping, including GA releases. | Filter successfully mapped EA results only. An empty filtered result removes old incremental splits; GA releases are not excluded by these rules. |
 
-The baseline already implements the following protections; they are not new
-behaviour introduced by this work:
+The merged upstream baseline already implements the following protections; they
+remain shared behaviour, not differences introduced by this work:
 
 - Complete upstream-snapshot replacement across all version splits.
 - Removal of old splits after a successful empty refresh.
 - Incremental retention on retryable failures, null fetches and ordinary
   per-release exceptions, while other releases continue.
 - Rejection of incomplete binary mappings.
+- Rejection of incomplete repository/asset pagination, missing page data and
+  missing, blank or non-advancing continuation cursors. An explicitly absent
+  repository is treated as empty only on the initial request.
 - The ten-minute upload grace and thirty-day demand-based cache retention.
+- Stable attribution of installer and other eligible ungrouped downloads to
+  the lowest-version split exactly once, independent of asset order.
 
-Scheduling and full-update age/vendor filters are also unchanged.
+Scheduling, the database-checksum publication guard and full-update age/vendor
+filters are also unchanged. The accepted limitations under
+[Assumptions and scope](#assumptions-and-scope) still apply; the merge does not add
+historical-EA recovery or whole-feature-version database cleanup.
 
-Additional mapping differences from this baseline are:
+Additional implementation differences from this baseline are:
 
-- Metadata association uses prefix matching rather than exact sidecar filenames.
+- Release-grouping metadata association uses prefix matching rather than exact
+  sidecar filenames. Installer metadata lookup separately prefers an exact
+  full-filename match before legacy naming fallbacks.
 - Metadata-bearing source archives can enter the selected binary set rather
   than always being source-only. Metadata-free sources remain outside that set.
-- Incomplete asset listings are explicitly rejected before mapping.
+- The Adopt mapper and full-build repository mapping explicitly reject asset
+  listings still marked `hasNextPage=true`, adding a completeness check beyond
+  the shared pagination guards. An EA whose asset pagination failed reaches
+  this check and is omitted; an equivalent GA failure still aborts the build.
 - Failure results default to non-retryable unless explicitly marked otherwise.
   Required-metadata and ordinary mapping failures in the Adopt mapper are
   explicitly retryable.
+- Checksum-sidecar parsing accepts a bare hash and general whitespace separators.
+  Upstream only returns a checksum when splitting on literal spaces produces
+  multiple tokens.
+- Checksum lookup prefers an exact asset filename before legacy aliases;
+  upstream selects the first matching name in asset order. Cancellation
+  propagates through asset-cache fetches and checksum retrieval rather than
+  being retried or converted into an unavailable checksum at those boundaries.
+- The internal cache-write API defaults to a background write (`accessedAt=null`);
+  demand HTTP fetches explicitly pass their access time. Upstream defaults to a
+  demand write. Cache eviction accepts the current time and calculates the
+  thirty-day cutoff internally, whereas upstream accepts the cutoff itself.
+  These API differences do not change the shared thirty-day demand-retention
+  policy.
+- GraphQL decoding mismatches are logged and returned as `null` by the query
+  helper, then rejected as missing page data by the paginated reader. Upstream
+  throws a decoding exception directly; neither path accepts a partial listing.
 
-Since the baseline comparison was first recorded, checksum agreement checks have
-also been added: GitHub no longer silently overrides conflicting metadata or
-checksum-sidecar values. Only the affected binary (or installer) is excluded.
+The checksum agreement and installer-metadata checks above are part of the
+implementation inspected, not pending follow-up work. They do not suppress the
+separate `Release.source` link or erase historical download counts, as documented
+in section 7.
 
 The principal operational trade-off is more reliable polling of the latest EA,
 less repeated polling of historical EAs, stale complete EAs on incremental

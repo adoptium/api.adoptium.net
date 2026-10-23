@@ -2,6 +2,7 @@ package net.adoptium.api.v3.dataSources.github
 
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.GlobalScope
@@ -137,6 +138,8 @@ open class CachedGitHubHtmlClient @Inject constructor(
                 internalDbStore.putCachedWebpage(cacheKey, lastModified, TimeSource.now(), body, accessedAt)
                 LOGGER.debug("Got ${request.url}")
                 return body
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 LOGGER.error("Failed to read data retrying $retryCount ${request.url}", e)
                 delay(1000)

@@ -198,10 +198,9 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
     private fun getChecksumAsset(fullAssetList: List<GHAsset>, binary_name: String): GHAsset? {
         val nameWithoutExtension = removeExtensionFromName(binary_name)
 
-        return fullAssetList
-            .firstOrNull { asset ->
-                asset.name == "$binary_name.sha256.txt" ||
-                    asset.name == binary_name.split(".")[0] + ".sha256.txt" ||
+        return fullAssetList.firstOrNull { it.name == "$binary_name.sha256.txt" }
+            ?: fullAssetList.firstOrNull { asset ->
+                asset.name == binary_name.split(".")[0] + ".sha256.txt" ||
                     asset.name == "$nameWithoutExtension.sha256.txt"
             }
     }
@@ -331,6 +330,8 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
                     return checksum.trim().takeIf { it.isNotEmpty() }?.split(Regex("\\s+"))?.first()
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             LOGGER.warn("Failed to fetch checksum ${checksumAsset?.downloadUrl}", e)
         }

@@ -377,6 +377,90 @@ class GitHubAssetCacheRefreshTest {
     }
 
     @ParameterizedTest
+    @ValueSource(booleans = [false, true])
+    fun `exact archive and installer checksum sidecars take precedence over legacy aliases`(genericFirst: Boolean) = runBlocking {
+        val now = TimeSource.now()
+        val archiveHash = "a".repeat(64)
+        val installerHash = "b".repeat(64)
+        val stem = "OpenJDK8U-jdk_x64_windows_hotspot_8u512b05-ea"
+        val archive = asset("$stem.zip", now, "archive", "sha256:$archiveHash")
+        val installer = asset("$stem.msi", now, "installer", "sha256:$installerHash")
+        val generic = asset("$stem.sha256.txt", now)
+        val archiveChecksum = asset("${archive.name}.sha256.txt", now)
+        val installerChecksum = asset("${installer.name}.sha256.txt", now)
+        val client = mockk<GitHubHtmlClient>()
+        coEvery { client.getAsset(generic) } returns "${"c".repeat(64)} $stem"
+        coEvery { client.getAsset(archiveChecksum) } returns "$archiveHash ${archive.name}"
+        coEvery { client.getAsset(installerChecksum) } returns "$installerHash ${installer.name}"
+        val exact = listOf(archiveChecksum, installerChecksum)
+        val sidecars = if (genericFirst) listOf(generic) + exact else exact + generic
+
+        val binary = AdoptBinaryMapper(client).toBinaryList(
+            listOf(archive), listOf(archive, installer) + sidecars, emptyMap()
+        ).single()
+
+        assertEquals(archiveHash, binary.`package`.checksum)
+        assertEquals(archiveChecksum.downloadUrl, binary.`package`.checksum_link)
+        assertEquals(installerHash, binary.installer!!.checksum)
+        assertEquals(installerChecksum.downloadUrl, binary.installer!!.checksum_link)
+        coVerify(exactly = 0) { client.getAsset(generic) }
+        coVerify(exactly = 1) { client.getAsset(archiveChecksum) }
+        coVerify(exactly = 1) { client.getAsset(installerChecksum) }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["stem", "first-dot"])
+    fun `legacy checksum aliases remain supported without an exact sidecar`(format: String) = runBlocking {
+        val now = TimeSource.now()
+        val hash = "a".repeat(64)
+        val archive = asset("OpenJDK11U-jdk_x64_linux_hotspot_11.0.28_6.tar.gz", now, "archive", "sha256:$hash")
+        val stem = if (format == "stem") archive.name.removeSuffix(".tar.gz") else archive.name.substringBefore(".")
+        val checksum = asset("$stem.sha256.txt", now)
+        val client = mockk<GitHubHtmlClient>()
+        coEvery { client.getAsset(checksum) } returns "$hash ${archive.name}"
+
+        val binary = AdoptBinaryMapper(client).toBinaryList(listOf(archive), listOf(archive, checksum), emptyMap()).single()
+
+        assertEquals(hash, binary.`package`.checksum)
+        assertEquals(checksum.downloadUrl, binary.`package`.checksum_link)
+        coVerify(exactly = 1) { client.getAsset(checksum) }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["archive", "installer", "cached-archive", "cached-installer"])
+    fun `checksum agreement retrieval cancellation propagates`(scenario: String) {
+        val now = TimeSource.now()
+        val hash = "a".repeat(64)
+        val archive = asset("OpenJDK8U-jdk_x64_windows_hotspot_8u512b05-ea.zip", now, "archive", "sha256:$hash")
+        val installer = asset(archive.name.removeSuffix(".zip") + ".msi", now, "installer", "sha256:$hash")
+        val checksumTarget = if (scenario.endsWith("installer")) installer else archive
+        val checksum = asset("${checksumTarget.name}.sha256.txt", now, "checksum")
+        val cancellation = CancellationException("Cancelled checksum agreement")
+        val http = mockk<UpdaterHtmlClient>()
+        val client = if (scenario.startsWith("cached-")) {
+            coEvery { http.getFullResponse(UrlRequest(checksum.downloadUrl)) } throws cancellation
+            CachedGitHubHtmlClient(InMemoryInternalDbStore(), http)
+        } else {
+            mockk<GitHubHtmlClient>().also {
+                coEvery { it.getAsset(checksum) } throws cancellation
+            }
+        }
+
+        val thrown = assertThrows(CancellationException::class.java) {
+            runBlocking {
+                AdoptBinaryMapper(client).toBinaryList(listOf(archive), listOf(archive, installer, checksum), emptyMap())
+            }
+        }
+
+        assertEquals(cancellation.message, thrown.message)
+        if (scenario.startsWith("cached-")) {
+            coVerify(exactly = 1) { http.getFullResponse(UrlRequest(checksum.downloadUrl)) }
+        } else {
+            coVerify(exactly = 1) { client.getAsset(checksum) }
+        }
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = ["hash", "filename", "tabs"])
     fun `checksum comparison accepts case and common sidecar formats`(format: String) = runBlocking {
         val now = TimeSource.now()
