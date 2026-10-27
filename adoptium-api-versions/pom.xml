@@ -22,7 +22,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.version>3.40.1.1</quarkus.version>
-        <rest-assured.version>6.2.0</rest-assured.version>
+        <rest-assured.version>6.3.0</rest-assured.version>
     </properties>
 
     <build>
