@@ -16,6 +16,7 @@ import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
 import org.slf4j.LoggerFactory
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.absoluteValue
 
 @ApplicationScoped
@@ -29,7 +30,9 @@ class AdoptReposBuilder @Inject constructor(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    private val excluded: MutableSet<GitHubId> = HashSet()
+    // Bounds repeat attempts at non-retryable releases across 6-minute incremental runs until the next
+    // full build clears it. Shared by the full and incremental update threads.
+    private val excluded: MutableSet<GitHubId> = ConcurrentHashMap.newKeySet()
 
     private data class ReleaseRefresh(val id: GitHubId, val releases: List<Release>)
 

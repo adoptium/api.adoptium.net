@@ -24,6 +24,13 @@ class Releases {
     @JsonIgnore
     private val nodeListTimeThenVersion: TreeSet<Release> = TreeSet(TIME_THEN_VERSION_SORTER)
 
+    // Releases are immutable, so incremental selection can look up each upstream
+    // release in constant time instead of rescanning and renormalizing every key.
+    @delegate:JsonIgnore
+    private val releasesByGitHubId: Map<GitHubId, List<Release>> by lazy {
+        nodes.entries.groupBy({ GitHubId(it.key) }, { it.value })
+    }
+
     constructor(nodes: List<Release>) {
         this.nodes = nodes.associateBy { it.id }
         nodeList.addAll(nodes)
@@ -68,19 +75,16 @@ class Releases {
     }
 
     fun hasReleaseId(gitHubId: GitHubId): Boolean {
-        return nodes
-            .keys
-            .any { release -> GitHubId(release) == gitHubId }
+        return releasesByGitHubId.containsKey(gitHubId)
     }
 
     fun hasReleaseBeenUpdated(
         gitHubId: GitHubId,
         updatedAt: ZonedDateTime
     ): Boolean {
-        return nodes
-            .filter { GitHubId(it.key) == gitHubId }
+        return releasesByGitHubId[gitHubId].orEmpty()
             .any {
-                ChronoUnit.SECONDS.between(it.value.updated_at.dateTime, updatedAt) != 0L
+                ChronoUnit.SECONDS.between(it.updated_at.dateTime, updatedAt) != 0L
             }
     }
 

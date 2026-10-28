@@ -65,10 +65,11 @@ for the explicit per-artifact checksum exclusions described below.
 GA failures and repository-wide listing failures still abort a full-build attempt;
 EA failure isolation does not relax those boundaries.
 
-Version-parsing failures retain this branch's mapper-lifetime blacklist. This
-differs from `upstream/main`, where these mapping failures are retryable. It is
-an explicit branch policy, not an assumption that malformed releases cannot be
-corrected upstream or a promise that they will recover automatically.
+Version-parsing failures are non-retryable within an update window but are not
+remembered by the mapper. This differs from `upstream/main`, where these mapping
+failures are retryable. It is an explicit branch policy, not an assumption that
+malformed releases cannot be corrected upstream or a promise that they will
+recover on any particular cycle.
 
 ## Decision
 
@@ -87,7 +88,9 @@ all API version splits produced from it.
 - Never merge successfully refreshed binaries with old binaries from a failed
   mapping of the same upstream release.
 - Compare exact normalized upstream IDs, excluding the API split suffix.
-  Similar string prefixes do not identify the same upstream release.
+  Similar string prefixes do not identify the same upstream release. Stored
+  releases are indexed by normalized ID on demand, so each incremental cycle
+  looks up every upstream release in constant time.
 
 For example, if the Windows metadata cannot be read for an EA containing Linux,
 Windows and macOS binaries, retain the previous complete EA during an incremental
@@ -169,10 +172,12 @@ required metadata, including SBOM metadata. Metadata sidecars themselves are not
 binaries. Installer, unsupported-asset and excluded-asset metadata is not required
 for binary grouping.
 
-Release-grouping metadata association uses prefix matching, unlike upstream's
-exact sidecar-name matching. Installer metadata is loaded separately and prefers
-an exact full-filename match before legacy naming fallbacks; it does not
-participate in version grouping.
+Release-grouping metadata association uses exact sidecar names, as upstream does:
+`<asset-name>.json`, or `<sbom-name-without-.json>-metadata.json` for SBOMs.
+Similar names never pair, for example the sidecar for build 10 is not matched to
+the SBOM for build 1 regardless of asset order. Installer metadata is loaded
+separately and prefers an exact full-filename match before legacy naming
+fallbacks; it does not participate in version grouping.
 
 Source packages retain their special treatment: source archives without metadata
 can be exposed as source packages without being selected as binaries. Source
@@ -207,15 +212,19 @@ Checksum-disagreement exclusions are also evaluated on each selected refresh,
 not permanently blacklisted. A later refresh can restore the binary once its
 checksums agree.
 
-Version-parsing failures are non-retryable in this implementation. The
-Adopt release mapper remembers an unparsable upstream ID for the lifetime of
-that mapper. Correcting its upstream name or metadata does not clear that set;
-restarting the updater clears it. Full builds clear the builder's incremental
-exclusion set, but not the mapper's parsing-failure set.
+Version-parsing failures are non-retryable in this implementation, but the
+release mapper keeps no per-release memory: mappers hold no mutable state and
+are created on demand by their factory. The only memory is the builder's
+exclusion set, which suppresses further incremental attempts at a non-retryable
+release across the six-minute incremental runs. Each full build clears that set
+and re-attempts the release, so correcting its upstream name or metadata recovers
+at the next full build without restarting the updater. The exclusion set is
+thread-safe because full and incremental updates run on separate scheduler
+threads and share the builder instance.
 
-This parsing behaviour is a retained branch policy, not shared upstream
-behaviour or a promise that parsing errors are recoverable. Aligning it with
-upstream's retryable behaviour requires a separate policy decision.
+This parsing behaviour is a branch policy, not shared upstream behaviour or a
+promise that parsing errors are recoverable. Aligning it with upstream's
+retryable behaviour requires a separate policy decision.
 
 ### 6. Isolate EA failures during full builds
 
@@ -344,7 +353,8 @@ Re-evaluated on 2026-10-23 against the local `upstream/main` reference at commit
 `d9836348`. The compared branch includes that commit via merge commit `32afbfd2`,
 plus subsequent checksum-lookup, cancellation and cache API cleanup changes. This
 replaces the earlier comparison against `77a4d8b0`; it is a fixed-baseline
-comparison, not a claim about later changes to either branch.
+comparison, not a claim about later changes to either branch. The later upstream
+commit `9c865f39` changes only the CodeQL workflow, so this comparison still holds.
 
 | Area | Upstream at `d9836348` | Current code |
 | --- | --- | --- |
@@ -354,7 +364,7 @@ comparison, not a claim about later changes to either branch.
 | Feature-version discovery | Incremental updates visit only versions in the stored catalogue. | Visit the union of stored and supported versions, allowing an EA-only version omitted by a full rebuild to recover incrementally. |
 | Older, recently edited EAs | Repeatedly refresh them while their edit timestamp remains within seven days. | An actual timestamp change still triggers refresh, but recent edits alone no longer repeatedly select older, already-known EAs. Recent publication still does. |
 | Non-retryable incremental failures | Remove their previous splits. No builder exclusion set prevents subsequent selection. | Retain previous splits and suppress further incremental attempts until a full build clears the builder exclusion set. |
-| Unparsable release versions | Mapping failure is retryable by default; there is no mapper-lifetime parsing blacklist. | Remember the upstream ID as non-retryable for the mapper's lifetime. Correcting the upstream release does not clear that memory; restarting the updater does. |
+| Unparsable release versions | Mapping failure is retryable by default; there is no mapper-lifetime parsing blacklist. | Non-retryable: the builder suppresses further incremental attempts until the next full build clears its exclusion set and re-attempts the release. The mapper keeps no memory, so a corrected upstream release recovers at the next full build without a restart. |
 | Metadata/checksum cache freshness | Use URL-based caching. Replacing an asset at the same URL can reuse cached content until validation refreshes it. | Key asset reads by URL plus GitHub asset ID/digest. Identity changes cause misses; assets without either identity field are fetched on demand. |
 | Checksums | Use metadata SHA-256, then checksum sidecars. | Compare a valid GitHub SHA-256 with available metadata/sidecar checksums and exclude only the affected artifact on disagreement. Otherwise prefer GitHub, then the existing fallbacks. Downloaded sidecars with supplied digests are validated before use/caching. |
 | Installer metadata | Do not load installer metadata for validation; use its checksum sidecar for the installer checksum. | Load matching installer metadata through the asset-aware cache and include its SHA-256 in agreement checks. Missing metadata assets are allowed; listed metadata that cannot be read or parsed excludes only the installer, not its archive. |
@@ -383,9 +393,8 @@ historical-EA recovery or whole-feature-version database cleanup.
 
 Additional implementation differences from this baseline are:
 
-- Release-grouping metadata association uses prefix matching rather than exact
-  sidecar filenames. Installer metadata lookup separately prefers an exact
-  full-filename match before legacy naming fallbacks.
+- Installer metadata lookup prefers an exact full-filename match before legacy
+  naming fallbacks; upstream does not load installer metadata.
 - Metadata-bearing source archives can enter the selected binary set rather
   than always being source-only. Metadata-free sources remain outside that set.
 - The Adopt mapper and full-build repository mapping explicitly reject asset

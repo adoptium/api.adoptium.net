@@ -12,7 +12,6 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAssets
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHMetaData
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
-import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.mapping.BinaryMapper
 import net.adoptium.api.v3.mapping.ReleaseMapper
 import net.adoptium.api.v3.models.DateTime
@@ -36,17 +35,8 @@ open class AdoptReleaseMapperFactory @Inject constructor(
     val adoptBinaryMapper: AdoptBinaryMapper,
     val htmlClient: GitHubHtmlClient
 ) {
-    private val mappers: MutableMap<Vendor, AdoptReleaseMapper> = EnumMap(Vendor::class.java)
-
-    open fun get(vendor: Vendor): ReleaseMapper {
-        return if (mappers.containsKey(vendor)) {
-            mappers[vendor]!!
-        } else {
-            val mapper = AdoptReleaseMapper(adoptBinaryMapper, htmlClient, vendor)
-            mappers[vendor] = mapper
-            mapper
-        }
-    }
+    // Mappers hold no mutable state, so they are created on demand and never shared for their state.
+    open fun get(vendor: Vendor): ReleaseMapper = AdoptReleaseMapper(adoptBinaryMapper, htmlClient, vendor)
 }
 
 private class AdoptReleaseMapper(
@@ -59,15 +49,10 @@ private class AdoptReleaseMapper(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    private val unparsableReleases: MutableSet<GitHubId> = mutableSetOf()
-
     override suspend fun toAdoptRelease(ghRelease: GHRelease): ReleaseResult {
         if (ghRelease.releaseAssets.pageInfo.hasNextPage) {
             LOGGER.error("Incomplete asset listing for ${ghRelease.id.id}")
             return ReleaseResult(error = "Incomplete asset listing", retryable = true)
-        }
-        if (unparsableReleases.contains(ghRelease.id)) {
-            return ReleaseResult(error = "Excluded")
         }
 
         val releaseType: ReleaseType = formReleaseType(ghRelease)
@@ -124,7 +109,6 @@ private class AdoptReleaseMapper(
         } catch (e: CancellationException) {
             throw e
         } catch (e: FailedToParse) {
-            unparsableReleases.add(ghRelease.id)
             LOGGER.error("Failed to parse $releaseName", e)
             return ReleaseResult(error = "Failed to parse $releaseName")
         } catch (e: Exception) {
@@ -268,12 +252,11 @@ private class AdoptReleaseMapper(
     }
 
     private suspend fun pairUpBinaryAndMetadata(releaseAssets: GHAssets, metadataAsset: GHAsset): Pair<GHAsset, GHMetaData>? {
+        // Similar names must not pair, e.g. build 10's sidecar with build 1's SBOM.
         val binaryAsset = releaseAssets
             .assets
             .filter(::isReleaseAsset)
-            .firstOrNull { // remove .json for matching, case: sbom.json with sbom-metadata.json 
-                metadataAsset.name.startsWith(it.name.removeSuffix(".json"))
-            } ?: return null
+            .firstOrNull { metadataAsset.name == metadataNameFor(it) } ?: return null
 
         // Ignored assets must not make a supported-binary snapshot fail. Source
         // metadata is still needed to identify the release's source package.
@@ -287,6 +270,13 @@ private class AdoptReleaseMapper(
             val metadata = UpdaterJsonMapper.mapper.readValue(metadataString, GHMetaData::class.java)
             Pair(binaryAsset, metadata)
         }
+    }
+
+    private fun metadataNameFor(binary: GHAsset) = if (binary.name.endsWith(".json")) {
+        // SBOMs replace their .json extension: sbom.json with sbom-metadata.json
+        binary.name.removeSuffix(".json") + "-metadata.json"
+    } else {
+        binary.name + ".json"
     }
 
     private fun isReleaseAsset(asset: GHAsset) = (

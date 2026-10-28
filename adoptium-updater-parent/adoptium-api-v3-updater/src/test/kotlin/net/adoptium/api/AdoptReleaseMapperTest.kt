@@ -11,6 +11,7 @@ import net.adoptium.api.testDoubles.InMemoryInternalDbStore
 import net.adoptium.api.v3.AdoptReposBuilder
 import net.adoptium.api.v3.AdoptRepository
 import net.adoptium.api.v3.AdoptRepositoryImpl
+import net.adoptium.api.v3.ReleaseFilterType
 import net.adoptium.api.v3.ReleaseIncludeFilter
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.V3Updater
@@ -54,6 +55,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -80,7 +82,7 @@ class AdoptReleaseMapperTest : BaseTest() {
     )
 
     @Test
-    fun ignoresUnparsableVersion() {
+    fun `unparsable version is non-retryable but not remembered once corrected`() {
         runBlocking {
             val source = GHAssets(listOf(jdk), PageInfo(false, ""), 1)
 
@@ -101,9 +103,10 @@ class AdoptReleaseMapperTest : BaseTest() {
             assertFalse(result.retryable)
             assertNotNull(result.error)
             assertNull(result.result)
+            // The mapper keeps no per-release memory; the builder's exclusion set bounds repeat attempts.
+            assertEquals(result.error, mapper.toAdoptRelease(ghRelease).error)
             val corrected = mapper.toAdoptRelease(ghRelease.copy(name = "jdk8u242-b02"))
-            assertFalse(corrected.succeeded())
-            assertFalse(corrected.retryable)
+            assertTrue(corrected.succeeded())
         }
     }
 
@@ -193,6 +196,30 @@ class AdoptReleaseMapperTest : BaseTest() {
             assertEquals(source.assets.filterNot { it.name.endsWith("-metadata.json") || it.name.endsWith(".tar.gz.json") }
                 .map { it.name }.toSet(), release.result!!.flatMap { it.binaries.toList() }.map { it.`package`.name }.toSet())
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["ascending", "descending"])
+    fun `sbom metadata only matches its exact sidecar when build numbers share a prefix`(order: String) = runBlocking {
+        val sbom1 = "OpenJDK8U-sbom_aarch64_linux_hotspot_21.0.9_1.json"
+        val sbom10 = "OpenJDK8U-sbom_aarch64_linux_hotspot_21.0.9_10.json"
+        val assets = listOf(
+            Pair(sbom1, ""),
+            Pair(sbom1.removeSuffix(".json") + "-metadata.json", "1"),
+            Pair(sbom10, ""),
+            Pair(sbom10.removeSuffix(".json") + "-metadata.json", "10")
+        )
+        val source = buildGhAssets(if (order == "ascending") assets else assets.reversed())
+
+        val release = createAdoptReleaseMapper(mockClient()).toAdoptRelease(formGhRelease(source))
+
+        assertTrue(release.succeeded())
+        assertEquals(2, release.result!!.size)
+        assertEquals(
+            setOf(sbom1, sbom10),
+            release.result!!.flatMap { it.binaries.toList() }.map { it.`package`.name }.toSet()
+        )
+        assertTrue(release.result!!.all { it.binaries.size == 1 })
     }
 
     @Test
@@ -411,6 +438,9 @@ class AdoptReleaseMapperTest : BaseTest() {
     @ParameterizedTest
     @ValueSource(strings = ["ea-omitted", "ga-omitted", "ea-decreased", "ga-decreased"])
     fun `full update stats allowance applies only to omitted EAs`(scenario: String) = runBlocking {
+        // Full updates never rewrite the AdoptOpenJDK ecosystem's default vendor, so the
+        // statistics allowance cannot apply there.
+        assumeTrue(ReleaseIncludeFilter(TimeSource.now(), ReleaseFilterType.ALL).filterVendor(Vendor.getDefault()))
         val timestamp = TimeSource.now().minusDays(1)
         fun release(id: String, type: ReleaseType, downloads: Long) = Release(
             id, type, "link", id, DateTime(timestamp), DateTime(timestamp), emptyArray(),
@@ -527,7 +557,9 @@ class AdoptReleaseMapperTest : BaseTest() {
         )
 
         database.addGithubDownloadStatsEntries(GitHubDownloadStatsCalculator.getStats(before))
-        assertEquals(4L, database.getLatestGithubStatsForFeatureVersion(8)!!.downloads)
+        // Download statistics only count the ecosystem's default vendor.
+        assertEquals(if (Vendor.getDefault() == Vendor.eclipse) 4L else 0L,
+            database.getLatestGithubStatsForFeatureVersion(8)!!.downloads)
         fail = true
         val after = updater.runUpdate(before, AtomicBoolean(true), mockk())
 
