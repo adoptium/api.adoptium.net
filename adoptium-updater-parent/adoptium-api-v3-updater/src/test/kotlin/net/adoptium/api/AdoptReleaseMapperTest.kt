@@ -44,6 +44,7 @@ import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.models.VersionData
 import net.adoptium.api.v3.stats.GitHubDownloadStatsCalculator
+import net.adoptium.api.v3.stats.StatsInterface
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
 import org.apache.http.ProtocolVersion
@@ -485,6 +486,65 @@ class AdoptReleaseMapperTest : BaseTest() {
             else -> 0
         }
         coVerify(exactly = writes) { database.updateAllRepos(any(), any()) }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["ea-growth-masks-ga-loss", "stored-ea-hidden-from-api-view"])
+    fun `full update stats guard uses the stored snapshot`(scenario: String) = runBlocking {
+        assumeTrue(ReleaseIncludeFilter(TimeSource.now(), ReleaseFilterType.ALL).filterVendor(Vendor.getDefault()))
+        val timestamp = TimeSource.now().minusDays(1)
+        fun release(id: String, type: ReleaseType, downloads: Long) = Release(
+            id, type, "link", id, DateTime(timestamp), DateTime(timestamp), emptyArray(),
+            downloads, Vendor.getDefault(), VersionData(8, 0, 242, null, null, 2, null, "")
+        )
+        fun repo(releases: List<Release>) = AdoptRepos(listOf(FeatureRelease(8, Releases(releases))))
+        // Saved statistics come from the last full update. Later incremental refreshes only reach the
+        // stored snapshot, and releases without binaries are stored but hidden from the in-memory view.
+        val savedStats = repo(listOf(release("ga", ReleaseType.ga, 90), release("ea", ReleaseType.ea, 10)))
+        val masked = scenario == "ea-growth-masks-ga-loss"
+        val stored = if (masked) {
+            repo(listOf(release("ga", ReleaseType.ga, 90), release("ea", ReleaseType.ea, 50)))
+        } else {
+            repo(listOf(release("ga", ReleaseType.ga, 90), release("ea", ReleaseType.ea, 10)))
+        }
+        val current = if (masked) stored else repo(listOf(release("ga", ReleaseType.ga, 90)))
+        val rebuilt = repo(listOf(release("ga", ReleaseType.ga, if (masked) 60 else 90)))
+        val builder = mockk<AdoptReposBuilder>()
+        coEvery { builder.build(any()) } answers {
+            val filter = firstArg<ReleaseIncludeFilter>()
+            AdoptRepos(rebuilt.repos.values.map { featureRelease ->
+                FeatureRelease(featureRelease.featureVersion, Releases(featureRelease.releases.getReleases()
+                    .filter { filter.filter(it.vendor, timestamp, it.release_type == ReleaseType.ea) }.toList()))
+            })
+        }
+        coEvery { builder.incrementalUpdate(any(), any(), any()) } answers { secondArg<AdoptRepos>() }
+        val versions = mockk<UpdatableVersionSupplier>()
+        every { versions.getAllVersions() } returns arrayOf(8)
+        every { versions.getLtsVersions() } returns arrayOf(8)
+        every { versions.getTipVersion() } returns 8
+        coEvery { versions.updateVersions() } returns Unit
+        val database = spyk(InMemoryApiPersistence(stored, mockk()))
+        database.addGithubDownloadStatsEntries(GitHubDownloadStatsCalculator.getStats(savedStats))
+        val stats = mockk<StatsInterface>(relaxed = true)
+        coEvery { stats.update(any()) } coAnswers {
+            database.addGithubDownloadStatsEntries(GitHubDownloadStatsCalculator.getStats(firstArg()))
+        }
+        val updater = V3Updater(
+            builder, mockk(), APIDataStoreImpl(database), database, stats,
+            ReleaseVersionResolver(versions), mockk(relaxed = true), versions
+        )
+
+        val after = updater.runUpdate(current, AtomicBoolean(true), mockk())
+
+        if (masked) {
+            assertEquals(current, after)
+            assertEquals(stored, database.repos)
+            coVerify(exactly = 0) { database.updateAllRepos(any(), any()) }
+        } else {
+            assertEquals(rebuilt, after)
+            assertEquals(rebuilt, database.repos)
+            coVerify(exactly = 2) { database.updateAllRepos(any(), any()) }
+        }
     }
 
     @ParameterizedTest

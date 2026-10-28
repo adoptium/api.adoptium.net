@@ -459,7 +459,7 @@ class V3Updater @Inject constructor(
 
                 val dataInDb = mutex.withLock {
                     runBlocking {
-                        if (!validateStats(repo, currentRepo)) {
+                        if (!validateStats(repo)) {
                             LOGGER.error("Stats do not look correct, not saving update")
                             throw InvalidUpdateException("Stats are not sane")
                         }
@@ -529,26 +529,32 @@ class V3Updater @Inject constructor(
 
     class InvalidUpdateException(message: String) : Exception(message)
 
-    private suspend fun validateStats(repo: AdoptRepos, currentRepo: AdoptRepos): Boolean {
+    private suspend fun validateStats(repo: AdoptRepos): Boolean {
         return GitHubDownloadStatsCalculator
             .getStats(repo)
             .filter { newEntry ->
                 val lastDownloads = database.getLatestGithubStatsForFeatureVersion(newEntry.feature_version)?.downloads ?: 0
                 val newReleases = repo.repos.getValue(newEntry.feature_version).releases
-                val omittedEaDownloads = currentRepo.getFeatureRelease(newEntry.feature_version)?.releases?.getReleases()
-                    ?.filter {
-                        it.release_type == ReleaseType.ea && it.vendor == Vendor.getDefault() &&
-                            !newReleases.hasReleaseId(GitHubId(it.id))
-                    }
-                    ?.sumOf { it.download_count } ?: 0
+
+                // The stored snapshot is what this update replaces. Unlike the saved stats it includes
+                // incremental refreshes since the last full update, and unlike the API view it keeps
+                // releases whose binaries were all excluded, so baseline and allowance share one snapshot.
+                val stored = database.readReleaseData(newEntry.feature_version).releases.getReleases()
+                    .filter { it.vendor == Vendor.getDefault() }
+                    .toList()
+                val storedDownloads = stored.sumOf { it.download_count }
+                val omittedEaDownloads = stored
+                    .filter { it.release_type == ReleaseType.ea && !newReleases.hasReleaseId(GitHubId(it.id)) }
+                    .sumOf { it.download_count }
+                val baselineDownloads = maxOf(lastDownloads, storedDownloads)
                 // Full builds may omit failed EAs without invalidating an otherwise
                 // healthy rebuild. Do not exempt losses from retained EAs or GAs.
                 val comparableDownloads = newEntry.downloads + omittedEaDownloads
 
-                if (lastDownloads > comparableDownloads) {
-                    LOGGER.error("Stats for ${newEntry.feature_version} are lower than the latest in the db $lastDownloads > $comparableDownloads (omitted EA downloads: $omittedEaDownloads)")
+                if (baselineDownloads > comparableDownloads) {
+                    LOGGER.error("Stats for ${newEntry.feature_version} are lower than the latest in the db $baselineDownloads (saved: $lastDownloads, stored: $storedDownloads) > $comparableDownloads (omitted EA downloads: $omittedEaDownloads)")
                 }
-                return@filter lastDownloads > comparableDownloads
+                return@filter baselineDownloads > comparableDownloads
             }
             .isEmpty()
     }
