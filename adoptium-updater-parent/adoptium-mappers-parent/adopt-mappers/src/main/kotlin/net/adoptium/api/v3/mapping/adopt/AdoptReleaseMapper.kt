@@ -131,8 +131,9 @@ private class AdoptReleaseMapper(
 
     private fun getReleaseVersion(ghAssetWithMetadata: Map.Entry<GHAsset, GHMetaData>): String {
         val version = ghAssetWithMetadata.value.version
-        val additionalNumbers = version.toApiVersion().additional_version_numbers.joinToString(".")
-        return "${version.major}.${version.minor}.${version.security}.${version.build}.${version.adopt_build_number}.${version.pre}.$additionalNumbers"
+        val apiVersion = version.toApiVersion()
+        val additionalNumbers = apiVersion.additional_version_numbers.joinToString(".")
+        return "${version.major}.${version.minor}.${version.security}.${apiVersion.patch}.${version.build}.${version.adopt_build_number}.${version.pre}.$additionalNumbers"
     }
 
     private fun excludeRelease(ghRelease: GHRelease, release: Release): Boolean {
@@ -163,7 +164,7 @@ private class AdoptReleaseMapper(
         val hashInput = if (version.additional_version_numbers.isEmpty()) {
             version.semver
         } else {
-            version.semver + "|" + version.additional_version_numbers.joinToString(".")
+            version.semver + "|" + version.patch + "|" + version.additional_version_numbers.joinToString(".")
         }
 
         // using a shortend hash as a suffix to keep id short, probability of clash still very low

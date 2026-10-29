@@ -151,16 +151,18 @@ class AdoptReleaseMapperTest : BaseTest() {
                     Pair("OpenJDK25U-jre_x64_linux_hotspot-1.tar.gz.json", "25.0.5.0.1"),
                     Pair("OpenJDK25U-jre_x64_linux_hotspot-2.tar.gz", ""),
                     Pair("OpenJDK25U-jre_x64_linux_hotspot-2.tar.gz.json", "25.0.5.0.2"),
+                    Pair("OpenJDK25U-jre_x64_linux_hotspot-3.tar.gz", ""),
+                    Pair("OpenJDK25U-jre_x64_linux_hotspot-3.tar.gz.json", "25.0.5.1.2"),
                 )
             )
 
             val release = createAdoptReleaseMapper(mockClient()).toAdoptRelease(formGhRelease(source))
 
             val releases = release.result!!
-            assertEquals(2, releases.size)
+            assertEquals(3, releases.size)
             assertEquals(setOf(listOf(1), listOf(2)), releases.map { it.version_data.additional_version_numbers }.toSet())
-            assertEquals(2, releases.map { it.id }.toSet().size)
-            releases.forEach { assertEquals(0, it.version_data.patch) }
+            assertEquals(3, releases.map { it.id }.toSet().size)
+            assertEquals(setOf(0, 1), releases.map { it.version_data.patch }.toSet())
         }
     }
 
@@ -170,7 +172,7 @@ class AdoptReleaseMapperTest : BaseTest() {
         }
 
         fun getMetadata(url: String): String {
-            if (url.startsWith("25.0.5.0.")) {
+            if (url.startsWith("25.0.5.")) {
                 return """
                     {
                         "os": "linux",
