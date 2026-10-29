@@ -21,7 +21,15 @@ open class StatsInterface @Inject constructor(
     private val dockerStats = dockerStatsInterfaceFactory.get()
 
     open suspend fun update(repos: AdoptRepos) {
-        handlingUpdateException("github") { gitHubDownloadStatsCalculator.saveStats(repos) }
+        // The full-update guard reads these saved stats, so retry once to avoid a stale baseline.
+        handlingUpdateException("github") {
+            try {
+                gitHubDownloadStatsCalculator.saveStats(repos)
+            } catch (e: Exception) {
+                LOGGER.warn("Failed to save github stats, retrying once", e)
+                gitHubDownloadStatsCalculator.saveStats(repos)
+            }
+        }
         handlingUpdateException("docker") { dockerStats.updateDb() }
         handlingUpdateException("cloudflare") { cloudFlareStatsCalculator.updateDb() }
     }

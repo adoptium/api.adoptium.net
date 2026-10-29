@@ -304,6 +304,14 @@ exact sidecar exists. Cancellation during sidecar retrieval propagates through
 the asset-cache and checksum-mapping boundaries; it is not treated as an
 unavailable optional checksum.
 
+A legacy basename sidecar shared by several supported artifacts (for example `foo.sha256.txt`
+for both `foo.zip` and `foo.msi`) is ambiguous, so it is treated as unavailable for each
+of them unless the others have their own exact sidecar. The same applies to `.json` metadata.
+Cache writes are ordered per cache key, GitHub download totals are summed as `Long`,
+the GitHub stats save is retried once because the full-update guard reads it, empty
+probed feature versions are omitted from incremental results, and incremental selection
+does the cheap age and already-selected checks before the per-release metadata lookup.
+
 If either value disagrees with GitHub, log an error identifying the asset and
 the conflicting checksums, and exclude only that binary. For an installer
 disagreement, exclude the installer but retain its otherwise valid archive.

@@ -195,29 +195,32 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         return githubChecksum ?: metadata ?: sidecar
     }
 
-    private fun getChecksumAsset(fullAssetList: List<GHAsset>, binary_name: String): GHAsset? {
-        val nameWithoutExtension = removeExtensionFromName(binary_name)
-
-        return fullAssetList.firstOrNull { it.name == "$binary_name.sha256.txt" }
-            ?: fullAssetList.firstOrNull { asset ->
-                asset.name == binary_name.split(".")[0] + ".sha256.txt" ||
-                    asset.name == "$nameWithoutExtension.sha256.txt"
-            }
-    }
+    private fun getChecksumAsset(fullAssetList: List<GHAsset>, binary_name: String): GHAsset? =
+        getSidecarAsset(fullAssetList, binary_name, ".sha256.txt")
 
     private fun getMetadataLink(fullAssetList: List<GHAsset>, binary_name: String): String? {
         return getMetadataAsset(fullAssetList, binary_name)?.downloadUrl
     }
 
-    private fun getMetadataAsset(fullAssetList: List<GHAsset>, binary_name: String): GHAsset? {
-        val nameWithoutExtension = removeExtensionFromName(binary_name)
+    private fun getMetadataAsset(fullAssetList: List<GHAsset>, binary_name: String): GHAsset? =
+        getSidecarAsset(fullAssetList, binary_name, ".json")
 
-        return fullAssetList.firstOrNull { it.name == "$binary_name.json" }
-            ?: fullAssetList
-            .firstOrNull { asset ->
-                asset.name == binary_name.split(".")[0] + ".json" ||
-                    asset.name == "$nameWithoutExtension.json"
-            }
+    private fun sidecarAliases(name: String, suffix: String) =
+        setOf(name.split(".")[0] + suffix, removeExtensionFromName(name) + suffix)
+
+    // A sidecar named only by the shared stem (foo.sha256.txt for foo.zip and foo.msi) cannot be
+    // attributed to one artifact, so it is unavailable to each unless the others have their own exact sidecar.
+    private fun getSidecarAsset(fullAssetList: List<GHAsset>, binary_name: String, suffix: String): GHAsset? {
+        fullAssetList.firstOrNull { it.name == "$binary_name$suffix" }?.let { return it }
+        val aliases = sidecarAliases(binary_name, suffix)
+        val alias = fullAssetList.firstOrNull { it.name in aliases } ?: return null
+        val competes = fullAssetList.any { other ->
+            other.name != binary_name &&
+                BINARY_ASSET_WHITELIST.any { other.name.endsWith(it) } &&
+                alias.name in sidecarAliases(other.name, suffix) &&
+                fullAssetList.none { it.name == "${other.name}$suffix" }
+        }
+        return if (competes) null else alias
     }
 
     private fun removeExtensionFromName(binary_name: String): String {

@@ -10,6 +10,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.DefaultUpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
@@ -24,6 +26,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.HexFormat
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 
@@ -51,6 +54,7 @@ open class CachedGitHubHtmlClient @Inject constructor(
 
     // List of urls to be refreshed in the background
     private val workList = LinkedBlockingQueue<UrlRequest>()
+    private val keyLocks = ConcurrentHashMap<String, Mutex>()
 
     init {
         // Do refresh in the background
@@ -110,7 +114,14 @@ open class CachedGitHubHtmlClient @Inject constructor(
         }
     }
 
+    // Fetch and write are serialized per key so an older response cannot overwrite a newer one.
     private suspend fun get(request: UrlRequest, cacheKey: String = request.url, digest: String? = null, accessedAt: ZonedDateTime? = TimeSource.now()): String? {
+        return keyLocks.computeIfAbsent(cacheKey) { Mutex() }.withLock {
+            fetchAndStore(request, cacheKey, digest, accessedAt)
+        }
+    }
+
+    private suspend fun fetchAndStore(request: UrlRequest, cacheKey: String, digest: String?, accessedAt: ZonedDateTime?): String? {
         // Retry up to 10 times
         for (retryCount in 1..10) {
             try {

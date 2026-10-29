@@ -265,6 +265,23 @@ class AdoptBinaryMapperTest {
     }
 
     @Test
+    fun `shared legacy checksum alias is ambiguous for archive and installer`() {
+        runBlocking {
+            val base = "OpenJDK8U-jdk_x64_windows_hotspot_2019-11-22-16-01"
+            fun asset(name: String, link: String = "") = GHAsset(name, 1L, link, 1L, "2013-02-27T19:35:32Z")
+            val shared = asset("$base.sha256.txt", "shared-link")
+
+            val ambiguous = listOf(asset("$base.zip"), asset("$base.msi"), shared)
+            val binaries = adoptBinaryMapper.toBinaryList(ambiguous, ambiguous, emptyMap())
+            assertEquals(null, binaries.single().`package`.checksum_link)
+
+            val exact = listOf(asset("$base.zip"), asset("$base.msi"), asset("$base.msi.sha256.txt", "msi-link"), shared)
+            val withExact = adoptBinaryMapper.toBinaryList(exact, exact, emptyMap())
+            assertEquals("shared-link", withExact.single().`package`.checksum_link)
+        }
+    }
+
+    @Test
     fun `parses old OpenJ9`() {
         runBlocking {
             val assets = listOf(

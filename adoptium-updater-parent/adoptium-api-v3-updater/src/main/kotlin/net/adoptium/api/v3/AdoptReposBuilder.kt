@@ -45,6 +45,9 @@ class AdoptReposBuilder @Inject constructor(
             .associateWith { version -> repo.getFeatureRelease(version) ?: FeatureRelease(version, emptyList()) }
         val updated = versions
             .map { entry -> getUpdatedFeatureRelease(toUpdate, entry, gitHubMetadataSupplier) }
+            // Probed versions with nothing mapped are not persisted, so keeping them would make
+            // the in-memory checksum differ from what a reload returns.
+            .filter { it.featureVersion in repo.repos || it.releases.nodes.isNotEmpty() }
 
         return AdoptRepos(updated)
     }
@@ -68,9 +71,10 @@ class AdoptReposBuilder @Inject constructor(
         // Find newly added releases
         val newReleases = getNewReleases(summary, pruned)
         val updatedReleases = getUpdatedReleases(summary, pruned)
-        val binaryCountChanged = binaryCountHasChanged(summary, gitHubMetadataSupplier)
         val youngReleases = getYoungReleases(summary, pruned)
         val explicitlyAdded = getExplicitlyAddedReleases(summary, toUpdate)
+        val alreadySelected = (newReleases + updatedReleases + youngReleases + explicitlyAdded).map { it.id }.toSet()
+        val binaryCountChanged = binaryCountHasChanged(summary, alreadySelected, gitHubMetadataSupplier)
 
         val selectedSummaries = newReleases +
             updatedReleases +
@@ -129,14 +133,16 @@ class AdoptReposBuilder @Inject constructor(
 
     private suspend fun binaryCountHasChanged(
         summary: GHRepositorySummary,
+        alreadySelected: Set<GitHubId>,
         gitHubMetadataSupplier: suspend (GitHubId) -> GHReleaseMetadata?
     ): List<GHReleaseSummary> {
+        // Cheap checks first: the metadata lookup is a database round trip per release.
         return summary.releases.releases
-            .filter { !excluded.contains(it.id) }
+            .filter { !excluded.contains(it.id) && it.id !in alreadySelected }
+            .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
             .filter {
                 gitHubMetadataSupplier(it.id)?.totalBinaryCount?.equals(it.releaseAssets.totalCount)?.not() ?: false
             }
-            .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
     }
 
     private fun getYoungReleases(summary: GHRepositorySummary, pruned: FeatureRelease): List<GHReleaseSummary> {

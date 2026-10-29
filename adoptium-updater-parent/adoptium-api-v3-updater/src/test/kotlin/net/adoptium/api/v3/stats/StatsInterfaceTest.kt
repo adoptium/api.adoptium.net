@@ -75,7 +75,7 @@ class StatsInterfaceTest {
 
         statsInterface.update(repos)
 
-        coVerify(exactly = 1) { gitHubCalculator.saveStats(repos) }
+        coVerify(exactly = 2) { gitHubCalculator.saveStats(repos) }
         coVerify(exactly = 1) { dockerStats.updateDb() }
         coVerify(exactly = 1) { cloudflareCalculator.updateDb() }
     }
@@ -98,7 +98,7 @@ class StatsInterfaceTest {
 
         statsInterface.update(repos)
 
-        coVerify(exactly = 1) { gitHubCalculator.saveStats(repos) }
+        coVerify(exactly = 2) { gitHubCalculator.saveStats(repos) }
         coVerify(exactly = 1) { dockerStats.updateDb() }
         coVerify(exactly = 1) { cloudflareCalculator.updateDb() }
     }
