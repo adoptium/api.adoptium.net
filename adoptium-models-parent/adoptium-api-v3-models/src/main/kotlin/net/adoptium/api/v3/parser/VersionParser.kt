@@ -20,8 +20,9 @@ object VersionParser {
 
     // Regexes based on those in http://openjdk.java.net/jeps/223
     // Technically the standard supports an arbitrary number of numbers, we will support 3 for now
+    // The leading lookbehind stops the (lazy, unanchored) match starting part way through a longer dotted number
     private const val VNUM_REGEX =
-        """(?<major>[0-9]+)(\.(?<minor>[0-9]+))?(\.(?<security>[0-9]+))?(\.(?<patch>[0-9]+))?(?<extra>(\.[0-9]+)*)"""
+        """(?<![0-9.])(?<major>[0-9]+)(\.(?<minor>[0-9]+))?(\.(?<security>[0-9]+))?(\.(?<patch>[0-9]+))?(?<extra>(\.[0-9]+)*)"""
     private const val OPT_REGEX = "(?<opt>[-a-zA-Z0-9\\.]+)"
     private const val PRE_REGEX = "(?<pre>[a-zA-Z0-9]+)"
     private const val BUILD_REGEX = "(?<build>[0-9]+)"
@@ -39,7 +40,7 @@ object VersionParser {
 
     private fun adoptSemver(): String {
         val vnumRegex =
-            """(?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<security>[0-9]+)"""
+            """(?<![0-9.])(?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<security>[0-9]+)"""
 
         val buildRegex = "(?<build>[0-9]+)(\\.(?<adoptBuild>[0-9]+))?"
 

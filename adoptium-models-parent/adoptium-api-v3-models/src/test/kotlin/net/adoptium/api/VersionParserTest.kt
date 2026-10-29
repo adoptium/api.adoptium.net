@@ -150,6 +150,18 @@ class VersionParserTest {
     }
 
     @Test
+    fun `does not start parsing part way through a dotted version`() {
+        listOf(false, true).forEach { exact ->
+            val parsed = VersionParser.parse("25.0.11.0.2+1", exactMatch = exact)
+            assertEquals(25, parsed.major, "exact=$exact")
+            assertEquals(11, parsed.security, "exact=$exact")
+            assertEquals(listOf(2), parsed.additional_version_numbers, "exact=$exact")
+            assertEquals("25.0.11.0.2+1", parsed.openjdk_version, "exact=$exact")
+        }
+        assertEquals(25, VersionParser.parse("jdk-25.0.11.0.2+1").major)
+    }
+
+    @Test
     fun `default version numbers are derived`() {
         assertEquals(listOf(11, 0, 9), VersionParser.parse("jdk-11.0.9+11").version_numbers)
         assertEquals(listOf(11, 0, 9, 1), VersionParser.parse("11.0.9.1+1").version_numbers)
