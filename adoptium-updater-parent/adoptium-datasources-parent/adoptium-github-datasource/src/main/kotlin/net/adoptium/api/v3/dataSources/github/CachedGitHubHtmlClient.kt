@@ -72,7 +72,17 @@ open class CachedGitHubHtmlClient @Inject constructor(
 
     override suspend fun getUrlUpdatedSince(url: String, updatedAt: ZonedDateTime?): String? {
         val cachedEntry = internalDbStore.getCachedWebpage(url)
-        if (cachedEntry == null || updatedAt == null) {
+        if (cachedEntry == null) {
+            return getUrl(url)
+        }
+
+        if (cachedEntry.data == null) {
+            // A null body is a failed fetch (404 or exhausted retries), not a valid cached response, so its
+            // lastChecked says nothing about freshness. Retry now, unconditionally (there is no body to validate).
+            return get(UrlRequest(url))
+        }
+
+        if (updatedAt == null) {
             return getUrl(url)
         }
 
