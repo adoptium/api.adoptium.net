@@ -131,7 +131,8 @@ private class AdoptReleaseMapper(
 
     private fun getReleaseVersion(ghAssetWithMetadata: Map.Entry<GHAsset, GHMetaData>): String {
         val version = ghAssetWithMetadata.value.version
-        return "${version.major}.${version.minor}.${version.security}.${version.build}.${version.adopt_build_number}.${version.pre}"
+        val additionalNumbers = version.toApiVersion().additional_version_numbers.joinToString(".")
+        return "${version.major}.${version.minor}.${version.security}.${version.build}.${version.adopt_build_number}.${version.pre}.$additionalNumbers"
     }
 
     private fun excludeRelease(ghRelease: GHRelease, release: Release): Boolean {
@@ -157,13 +158,21 @@ private class AdoptReleaseMapper(
     }
 
     private fun generateIdForSplitRelease(version: VersionData, release: GHRelease): String {
+        // Retaining the use of semver here for historic backward compatibility, and stable ids, in the future remove it
+        // semver alone cannot distinguish versions with additional version numbers; only extend the hash input for those so existing ids are unchanged
+        val hashInput = if (version.additional_version_numbers.isEmpty()) {
+            version.semver
+        } else {
+            version.semver + "|" + version.additional_version_numbers.joinToString(".")
+        }
+
         // using a shortend hash as a suffix to keep id short, probability of clash still very low
         val suffix = Base64
             .getEncoder()
             .encodeToString(
                 MessageDigest
                     .getInstance("SHA-1")
-                    .digest(version.semver.toByteArray())
+                    .digest(hashInput.toByteArray())
                     .copyOfRange(0, 10)
             )
 

@@ -142,12 +142,59 @@ class AdoptReleaseMapperTest : BaseTest() {
         }
     }
 
+    @Test
+    fun separatesVersionsThatDifferOnlyByAdditionalVersionNumbers() {
+        runBlocking {
+            val source = buildGhAssets(
+                listOf(
+                    Pair("OpenJDK25U-jre_x64_linux_hotspot-1.tar.gz", ""),
+                    Pair("OpenJDK25U-jre_x64_linux_hotspot-1.tar.gz.json", "25.0.5.0.1"),
+                    Pair("OpenJDK25U-jre_x64_linux_hotspot-2.tar.gz", ""),
+                    Pair("OpenJDK25U-jre_x64_linux_hotspot-2.tar.gz.json", "25.0.5.0.2"),
+                )
+            )
+
+            val release = createAdoptReleaseMapper(mockClient()).toAdoptRelease(formGhRelease(source))
+
+            val releases = release.result!!
+            assertEquals(2, releases.size)
+            assertEquals(setOf(listOf(1), listOf(2)), releases.map { it.version_data.additional_version_numbers }.toSet())
+            assertEquals(2, releases.map { it.id }.toSet().size)
+            releases.forEach { assertEquals(0, it.version_data.patch) }
+        }
+    }
+
     private fun mockClient() = object : UpdaterHtmlClient {
         override suspend fun get(url: String, log: Boolean): String {
             return getMetadata(url)
         }
 
         fun getMetadata(url: String): String {
+            if (url.startsWith("25.0.5.0.")) {
+                return """
+                    {
+                        "os": "linux",
+                        "arch": "x64",
+                        "variant": "temurin",
+                        "version": {
+                            "minor": 0,
+                            "security": 5,
+                            "pre": null,
+                            "adopt_build_number": 0,
+                            "major": 25,
+                            "version": "$url+1",
+                            "semver": "25.0.5+1",
+                            "build": 1,
+                            "opt": null
+                        },
+                        "scmRef": "",
+                        "version_data": "jdk25u",
+                        "binary_type": "jre",
+                        "sha256": "dc755cf762c867d4c71b782b338d2dc1500b468ab01adbf88620b5ae55eef42a"
+                    }
+                """.trimIndent().replace("\n", "")
+            }
+
             val opt = UUID.randomUUID()
 
             val build = try {

@@ -8,6 +8,7 @@ import net.adoptium.api.v3.models.ImageType
 import net.adoptium.api.v3.models.OperatingSystem
 import net.adoptium.api.v3.models.VersionData
 
+// TODO determine if temurin build metadata versions will add additional version numbers to their format
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class GHVersion @JsonCreator constructor(
     @JsonProperty("major") val major: Int,
@@ -22,7 +23,12 @@ data class GHVersion @JsonCreator constructor(
     @JsonProperty("patch") val patch: Int? = null
 ) {
     fun toApiVersion(): VersionData {
-        return VersionData(major, minor, security, pre, adopt_build_number, build, opt, version, semver, patch, VersionData.versionNumbersOf(version)?.drop(4))
+        val numbers = VersionData.versionNumbersOf(version)
+        // If temurin build metadata add additional version numbers, add them here
+
+        // metadata may omit patch, in which case take it from the version string so it matches a parsed version
+        val resolvedPatch = patch ?: numbers?.getOrNull(3)
+        return VersionData(major, minor, security, pre, adopt_build_number, build, opt, version, semver, resolvedPatch, numbers?.drop(4))
     }
 }
 
