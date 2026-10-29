@@ -285,6 +285,11 @@ served to API readers) rather than an empty catalogue, so the first
 If that recovery read fails, updater startup aborts before scheduling any
 updates; it never substitutes an empty catalogue for an unreadable baseline.
 Startup can be retried once the database is readable again.
+Updater startup, recovery baselines and incremental checksum reconciliation use
+the unfiltered persisted snapshot. API-only filtering must not feed publication:
+in particular, internal releases with no binaries retain their download counts
+even though the frontend hides them. Normal updater snapshot reads still reject
+incomplete generations; only recovery baseline reads permit them.
 
 Do not pass prior EA splits through the full mapping path, or add partial
 full-build persistence, per-binary fallback or a separate recovery framework.

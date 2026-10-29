@@ -97,7 +97,7 @@ class V3UpdaterTest {
                 mockk(),
                 mockk(),
                 apiDataStore,
-                mockk(),
+                InMemoryApiPersistence(AdoptRepos(emptyList()), AdoptCdxaRepos(emptyList())),
                 mockk(),
                 mockk(),
                 mockk(),

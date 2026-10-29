@@ -44,7 +44,8 @@ open class APIDataStoreImpl : APIDataStore {
             previousRepo: AdoptRepos?,
             versions: List<Int>,
             logEntries: Boolean = true,
-            allowIncomplete: Boolean = false): Pair<AdoptRepos, UpdatedInfo> {
+            allowIncomplete: Boolean = false,
+            filterForApi: Boolean = true): Pair<AdoptRepos, UpdatedInfo> {
 
             return runBlocking {
                 val updated = dataStore.getUpdatedAt()
@@ -60,7 +61,7 @@ open class APIDataStoreImpl : APIDataStore {
                     val updatedAt = dataStore.getUpdatedAt()
                     check(updated == updatedAt) { "Release generation changed while loading: $updated -> $updatedAt" }
 
-                    val newData = filterValidAssets(data)
+                    val newData = if (filterForApi) filterValidAssets(data) else AdoptRepos(data)
 
                     if (logEntries) {
                         LOGGER.info("Loaded Version: $updatedAt")
@@ -73,9 +74,8 @@ open class APIDataStoreImpl : APIDataStore {
             }
         }
 
-        // Only for the updater's rebuild baseline: an incomplete generation must never be served,
-        // but its surviving records still let a rebuild preserve data outside the rebuild filter.
-        fun loadRecoveryBaseline(dataStore: ApiPersistence): AdoptRepos {
+        // Updater checksums and publication must use the persisted catalogue, not the API projection.
+        fun loadUpdaterSnapshot(dataStore: ApiPersistence, allowIncomplete: Boolean = false): AdoptRepos {
             return loadDataFromDb(
                 dataStore,
                 UpdatedInfo(ZonedDateTime.now().minusYears(10), "111", 0),
@@ -83,9 +83,14 @@ open class APIDataStoreImpl : APIDataStore {
                 null,
                 (8..MAX_VERSION_TO_LOAD).toList(),
                 logEntries = false,
-                allowIncomplete = true
+                allowIncomplete = allowIncomplete,
+                filterForApi = false
             ).first
         }
+
+        // Recovery may use surviving records, but they must never enter the frontend cache.
+        fun loadRecoveryBaseline(dataStore: ApiPersistence): AdoptRepos =
+            loadUpdaterSnapshot(dataStore, allowIncomplete = true)
 
         fun loadCdxaDataFromDb(
             dataStore: ApiPersistence,

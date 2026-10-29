@@ -78,7 +78,6 @@ class ReleaseGenerationReadTest {
         coEvery { database.readReleaseData(8) } throws failure
         val store = mockk<APIDataStore>()
         coEvery { store.isConnectedToDb() } returns true
-        every { store.loadDataFromDb(true, any()) } throws IllegalStateException("Release publication is incomplete")
         every { store.loadCdxaDataFromDb(any(), any()) } throws AssertionError("Startup continued without a recovery baseline")
         val builder = mockk<AdoptReposBuilder>()
         val updater = V3Updater(builder, mockk(), store, database, mockk(), mockk(), mockk(), mockk())

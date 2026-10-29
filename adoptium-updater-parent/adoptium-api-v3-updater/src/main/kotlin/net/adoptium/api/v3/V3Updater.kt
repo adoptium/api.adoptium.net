@@ -292,7 +292,7 @@ class V3Updater @Inject constructor(
                 LOGGER.warn("Not applying incremental update due to checksum miss $checksum ${updatedRepo.hashCode()} $oldChecksum ${oldRepo.hashCode()} ${database.getUpdatedAt().checksum}")
 
                 // re-calculate checksum in case of schema change
-                val dbVersion = apiDataStore.loadDataFromDb(true)
+                val dbVersion = APIDataStoreImpl.loadUpdaterSnapshot(database)
                 val dbChecksum = calculateChecksum(dbVersion)
                 if (dbChecksum != database.getUpdatedAt().checksum) {
                     database.updateAllRepos(dbVersion, dbChecksum)
@@ -352,7 +352,7 @@ class V3Updater @Inject constructor(
         val delay = if (instantFullUpdate) 0L else 1L
 
         var repo: AdoptRepos = try {
-            apiDataStore.loadDataFromDb(true)
+            APIDataStoreImpl.loadUpdaterSnapshot(database)
         } catch (e: java.lang.Exception) {
             LOGGER.error("Failed to load db", e)
             if (e is MongoException) {
