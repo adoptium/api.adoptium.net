@@ -3,7 +3,7 @@ name: Docker Build (AdoptOpenJDK)
 on:
   workflow_dispatch:
   push:
-   branches: [ main, production ]
+    branches: [ main, production, prod-release-notes ]
 
 permissions:
   id-token: write
