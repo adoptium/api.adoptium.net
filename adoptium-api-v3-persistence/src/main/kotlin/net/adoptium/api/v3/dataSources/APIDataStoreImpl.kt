@@ -47,6 +47,7 @@ open class APIDataStoreImpl : APIDataStore {
 
             return runBlocking {
                 val updated = dataStore.getUpdatedAt()
+                check(!updated.isIncomplete()) { "Release publication is incomplete: $updated" }
 
                 if (previousRepo == null || forceUpdate || updated != previousUpdateInfo) {
                     val data = versions
@@ -56,6 +57,7 @@ open class APIDataStoreImpl : APIDataStore {
                         .filter { it.releases.nodes.isNotEmpty() }
                         .toList()
                     val updatedAt = dataStore.getUpdatedAt()
+                    check(updated == updatedAt) { "Release generation changed while loading: $updated -> $updatedAt" }
 
                     val newData = filterValidAssets(data)
 

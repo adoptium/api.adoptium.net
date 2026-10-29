@@ -273,6 +273,11 @@ class V3Updater @Inject constructor(
         }
 
         return mutex.withLock {
+            // A failed publication leaves a partial database; only a full rebuild can complete it.
+            if (database.getUpdatedAt().isIncomplete()) {
+                LOGGER.warn("Deferring incremental update until a full rebuild replaces the incomplete publication")
+                return@withLock oldRepo
+            }
             // Ensure that the database has not been updated since calculating the incremental update
             if (database.getUpdatedAt().checksum == oldChecksum) {
                 database.updateAllRepos(updatedRepo, checksum)

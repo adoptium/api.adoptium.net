@@ -266,6 +266,16 @@ Aborting a build before publication leaves the existing database catalogue in
 place. The scheduler can continue with other update attempts; this does not
 guarantee rollback of a database failure after publication has begun.
 
+Publication to MongoDB is not atomic, so the generation marker guards it. Before
+changing any release, a fresh `incomplete:<uuid>` marker replaces the published
+checksum; the target checksum is written only after every feature version has
+been written and feature versions absent from the snapshot have been deleted. A
+failure therefore leaves a marker that matches neither the previous nor the
+target generation. Readers reject an incomplete marker, or a marker that changes
+while loading, and keep serving their cached catalogue. Incremental updates defer
+while the marker is incomplete, and the next full rebuild replaces the partial
+data and completes the generation.
+
 Do not pass prior EA splits through the full mapping path, or add partial
 full-build persistence, per-binary fallback or a separate recovery framework.
 The normal publication step replaces data covered by the full-update filters,

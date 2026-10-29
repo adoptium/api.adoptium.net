@@ -2,6 +2,7 @@ package net.adoptium.api.testDoubles
 
 import jakarta.enterprise.context.ApplicationScoped
 import net.adoptium.api.v3.TimeSource
+import net.adoptium.api.v3.V3Updater
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
@@ -26,6 +27,7 @@ import net.adoptium.api.v3.models.CloudflarePackageDownloadStatsDbEntry
 @Alternative
 @ApplicationScoped
 open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var cdxaRepos: AdoptCdxaRepos) : ApiPersistence {
+    private val initialUpdateTime = TimeSource.now().minusMinutes(5)
     private var updatedAtInfo: UpdatedInfo? = null
     private var cdxaUpdatedAtInfo: UpdatedInfo? = null
     private var releaseInfo: ReleaseInfo? = null
@@ -136,7 +138,7 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var
     }
 
     override suspend fun getUpdatedAt(): UpdatedInfo {
-        return updatedAtInfo ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
+        return updatedAtInfo ?: UpdatedInfo(initialUpdateTime, V3Updater.calculateChecksum(repos), repos.hashCode())
     }
 
     override suspend fun getCdxaUpdatedAt(): UpdatedInfo {

@@ -34,6 +34,7 @@ import org.bson.Document
 import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.time.ZonedDateTime
+import java.util.UUID
 
 @ApplicationScoped
 open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : MongoInterface(), ApiPersistence {
@@ -62,6 +63,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     private val cdxaUpdateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), CDXAS_UPDATE_TIME_DB)
     private val githubReleaseNotesCollection: MongoCollection<ReleaseNotes> = createCollection(mongoClient.getDatabase(), GH_RELEASE_NOTES)
     private val client: MongoClient = mongoClient
+    private val initialUpdateInfo = UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
 
     companion object {
         @JvmStatic
@@ -79,16 +81,16 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     }
 
     override suspend fun updateAllRepos(repos: AdoptRepos, checksum: String) {
-
-        try {
-            repos
-                .repos
-                .forEach { repo ->
-                    writeReleases(repo.key, repo.value)
-                }
-        } finally {
-            updateUpdatedTime(TimeSource.now(), checksum, repos.hashCode())
+        // Deletes and inserts are not atomic. Invalidate the published generation before
+        // mutating so a partial failure is never served or mistaken for the previous or
+        // target generation. A fresh token also invalidates rebuilds based on an earlier one.
+        updateUpdatedTime(TimeSource.now(), "${UpdatedInfo.INCOMPLETE_PREFIX}${UUID.randomUUID()}", 0)
+        repos.repos.forEach { (version, releases) ->
+            writeReleases(version, releases)
         }
+        // A complete snapshot also removes feature versions it no longer contains.
+        releasesCollection.deleteMany(Document("version_data.major", Document("\$nin", repos.repos.keys.toList())))
+        updateUpdatedTime(TimeSource.now(), checksum, repos.hashCode())
     }
 
     override suspend fun updateCdxaRepos(repo: AdoptCdxaRepos, checksum: String) {
@@ -108,8 +110,8 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
 
     private suspend fun writeReleases(featureVersion: Int, value: FeatureRelease) {
         val toAdd = value.releases.getReleases().toList()
+        releasesCollection.deleteMany(majorVersionMatcher(featureVersion))
         if (toAdd.isNotEmpty()) {
-            releasesCollection.deleteMany(majorVersionMatcher(featureVersion))
             releasesCollection.insertMany(toAdd, InsertManyOptions())
         }
     }
@@ -287,7 +289,7 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     override suspend fun getUpdatedAt(): UpdatedInfo {
         val info = updateTimeCollection.find().firstOrNull()
         // if we have no existing time, make it 5 mins ago, should only happen on first time the db is used
-        return info ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
+        return info ?: initialUpdateInfo
     }
 
     override suspend fun getCdxaUpdatedAt(): UpdatedInfo {
