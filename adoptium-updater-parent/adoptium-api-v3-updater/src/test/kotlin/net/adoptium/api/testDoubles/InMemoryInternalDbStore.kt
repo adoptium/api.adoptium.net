@@ -15,7 +15,7 @@ class InMemoryInternalDbStore : InternalDbStore {
     private val cache: MutableMap<String, CacheDbEntry> = HashMap()
     override fun putCachedWebpage(url: String, lastModified: String?, date: ZonedDateTime, data: String?): Job {
         cache[url] = CacheDbEntry(url, lastModified, date, data)
-        return Job()
+        return Job().also { it.complete() }
     }
 
     override suspend fun getCachedWebpage(url: String): CacheDbEntry? {
