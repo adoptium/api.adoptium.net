@@ -1,6 +1,7 @@
 package net.adoptium.api.v3.releaseNotes
 
 import jakarta.enterprise.context.ApplicationScoped
+import kotlinx.coroutines.CancellationException
 import net.adoptium.api.v3.AdoptRepository
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.github.GitHubHtmlClient
@@ -13,6 +14,7 @@ import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.models.ReleaseType
 import org.slf4j.LoggerFactory
 import jakarta.inject.Inject
+import java.time.ZonedDateTime
 
 @ApplicationScoped
 open class AdoptReleaseNotes @Inject constructor(
@@ -58,6 +60,8 @@ open class AdoptReleaseNotes @Inject constructor(
                             database.putReleaseNote(releaseNotes)
                         }
                     }
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     LOGGER.error("Failed to update release notes for ${it.release_name}", e)
                 }
@@ -65,7 +69,8 @@ open class AdoptReleaseNotes @Inject constructor(
     }
 
     private suspend fun getReleaseNotesFor(releaseNotesFile: GHAsset): List<ReleaseNote>? {
-        val releaseNoteContents = gitHubHtmlClient.getUrl(releaseNotesFile.downloadUrl) ?: return null
+        val updatedAt = runCatching { ZonedDateTime.parse(releaseNotesFile.updatedAt) }.getOrNull()
+        val releaseNoteContents = gitHubHtmlClient.getUrlUpdatedSince(releaseNotesFile.downloadUrl, updatedAt) ?: return null
         return UpdaterJsonMapper.mapper.readValue(releaseNoteContents, releaseNoteListType)
     }
 }
