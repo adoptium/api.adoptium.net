@@ -34,12 +34,19 @@ class AdoptReposBuilder @Inject constructor(
     // full build clears it. Shared by the full and incremental update threads.
     private val excluded: MutableSet<GitHubId> = ConcurrentHashMap.newKeySet()
 
-    // Incremented by each full build so a refresh started before it cannot re-exclude a release
-    // that the build has since reset.
+    // Reset at full-build start and successful completion, invalidating failures from
+    // incremental requests that began before or during the build.
     private var exclusionEpoch = 0L
     private val exclusionLock = Any()
 
     private fun currentExclusionEpoch(): Long = synchronized(exclusionLock) { exclusionEpoch }
+
+    private fun resetExclusions() {
+        synchronized(exclusionLock) {
+            exclusionEpoch++
+            excluded.clear()
+        }
+    }
 
     private fun exclude(id: GitHubId, epoch: Long) {
         synchronized(exclusionLock) {
@@ -232,10 +239,7 @@ class AdoptReposBuilder @Inject constructor(
     }
 
     suspend fun build(filter: ReleaseIncludeFilter): AdoptRepos {
-        synchronized(exclusionLock) {
-            exclusionEpoch++
-            excluded.clear()
-        }
+        resetExclusions()
         // Fetch repos in parallel
         val reposMap = versionSupplier
             .getAllVersions()
@@ -244,7 +248,9 @@ class AdoptReposBuilder @Inject constructor(
                 adoptRepository.getRelease(version, filter)
             }
             .associateBy { it.featureVersion }
+        val repos = AdoptRepos(reposMap)
+        resetExclusions()
         LOGGER.info("DONE")
-        return AdoptRepos(reposMap)
+        return repos
     }
 }

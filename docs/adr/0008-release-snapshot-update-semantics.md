@@ -220,9 +220,11 @@ release across the six-minute incremental runs. Each full build clears that set
 and re-attempts the release, so correcting its upstream name or metadata recovers
 at the next full build without restarting the updater. The exclusion set is
 thread-safe because full and incremental updates run on separate scheduler
-threads and share the builder instance. Each full build also advances an
-exclusion epoch, and an incremental refresh that began before the build cannot
-add to the cleared set, so a stale failure cannot re-suppress a corrected release.
+threads and share the builder instance. Each full build clears the set and
+advances an exclusion epoch both at its start and on successful completion.
+Completion removes failures recorded during the build, and the epoch prevents
+requests started before or during the build from adding stale failures afterward.
+Failures from requests started after completion remain excluded as normal.
 
 This parsing behaviour is a branch policy, not shared upstream behaviour or a
 promise that parsing errors are recoverable. Aligning it with upstream's
@@ -280,6 +282,9 @@ data and completes the generation. After an updater restart, the rebuild
 baseline is read from the surviving records of an incomplete generation (never
 served to API readers) rather than an empty catalogue, so the first
 `RELEASES_ONLY` rebuild preserves data outside its filter.
+If that recovery read fails, updater startup aborts before scheduling any
+updates; it never substitutes an empty catalogue for an unreadable baseline.
+Startup can be retried once the database is readable again.
 
 Do not pass prior EA splits through the full mapping path, or add partial
 full-build persistence, per-binary fallback or a separate recovery framework.

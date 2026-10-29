@@ -341,15 +341,13 @@ class V3Updater @Inject constructor(
         return try {
             APIDataStoreImpl.loadRecoveryBaseline(database)
         } catch (e: Exception) {
-            LOGGER.error("Failed to load recovery baseline", e)
-            AdoptRepos(emptyList())
+            LOGGER.error("Failed to load recovery baseline; refusing to start updates", e)
+            throw e
         }
     }
 
     fun run(instantFullUpdate: Boolean) {
         assertConnectedToDb()
-
-        val executor = Executors.newScheduledThreadPool(2)
 
         val delay = if (instantFullUpdate) 0L else 1L
 
@@ -377,6 +375,7 @@ class V3Updater @Inject constructor(
             AdoptCdxaRepos(emptyList())
         } 
 
+        val executor = Executors.newScheduledThreadPool(2)
         val incrementalUpdateScheduled = AtomicBoolean(false)
         val incrementalCdxaUpdateScheduled = AtomicBoolean(false)
 

@@ -110,6 +110,81 @@ class AdoptReposBuilderEaPollingTest {
         coVerify(exactly = 2) { repository.getReleaseById(any()) }
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = [false, true])
+    fun `failure from a refresh started during a successful full build cannot re-exclude its result`(failureFinishesAfterBuild: Boolean) = runBlocking {
+        withTimeout(5000) {
+            val ea = release("fixed-ea", now.minusDays(1))
+            val before = repo(listOf(ea))
+            val fullStarted = CompletableDeferred<Unit>()
+            val finishFull = CompletableDeferred<Unit>()
+            val refreshStarted = CompletableDeferred<Unit>()
+            val finishRefresh = CompletableDeferred<Unit>()
+            val repository = mockk<AdoptRepository>()
+            coEvery { repository.getRelease(8, any()) } coAnswers {
+                fullStarted.complete(Unit)
+                finishFull.await()
+                FeatureRelease(8, Releases(listOf(ea)))
+            }
+            coEvery { repository.getSummary(8) } returns GHSummaryTestDataGenerator.generateGHRepositorySummary(
+                GHSummaryTestDataGenerator.generateGHRepository(before)
+            )
+            coEvery { repository.getReleaseById(GitHubId(ea.id)) } coAnswers {
+                refreshStarted.complete(Unit)
+                finishRefresh.await()
+                ReleaseResult(error = "Malformed", retryable = false)
+            }
+            val versions = mockk<VersionSupplier>()
+            every { versions.getAllVersions() } returns arrayOf(8)
+            val builder = AdoptReposBuilder(repository, versions)
+
+            val full = async { builder.build(ReleaseIncludeFilter.INCLUDE_ALL) }
+            fullStarted.await()
+            val stale = async { builder.incrementalUpdate(emptySet(), before) { null } }
+            refreshStarted.await()
+            if (!failureFinishesAfterBuild) {
+                finishRefresh.complete(Unit)
+                stale.await()
+            }
+            finishFull.complete(Unit)
+            val rebuilt = full.await()
+            assertEquals(before, rebuilt)
+            if (failureFinishesAfterBuild) {
+                finishRefresh.complete(Unit)
+                stale.await()
+            }
+
+            val refreshed = release(ea.id, now.minusDays(1), updatedAt = now.minusHours(1))
+            coEvery { repository.getReleaseById(GitHubId(ea.id)) } returns ReleaseResult(listOf(refreshed))
+            val after = builder.incrementalUpdate(emptySet(), rebuilt) { null }
+
+            assertEquals(repo(listOf(refreshed)), after)
+            coVerify(exactly = 2) { repository.getReleaseById(any()) }
+        }
+    }
+
+    @Test
+    fun `non-retryable failures after a completed full build remain excluded`() = runBlocking {
+        val ea = release("malformed-ea", now.minusDays(1))
+        val before = repo(listOf(ea))
+        val repository = mockk<AdoptRepository>()
+        coEvery { repository.getRelease(8, any()) } returns FeatureRelease(8, Releases(listOf(ea)))
+        coEvery { repository.getSummary(8) } returns GHSummaryTestDataGenerator.generateGHRepositorySummary(
+            GHSummaryTestDataGenerator.generateGHRepository(before)
+        )
+        coEvery { repository.getReleaseById(GitHubId(ea.id)) } returns ReleaseResult(error = "Malformed", retryable = false)
+        val versions = mockk<VersionSupplier>()
+        every { versions.getAllVersions() } returns arrayOf(8)
+        val builder = AdoptReposBuilder(repository, versions)
+        val rebuilt = builder.build(ReleaseIncludeFilter.INCLUDE_ALL)
+
+        repeat(2) {
+            assertEquals(rebuilt, builder.incrementalUpdate(emptySet(), rebuilt) { null })
+        }
+
+        coVerify(exactly = 1) { repository.getReleaseById(any()) }
+    }
+
     @Test
     fun `a thousand historical EAs only fetch the latest old EA`() {
         val history = (0 until 1000).map {
