@@ -22,7 +22,7 @@ data class GHVersion @JsonCreator constructor(
     @JsonProperty("patch") val patch: Int? = null
 ) {
     fun toApiVersion(): VersionData {
-        return VersionData(major, minor, security, pre, adopt_build_number, build, opt, version, semver, patch)
+        return VersionData(major, minor, security, pre, adopt_build_number, build, opt, version, semver, patch, VersionData.versionNumbersOf(version)?.drop(4))
     }
 }
 

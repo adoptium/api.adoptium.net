@@ -72,6 +72,7 @@ class VersionRangeFilter(range: String?, val semver: Boolean) : Predicate<Versio
                 version.openjdk_version,
                 version.semver,
                 version.patch,
+                version.additional_version_numbers,
             )
         } else {
             version

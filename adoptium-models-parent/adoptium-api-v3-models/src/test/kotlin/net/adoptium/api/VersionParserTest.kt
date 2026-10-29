@@ -134,6 +134,56 @@ class VersionParserTest {
     }
 
     @Test
+    fun `parses jep 322 version with downstream fifth element`() {
+        listOf("25.0.5.0.2+1", "jdk-25.0.5.0.2+1").forEach { name ->
+            listOf(false, true).forEach { exact ->
+                val parsed = VersionParser.parse(name, exactMatch = exact)
+                assertEquals(listOf(25, 0, 5, 0, 2), parsed.version_numbers, "$name exact=$exact")
+                assertEquals(25, parsed.major)
+                assertEquals(5, parsed.security)
+                assertEquals(0, parsed.patch)
+                assertEquals(1, parsed.build)
+                assertEquals("25.0.5.0.2+1", parsed.openjdk_version)
+                assertEquals(listOf(2), parsed.additional_version_numbers)
+            }
+        }
+    }
+
+    @Test
+    fun `default version numbers are derived`() {
+        assertEquals(listOf(11, 0, 9), VersionParser.parse("jdk-11.0.9+11").version_numbers)
+        assertEquals(listOf(11, 0, 9, 1), VersionParser.parse("11.0.9.1+1").version_numbers)
+    }
+
+    @Test
+    fun `additional version numbers sort pointwise`() {
+        val versions = listOf("25.0.5.1+1", "25.0.5.0.2+1", "25.0.5+1", "25.0.5.0.1+1", "25.0.5.0.10+1")
+            .map { VersionParser.parse(it, exactMatch = true) }
+        val sorted = versions.sortedWith(Releases.VERSION_COMPARATOR).map { it.openjdk_version }
+        assertEquals(
+            listOf("25.0.5+1", "25.0.5.0.1+1", "25.0.5.0.2+1", "25.0.5.0.10+1", "25.0.5.1+1"),
+            sorted
+        )
+        assertEquals(sorted, versions.sorted().map { it.openjdk_version })
+        assertTrue(
+            !VersionParser.parse("25.0.5.0.2+1", exactMatch = true)
+                .compareVersionNumber(VersionParser.parse("25.0.5.0.3+1", exactMatch = true))
+        )
+    }
+
+    @Test
+    fun `version numbers survive json round trip`() {
+        val mapper = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper()
+        val parsed = VersionParser.parse("25.0.5.0.2+1")
+        val copy = mapper.readValue(mapper.writeValueAsString(parsed), VersionData::class.java)
+        assertEquals(parsed, copy)
+        assertEquals(listOf(25, 0, 5, 0, 2), copy.version_numbers)
+        assertEquals(listOf(2), copy.additional_version_numbers)
+        assertTrue(mapper.writeValueAsString(parsed).contains("\"additional_version_numbers\":[2]"))
+        assertEquals(emptyList<Int>(), mapper.readValue("""{"major":11,"minor":0,"security":9,"build":1,"openjdk_version":"11.0.9+1","semver":"11.0.9+1"}""", VersionData::class.java).additional_version_numbers)
+    }
+
+    @Test
     fun `parses single number`() {
         val parsed = VersionParser.parse("8", false)
         assertEquals(
