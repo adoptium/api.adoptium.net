@@ -29,6 +29,7 @@ import java.util.UUID
 @AddPackages(value = [DefaultUpdaterHtmlClient::class, HttpClientFactory::class])
 class AdoptReleaseMapperTest : BaseTest() {
 
+
     val jdk = GHAsset(
         name = "OpenJDK8U-jre_x64_linux_hotspot-123244354325.tar.gz",
         size = 1L,
