@@ -2,16 +2,16 @@ package net.adoptium.api.v3.models
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonDeserializer
-import com.fasterxml.jackson.databind.JsonSerializer
-import com.fasterxml.jackson.databind.SerializerProvider
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
-import com.fasterxml.jackson.datatype.jsr310.deser.InstantDeserializer
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.databind.DeserializationContext
+import tools.jackson.databind.SerializationContext
+import tools.jackson.databind.ValueDeserializer
+import tools.jackson.databind.ValueSerializer
+import tools.jackson.databind.annotation.JsonDeserialize
+import tools.jackson.databind.annotation.JsonSerialize
+import tools.jackson.databind.ext.javatime.deser.InstantDeserializer
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 import java.time.Instant
@@ -89,7 +89,7 @@ class DateTime {
                     .plusDays(1)
                     .atStartOfDay(zoneOffset)
                     .minus(1, TimeUnit.MILLISECONDS.toChronoUnit())
-            } catch (e: DateTimeParseException) {
+            } catch (_: DateTimeParseException) {
                 // NOP
             }
 
@@ -100,7 +100,7 @@ class DateTime {
                 } else if (rawDate.length == 13) {
                     return Instant.ofEpochMilli(number).atZone(zoneOffset)
                 }
-            } catch (e: NumberFormatException) {
+            } catch (_: NumberFormatException) {
                 // NOP
             }
 
@@ -118,7 +118,7 @@ class DateTime {
                     is ZonedDateTime -> parsedDate
                     else -> throw UnableToParseDateException("Failed to parse date: $rawDate")
                 }
-            } catch (e: DateTimeParseException) {
+            } catch (_: DateTimeParseException) {
                 // NOP
             }
 
@@ -128,7 +128,7 @@ class DateTime {
                     .plusDays(1)
                     .atStartOfDay(zoneOffset)
                     .minus(1, TimeUnit.MILLISECONDS.toChronoUnit())
-            } catch (e: DateTimeParseException) {
+            } catch (_: DateTimeParseException) {
                 throw UnableToParseDateException("Failed to parse date: $rawDate")
             }
         }
@@ -137,19 +137,15 @@ class DateTime {
     }
 }
 
-class DateTimeSerializer : JsonSerializer<DateTime>() {
-    override fun serialize(dateTime: DateTime?, jsonGenerator: JsonGenerator, serializerProvider: SerializerProvider?) {
-        if (dateTime != null) {
-            jsonGenerator.writeString(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(dateTime.dateTime))
-        } else {
-            jsonGenerator.writeNull()
-        }
+class DateTimeSerializer : ValueSerializer<DateTime>() {
+    override fun serialize(dateTime: DateTime, jsonGenerator: JsonGenerator, serializerProvider: SerializationContext) {
+        jsonGenerator.writeString(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(dateTime.dateTime))
     }
 }
 
-class DateTimeDeSerializer : JsonDeserializer<DateTime>() {
-    override fun deserialize(parser: JsonParser?, context: DeserializationContext?): DateTime {
-        if (parser!!.currentToken() == JsonToken.VALUE_NUMBER_FLOAT) {
+class DateTimeDeSerializer : ValueDeserializer<DateTime>() {
+    override fun deserialize(parser: JsonParser, context: DeserializationContext): DateTime {
+        if (parser.currentToken() == JsonToken.VALUE_NUMBER_FLOAT) {
             return DateTime(InstantDeserializer.ZONED_DATE_TIME.deserialize(parser, context))
         } else if (parser.currentToken() == JsonToken.VALUE_EMBEDDED_OBJECT) {
             return when (val obj = parser.embeddedObject) {
@@ -162,7 +158,7 @@ class DateTimeDeSerializer : JsonDeserializer<DateTime>() {
                 else -> throw RuntimeException("Unknown type " + obj::class.java)
             }
         } else if (parser.currentToken() == JsonToken.START_OBJECT) {
-            val fieldName = parser.nextFieldName()
+            val fieldName = parser.nextName()
             parser.nextToken()
             if (fieldName == "dateTime") {
                 val dt = DateTime(parser.readValueAs(ZonedDateTime::class.java))

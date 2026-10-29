@@ -1,17 +1,28 @@
 package net.adoptium.api.v3.stats.cloudflare
 
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.v3.TimeSource
+import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import org.apache.http.HttpResponse
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.concurrent.FutureCallback
+import org.apache.http.nio.client.HttpAsyncClient
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.CompletableFuture
 
 class CloudflareClientTest {
 
@@ -74,5 +85,41 @@ class CloudflareClientTest {
         assertTrue(merged.data.any { it.path == "/path/one.deb" && it.count == 100L })
         assertTrue(merged.data.any { it.path == "/path/two.deb" && it.count == 200L })
         assertTrue(merged.data.any { it.path == "/path/duplicated.deb" && it.count == 50L })
+    }
+
+    @Test
+    fun `cancelling fetch should cancel in-flight HTTP request`() = runBlocking {
+        val previousToken = APIConfig.ENVIRONMENT.put("CLOUDFLARE_API_TOKEN", "test-token")
+        val previousZoneTag = APIConfig.ENVIRONMENT.put("CLOUDFLARE_ZONE_TAG", "test-zone")
+
+        try {
+            val requestFuture = CompletableFuture<HttpResponse>()
+            val httpClient = mockk<HttpAsyncClient>() {
+                every {
+                    execute(any<HttpPost>(), any<FutureCallback<HttpResponse>>())
+                } returns requestFuture
+            }
+            val client = CloudflareClient(httpClient)
+
+            val fetchJob = launch(start = CoroutineStart.UNDISPATCHED) {
+                client.fetchDownloadStats(Instant.EPOCH.atZone(TimeSource.ZONE), Instant.now().atZone(TimeSource.ZONE))
+            }
+
+            assertFalse(requestFuture.isCancelled)
+            fetchJob.cancelAndJoin()
+
+            assertTrue(requestFuture.isCancelled)
+        } finally {
+            if (previousToken == null) {
+                APIConfig.ENVIRONMENT.remove("CLOUDFLARE_API_TOKEN")
+            } else {
+                APIConfig.ENVIRONMENT["CLOUDFLARE_API_TOKEN"] = previousToken
+            }
+            if (previousZoneTag == null) {
+                APIConfig.ENVIRONMENT.remove("CLOUDFLARE_ZONE_TAG")
+            } else {
+                APIConfig.ENVIRONMENT["CLOUDFLARE_ZONE_TAG"] = previousZoneTag
+            }
+        }
     }
 }
