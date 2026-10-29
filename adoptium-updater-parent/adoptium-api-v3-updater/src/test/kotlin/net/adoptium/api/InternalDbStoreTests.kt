@@ -14,6 +14,7 @@ import org.bson.Document
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.Date
@@ -30,6 +31,35 @@ class InternalDbStoreTests : MongoTest() {
             collection = mongoClient.getDatabase().getCollection<Document>("web-cache")
             collection.deleteMany(Document())
         }
+    }
+
+    @Test
+    fun `legacy duplicate keys are invalidated before installing the unique index`() = runBlocking {
+        InternalDbStoreImpl(mongoClient)
+        val index = collection.listIndexes<Document>().toList().single {
+            it["key"] == Document("url", 1)
+        }
+        collection.dropIndex(index.getString("name"))
+        collection.createIndex(Document("url", 1))
+        val accessed = Date.from(TimeSource.now().minusDays(1).toInstant())
+        collection.insertMany(listOf(
+            Document("url", "duplicate").append("data", "old"),
+            Document("url", "duplicate").append("data", "ambiguous"),
+            Document("url", "retained").append("data", "retained").append("lastAccessed", accessed)
+        ))
+
+        InternalDbStoreImpl(mongoClient)
+        assertEquals(0, collection.countDocuments(Document("url", "duplicate")))
+        assertEquals(1, collection.countDocuments(Document("url", "retained")))
+        assertEquals(accessed, collection.find(Document("url", "retained")).firstOrNull()!!.getDate("lastAccessed"))
+        assertTrue(collection.listIndexes<Document>().toList().single {
+            it["key"] == Document("url", 1)
+        }.getBoolean("unique"))
+        assertThrows(com.mongodb.MongoWriteException::class.java) {
+            runBlocking { collection.insertOne(Document("url", "retained").append("data", "duplicate")) }
+        }
+        InternalDbStoreImpl(mongoClient)
+        assertEquals(1, collection.countDocuments())
     }
 
     @Test

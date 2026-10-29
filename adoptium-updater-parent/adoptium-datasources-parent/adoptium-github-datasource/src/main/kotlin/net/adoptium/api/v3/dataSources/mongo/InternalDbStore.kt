@@ -11,12 +11,15 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.toList
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.persitence.mongo.MongoClient
 import net.adoptium.api.v3.dataSources.persitence.mongo.MongoInterface
 import org.bson.BsonDateTime
 import org.bson.BsonDocument
 import org.bson.Document
+import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
 import java.util.Date
 import java.util.concurrent.TimeUnit
@@ -38,7 +41,21 @@ open class InternalDbStoreImpl @Inject constructor(mongoClient: MongoClient) : M
 
     init {
         runBlocking {
-            webCache.createIndex(Document.parse("""{"url":1}"""), IndexOptions().background(true))
+            val urlIndex = webCache.listIndexes<Document>().toList()
+                .singleOrNull { it["key"] == Document("url", 1) }
+            if (urlIndex?.getBoolean("unique", false) != true) {
+                // Duplicate content has no trustworthy ordering. Invalidate those keys and refetch.
+                webCache.aggregate<Document>(listOf(
+                    Document($$"$group", Document("_id", $$"$url").append("count", Document($$"$sum", 1))),
+                    Document($$"$match", Document("count", Document($$"$gt", 1)))
+                )).collect { duplicate ->
+                    val removed = webCache.deleteMany(Document("url", duplicate["_id"])).deletedCount
+                    LoggerFactory.getLogger(InternalDbStoreImpl::class.java)
+                        .warn("Invalidated {} duplicate cache entries for {}", removed, duplicate["_id"])
+                }
+                if (urlIndex != null) webCache.dropIndex(urlIndex.getString("name"))
+            }
+            webCache.createIndex(Document("url", 1), IndexOptions().unique(true).background(true))
             // Old entries have no usage history. Give them one retention period to
             // be reused rather than treating a possibly ancient validation as last use.
             webCache.updateMany(

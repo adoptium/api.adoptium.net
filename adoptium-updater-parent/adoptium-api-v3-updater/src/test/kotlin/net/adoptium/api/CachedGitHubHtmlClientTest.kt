@@ -6,6 +6,10 @@ import io.mockk.confirmVerified
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
@@ -31,12 +35,131 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.ZonedDateTime
 import java.util.stream.Stream
 
 @ExtendWith(MockKExtension::class)
 class CachedGitHubHtmlClientTest {
+
+    @Test
+    fun `demand reads do not enqueue repeated refreshes while validation is pending`() = runBlocking {
+        withTimeout(5000) {
+            val started = CompletableDeferred<Unit>()
+            val gate = CompletableDeferred<Unit>()
+            val http = mockk<UpdaterHtmlClient>()
+            coEvery { http.getFullResponse(UrlRequest("refresh")) } coAnswers {
+                started.complete(Unit)
+                gate.await()
+                response("fresh")
+            }
+            val store = InMemoryInternalDbStore()
+            store.putCachedWebpage("refresh", null, TimeSource.now().minusDays(2), "old").join()
+            val client = CachedGitHubHtmlClient(store, http)
+            try {
+                assertEquals("old", client.getUrl("refresh"))
+                started.await()
+                repeat(3) { assertEquals("old", client.getUrl("refresh")) }
+                assertEquals(0, client.getQueueLength())
+                coVerify(exactly = 1) { http.getFullResponse(any()) }
+            } finally {
+                gate.complete(Unit)
+            }
+        }
+    }
+
+    @Test
+    fun `cancelling the fetch owner clears pending work for a subsequent request`() = runBlocking {
+        withTimeout(5000) {
+            val http = mockk<UpdaterHtmlClient>()
+            var requests = 0
+            coEvery { http.getFullResponse(UrlRequest("cancelled")) } coAnswers {
+                if (++requests == 1) awaitCancellation()
+                response("recovered")
+            }
+            val client = CachedGitHubHtmlClient(InMemoryInternalDbStore(), http)
+            val owner = async(start = CoroutineStart.UNDISPATCHED) { client.getUrl("cancelled") }
+            val waiter = async(start = CoroutineStart.UNDISPATCHED) { client.getUrl("cancelled") }
+            owner.cancelAndJoin()
+            val failure = runCatching { waiter.await() }.exceptionOrNull()
+            assertTrue(failure is CancellationException)
+            assertEquals("recovered", client.getUrl("cancelled"))
+            coVerify(exactly = 2) { http.getFullResponse(any()) }
+        }
+    }
+
+    @Test
+    fun `unavailable pending response is shared and removed before a later retry`() = runBlocking {
+        withTimeout(5000) {
+            val gate = CompletableDeferred<Unit>()
+            val http = mockk<UpdaterHtmlClient>()
+            var requests = 0
+            coEvery { http.getFullResponse(UrlRequest("unavailable")) } coAnswers {
+                gate.await()
+                if (++requests == 1) null else response("recovered")
+            }
+            val client = CachedGitHubHtmlClient(InMemoryInternalDbStore(), http)
+            val first = async(start = CoroutineStart.UNDISPATCHED) { client.getUrl("unavailable") }
+            val second = async(start = CoroutineStart.UNDISPATCHED) { client.getUrl("unavailable") }
+            gate.complete(Unit)
+            assertNull(first.await())
+            assertNull(second.await())
+            assertEquals("recovered", client.getUrl("unavailable"))
+            coVerify(exactly = 2) { http.getFullResponse(any()) }
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [false, true])
+    fun `overlapping asset fetches share work without caching later unversioned requests`(versioned: Boolean) = runBlocking {
+        withTimeout(5000) {
+            val gate = CompletableDeferred<Unit>()
+            val http = mockk<UpdaterHtmlClient>()
+            coEvery { http.getFullResponse(UrlRequest("shared")) } coAnswers {
+                gate.await()
+                response("body")
+            }
+            val store = InMemoryInternalDbStore()
+            val client = CachedGitHubHtmlClient(store, http)
+            val asset = GHAsset("metadata.json", 1, "shared", 0, "2013-02-27T19:35:32Z",
+                id = if (versioned) "identity" else null)
+            val first = async(start = CoroutineStart.UNDISPATCHED) { client.getAsset(asset) }
+            val second = async(start = CoroutineStart.UNDISPATCHED) { client.getAsset(asset) }
+            val cancelledWaiter = async(start = CoroutineStart.UNDISPATCHED) { client.getAsset(asset) }
+            cancelledWaiter.cancel()
+            coVerify(exactly = 1) { http.getFullResponse(any()) }
+            val releasedAt = TimeSource.now()
+            gate.complete(Unit)
+            assertEquals("body", first.await())
+            assertEquals("body", second.await())
+            val key = if (versioned) "shared#github-asset=identity;digest=" else "shared"
+            assertTrue(!store.peekCachedWebpage(key)!!.lastAccessed!!.isBefore(releasedAt))
+            assertEquals("body", client.getAsset(asset))
+            coVerify(exactly = if (versioned) 1 else 2) { http.getFullResponse(any()) }
+        }
+    }
+
+    @Test
+    fun `different asset identities never share a pending response`() = runBlocking {
+        withTimeout(5000) {
+            val gate = CompletableDeferred<Unit>()
+            val http = mockk<UpdaterHtmlClient>()
+            coEvery { http.getFullResponse(UrlRequest("shared")) } coAnswers {
+                gate.await()
+                response("body")
+            }
+            val client = CachedGitHubHtmlClient(InMemoryInternalDbStore(), http)
+            val asset = GHAsset("metadata.json", 1, "shared", 0, "2013-02-27T19:35:32Z", id = "first")
+            val first = async(start = CoroutineStart.UNDISPATCHED) { client.getAsset(asset) }
+            val second = async(start = CoroutineStart.UNDISPATCHED) { client.getAsset(asset.copy(id = "second")) }
+            coVerify(exactly = 2) { http.getFullResponse(any()) }
+            gate.complete(Unit)
+            assertEquals("body", first.await())
+            assertEquals("body", second.await())
+        }
+    }
 
     private data class TestData(
         val name: String,

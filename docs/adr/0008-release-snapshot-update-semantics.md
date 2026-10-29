@@ -323,7 +323,7 @@ A legacy basename sidecar shared by several supported artifacts (for example `fo
 for both `foo.zip` and `foo.msi`) is ambiguous, so it is treated as unavailable for each
 of them unless the others have their own exact sidecar. The same applies to `.json` metadata.
 Cache writes are ordered per cache key, GitHub download totals are summed as `Long`,
-the GitHub stats save is retried once because the full-update guard reads it, empty
+the GitHub stats save is retried once (the full-update guard uses the persisted release snapshot), empty
 probed feature versions are omitted from incremental results, and incremental selection
 does the cheap age and already-selected checks before the per-release metadata lookup.
 
@@ -359,6 +359,22 @@ Background HTTP validation does not extend demand retention; old entries without
 usage history receive one retention-period grace. Cache writes remain
 asynchronous; this decision does not introduce a durable-cache-write prerequisite
 for publishing a release.
+
+Overlapping identical fetches share pending work, including retries, but completed
+requests are removed rather than becoming an additional indefinite cache.
+Different asset IDs/digests and demand/background requests remain separate.
+Cancelling a waiter does not cancel the shared fetch; cancelling its owner cancels
+the shared result and allows a subsequent request to start again. Queued and running
+background refreshes are deduplicated by URL and validation token.
+
+MongoDB enforces a unique `url` index on the complete cache key. On startup,
+migration invalidates all entries for duplicate keys, logging each invalidation,
+then replaces the old non-unique index. Refetching avoids selecting potentially
+stale content from ambiguously ordered legacy writes; non-duplicate keys and their
+usage timestamps are preserved. Repeated initialization is idempotent.
+Migration/index errors abort initialization rather than proceeding without
+uniqueness. This is a startup migration: old writers must be stopped before it
+runs; mixed-version writers are not supported during index replacement.
 
 Release download counts include installer and other eligible ungrouped-asset
 downloads exactly once. Attribute ungrouped downloads to the lowest-version

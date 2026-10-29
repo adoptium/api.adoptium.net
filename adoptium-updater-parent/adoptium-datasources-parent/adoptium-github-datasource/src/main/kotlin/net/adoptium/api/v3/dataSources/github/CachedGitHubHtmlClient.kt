@@ -3,6 +3,7 @@ package net.adoptium.api.v3.dataSources.github
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.GlobalScope
@@ -54,9 +55,12 @@ open class CachedGitHubHtmlClient @Inject constructor(
 
     // List of urls to be refreshed in the background
     private val workList = LinkedBlockingQueue<UrlRequest>()
+    private val queuedRefreshes = ConcurrentHashMap.newKeySet<UrlRequest>()
     private class KeyLock(val mutex: Mutex = Mutex(), var holders: Int = 0)
 
     private val keyLocks = ConcurrentHashMap<String, KeyLock>()
+    private data class FetchKey(val request: UrlRequest, val cacheKey: String, val digest: String?, val demand: Boolean)
+    private val pendingFetches = ConcurrentHashMap<FetchKey, CompletableDeferred<String?>>()
 
     init {
         // Do refresh in the background
@@ -70,7 +74,8 @@ open class CachedGitHubHtmlClient @Inject constructor(
         } else {
             if (shouldUpdate(cachedEntry)) {
                 LOGGER.debug("Scheduling for refresh $url ${cachedEntry.lastModified} ${workList.size}")
-                workList.offer(UrlRequest(url, cachedEntry.lastModified))
+                val request = UrlRequest(url, cachedEntry.lastModified)
+                if (queuedRefreshes.add(request)) workList.offer(request)
             }
             cachedEntry.data
         }
@@ -84,7 +89,7 @@ open class CachedGitHubHtmlClient @Inject constructor(
             return get(UrlRequest(asset.downloadUrl))
         }
         val cached = internalDbStore.getCachedWebpage(cacheKey)?.data
-        return cached ?: get(UrlRequest(asset.downloadUrl), cacheKey, asset.digest)
+        return cached ?: get(UrlRequest(asset.downloadUrl), cacheKey, asset.digest, reuseCached = true)
     }
 
     private fun shouldUpdate(cachedEntry: CacheDbEntry): Boolean {
@@ -111,16 +116,44 @@ open class CachedGitHubHtmlClient @Inject constructor(
             while (true) {
                 val request = workList.take()
                 LOGGER.debug("Enqueuing ${request.url} ${request.lastModified} ${workList.size}")
-                get(request, accessedAt = null)
+                try {
+                    get(request, accessedAt = null)
+                } finally {
+                    queuedRefreshes.remove(request)
+                }
             }
         }
     }
 
-    private suspend fun get(request: UrlRequest, cacheKey: String = request.url, digest: String? = null, accessedAt: ZonedDateTime? = TimeSource.now()): String? {
+    private suspend fun get(request: UrlRequest, cacheKey: String = request.url, digest: String? = null, accessedAt: ZonedDateTime? = TimeSource.now(), reuseCached: Boolean = false): String? {
+        val key = FetchKey(request, cacheKey, digest, accessedAt != null)
+        val pending = CompletableDeferred<String?>()
+        val existing = pendingFetches.putIfAbsent(key, pending)
+        if (existing != null) {
+            val result = existing.await()
+            if (accessedAt != null && result != null) internalDbStore.getCachedWebpage(cacheKey)
+            return result
+        }
+        try {
+            val result = fetchWithRetries(request, cacheKey, digest, accessedAt, reuseCached)
+            pending.complete(result)
+            return result
+        } catch (e: Throwable) {
+            pending.completeExceptionally(e)
+            throw e
+        } finally {
+            pendingFetches.remove(key, pending)
+        }
+    }
+
+    private suspend fun fetchWithRetries(request: UrlRequest, cacheKey: String, digest: String?, accessedAt: ZonedDateTime?, reuseCached: Boolean): String? {
         // Retry up to 10 times
         for (retryCount in 1..10) {
             try {
-                return withKeyLock(cacheKey) { fetchAndStore(request, cacheKey, digest, accessedAt) }
+                return withKeyLock(cacheKey) {
+                    val cached = if (reuseCached) internalDbStore.getCachedWebpage(cacheKey)?.data else null
+                    cached ?: fetchAndStore(request, cacheKey, digest, accessedAt)
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
