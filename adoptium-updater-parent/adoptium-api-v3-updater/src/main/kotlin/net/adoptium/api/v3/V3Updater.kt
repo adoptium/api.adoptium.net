@@ -13,6 +13,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.APIDataStore
+import net.adoptium.api.v3.dataSources.APIDataStoreImpl
 import net.adoptium.api.v3.dataSources.ReleaseVersionResolver
 import net.adoptium.api.v3.dataSources.UpdatableVersionSupplier
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
@@ -334,6 +335,17 @@ class V3Updater @Inject constructor(
         }
     }
 
+    // An incomplete generation is not servable, but the rebuild still needs its surviving records
+    // so that releases outside the first rebuild's filter are not deleted.
+    private fun loadRecoveryBaseline(): AdoptRepos {
+        return try {
+            APIDataStoreImpl.loadRecoveryBaseline(database)
+        } catch (e: Exception) {
+            LOGGER.error("Failed to load recovery baseline", e)
+            AdoptRepos(emptyList())
+        }
+    }
+
     fun run(instantFullUpdate: Boolean) {
         assertConnectedToDb()
 
@@ -350,7 +362,7 @@ class V3Updater @Inject constructor(
                 Quarkus.asyncExit(2)
                 Quarkus.waitForExit()
             }
-            AdoptRepos(emptyList())
+            loadRecoveryBaseline()
         }
 
         var cdxaRepo: AdoptCdxaRepos = try {

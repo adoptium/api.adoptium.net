@@ -50,6 +50,15 @@ class ReleaseGenerationReadTest {
     }
 
     @Test
+    fun `recovery baseline reads the surviving records of an incomplete generation`() {
+        val database = mockk<ApiPersistence>()
+        coEvery { database.getUpdatedAt() } returns previous.copy(checksum = "incomplete:failed")
+        coEvery { database.readReleaseData(any()) } returns FeatureRelease(8, emptyList())
+        APIDataStoreImpl.loadRecoveryBaseline(database)
+        coVerify { database.readReleaseData(8) }
+    }
+
+    @Test
     fun `rejected read preserves cached generation and a later successful poll reloads`() = runBlocking {
         val database = InMemoryApiPersistence(empty, AdoptCdxaRepos(emptyList()))
         database.updateAllRepos(empty, "published")

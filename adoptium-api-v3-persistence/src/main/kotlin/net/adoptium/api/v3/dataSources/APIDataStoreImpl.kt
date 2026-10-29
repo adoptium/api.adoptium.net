@@ -43,11 +43,12 @@ open class APIDataStoreImpl : APIDataStore {
             forceUpdate: Boolean,
             previousRepo: AdoptRepos?,
             versions: List<Int>,
-            logEntries: Boolean = true): Pair<AdoptRepos, UpdatedInfo> {
+            logEntries: Boolean = true,
+            allowIncomplete: Boolean = false): Pair<AdoptRepos, UpdatedInfo> {
 
             return runBlocking {
                 val updated = dataStore.getUpdatedAt()
-                check(!updated.isIncomplete()) { "Release publication is incomplete: $updated" }
+                check(allowIncomplete || !updated.isIncomplete()) { "Release publication is incomplete: $updated" }
 
                 if (previousRepo == null || forceUpdate || updated != previousUpdateInfo) {
                     val data = versions
@@ -70,6 +71,20 @@ open class APIDataStoreImpl : APIDataStore {
                     Pair(previousRepo, previousUpdateInfo)
                 }
             }
+        }
+
+        // Only for the updater's rebuild baseline: an incomplete generation must never be served,
+        // but its surviving records still let a rebuild preserve data outside the rebuild filter.
+        fun loadRecoveryBaseline(dataStore: ApiPersistence): AdoptRepos {
+            return loadDataFromDb(
+                dataStore,
+                UpdatedInfo(ZonedDateTime.now().minusYears(10), "111", 0),
+                true,
+                null,
+                (8..MAX_VERSION_TO_LOAD).toList(),
+                logEntries = false,
+                allowIncomplete = true
+            ).first
         }
 
         fun loadCdxaDataFromDb(

@@ -4,7 +4,10 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import net.adoptium.api.v3.AdoptReposBuilder
 import net.adoptium.api.v3.AdoptRepository
 import net.adoptium.api.v3.ReleaseResult
@@ -69,6 +72,41 @@ class AdoptReposBuilderEaPollingTest {
         assertEquals(repo(healthy + ea), recovered)
         coVerify(exactly = 2) { repository.getSummary(27) }
         coVerify(exactly = if (keepHealthyVersion) 2 else 0) { repository.getSummary(8) }
+        coVerify(exactly = 2) { repository.getReleaseById(any()) }
+    }
+
+    @Test
+    fun `incremental failure that began before a full build cannot re-exclude the corrected release`() = runBlocking {
+        val ea = release("fixed-ea", now.minusDays(1))
+        val entered = CompletableDeferred<Unit>()
+        val gate = CompletableDeferred<Unit>()
+        var calls = 0
+        val repository = mockk<AdoptRepository>()
+        coEvery { repository.getRelease(any(), any()) } returns FeatureRelease(8, Releases(emptyList()))
+        coEvery { repository.getSummary(8) } returns GHSummaryTestDataGenerator.generateGHRepositorySummary(
+            GHSummaryTestDataGenerator.generateGHRepository(repo(listOf(ea)))
+        )
+        coEvery { repository.getReleaseById(GitHubId(ea.id)) } coAnswers {
+            if (calls++ == 0) {
+                entered.complete(Unit)
+                gate.await()
+                ReleaseResult(error = "Malformed", retryable = false)
+            } else {
+                ReleaseResult(listOf(ea))
+            }
+        }
+        val versions = mockk<VersionSupplier>()
+        every { versions.getAllVersions() } returns arrayOf(8)
+        val builder = AdoptReposBuilder(repository, versions)
+
+        val stale = async { builder.incrementalUpdate(emptySet(), AdoptRepos(emptyList())) { null } }
+        withTimeout(5000) { entered.await() }
+        builder.build(ReleaseIncludeFilter.INCLUDE_ALL)
+        gate.complete(Unit)
+        stale.await()
+
+        val recovered = builder.incrementalUpdate(emptySet(), AdoptRepos(emptyList())) { null }
+        assertEquals(repo(listOf(ea)), recovered)
         coVerify(exactly = 2) { repository.getReleaseById(any()) }
     }
 

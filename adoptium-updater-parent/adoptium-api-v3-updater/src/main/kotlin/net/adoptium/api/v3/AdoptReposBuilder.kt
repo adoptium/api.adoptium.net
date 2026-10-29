@@ -34,6 +34,19 @@ class AdoptReposBuilder @Inject constructor(
     // full build clears it. Shared by the full and incremental update threads.
     private val excluded: MutableSet<GitHubId> = ConcurrentHashMap.newKeySet()
 
+    // Incremented by each full build so a refresh started before it cannot re-exclude a release
+    // that the build has since reset.
+    private var exclusionEpoch = 0L
+    private val exclusionLock = Any()
+
+    private fun currentExclusionEpoch(): Long = synchronized(exclusionLock) { exclusionEpoch }
+
+    private fun exclude(id: GitHubId, epoch: Long) {
+        synchronized(exclusionLock) {
+            if (epoch == exclusionEpoch) excluded.add(id)
+        }
+    }
+
     private data class ReleaseRefresh(val id: GitHubId, val releases: List<Release>)
 
     suspend fun incrementalUpdate(
@@ -196,6 +209,7 @@ class AdoptReposBuilder @Inject constructor(
     }
 
     private suspend fun getReleaseById(it: GHReleaseSummary): ReleaseRefresh? {
+        val epoch = currentExclusionEpoch()
         val result = try {
             adoptRepository.getReleaseById(it.id)
         } catch (e: CancellationException) {
@@ -211,14 +225,17 @@ class AdoptReposBuilder @Inject constructor(
                 LOGGER.info("Deferring ${it.id.id} until a later update")
             } else {
                 LOGGER.info("Excluding ${it.id.id} from update")
-                excluded.add(it.id)
+                exclude(it.id, epoch)
             }
             null
         }
     }
 
     suspend fun build(filter: ReleaseIncludeFilter): AdoptRepos {
-        excluded.clear()
+        synchronized(exclusionLock) {
+            exclusionEpoch++
+            excluded.clear()
+        }
         // Fetch repos in parallel
         val reposMap = versionSupplier
             .getAllVersions()
