@@ -25,6 +25,12 @@ import java.util.concurrent.LinkedBlockingQueue
 
 interface GitHubHtmlClient {
     suspend fun getUrl(url: String): String?
+
+    /**
+     * Like [getUrl], but guarantees the result is not older than [updatedAt] (the time the remote asset was
+     * last replaced), revalidating a cached copy synchronously if it was last checked before that time.
+     */
+    suspend fun getUrlUpdatedSince(url: String, updatedAt: ZonedDateTime?): String? = getUrl(url)
 }
 
 @ApplicationScoped
@@ -62,6 +68,23 @@ open class CachedGitHubHtmlClient @Inject constructor(
             }
             cachedEntry.data
         }
+    }
+
+    override suspend fun getUrlUpdatedSince(url: String, updatedAt: ZonedDateTime?): String? {
+        val cachedEntry = internalDbStore.getCachedWebpage(url)
+        if (cachedEntry == null || updatedAt == null) {
+            return getUrl(url)
+        }
+
+        val lastChecked = cachedEntry.lastChecked
+        if (lastChecked != null && !lastChecked.isBefore(updatedAt)) {
+            // Cached copy was validated after the asset was last updated
+            return getUrl(url)
+        }
+
+        // Asset changed since we last checked it, revalidate now rather than in the background.
+        // get() returns null on HTTP 304 (unchanged) or failure, in which case the cached body is still the best we have.
+        return get(UrlRequest(url, cachedEntry.lastModified)) ?: cachedEntry.data
     }
 
     private fun shouldUpdate(cachedEntry: CacheDbEntry): Boolean {

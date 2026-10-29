@@ -3,6 +3,7 @@ package net.adoptium.api
 import io.mockk.mockk
 import io.mockk.coEvery
 import io.mockk.coVerify
+import kotlinx.coroutines.CancellationException
 import net.adoptium.api.v3.ReleaseIncludeFilter
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
@@ -29,6 +30,14 @@ import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.models.VersionData
+import net.adoptium.api.testDoubles.InMemoryInternalDbStore
+import net.adoptium.api.v3.TimeSource
+import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
+import net.adoptium.api.v3.dataSources.UrlRequest
+import net.adoptium.api.v3.dataSources.github.CachedGitHubHtmlClient
+import org.apache.http.HttpVersion
+import org.apache.http.entity.StringEntity
+import org.apache.http.message.BasicHttpResponse
 import org.jboss.weld.junit5.auto.AddPackages
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -76,7 +85,7 @@ class AdoptReleaseNotesTest : BaseTest() {
             val summary = GHReleaseSummary(id, "2023-01-01T00:00:00Z", "2023-01-01T00:00:00Z", release.release_name, GHAssetsSummary(1))
             coEvery { repository.getReleaseById(id) } returns ReleaseResult(listOf(release))
             coEvery { repository.getReleaseFilesForId(id) } returns listOf(GHAsset("release-notes.json", 0, "a-download-url", 0, ""))
-            coEvery { htmlClient.getUrl("a-download-url") } returns "[]"
+            coEvery { htmlClient.getUrlUpdatedSince("a-download-url", any()) } returns "[]"
 
             for (updatedSummary in listOf(summary, summary.copy(updatedAt = "2023-01-02T00:00:00Z", releaseAssets = GHAssetsSummary(0)))) {
                 coEvery { repository.getSummary(17) } returns GHRepositorySummary(GHReleasesSummary(listOf(updatedSummary), PageInfo(false, null)))
@@ -89,7 +98,7 @@ class AdoptReleaseNotesTest : BaseTest() {
                 Assertions.assertEquals(1, persistence.releaseNotes.size)
             }
 
-            coVerify(exactly = 2) { htmlClient.getUrl("a-download-url") }
+            coVerify(exactly = 2) { htmlClient.getUrlUpdatedSince("a-download-url", any()) }
 
             coEvery { repository.getSummary(17) } returns GHRepositorySummary(GHReleasesSummary(listOf(summary.copy(releaseAssets = GHAssetsSummary(0))), PageInfo(false, null)))
             builder.incrementalUpdate(
@@ -97,7 +106,46 @@ class AdoptReleaseNotesTest : BaseTest() {
                 onReleasesUpdated = { notes.updateReleaseNotes(AdoptRepos(emptyList()).addAll(it)) },
                 gitHubMetadataSupplier = { GHReleaseMetadata(0, it) }
             )
-            coVerify(exactly = 2) { htmlClient.getUrl("a-download-url") }
+            coVerify(exactly = 2) { htmlClient.getUrlUpdatedSince("a-download-url", any()) }
+        }
+    }
+
+    @Test
+    fun `release notes replaced at the same url bypass the recently checked cache`() {
+        runBlocking {
+            val release = Release(
+                "release-id", ReleaseType.ga, "release-link", "jdk-17.0.6+10",
+                DateTime("2023-01-01T00:00:00Z"), DateTime("2023-01-01T00:00:00Z"),
+                emptyArray(), 0, Vendor.eclipse, VersionData(17, 0, 6, null, 1, 10, null, "")
+            )
+            val repo = AdoptRepos(emptyList()).addAll(listOf(release))
+            val repository: AdoptRepository = mockk()
+            val persistence = InMemoryApiPersistence(repo, mockk())
+
+            val url = "https://github.com/a/b/releases/download/x/release-notes.json"
+            val now = TimeSource.now()
+            val lastModified = CachedGitHubHtmlClient.LAST_MODIFIED_PARSER.format(now.minusDays(15))
+            val store = InMemoryInternalDbStore()
+            // Cached an hour ago: well inside the one day window where the plain cache would never revalidate
+            store.putCachedWebpage(url, lastModified, now.minusHours(1), "[]").join()
+
+            val http = mockk<UpdaterHtmlClient>()
+            val newBody = """[{"id":"JDK-1","title":"t"}]"""
+            coEvery { http.getFullResponse(UrlRequest(url, lastModified)) } returns
+                BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "OK").apply { entity = StringEntity(newBody) }
+
+            val notes = AdoptReleaseNotes(repository, persistence, CachedGitHubHtmlClient(store, http))
+
+            // Asset was replaced 30 minutes ago, after the cached copy was validated
+            coEvery { repository.getReleaseFilesForId(GitHubId(release.id)) } returns
+                listOf(GHAsset("release-notes.json", 0, url, 0, now.minusMinutes(30).toString()))
+            notes.updateReleaseNotes(repo)
+            Assertions.assertEquals("JDK-1", persistence.releaseNotes.single().release_notes.single().id)
+            coVerify(exactly = 1) { http.getFullResponse(any()) }
+
+            // Same asset timestamp again: the cache was validated after it, so no further request is made
+            notes.updateReleaseNotes(repo)
+            coVerify(exactly = 1) { http.getFullResponse(any()) }
         }
     }
 
@@ -106,25 +154,41 @@ class AdoptReleaseNotesTest : BaseTest() {
         runBlocking {
             val persistence = InMemoryApiPersistence(adoptRepos, mockk())
             val htmlClient: GitHubHtmlClient = mockk()
-            coEvery { htmlClient.getUrl("a-download-url") } returns "[]"
+            coEvery { htmlClient.getUrlUpdatedSince("a-download-url", any()) } returns "[]"
             val notes = AdoptReleaseNotes(addReleaseNotesFiles(adoptRepository), persistence, htmlClient)
             notes.updateReleaseNotes(adoptRepos)
             val count = persistence.releaseNotes.size
             Assertions.assertTrue(count > 1)
             Assertions.assertTrue(persistence.releaseNotes.all { it.release_notes.isEmpty() })
 
-            coEvery { htmlClient.getUrl("a-download-url") } coAnswers { gitHubHtmlClient().getUrl("a-download-url") }
+            coEvery { htmlClient.getUrlUpdatedSince("a-download-url", any()) } coAnswers { gitHubHtmlClient().getUrl("a-download-url") }
             notes.updateReleaseNotes(adoptRepos)
             Assertions.assertEquals(count, persistence.releaseNotes.size)
             Assertions.assertTrue(persistence.releaseNotes.all { it.release_notes.size == 1 })
 
             val storedNotes = persistence.releaseNotes.toList()
             for (contents in listOf("invalid-json", null)) {
-                coEvery { htmlClient.getUrl("a-download-url") } returns contents
+                coEvery { htmlClient.getUrlUpdatedSince("a-download-url", any()) } returns contents
                 notes.updateReleaseNotes(adoptRepos)
                 Assertions.assertEquals(storedNotes, persistence.releaseNotes)
             }
-            coVerify(exactly = count * 4) { htmlClient.getUrl("a-download-url") }
+            coVerify(exactly = count * 4) { htmlClient.getUrlUpdatedSince("a-download-url", any()) }
+        }
+    }
+
+    @Test
+    fun `cancellation is rethrown and not swallowed`(adoptRepository: AdoptRepository) {
+        runBlocking {
+            val persistence = InMemoryApiPersistence(adoptRepos, mockk())
+            val htmlClient: GitHubHtmlClient = mockk()
+            coEvery { htmlClient.getUrlUpdatedSince(any(), any()) } throws CancellationException("coroutine cancelled")
+            val notes = AdoptReleaseNotes(addReleaseNotesFiles(adoptRepository), persistence, htmlClient)
+
+            Assertions.assertThrows(CancellationException::class.java) {
+                runBlocking {
+                    notes.updateReleaseNotes(adoptRepos)
+                }
+            }
         }
     }
 
