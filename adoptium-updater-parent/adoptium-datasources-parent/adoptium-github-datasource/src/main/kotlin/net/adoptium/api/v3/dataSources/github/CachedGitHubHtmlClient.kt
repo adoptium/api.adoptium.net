@@ -54,7 +54,9 @@ open class CachedGitHubHtmlClient @Inject constructor(
 
     // List of urls to be refreshed in the background
     private val workList = LinkedBlockingQueue<UrlRequest>()
-    private val keyLocks = ConcurrentHashMap<String, Mutex>()
+    private class KeyLock(val mutex: Mutex = Mutex(), var holders: Int = 0)
+
+    private val keyLocks = ConcurrentHashMap<String, KeyLock>()
 
     init {
         // Do refresh in the background
@@ -114,41 +116,11 @@ open class CachedGitHubHtmlClient @Inject constructor(
         }
     }
 
-    // Fetch and write are serialized per key so an older response cannot overwrite a newer one.
     private suspend fun get(request: UrlRequest, cacheKey: String = request.url, digest: String? = null, accessedAt: ZonedDateTime? = TimeSource.now()): String? {
-        return keyLocks.computeIfAbsent(cacheKey) { Mutex() }.withLock {
-            fetchAndStore(request, cacheKey, digest, accessedAt)
-        }
-    }
-
-    private suspend fun fetchAndStore(request: UrlRequest, cacheKey: String, digest: String?, accessedAt: ZonedDateTime?): String? {
         // Retry up to 10 times
         for (retryCount in 1..10) {
             try {
-                LOGGER.debug("Getting  ${request.url} ${request.lastModified}")
-                val response = updaterHtmlClient.getFullResponse(request)
-
-                if (response?.statusLine?.statusCode == 304) {
-                    check(request.lastModified != null) { "Unexpected 304 for an uncached asset" }
-                    internalDbStore.updateCheckedTime(cacheKey, TimeSource.now())
-                    // asset has not updated
-                    return null
-                }
-
-                val body = if (digest != null && response != null) {
-                    val bytes = response.entity.content.use { it.readBytes() }
-                    val actualDigest = "sha256:" + HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes))
-                    check(actualDigest.equals(digest, ignoreCase = true)) { "Asset digest mismatch for ${request.url}" }
-                    bytes.toString(Charsets.UTF_8)
-                } else {
-                    DefaultUpdaterHtmlClient.extractBody(response)
-                } ?: return null
-
-                val lastModified = response?.getFirstHeader("Last-Modified")?.value
-
-                internalDbStore.putCachedWebpage(cacheKey, lastModified, TimeSource.now(), body, accessedAt)
-                LOGGER.debug("Got ${request.url}")
-                return body
+                return withKeyLock(cacheKey) { fetchAndStore(request, cacheKey, digest, accessedAt) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -158,6 +130,44 @@ open class CachedGitHubHtmlClient @Inject constructor(
         }
 
         return null
+    }
+
+    // Fetch and write are serialized per key so an older response cannot overwrite a newer one.
+    // The lock is released between retries and dropped from the map once unused.
+    private suspend fun <T> withKeyLock(key: String, block: suspend () -> T): T {
+        val lock = keyLocks.compute(key) { _, existing -> (existing ?: KeyLock()).also { it.holders++ } }!!
+        try {
+            return lock.mutex.withLock { block() }
+        } finally {
+            keyLocks.compute(key) { _, existing -> if (--existing!!.holders == 0) null else existing }
+        }
+    }
+
+    private suspend fun fetchAndStore(request: UrlRequest, cacheKey: String, digest: String?, accessedAt: ZonedDateTime?): String? {
+        LOGGER.debug("Getting  ${request.url} ${request.lastModified}")
+        val response = updaterHtmlClient.getFullResponse(request)
+
+        if (response?.statusLine?.statusCode == 304) {
+            check(request.lastModified != null) { "Unexpected 304 for an uncached asset" }
+            internalDbStore.updateCheckedTime(cacheKey, TimeSource.now())
+            // asset has not updated
+            return null
+        }
+
+        val body = if (digest != null && response != null) {
+            val bytes = response.entity.content.use { it.readBytes() }
+            val actualDigest = "sha256:" + HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes))
+            check(actualDigest.equals(digest, ignoreCase = true)) { "Asset digest mismatch for ${request.url}" }
+            bytes.toString(Charsets.UTF_8)
+        } else {
+            DefaultUpdaterHtmlClient.extractBody(response)
+        } ?: return null
+
+        val lastModified = response?.getFirstHeader("Last-Modified")?.value
+
+        internalDbStore.putCachedWebpage(cacheKey, lastModified, TimeSource.now(), body, accessedAt).join()
+        LOGGER.debug("Got ${request.url}")
+        return body
     }
 
     fun getQueueLength(): Int {

@@ -538,12 +538,11 @@ class V3Updater @Inject constructor(
         return GitHubDownloadStatsCalculator
             .getStats(repo)
             .filter { newEntry ->
-                val lastDownloads = database.getLatestGithubStatsForFeatureVersion(newEntry.feature_version)?.downloads ?: 0
                 val newReleases = repo.repos.getValue(newEntry.feature_version).releases
 
-                // The stored snapshot is what this update replaces. Unlike the saved stats it includes
-                // incremental refreshes since the last full update, and unlike the API view it keeps
-                // releases whose binaries were all excluded, so baseline and allowance share one snapshot.
+                // The stored snapshot is what this update replaces. Saved stats are not used: a failed stats
+                // write after a published omission would leave them stale and reject healthy rebuilds.
+                // Unlike the API view the snapshot keeps releases whose binaries were all excluded.
                 val stored = database.readReleaseData(newEntry.feature_version).releases.getReleases()
                     .filter { it.vendor == Vendor.getDefault() }
                     .toList()
@@ -551,13 +550,13 @@ class V3Updater @Inject constructor(
                 val omittedEaDownloads = stored
                     .filter { it.release_type == ReleaseType.ea && !newReleases.hasReleaseId(GitHubId(it.id)) }
                     .sumOf { it.download_count }
-                val baselineDownloads = maxOf(lastDownloads, storedDownloads)
+                val baselineDownloads = storedDownloads
                 // Full builds may omit failed EAs without invalidating an otherwise
                 // healthy rebuild. Do not exempt losses from retained EAs or GAs.
                 val comparableDownloads = newEntry.downloads + omittedEaDownloads
 
                 if (baselineDownloads > comparableDownloads) {
-                    LOGGER.error("Stats for ${newEntry.feature_version} are lower than the latest in the db $baselineDownloads (saved: $lastDownloads, stored: $storedDownloads) > $comparableDownloads (omitted EA downloads: $omittedEaDownloads)")
+                    LOGGER.error("Stats for ${newEntry.feature_version} are lower than the latest in the db $baselineDownloads > $comparableDownloads (omitted EA downloads: $omittedEaDownloads)")
                 }
                 return@filter baselineDownloads > comparableDownloads
             }

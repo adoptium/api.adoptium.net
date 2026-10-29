@@ -252,11 +252,11 @@ described under [Assumptions and scope](#assumptions-and-scope).
   result removes them. Failed EAs and policy exclusions are both absent from the
   selected full-rebuild result, although their reasons for omission differ.
 - The full-update statistics guard rejects a result whose download total falls
-  below the greater of the last saved statistic and the total of the persisted
-  unfiltered snapshot being replaced, after allowing for persisted default-vendor
-  EAs absent from the rebuild. Incremental refreshes can raise download counts
-  between saved statistics, so the saved figure alone could let EA growth mask a
-  GA loss. The persisted snapshot supplies both baseline and allowance because
+  below the total of the persisted unfiltered snapshot being replaced, after
+  allowing for persisted default-vendor EAs absent from the rebuild. Saved
+  statistics are not consulted: a failed stats write after a published omission
+  would leave them stale and block healthy rebuilds, and they can lag incremental
+  refreshes. The persisted snapshot supplies both baseline and allowance because
   it keeps internal releases with no binaries that reload filtering hides from
   the in-memory catalogue. Omitted EAs must not indirectly block publication
   through their missing download counts. Losses from retained EAs and GAs are
@@ -384,7 +384,7 @@ commit `9c865f39` changes only the CodeQL workflow, so this comparison still hol
 | Area | Upstream at `d9836348` | Current code |
 | --- | --- | --- |
 | EA failure during a full update | An EA mapping/required-metadata failure or asset-pagination exception aborts that full-build attempt. | Log and omit the entire failed EA, including previous splits, while rebuilding other releases. GA failures still abort. |
-| Full-update download-count guard | Reject a feature-version download-total decrease against the last saved statistic, without allowing for omitted EAs. | Compare against the greater of the saved statistic and the persisted unfiltered snapshot total, allowing the download counts of persisted EAs now absent from the rebuild. Retained-EA and GA losses receive no allowance. |
+| Full-update download-count guard | Reject a feature-version download-total decrease against the last saved statistic, without allowing for omitted EAs. | Compare against the persisted unfiltered snapshot total, allowing the download counts of persisted EAs now absent from the rebuild. Retained-EA and GA losses receive no allowance. |
 | Latest EA polling | An unchanged EA outside the seven-day refresh window is not necessarily fetched. | Select the latest known EA per vendor, repository and feature version even when its timestamp and asset count are unchanged. Existing upload-grace and exclusion rules still apply. |
 | Feature-version discovery | Incremental updates visit only versions in the stored catalogue. | Visit the union of stored and supported versions, allowing an EA-only version omitted by a full rebuild to recover incrementally. |
 | Older, recently edited EAs | Repeatedly refresh them while their edit timestamp remains within seven days. | An actual timestamp change still triggers refresh, but recent edits alone no longer repeatedly select older, already-known EAs. Recent publication still does. |

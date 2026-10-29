@@ -489,7 +489,7 @@ class AdoptReleaseMapperTest : BaseTest() {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["ea-growth-masks-ga-loss", "stored-ea-hidden-from-api-view"])
+    @ValueSource(strings = ["ea-growth-masks-ga-loss", "stored-ea-hidden-from-api-view", "stale-saved-stats"])
     fun `full update stats guard uses the stored snapshot`(scenario: String) = runBlocking {
         assumeTrue(ReleaseIncludeFilter(TimeSource.now(), ReleaseFilterType.ALL).filterVendor(Vendor.getDefault()))
         val timestamp = TimeSource.now().minusDays(1)
@@ -500,10 +500,14 @@ class AdoptReleaseMapperTest : BaseTest() {
         fun repo(releases: List<Release>) = AdoptRepos(listOf(FeatureRelease(8, Releases(releases))))
         // Saved statistics come from the last full update. Later incremental refreshes only reach the
         // stored snapshot, and releases without binaries are stored but hidden from the in-memory view.
-        val savedStats = repo(listOf(release("ga", ReleaseType.ga, 90), release("ea", ReleaseType.ea, 10)))
+        // A stale saved total (failed stats write after an EA omission) must not block a rebuild.
+        val stale = scenario == "stale-saved-stats"
+        val savedStats = repo(listOf(release("ga", ReleaseType.ga, 90), release("ea", ReleaseType.ea, if (stale) 30 else 10)))
         val masked = scenario == "ea-growth-masks-ga-loss"
         val stored = if (masked) {
             repo(listOf(release("ga", ReleaseType.ga, 90), release("ea", ReleaseType.ea, 50)))
+        } else if (stale) {
+            repo(listOf(release("ga", ReleaseType.ga, 90)))
         } else {
             repo(listOf(release("ga", ReleaseType.ga, 90), release("ea", ReleaseType.ea, 10)))
         }

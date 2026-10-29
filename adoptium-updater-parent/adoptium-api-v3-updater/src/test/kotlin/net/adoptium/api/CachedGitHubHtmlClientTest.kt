@@ -7,6 +7,8 @@ import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -137,6 +139,29 @@ class CachedGitHubHtmlClientTest {
         assertNotNull(accessedAt)
         assertTrue(!accessedAt!!.isBefore(now))
         assertEquals(accessedAt, memory.peekCachedWebpage("direct")!!.lastAccessed)
+    }
+
+    @Test
+    fun `fetch does not return until its cache write completes`() = runBlocking {
+        val memory = InMemoryInternalDbStore()
+        val gate = CompletableDeferred<Unit>()
+        val store = object : InternalDbStore by memory {
+            override fun putCachedWebpage(url: String, lastModified: String?, date: ZonedDateTime, data: String?, accessedAt: ZonedDateTime?): Job {
+                return kotlinx.coroutines.GlobalScope.launch {
+                    gate.await()
+                    memory.putCachedWebpage(url, lastModified, date, data, accessedAt).join()
+                }
+            }
+        }
+        val http = mockk<UpdaterHtmlClient>()
+        coEvery { http.getFullResponse(UrlRequest("ordered")) } returns response("new")
+        val result = this.async { CachedGitHubHtmlClient(store, http).getUrl("ordered") }
+
+        delay(200)
+        assertTrue(!result.isCompleted)
+        gate.complete(Unit)
+        assertEquals("new", withTimeout(5000) { result.await() })
+        assertEquals("new", memory.peekCachedWebpage("ordered")!!.data)
     }
 
     @Test
