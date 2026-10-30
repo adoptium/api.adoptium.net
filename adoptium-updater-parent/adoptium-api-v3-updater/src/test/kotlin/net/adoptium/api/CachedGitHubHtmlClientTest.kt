@@ -14,6 +14,9 @@ import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.UrlRequest
 import net.adoptium.api.v3.dataSources.github.CachedGitHubHtmlClient
 import net.adoptium.api.v3.dataSources.mongo.CacheDbEntry
+import org.apache.http.HttpVersion
+import org.apache.http.entity.StringEntity
+import org.apache.http.message.BasicHttpResponse
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.DynamicTest
@@ -94,6 +97,26 @@ class CachedGitHubHtmlClientTest {
         assertNull(cacheDbEntry.lastChecked)
     }
 
+    @Test
+    fun `cached failed fetch is retried even when recently checked`() = runBlocking {
+        val store = InMemoryInternalDbStore()
+        // A 404 / exhausted retries is cached as a null body with a fresh lastChecked
+        store.putCachedWebpage("missing", null, TimeSource.now(), null).join()
+        val http = mockk<UpdaterHtmlClient>()
+        coEvery { http.getFullResponse(UrlRequest("missing")) } returnsMany listOf(
+            null,
+            BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "OK").apply { entity = StringEntity("now available") }
+        )
+        val client = CachedGitHubHtmlClient(store, http)
+        val updatedAt = TimeSource.now().minusDays(1)
+
+        assertNull(client.getUrlUpdatedSince("missing", updatedAt))
+        assertEquals("now available", client.getUrlUpdatedSince("missing", updatedAt))
+        assertEquals("now available", store.getCachedWebpage("missing")!!.data)
+        // Now a valid cached response checked after updatedAt: no further request
+        assertEquals("now available", client.getUrlUpdatedSince("missing", updatedAt))
+        coVerify(exactly = 2) { http.getFullResponse(any()) }
+    }
     private fun performRequest(modifiedTime: String?, lastChecked: ZonedDateTime, expectUpdate: Boolean) {
         runBlocking {
             val internalDbStore = InMemoryInternalDbStore()
@@ -101,6 +124,9 @@ class CachedGitHubHtmlClientTest {
 
             val updaterHtmlClient: UpdaterHtmlClient = mockk()
             coEvery { updaterHtmlClient.get("foo") }.returns("bar")
+            coEvery { updaterHtmlClient.getFullResponse(any()) }.returns(
+                BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "OK").apply { entity = StringEntity("bar") }
+            )
             val client = CachedGitHubHtmlClient(internalDbStore, updaterHtmlClient)
 
             client.getUrl("foo")

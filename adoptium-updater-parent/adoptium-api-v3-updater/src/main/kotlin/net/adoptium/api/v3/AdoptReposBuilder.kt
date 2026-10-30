@@ -32,11 +32,12 @@ class AdoptReposBuilder @Inject constructor(
     suspend fun incrementalUpdate(
         toUpdate: Set<String>,
         repo: AdoptRepos,
+        onReleasesUpdated: suspend (List<Release>) -> Unit = {},
         gitHubMetadataSupplier: suspend (GitHubId) -> GHReleaseMetadata?,
     ): AdoptRepos {
         val updated = repo
             .repos
-            .map { entry -> getUpdatedFeatureRelease(toUpdate, entry, repo, gitHubMetadataSupplier) }
+            .map { entry -> getUpdatedFeatureRelease(toUpdate, entry, repo, onReleasesUpdated, gitHubMetadataSupplier) }
 
         return AdoptRepos(updated)
     }
@@ -45,6 +46,7 @@ class AdoptReposBuilder @Inject constructor(
         toUpdate: Set<String>,
         entry: Map.Entry<Int, FeatureRelease>,
         repo: AdoptRepos,
+        onReleasesUpdated: suspend (List<Release>) -> Unit,
         gitHubMetadataSupplier: suspend (GitHubId) -> GHReleaseMetadata?,
     ): FeatureRelease {
         val summary = adoptRepository.getSummary(entry.key)
@@ -67,14 +69,13 @@ class AdoptReposBuilder @Inject constructor(
             val youngReleases = getYoungReleases(summary)
             val explicitlyAdded = getExplicitlyAddedReleases(summary, toUpdate)
 
-            pruned
-                .add(newReleases)
-                .add(updatedReleases)
-                .add(youngReleases)
-                .add(explicitlyAdded)
-                .add(binaryCountChanged)
+            val updatedList = (newReleases + updatedReleases + youngReleases + explicitlyAdded + binaryCountChanged).associateBy { it.id }.values.toList()
+            onReleasesUpdated(updatedList)
+
+            pruned.add(updatedList)
         } else {
             val newReleases = getNewReleases(summary, FeatureRelease(entry.key, emptyList()))
+            onReleasesUpdated(newReleases)
             FeatureRelease(entry.key, Releases(newReleases))
         }
     }
