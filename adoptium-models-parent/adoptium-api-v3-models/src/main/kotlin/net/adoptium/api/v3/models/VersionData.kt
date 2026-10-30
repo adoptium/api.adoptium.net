@@ -1,5 +1,7 @@
 package net.adoptium.api.v3.models
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import jakarta.json.bind.annotation.JsonbTransient
 import net.adoptium.api.v3.dataSources.models.Releases
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 
@@ -9,6 +11,12 @@ class VersionData : Comparable<VersionData> {
     val minor: Int
     val security: Int
     val patch: Int?
+
+    // Elements after $PATCH, reserved by JEP 322 for downstream use. i.e [2] for 25.0.5.0.2
+    // Hold off displaying these in the API for now
+    @get:JsonbTransient
+    @get:Schema(hidden = true)
+    val additional_version_numbers: List<Int>
     val pre: String?
     val adopt_build_number: Int?
 
@@ -30,12 +38,14 @@ class VersionData : Comparable<VersionData> {
         optional: String?,
         openjdk_version: String,
         semver: String? = null,
-        patch: Int? = null
+        patch: Int? = null,
+        additional_version_numbers: List<Int>? = null
     ) {
         this.major = major
         this.minor = minor
         this.security = security
         this.patch = patch
+        this.additional_version_numbers = additional_version_numbers ?: emptyList()
         this.pre = if (pre?.isNotEmpty() == true) pre else null
         this.adopt_build_number = if (adopt_build_number != null && adopt_build_number != 0) adopt_build_number else null
         this.build = build
@@ -43,6 +53,17 @@ class VersionData : Comparable<VersionData> {
         this.openjdk_version = openjdk_version
         this.semver = semver ?: formSemver()
     }
+
+    // Complete JEP 322 version number sequence, FEATURE.INTERIM.UPDATE.PATCH followed by any downstream elements
+    @get:JsonIgnore
+    @get:JsonbTransient
+    @get:Schema(hidden = true)
+    val version_numbers: List<Int>
+        get() = if (additional_version_numbers.isEmpty()) {
+            listOfNotNull(major, minor, security, patch)
+        } else {
+            listOf(major, minor, security, patch ?: 0) + additional_version_numbers
+        }
 
     // i.e 11.0.1+11.1
     fun formSemver(): String {
@@ -81,6 +102,7 @@ class VersionData : Comparable<VersionData> {
         result = 31 * result + minor
         result = 31 * result + security
         result = 31 * result + (patch?.hashCode() ?: 0)
+        result = 31 * result + additional_version_numbers.hashCode()
         result = 31 * result + (pre?.hashCode() ?: 0)
         result = 31 * result + (adopt_build_number ?: 0)
         result = 31 * result + openjdk_version.hashCode()
@@ -110,6 +132,7 @@ class VersionData : Comparable<VersionData> {
         if (minor != other.minor) return false
         if (security != other.security) return false
         if (patch != other.patch) return false
+        if (additional_version_numbers != other.additional_version_numbers) return false
         if (pre != other.pre) return false
         if (build != other.build) return false
         if (optional != other.optional) return false
@@ -122,14 +145,38 @@ class VersionData : Comparable<VersionData> {
     }
 
     override fun toString(): String {
-        return "VersionData(major=$major, minor=$minor, security=$security, patch=$patch, pre=$pre, adopt_build_number=$adopt_build_number, semver='$semver', openjdk_version='$openjdk_version', build=$build, optional=$optional)"
+        return "VersionData(major=$major, minor=$minor, security=$security, patch=$patch, additional_version_numbers=$additional_version_numbers, pre=$pre, adopt_build_number=$adopt_build_number, semver='$semver', openjdk_version='$openjdk_version', build=$build, optional=$optional)"
     }
 
     companion object {
+        // Pointwise numeric comparison, where missing elements sort before present ones (JEP 322)
+        val ADDITIONAL_NUMBERS_COMPARATOR = Comparator<VersionData> { a, b ->
+            val left = a.additional_version_numbers
+            val right = b.additional_version_numbers
+            for (i in 0 until minOf(left.size, right.size)) {
+                val result = left[i].compareTo(right[i])
+                if (result != 0) return@Comparator result
+            }
+            left.size.compareTo(right.size)
+        }
+
+        private val VNUM_PREFIX = Regex("""^(?:jdk-)?([0-9]+(?:\.[0-9]+)*)""")
+
+        // Numeric elements of the VNUM at the start of a version string, i.e 25.0.5.0.2+1 -> [25, 0, 5, 0, 2]
+        fun versionNumbersOf(openjdkVersion: String): List<Int>? {
+            val match = VNUM_PREFIX.find(openjdkVersion) ?: return null
+            return try {
+                match.groupValues[1].split(".").map { it.toInt() }
+            } catch (_: NumberFormatException) {
+                null
+            }
+        }
+
         val COMPARATOR = compareBy<VersionData> { it.major }
             .thenBy { it.minor }
             .thenBy { it.security }
             .thenBy { it.patch }
+            .thenComparing(ADDITIONAL_NUMBERS_COMPARATOR)
             .then(Releases.PRE_SORTER)
             .thenBy { it.build }
             .thenBy { it.adopt_build_number }
