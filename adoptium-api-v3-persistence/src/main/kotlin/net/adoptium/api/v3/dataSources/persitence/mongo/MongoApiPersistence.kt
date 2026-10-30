@@ -1,5 +1,6 @@
 package net.adoptium.api.v3.dataSources.persitence.mongo
 
+import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.kotlin.client.coroutine.MongoCollection
@@ -60,7 +61,19 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     private val releaseInfoCollection: MongoCollection<ReleaseInfo> = createCollection(mongoClient.getDatabase(), RELEASE_INFO_DB)
     private val updateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), UPDATE_TIME_DB)
     private val cdxaUpdateTimeCollection: MongoCollection<UpdatedInfo> = createCollection(mongoClient.getDatabase(), CDXAS_UPDATE_TIME_DB)
-    private val githubReleaseNotesCollection: MongoCollection<ReleaseNotes> = createCollection(mongoClient.getDatabase(), GH_RELEASE_NOTES)
+    private val githubReleaseNotesCollection: MongoCollection<ReleaseNotes> = createCollection(
+        mongoClient.getDatabase(),
+        GH_RELEASE_NOTES,
+        ensureIndexes = { collection ->
+            try {
+                runBlocking {
+                    collection.createIndex(Document("id", 1), IndexOptions().unique(true))
+                }
+            } catch (e: Exception) {
+                LOGGER.warn("Failed to create index for releaseNotes: ${e.message}")
+            }
+        }
+    )
     private val client: MongoClient = mongoClient
 
     companion object {
@@ -335,8 +348,11 @@ open class MongoApiPersistence @Inject constructor(mongoClient: MongoClient) : M
     }
 
     override suspend fun putReleaseNote(releaseNotes: ReleaseNotes) {
-        githubReleaseNotesCollection.deleteMany(Document("id", releaseNotes.id))
-        githubReleaseNotesCollection.insertOne(releaseNotes)
+        githubReleaseNotesCollection.replaceOne(
+            Document("id", releaseNotes.id),
+            releaseNotes,
+            ReplaceOptions().upsert(true)
+        )
     }
 
     override suspend fun getReleaseNotes(vendor: Vendor, releaseName: String): ReleaseNotes? {
