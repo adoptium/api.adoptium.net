@@ -5,8 +5,11 @@ import io.mockk.coVerify
 import io.mockk.confirmVerified
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import net.adoptium.api.testDoubles.InMemoryInternalDbStore
 import net.adoptium.api.v3.JsonMapper
 import net.adoptium.api.v3.TimeSource
@@ -14,8 +17,13 @@ import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.UrlRequest
 import net.adoptium.api.v3.dataSources.github.CachedGitHubHtmlClient
 import net.adoptium.api.v3.dataSources.mongo.CacheDbEntry
+import net.adoptium.api.v3.dataSources.mongo.InternalDbStore
+import org.apache.http.HttpVersion
+import org.apache.http.entity.StringEntity
+import org.apache.http.message.BasicHttpResponse
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
@@ -92,7 +100,61 @@ class CachedGitHubHtmlClientTest {
 
         assertEquals("foo", cacheDbEntry.url)
         assertNull(cacheDbEntry.lastChecked)
+        assertNull(cacheDbEntry.lastAccessed)
     }
+
+    @Test
+    fun `uncached demand fetch initializes usage`() = runBlocking {
+        val store = InMemoryInternalDbStore()
+        val http = mockk<UpdaterHtmlClient>()
+        coEvery { http.getFullResponse(UrlRequest("demand")) } returns
+            BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "OK").apply { entity = StringEntity("body") }
+        val before = TimeSource.now()
+        assertEquals("body", CachedGitHubHtmlClient(store, http).getUrl("demand"))
+        assertEquals(0L, store.evictUnusedCache(before.minusDays(30)))
+        assertTrue(!store.getCachedWebpage("demand")!!.lastAccessed!!.isBefore(before))
+    }
+
+    @TestFactory
+    fun `background validation does not prolong demand usage`(): Stream<DynamicTest> = listOf(200, 304).map { status ->
+        DynamicTest.dynamicTest("HTTP $status preserves usage") {
+            runBlocking {
+                val backing = InMemoryInternalDbStore()
+                val now = TimeSource.now()
+                val modified = CachedGitHubHtmlClient.LAST_MODIFIED_PARSER.format(now)
+                backing.putCachedWebpage("background", modified, now.minusDays(2), "old", now.minusDays(31)).join()
+                val releaseResponse = CompletableDeferred<Unit>()
+                val validated = CompletableDeferred<Unit>()
+                var demandUsage: ZonedDateTime? = null
+                val store = object : InternalDbStore by backing {
+                    override suspend fun getCachedWebpage(url: String): CacheDbEntry? =
+                        backing.getCachedWebpage(url)?.also { demandUsage = it.lastAccessed }
+
+                    override fun putCachedWebpage(url: String, lastModified: String?, date: ZonedDateTime, data: String?, accessedAt: ZonedDateTime?): Job {
+                        assertNull(accessedAt, "Background HTTP 200 must not be a demand write")
+                        return backing.putCachedWebpage(url, lastModified, date, data, accessedAt)
+                            .also { validated.complete(Unit) }
+                    }
+
+                    override suspend fun updateCheckedTime(url: String, dateTime: ZonedDateTime) {
+                        backing.updateCheckedTime(url, dateTime)
+                        validated.complete(Unit)
+                    }
+                }
+                val http = mockk<UpdaterHtmlClient>()
+                coEvery { http.getFullResponse(UrlRequest("background", modified)) } coAnswers {
+                    releaseResponse.await()
+                    BasicHttpResponse(HttpVersion.HTTP_1_1, status, "OK").apply { entity = StringEntity("new") }
+                }
+                assertEquals("old", CachedGitHubHtmlClient(store, http).getUrl("background"))
+                assertTrue(!demandUsage!!.isBefore(now), "Cache hits are demand reads")
+                releaseResponse.complete(Unit)
+                withTimeout(5000) { validated.await() }
+                // The refresh has finished; usage must still be exactly the original demand touch.
+                assertEquals(1L, backing.evictUnusedCache(demandUsage!!))
+            }
+        }
+    }.stream()
 
     private fun performRequest(modifiedTime: String?, lastChecked: ZonedDateTime, expectUpdate: Boolean) {
         runBlocking {
