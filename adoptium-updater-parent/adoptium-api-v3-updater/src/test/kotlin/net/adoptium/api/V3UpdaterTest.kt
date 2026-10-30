@@ -1,9 +1,12 @@
 package net.adoptium.api
 
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.slot
 import io.quarkus.runtime.ApplicationLifecycleManager
 import io.quarkus.runtime.Quarkus
 import kotlinx.coroutines.runBlocking
@@ -48,6 +51,8 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 import net.adoptium.api.v3.dataSources.SortMethod
 import net.adoptium.api.v3.dataSources.SortOrder
 import java.util.function.Predicate
@@ -280,6 +285,42 @@ class V3UpdaterTest {
         runBlocking {
             val checksum = V3Updater.calculateChecksum(BaseTest.adoptRepos)
             assertTrue(checksum.length == 44)
+        }
+    }
+
+    @Test
+    fun `scheduled incremental update refreshes notes for unchanged releases`() {
+        runBlocking {
+            val repo = AdoptReposTestDataGenerator.generate()
+            val builder: AdoptReposBuilder = mockk()
+            val apiDataStore: APIDataStore = mockk()
+            val persistence = InMemoryApiPersistence(repo, mockk())
+            val stats: StatsInterface = mockk()
+            val resolver: ReleaseVersionResolver = mockk()
+            val notes: AdoptReleaseNotes = mockk()
+            val versions: UpdatableVersionSupplier = mockk()
+            val executor: ScheduledExecutorService = mockk()
+            val task = slot<Runnable>()
+            coEvery { builder.build(any()) } returns repo
+            coEvery { builder.incrementalUpdate(any(), any(), any(), any()) } coAnswers {
+                val onReleasesUpdated = thirdArg<suspend (List<Release>) -> Unit>()
+                onReleasesUpdated(repo.allReleases.getReleases().toList())
+                repo
+            }
+            every { apiDataStore.loadDataFromDb(true, false) } returns repo
+            coEvery { stats.update(any()) } returns Unit
+            coEvery { resolver.formReleaseInfo(any()) } returns mockk()
+            coEvery { notes.updateReleaseNotes(any()) } returns Unit
+            coEvery { versions.updateVersions() } returns Unit
+            every { executor.scheduleWithFixedDelay(capture(task), 1L, 6L, TimeUnit.MINUTES) } returns mockk()
+
+            val updater = V3Updater(builder, mockk(), apiDataStore, persistence, stats, resolver, notes, versions)
+            Assertions.assertEquals(repo, updater.runUpdate(repo, AtomicBoolean(false), executor))
+            clearMocks(notes, answers = false)
+
+            task.captured.run()
+
+            coVerify(exactly = 1) { notes.updateReleaseNotes(repo) }
         }
     }
 
