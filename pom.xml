@@ -16,7 +16,7 @@
     <!-- Keep all these in sync with adoptium-api-versions -->
     <properties>
         <coroutine.version>1.7.1</coroutine.version>
-        <jacoco.version>0.8.15</jacoco.version>
+        <jacoco.version>0.8.16</jacoco.version>
         <jdk.version>25</jdk.version>
         <kotlin.compiler.jvmTarget>25</kotlin.compiler.jvmTarget>
         <kotlin.version>2.4.21</kotlin.version>
