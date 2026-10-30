@@ -6,6 +6,7 @@ import net.adoptium.api.v3.dataSources.models.Releases
 import net.adoptium.api.v3.models.VersionData
 import net.adoptium.api.v3.parser.VersionParser
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DynamicTest
@@ -192,6 +193,7 @@ class VersionParserTest {
         assertEquals(listOf(25, 0, 5, 0, 2), copy.version_numbers)
         assertEquals(listOf(2), copy.additional_version_numbers)
         assertTrue(mapper.writeValueAsString(parsed).contains("\"additional_version_numbers\":[2]"))
+        assertFalse(mapper.readTree(mapper.writeValueAsString(parsed)).has("version_numbers"))
         assertEquals(emptyList<Int>(), mapper.readValue("""{"major":11,"minor":0,"security":9,"build":1,"openjdk_version":"11.0.9+1","semver":"11.0.9+1"}""", VersionData::class.java).additional_version_numbers)
     }
 
