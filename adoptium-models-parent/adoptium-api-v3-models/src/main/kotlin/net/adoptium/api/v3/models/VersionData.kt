@@ -1,6 +1,7 @@
 package net.adoptium.api.v3.models
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import jakarta.json.bind.annotation.JsonbTransient
 import net.adoptium.api.v3.dataSources.models.Releases
 import org.eclipse.microprofile.openapi.annotations.media.Schema
 
@@ -52,6 +53,8 @@ class VersionData : Comparable<VersionData> {
 
     // Complete JEP 322 version number sequence, FEATURE.INTERIM.UPDATE.PATCH followed by any downstream elements
     @get:JsonIgnore
+    @get:JsonbTransient
+    @get:Schema(hidden = true)
     val version_numbers: List<Int>
         get() = if (additional_version_numbers.isEmpty()) {
             listOfNotNull(major, minor, security, patch)
