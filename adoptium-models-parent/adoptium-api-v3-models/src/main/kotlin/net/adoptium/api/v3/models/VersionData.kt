@@ -13,6 +13,9 @@ class VersionData : Comparable<VersionData> {
     val patch: Int?
 
     // Elements after $PATCH, reserved by JEP 322 for downstream use. i.e [2] for 25.0.5.0.2
+    // Hold off displaying these in the API for now
+    @get:JsonbTransient
+    @get:Schema(hidden = true)
     val additional_version_numbers: List<Int>
     val pre: String?
     val adopt_build_number: Int?
