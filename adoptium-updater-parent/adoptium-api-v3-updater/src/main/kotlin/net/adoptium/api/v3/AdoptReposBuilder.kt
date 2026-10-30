@@ -69,7 +69,7 @@ class AdoptReposBuilder @Inject constructor(
             val youngReleases = getYoungReleases(summary)
             val explicitlyAdded = getExplicitlyAddedReleases(summary, toUpdate)
 
-            val updatedList = (newReleases + updatedReleases + youngReleases + explicitlyAdded + binaryCountChanged).distinctBy { it.id }
+            val updatedList = (newReleases + updatedReleases + youngReleases + explicitlyAdded + binaryCountChanged).associateBy { it.id }.values.toList()
             onReleasesUpdated(updatedList)
 
             pruned.add(updatedList)
