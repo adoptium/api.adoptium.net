@@ -23,4 +23,14 @@ class VersionRangeFilterTest {
         assertTrue(filter17.test(first))
         assertTrue(filter17.test(second))
     }
+
+    @Test
+    fun semverRangeIgnoresAdditionalVersionNumbers() {
+        val version = VersionParser.parse("25.0.5.0.2+1")
+
+        assertTrue(VersionRangeFilter("[25.0.5+1]", true).test(version))
+        assertTrue(VersionRangeFilter("[25.0.5+1,25.0.6)", true).test(version))
+        assertTrue(VersionRangeFilter("[25.0.5.0.2+1]", false).test(version))
+        assertFalse(VersionRangeFilter("[25.0.5.0.3+1]", false).test(version))
+    }
 }

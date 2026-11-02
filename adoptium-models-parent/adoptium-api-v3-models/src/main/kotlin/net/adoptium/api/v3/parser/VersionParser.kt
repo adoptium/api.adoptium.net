@@ -20,8 +20,9 @@ object VersionParser {
 
     // Regexes based on those in http://openjdk.java.net/jeps/223
     // Technically the standard supports an arbitrary number of numbers, we will support 3 for now
+    // The leading lookbehind stops the (lazy, unanchored) match starting part way through a longer dotted number
     private const val VNUM_REGEX =
-        """(?<major>[0-9]+)(\.(?<minor>[0-9]+))?(\.(?<security>[0-9]+))?(\.(?<patch>[0-9]+))?"""
+        """(?<![0-9.])(?<major>[0-9]+)(\.(?<minor>[0-9]+))?(\.(?<security>[0-9]+))?(\.(?<patch>[0-9]+))?(?<extra>(\.[0-9]+)*)"""
     private const val OPT_REGEX = "(?<opt>[-a-zA-Z0-9\\.]+)"
     private const val PRE_REGEX = "(?<pre>[a-zA-Z0-9]+)"
     private const val BUILD_REGEX = "(?<build>[0-9]+)"
@@ -39,7 +40,7 @@ object VersionParser {
 
     private fun adoptSemver(): String {
         val vnumRegex =
-            """(?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<security>[0-9]+)"""
+            """(?<![0-9.])(?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<security>[0-9]+)"""
 
         val buildRegex = "(?<build>[0-9]+)(\\.(?<adoptBuild>[0-9]+))?"
 
@@ -111,7 +112,7 @@ object VersionParser {
     private fun parseWithJavaClass(publishName: String, sanityCheck: Boolean): VersionData? {
 
         try {
-            val parsedVersion = Runtime.Version.parse(publishName.removePrefix("jdk"))
+            val parsedVersion = Runtime.Version.parse(publishName.removePrefix("jdk-").removePrefix("jdk"))
             val major = parsedVersion.feature()
             val minor = parsedVersion.interim()
             val security = parsedVersion.update()
@@ -121,7 +122,7 @@ object VersionParser {
             val version = parsedVersion.toString()
             val pre = parsedVersion.pre().orElse(null)
 
-            val parsed = VersionData(major, minor, security, pre, null, build, opt, version, null, patch)
+            val parsed = VersionData(major, minor, security, pre, null, build, opt, version, null, patch, parsedVersion.version().drop(4))
             if (!sanityCheck || sanityCheck(parsed)) {
                 return parsed
             }
@@ -214,6 +215,13 @@ object VersionParser {
                         null
                     }
 
+                    val extra = if (regex.pattern().contains("?<extra>")) matched.group("extra") else null
+                    val additionalNumbers: List<Int>? = if (!extra.isNullOrEmpty()) {
+                        extra.removePrefix(".").split(".").map { it.toInt() }
+                    } else {
+                        null
+                    }
+
                     var pre: String? = null
                     if (regex.pattern().contains("pre") && matched.group("pre") != null) {
                         pre = matched.group("pre")
@@ -226,7 +234,7 @@ object VersionParser {
                     }
                     val version = matched.group("version")
 
-                    val parsed = VersionData(major, minor, security, pre, adopt_build_number, build, opt, version, null, patch)
+                    val parsed = VersionData(major, minor, security, pre, adopt_build_number, build, opt, version, null, patch, additionalNumbers)
                     if (!sanityCheck || sanityCheck(parsed)) {
                         return parsed
                     }

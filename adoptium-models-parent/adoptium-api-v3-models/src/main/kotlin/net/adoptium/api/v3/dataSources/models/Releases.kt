@@ -127,6 +127,7 @@ class Releases {
             .thenBy { it.minor }
             .thenBy { it.security }
             .thenBy { it.patch }
+            .thenComparing(VersionData.ADDITIONAL_NUMBERS_COMPARATOR)
             .then(PRE_SORTER)
             .thenBy { it.build }
             .thenBy { it.adopt_build_number }

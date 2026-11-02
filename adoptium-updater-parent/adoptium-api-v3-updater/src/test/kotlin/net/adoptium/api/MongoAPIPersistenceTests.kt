@@ -3,10 +3,14 @@ package net.adoptium.api
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.models.GitHubId
+import net.adoptium.api.v3.dataSources.models.ReleaseNote
+import net.adoptium.api.v3.dataSources.models.ReleaseNotes
 import net.adoptium.api.v3.dataSources.persitence.mongo.MongoApiPersistence
 import net.adoptium.api.v3.dataSources.persitence.mongo.MongoClient
 import net.adoptium.api.v3.models.CloudflarePackageDownloadStatsDbEntry
 import net.adoptium.api.v3.models.GHReleaseMetadata
+import net.adoptium.api.v3.models.Vendor
+import net.adoptium.api.v3.models.VersionData
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -54,6 +58,37 @@ class MongoAPIPersistenceTests : MongoTest() {
 
 
             assertEquals(metadata, saved)
+        }
+    }
+
+    @Test
+    fun `release notes are persisted and upserted atomically`() {
+        runBlocking {
+            val apiPersistence = MongoApiPersistence(MongoClient())
+
+            val releaseNotes1 = ReleaseNotes(
+                VersionData(17, 0, 1, "open", 1, 1, null, "17.0.1+1"),
+                Vendor.adoptium,
+                "release-id-123",
+                "jdk-17.0.1+1",
+                listOf(ReleaseNote("JDK-1234", "Title 1", "P1", "core-libs", "java.lang", "https://bugs.openjdk.org/browse/JDK-1234", "Enhancement", null, null))
+            )
+
+            apiPersistence.putReleaseNote(releaseNotes1)
+            assertEquals(true, apiPersistence.hasReleaseNotesForGithubId(GitHubId("release-id-123")))
+            assertEquals(releaseNotes1, apiPersistence.getReleaseNotes(Vendor.adoptium, "jdk-17.0.1+1"))
+
+            // Upsert / replace existing release notes
+            val releaseNotes2 = ReleaseNotes(
+                VersionData(17, 0, 1, "open", 1, 1, null, "17.0.1+1"),
+                Vendor.adoptium,
+                "release-id-123",
+                "jdk-17.0.1+1",
+                listOf(ReleaseNote("JDK-5678", "Title 2", "P2", "core-libs", "java.util", "https://bugs.openjdk.org/browse/JDK-5678", "Bug", null, null))
+            )
+
+            apiPersistence.putReleaseNote(releaseNotes2)
+            assertEquals(releaseNotes2, apiPersistence.getReleaseNotes(Vendor.adoptium, "jdk-17.0.1+1"))
         }
     }
 

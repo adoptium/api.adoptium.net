@@ -11,6 +11,7 @@ import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.dataSources.models.Releases
 import net.adoptium.api.v3.mapping.ReleaseMapper
 import net.adoptium.api.v3.models.GHReleaseMetadata
+import net.adoptium.api.v3.models.Release
 import org.slf4j.LoggerFactory
 import java.time.temporal.ChronoUnit
 import kotlin.math.absoluteValue
@@ -29,11 +30,12 @@ class AdoptReposBuilder @Inject constructor(
     suspend fun incrementalUpdate(
         toUpdate: Set<String>,
         repo: AdoptRepos,
+        onReleasesUpdated: suspend (List<Release>) -> Unit = {},
         gitHubMetadataSupplier: suspend (GitHubId) -> GHReleaseMetadata?,
     ): AdoptRepos {
         val updated = repo
             .repos
-            .map { entry -> getUpdatedFeatureRelease(toUpdate, entry, gitHubMetadataSupplier) }
+            .map { entry -> getUpdatedFeatureRelease(toUpdate, entry, onReleasesUpdated, gitHubMetadataSupplier) }
 
         return AdoptRepos(updated)
     }
@@ -41,6 +43,7 @@ class AdoptReposBuilder @Inject constructor(
     private suspend fun getUpdatedFeatureRelease(
         toUpdate: Set<String>,
         entry: Map.Entry<Int, FeatureRelease>,
+        onReleasesUpdated: suspend (List<Release>) -> Unit,
         gitHubMetadataSupplier: suspend (GitHubId) -> GHReleaseMetadata?,
     ): FeatureRelease {
         val summaries = adoptRepository.getSummary(entry.key).releases.releases.distinctBy { it.id }
@@ -73,8 +76,10 @@ class AdoptReposBuilder @Inject constructor(
         // Only complete snapshots (including empty ones) and explicit permanent
         // exclusions replace all old splits. Retryable failures preserve them.
         val replacements = outcomes.filterValues { it.succeeded() || !it.retryable }
+        val updatedReleases = replacements.values.filter { it.succeeded() }.flatMap { it.result!! }
+        onReleasesUpdated(updatedReleases)
         return FeatureRelease(entry.key, Releases(pruned.filterValues { GitHubId(it.id) !in replacements }))
-            .add(replacements.values.filter { it.succeeded() }.flatMap { it.result!! })
+            .add(updatedReleases)
     }
 
     private fun isYoung(summary: GHReleaseSummary): Boolean =

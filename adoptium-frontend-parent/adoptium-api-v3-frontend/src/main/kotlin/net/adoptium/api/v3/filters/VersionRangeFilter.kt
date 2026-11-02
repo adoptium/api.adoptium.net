@@ -55,7 +55,11 @@ class VersionRangeFilter(range: String?, val semver: Boolean) : Predicate<Versio
     }
 
     private fun rangeContainsVersion(rangeMatcher: VersionRange, version: VersionData): Boolean {
-        val noPreVersion = if (version.pre != null) {
+        // semver bounds cannot express additional version numbers, so ignore them in semver mode
+        val additionalNumbers = if (semver) emptyList() else version.additional_version_numbers
+        // SemverParser represents a zero patch as null
+        val patch = if (semver && version.patch == 0) null else version.patch
+        val noPreVersion = if (version.pre != null || additionalNumbers != version.additional_version_numbers || patch != version.patch) {
             // Special case where since pre-releases are less than full releases, 17.0.0-beta is less than 17.0.0
             // this means that if asking for a filter of 16.0.0 < version < 17.0.0, someone would expect this to
             // return ONLY 16 versions, however since 17.0.0-beta < 17.0.0, 17.0.0-beta will be included. This
@@ -71,7 +75,8 @@ class VersionRangeFilter(range: String?, val semver: Boolean) : Predicate<Versio
                 version.optional,
                 version.openjdk_version,
                 version.semver,
-                version.patch,
+                patch,
+                additionalNumbers,
             )
         } else {
             version
