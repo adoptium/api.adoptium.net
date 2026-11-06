@@ -2,6 +2,7 @@ package net.adoptium.api.v3.mapping.adopt
 
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -37,10 +38,11 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
 
 
     suspend fun toBinaryList(ghBinaryAssets: List<GHAsset>, allGhAssets: List<GHAsset>, ghAssetsWithMetadata: Map<GHAsset, GHMetaData>): List<Binary> {
-        // probably whitelist rather than black list
+        return toSelectedBinaryList(ghBinaryAssets.filter(::isSupportedBinaryAsset), allGhAssets, ghAssetsWithMetadata)
+    }
+
+    internal suspend fun toSelectedBinaryList(ghBinaryAssets: List<GHAsset>, allGhAssets: List<GHAsset>, ghAssetsWithMetadata: Map<GHAsset, GHMetaData>): List<Binary> {
         return ghBinaryAssets
-            .filter(this::isBinaryAsset)
-            .filter { asset -> EXCLUDED.all { excluded -> !asset.name.contains(excluded) } }
             .map { asset -> assetToBinaryAsync(asset, ghAssetsWithMetadata, allGhAssets) }
             .mapNotNull { it.await() }
     }
@@ -78,6 +80,8 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
                 } else {
                     return@async binaryFromName(ghBinaryAsset, `package`, downloadCount, updatedAt, installer, heapSize, cLib)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 LOGGER.error("Failed to fetch binary ${ghBinaryAsset.name}", e)
                 return@async null
@@ -175,7 +179,10 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         return BINARY_ASSET_WHITELIST.foldRight(binary_name) { extension, name -> name.removeSuffix(extension) }
     }
 
-    private fun isBinaryAsset(asset: GHAsset) = ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } || (asset.name.endsWith(".json") && asset.name.contains("-sbom_"))
+    internal fun isSupportedBinaryAsset(asset: GHAsset) =
+        (ARCHIVE_WHITELIST.any { asset.name.endsWith(it) } ||
+            (asset.name.endsWith(".json") && asset.name.contains("-sbom_") && !asset.name.endsWith("-metadata.json"))) &&
+            !asset.name.contains("-sources") && EXCLUDED.none { asset.name.contains(it) }
 
     private fun binaryFromName(
         asset: GHAsset,
