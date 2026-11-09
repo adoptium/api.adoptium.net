@@ -12,35 +12,39 @@ class ReleaseVersionResolver @Inject constructor(
 ) {
 
     fun formReleaseInfo(repo: AdoptRepos): ReleaseInfo {
-        val gaReleases = repo
+        val allReleases = repo
             .allReleases
             .getReleases()
-            .filter { it.release_type == ReleaseType.ga }
             .toList()
+
+        val gaReleases = allReleases
+            .filter { it.release_type == ReleaseType.ga }
 
         val availableReleases = gaReleases
             .map { it.version_data.major }
             .distinct()
             .sorted()
-            .toList()
             .toTypedArray()
         val mostRecentFeatureRelease: Int = availableReleases.lastOrNull() ?: 0
 
         val ltsVersions = versionSupplier.getLtsVersions()
 
         val availableLtsReleases: Array<Int> = gaReleases
-            .asSequence()
             .filter { ltsVersions.contains(it.version_data.major) }
             .map { it.version_data.major }
             .distinct()
             .sorted()
-            .toList()
             .toTypedArray()
         val mostRecentLts = availableLtsReleases.lastOrNull() ?: 0
 
-        val mostRecentFeatureVersion: Int = repo
-            .allReleases
-            .getReleases()
+        val availableEaReleases: Array<Int> = allReleases
+            .filter { it.release_type == ReleaseType.ea }
+            .map { it.version_data.major }
+            .distinct()
+            .sorted()
+            .toTypedArray()
+
+        val mostRecentFeatureVersion: Int = allReleases
             .map { it.version_data.major }
             .distinct()
             .sorted()
@@ -54,7 +58,8 @@ class ReleaseVersionResolver @Inject constructor(
             mostRecentLts,
             mostRecentFeatureRelease,
             mostRecentFeatureVersion,
-            tip
+            tip,
+            availableEaReleases
         )
     }
 }
