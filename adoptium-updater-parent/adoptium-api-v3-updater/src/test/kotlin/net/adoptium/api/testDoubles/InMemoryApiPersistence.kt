@@ -17,6 +17,7 @@ import net.adoptium.api.v3.models.Vendor
 import net.adoptium.api.v3.models.Cdxa
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
+import java.util.UUID
 import jakarta.annotation.Priority
 import jakarta.enterprise.inject.Alternative
 import jakarta.inject.Inject
@@ -26,6 +27,7 @@ import net.adoptium.api.v3.models.CloudflarePackageDownloadStatsDbEntry
 @Alternative
 @ApplicationScoped
 open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var cdxaRepos: AdoptCdxaRepos) : ApiPersistence {
+    private val initialUpdateTime = TimeSource.now().minusMinutes(5)
     private var updatedAtInfo: UpdatedInfo? = null
     private var cdxaUpdatedAtInfo: UpdatedInfo? = null
     private var releaseInfo: ReleaseInfo? = null
@@ -38,7 +40,7 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var
 
     override suspend fun updateAllRepos(repos: AdoptRepos, checksum: String) {
         this.repos = repos
-        this.updatedAtInfo = UpdatedInfo(TimeSource.now(), checksum, repos.hashCode())
+        this.updatedAtInfo = UpdatedInfo(TimeSource.now(), checksum, repos.hashCode(), generationId = UUID.randomUUID().toString())
     }
 
     override suspend fun updateCdxaRepos(repos: AdoptCdxaRepos, checksum: String) {
@@ -54,6 +56,8 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var
     override suspend fun readReleaseData(featureVersion: Int): FeatureRelease {
         return repos.getFeatureRelease(featureVersion) ?: FeatureRelease(featureVersion, emptyList())
     }
+
+    override suspend fun readAllReleaseData(): AdoptRepos = repos
 
     override suspend fun addGithubDownloadStatsEntries(stats: List<GitHubDownloadStatsDbEntry>) {
         githubStats.addAll(stats)
@@ -136,7 +140,7 @@ open class InMemoryApiPersistence @Inject constructor(var repos: AdoptRepos, var
     }
 
     override suspend fun getUpdatedAt(): UpdatedInfo {
-        return updatedAtInfo ?: UpdatedInfo(TimeSource.now().minusMinutes(5), "000", 0)
+        return updatedAtInfo ?: UpdatedInfo(initialUpdateTime, repos.hashCode().toString(), repos.hashCode())
     }
 
     override suspend fun getCdxaUpdatedAt(): UpdatedInfo {
