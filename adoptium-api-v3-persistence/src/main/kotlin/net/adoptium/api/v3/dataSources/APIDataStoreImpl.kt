@@ -56,6 +56,7 @@ open class APIDataStoreImpl : APIDataStore {
                         .filter { it.releases.nodes.isNotEmpty() }
                         .toList()
                     val updatedAt = dataStore.getUpdatedAt()
+                    check(updated == updatedAt) { "Release generation changed while loading: $updated -> $updatedAt" }
 
                     val newData = filterValidAssets(data)
 
@@ -69,6 +70,18 @@ open class APIDataStoreImpl : APIDataStore {
                 }
             }
         }
+
+        // Updater checksums and publication must use the persisted catalogue, not the API projection.
+        fun loadUpdaterSnapshotWithInfo(dataStore: ApiPersistence): Pair<AdoptRepos, UpdatedInfo> = runBlocking {
+            val before = dataStore.getUpdatedAt()
+            val snapshot = dataStore.readAllReleaseData()
+            val after = dataStore.getUpdatedAt()
+            check(before == after) { "Release generation changed while loading: $before -> $after" }
+            Pair(snapshot, after)
+        }
+
+        fun loadUpdaterSnapshot(dataStore: ApiPersistence): AdoptRepos =
+            loadUpdaterSnapshotWithInfo(dataStore).first
 
         fun loadCdxaDataFromDb(
             dataStore: ApiPersistence,
@@ -312,13 +325,18 @@ open class APIDataStoreImpl : APIDataStore {
 
     private fun periodicUpdate() {
         // Must catch errors or may kill the scheduler
+        LOGGER.debug("periodicUpdate")
+        // Independent refreshes: an incomplete release publication must not freeze unrelated datasets
+        refresh("releases") { binaryRepos = loadDataFromDb(false) }
+        refresh("cdxa") { cdxaRepos = loadCdxaDataFromDb(false) }
+        refresh("release info") { releaseInfo = loadReleaseInfo() }
+    }
+
+    private fun refresh(name: String, load: () -> Unit) {
         try {
-            LOGGER.debug("periodicUpdate")
-            binaryRepos = loadDataFromDb(false)
-            cdxaRepos = loadCdxaDataFromDb(false)
-            releaseInfo = loadReleaseInfo()
+            load()
         } catch (e: Exception) {
-            LOGGER.error("Failed to load db", e)
+            LOGGER.error("Failed to load $name from db", e)
         }
     }
 

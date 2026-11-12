@@ -51,6 +51,8 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.Evidences
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import net.adoptium.api.v3.dataSources.models.FeatureRelease
+import net.adoptium.api.v3.dataSources.models.Releases
 import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.mapping.adopt.AdoptBinaryMapper
@@ -520,8 +522,24 @@ class V3UpdaterEndToEndTest {
         }
     }
 
+    // The GitHub fixtures only carry binary asset counts, so a rebuild cannot reproduce the
+    // release-level download counts of the generated snapshot the stats guard reads from the db.
+    private fun withoutReleaseDownloads(repo: AdoptRepos) = AdoptRepos(
+        repo.repos.values.map { featureRelease ->
+            FeatureRelease(
+                featureRelease.featureVersion,
+                Releases(featureRelease.releases.getReleases().map {
+                    Release(
+                        it.id, it.release_type, it.release_link, it.release_name, it.timestamp, it.updated_at,
+                        it.binaries, 0, it.vendor, it.version_data, it.source, it.release_notes, it.aqavit_results_link
+                    )
+                }.toList())
+            )
+        }
+    )
+
     private fun runUpdateTest(repo: AdoptRepos, getRepository: (String, String, (updatedAt: String, isPrerelease: Boolean) -> Boolean) -> GHRepository, getById: (GitHubId) -> GHRelease?): AdoptRepos {
-        val memoryDb = InMemoryApiPersistence(repo, mockk())
+        val memoryDb = InMemoryApiPersistence(withoutReleaseDownloads(repo), mockk())
 
         val apiDataStore: APIDataStore = APIDataStoreImpl(memoryDb)
 

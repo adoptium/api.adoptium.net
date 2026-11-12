@@ -15,7 +15,8 @@ data class UpdatedInfo(
     val lastModifiedFormatted: String? = lastModified
         ?.toInstant()
         ?.atZone(ZoneId.of("GMT"))
-        ?.format(DateTimeFormatter.RFC_1123_DATE_TIME)) {
+        ?.format(DateTimeFormatter.RFC_1123_DATE_TIME),
+    val generationId: String? = null) {
 
     override fun toString(): String {
         return "$time $checksum $hashCode $lastModified"
