@@ -1,5 +1,6 @@
 package net.adoptium.api.v3
 
+import com.mongodb.MongoException
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -8,7 +9,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import net.adoptium.api.v3.dataSources.github.GitHubApi
 import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
-import net.adoptium.api.v3.dataSources.github.graphql.models.GHRelease
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleasesSummary
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
@@ -19,6 +19,7 @@ import net.adoptium.api.v3.mapping.ReleaseMapper
 import net.adoptium.api.v3.mapping.adopt.AdoptReleaseMapperFactory
 import net.adoptium.api.v3.mapping.upstream.UpstreamReleaseMapper
 import net.adoptium.api.v3.models.Release
+import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
 import org.slf4j.LoggerFactory
 
@@ -78,16 +79,13 @@ open class AdoptRepositoryImpl @Inject constructor(
 
         if (release == null) return null
 
-        return mapRelease(release)
-    }
-
-    private suspend fun mapRelease(release: GHRelease): ReleaseResult {
-        // These known malformed upstream tags are permanent policy exclusions,
-        // unlike unavailable metadata or a mapping failure that can recover.
-        if (release.name in EXCLUDED) {
-            return ReleaseResult(error = "Excluded upstream tag ${release.name}", retryable = false)
+        val result = getMapperForRepo(release.url)
+            .toAdoptRelease(release)
+        return if (result.succeeded()) {
+            ReleaseResult(result = result.result!!.filter(::excludeReleases))
+        } else {
+            result
         }
-        return getMapperForRepo(release.url).toAdoptRelease(release)
     }
 
     override suspend fun getReleaseFilesForId(gitHubId: GitHubId): List<GHAsset>? {
@@ -102,7 +100,7 @@ open class AdoptRepositoryImpl @Inject constructor(
         val repo = getDataForEachRepo(
             version,
             filter,
-            getRepository(filter)
+            { vendor, owner, repoName -> getRepository(filter, vendor, owner, repoName) }
         )
             .await()
             .filterNotNull()
@@ -123,32 +121,40 @@ open class AdoptRepositoryImpl @Inject constructor(
         return GHRepositorySummary(GHReleasesSummary(releaseSummaries, PageInfo(false, "")))
     }
 
-    private fun getRepository(filter: ReleaseIncludeFilter): suspend (Vendor, String, String) -> List<Release> {
-        return { vendor: Vendor, owner: String, repoName: String -> getRepository(filter, vendor, owner, repoName) }
-    }
-
-    private suspend fun getRepository(filter: ReleaseIncludeFilter, vendor: Vendor, owner: String, repoName: String): List<Release> {
+    private suspend fun getRepository(
+        filter: ReleaseIncludeFilter,
+        vendor: Vendor,
+        owner: String,
+        repoName: String
+    ): List<Release> {
         return client
             .getRepository(owner, repoName) { updatedAt, isPrerelease -> filter.filter(vendor, updatedAt, isPrerelease) }
             .getReleases()
-            .flatMap {
+            .flatMap { release ->
                 try {
-                    val result = mapRelease(it)
-                    if (result.succeeded()) {
-                        result.result!!
-                    } else if (result.retryable) {
-                        error("Incomplete snapshot ${it.id.id}: ${result.error}")
-                    } else {
-                        return@flatMap emptyList<Release>()
-                    }
+                    check(!release.releaseAssets.pageInfo.hasNextPage) { "Incomplete assets for ${release.id.id}" }
+                    val result = getMapperForRepo(release.url).toAdoptRelease(release)
+                    check(!result.retryable) { "Retryable mapping failure for ${release.id.id}: ${result.error}" }
+                    if (result.succeeded()) result.result!! else emptyList()
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    // A full rebuild has no previous snapshots to merge with.
-                    // Abort rather than publishing an incomplete replacement.
-                    throw IllegalStateException("Failed to map release ${it.id.id}", e)
+                    if (e is MongoException) throw e
+                    if (!release.isPrerelease) throw e
+                    LOGGER.warn("Omitting EA ${release.id.id} from full update after failure", e)
+                    emptyList()
                 }
             }
+            .filter { excludeReleases(it) }
+    }
+
+    private fun excludeReleases(release: Release): Boolean {
+        return if (release.release_type == ReleaseType.ea) {
+            val isExcluded = EXCLUDED.any { release.release_name == it }
+            return !isExcluded
+        } else {
+            true
+        }
     }
 
     private fun <E> getDataForEachRepo(

@@ -197,7 +197,7 @@ class AdoptBinaryMapperTest {
                 Pair(installerAsset, installerMetadata)
             )
 
-            coEvery { fakeGithubHtmlClient.getUrl("http://installer-checksum-link") } returns "installer-checksum archive.msi"
+            coEvery { fakeGithubHtmlClient.getAsset(installerChecksumAsset) } returns "installer-checksum archive.msi"
 
             val actualBinaries = adoptBinaryMapper.toBinaryList(ghBinaryAssets, fullGhAssetList, ghBinaryAssetsWithMetadata)
 
@@ -261,6 +261,42 @@ class AdoptBinaryMapperTest {
             val binaryList = adoptBinaryMapper.toBinaryList(assets, assets, emptyMap())
 
             assertEquals("a-download-link", binaryList[0].`package`.checksum_link)
+        }
+    }
+
+    @Test
+    fun `shared legacy checksum alias is ambiguous for archive and installer`() {
+        runBlocking {
+            val base = "OpenJDK8U-jdk_x64_windows_hotspot_2019-11-22-16-01"
+            fun asset(name: String, link: String = "") = GHAsset(name, 1L, link, 1L, "2013-02-27T19:35:32Z")
+            val shared = asset("$base.sha256.txt", "shared-link")
+
+            val ambiguous = listOf(asset("$base.zip"), asset("$base.msi"), shared)
+            val binaries = adoptBinaryMapper.toBinaryList(ambiguous, ambiguous, emptyMap())
+            assertEquals(null, binaries.single().`package`.checksum_link)
+
+            val exact = listOf(asset("$base.zip"), asset("$base.msi"), asset("$base.msi.sha256.txt", "msi-link"), shared)
+            val withExact = adoptBinaryMapper.toBinaryList(exact, exact, emptyMap())
+            assertEquals("shared-link", withExact.single().`package`.checksum_link)
+        }
+    }
+
+    @Test
+    fun `shared checksum alias is ambiguous for SBOMs but not their metadata sidecars`() {
+        runBlocking {
+            coEvery { fakeGithubHtmlClient.getAsset(any()) } returns null
+            val stem = "OpenJDK21U-sbom_x64_linux_hotspot_21"
+            fun asset(name: String, link: String = "") = GHAsset(name, 1L, link, 1L, "2013-02-27T19:35:32Z")
+            val shared = asset("$stem.sha256.txt", "shared-link")
+            val sbom = asset("$stem.0.1_12.json")
+
+            val ambiguous = listOf(sbom, asset("$stem.0.2_13.json"), shared)
+            val binaries = adoptBinaryMapper.toBinaryList(listOf(sbom), ambiguous, emptyMap())
+            assertEquals(null, binaries.single().`package`.checksum_link)
+
+            val withSidecar = listOf(sbom, asset("$stem.0.1_12-metadata.json"), shared)
+            val mapped = adoptBinaryMapper.toBinaryList(listOf(sbom), withSidecar, emptyMap())
+            assertEquals("shared-link", mapped.single().`package`.checksum_link)
         }
     }
 
