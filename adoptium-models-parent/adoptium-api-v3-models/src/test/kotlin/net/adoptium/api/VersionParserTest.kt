@@ -186,7 +186,7 @@ class VersionParserTest {
 
     @Test
     fun `version numbers survive json round trip`() {
-        val mapper = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper()
+        val mapper = tools.jackson.module.kotlin.jacksonObjectMapper()
         val parsed = VersionParser.parse("25.0.5.0.2+1")
         val copy = mapper.readValue(mapper.writeValueAsString(parsed), VersionData::class.java)
         assertEquals(parsed, copy)

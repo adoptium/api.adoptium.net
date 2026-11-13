@@ -2,9 +2,9 @@ package net.adoptium.api.v3
 
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import kotlinx.coroutines.CancellationException
 import net.adoptium.api.v3.dataSources.VersionSupplier
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHReleaseSummary
-import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.GitHubId
@@ -27,8 +27,6 @@ class AdoptReposBuilder @Inject constructor(
         private val LOGGER = LoggerFactory.getLogger(this::class.java)
     }
 
-    private val excluded: MutableSet<GitHubId> = HashSet()
-
     suspend fun incrementalUpdate(
         toUpdate: Set<String>,
         repo: AdoptRepos,
@@ -37,7 +35,7 @@ class AdoptReposBuilder @Inject constructor(
     ): AdoptRepos {
         val updated = repo
             .repos
-            .map { entry -> getUpdatedFeatureRelease(toUpdate, entry, repo, onReleasesUpdated, gitHubMetadataSupplier) }
+            .map { entry -> getUpdatedFeatureRelease(toUpdate, entry, onReleasesUpdated, gitHubMetadataSupplier) }
 
         return AdoptRepos(updated)
     }
@@ -45,130 +43,61 @@ class AdoptReposBuilder @Inject constructor(
     private suspend fun getUpdatedFeatureRelease(
         toUpdate: Set<String>,
         entry: Map.Entry<Int, FeatureRelease>,
-        repo: AdoptRepos,
         onReleasesUpdated: suspend (List<Release>) -> Unit,
         gitHubMetadataSupplier: suspend (GitHubId) -> GHReleaseMetadata?,
     ): FeatureRelease {
-        val summary = adoptRepository.getSummary(entry.key)
+        val summaries = adoptRepository.getSummary(entry.key).releases.releases.distinctBy { it.id }
+        val ids = summaries.map { it.id }.toSet()
+        val pruned = entry.value.releases.nodes.filterValues { GitHubId(it.id) in ids }
+        val current = pruned.values.groupBy { GitHubId(it.id) }
 
-        // Update cycle
-        // 1) remove missing ones
-        // 2) add new ones
-        // 3) fix updated
-        val existingRelease = repo.getFeatureRelease(entry.key)
-        return if (existingRelease != null) {
-            val ids = summary.releases.getIds()
-
-            // keep only release ids that still exist
-            val pruned = existingRelease.retain(ids)
-
-            // Find newly added releases
-            val newReleases = getNewReleases(summary, pruned)
-            val updatedReleases = getUpdatedReleases(summary, pruned)
-            val binaryCountChanged = binaryCountHasChanged(summary, gitHubMetadataSupplier)
-            val youngReleases = getYoungReleases(summary)
-            val explicitlyAdded = getExplicitlyAddedReleases(summary, toUpdate)
-
-            val updatedList = (newReleases + updatedReleases + youngReleases + explicitlyAdded + binaryCountChanged).associateBy { it.id }.values.toList()
-            onReleasesUpdated(updatedList)
-
-            pruned.add(updatedList)
-        } else {
-            val newReleases = getNewReleases(summary, FeatureRelease(entry.key, emptyList()))
-            onReleasesUpdated(newReleases)
-            FeatureRelease(entry.key, Releases(newReleases))
+        // Select upstream IDs before fetching: overlapping selectors must not fetch
+        // different snapshots of the same rolling release during a single update.
+        val selected = summaries.filter { summary ->
+            val previous = current[summary.id]
+            isReleaseOldEnough(summary.publishedAt) && (
+                previous == null ||
+                    previous.any { ChronoUnit.SECONDS.between(it.updated_at.dateTime, summary.getUpdatedTime()) != 0L } ||
+                    isYoung(summary) || summary.name in toUpdate ||
+                    (gitHubMetadataSupplier(summary.id)?.totalBinaryCount?.let { it != summary.releaseAssets.totalCount } ?: false)
+                )
         }
-    }
-
-    private suspend fun getUpdatedReleases(summary: GHRepositorySummary, pruned: FeatureRelease): List<Release> {
-        return summary.releases.releases
-            .filter { !excluded.contains(it.id) }
-            .filter { pruned.releases.hasReleaseBeenUpdated(it.id, it.getUpdatedTime()) }
-            .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
-            .flatMap { getReleaseById(it) }
-    }
-
-    private suspend fun binaryCountHasChanged(
-        summary: GHRepositorySummary,
-        gitHubMetadataSupplier: suspend (GitHubId) -> GHReleaseMetadata?
-    ): List<Release> {
-        return summary.releases.releases
-            .filter { !excluded.contains(it.id) }
-            .filter {
-                gitHubMetadataSupplier(it.id)?.totalBinaryCount?.equals(it.releaseAssets.totalCount)?.not() ?: false
+        val outcomes = selected.associate { summary ->
+            val result = try {
+                adoptRepository.getReleaseById(summary.id) ?: ReleaseResult(error = "Release unavailable")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                LOGGER.warn("Failed to refresh ${summary.id.id}", e)
+                ReleaseResult(error = "Release fetch failed")
             }
-            .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
-            .flatMap { getReleaseById(it) }
+            summary.id to result
+        }
+        // Only complete snapshots (including empty ones) and explicit permanent
+        // exclusions replace all old splits. Retryable failures preserve them.
+        val replacements = outcomes.filterValues { it.succeeded() || !it.retryable }
+        val updatedReleases = replacements.values.filter { it.succeeded() }.flatMap { it.result!! }
+        onReleasesUpdated(updatedReleases)
+        return FeatureRelease(entry.key, Releases(pruned.filterValues { GitHubId(it.id) !in replacements }))
+            .add(updatedReleases)
     }
 
-    private suspend fun getYoungReleases(summary: GHRepositorySummary): List<Release> {
-        return summary.releases.releases
-            .filter { !excluded.contains(it.id) }
-            .filter {
-                // Re-pull data if the release is less than 7 days old
-                ChronoUnit.DAYS.between(it.getPublishedTime(), TimeSource.now()).absoluteValue < 7 ||
-                    ChronoUnit.DAYS.between(it.getUpdatedTime(), TimeSource.now()).absoluteValue < 7
-            }
-            .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
-            .flatMap { getReleaseById(it) }
-    }
-
-    /**
-     * Fetches releases from github that have been explicitly requested by the user for an update
-     */
-    private suspend fun getExplicitlyAddedReleases(summary: GHRepositorySummary, releaseNames: Set<String>): List<Release> {
-        return releaseNames
-            .mapNotNull { name ->
-                val allReleases = summary.releases.releases
-                val release = allReleases
-                    .filter { !excluded.contains(it.id) } // Filter out excluded releases
-                    .filter { name == it.name } // Find release with the requested name
-                    .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
-                    .flatMap {
-                        LOGGER.info("Updating ${it.name}")
-                        getReleaseById(it) // fetch release from Github
-                    }
-                    .firstOrNull()
-
-                if (release == null) {
-                    LOGGER.warn("Failed to match update name $name")
-                }
-                release // return updated release
-            }
-    }
-
-    private suspend fun getNewReleases(summary: GHRepositorySummary, currentRelease: FeatureRelease): List<Release> {
-        return summary.releases.releases
-            .filter { !excluded.contains(it.id) }
-            .filter { !currentRelease.releases.hasReleaseId(it.id) }
-            .filter { isReleaseOldEnough(it.publishedAt) } // Ignore artifacts for the first 10 min while they are still uploading
-            .flatMap { getReleaseById(it) }
-    }
+    private fun isYoung(summary: GHReleaseSummary): Boolean =
+        ChronoUnit.DAYS.between(summary.getPublishedTime(), TimeSource.now()).absoluteValue < 7 ||
+            ChronoUnit.DAYS.between(summary.getUpdatedTime(), TimeSource.now()).absoluteValue < 7
 
     private fun isReleaseOldEnough(timestamp: String): Boolean {
         val created = ReleaseMapper.parseDate(timestamp)
         return ChronoUnit.MINUTES.between(created, TimeSource.now()).absoluteValue > 10
     }
 
-    private suspend fun getReleaseById(it: GHReleaseSummary): List<Release> {
-        val result = adoptRepository.getReleaseById(it.id)
-        return if (result != null && result.succeeded()) {
-            result.result!!
-        } else {
-            LOGGER.info("Excluding ${it.id.id} from update")
-            excluded.add(it.id)
-            emptyList()
-        }
-    }
-
     suspend fun build(filter: ReleaseIncludeFilter): AdoptRepos {
-        excluded.clear()
         // Fetch repos in parallel
         val reposMap = versionSupplier
             .getAllVersions()
             .reversed()
-            .mapNotNull { version ->
-                adoptRepository.getRelease(version, filter)
+            .map { version ->
+                checkNotNull(adoptRepository.getRelease(version, filter)) { "Incomplete feature release $version" }
             }
             .associateBy { it.featureVersion }
         LOGGER.info("DONE")

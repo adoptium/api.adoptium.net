@@ -7,20 +7,14 @@ import com.expediagroup.graphql.client.types.GraphQLClientResponse
 import io.ktor.client.*
 import io.ktor.client.plugins.logging.*
 import jakarta.enterprise.context.ApplicationScoped
+import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.github.GitHubAuth
 import net.adoptium.api.v3.dataSources.github.GitHubAuth.AuthInfo
 import java.net.URL
-import org.slf4j.LoggerFactory
-import net.adoptium.api.v3.config.APIConfig
 
 @ApplicationScoped
 open class GraphQLRequestImpl : GraphQLRequest {
-
-    companion object {
-        @JvmStatic
-        private val LOGGER = LoggerFactory.getLogger(this::class.java)
-    }
 
     private val client: GraphQLKtorClient
 
