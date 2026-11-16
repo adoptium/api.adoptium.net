@@ -1,9 +1,17 @@
 package net.adoptium.api.v3.dataSources.persitence.mongo
 
 import com.mongodb.MongoCommandException
+import com.mongodb.MongoException
+import com.mongodb.MongoNodeIsRecoveringException
+import com.mongodb.MongoNotPrimaryException
+import com.mongodb.MongoSocketException
+import com.mongodb.MongoTimeoutException
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.config.DeploymentType
 import org.slf4j.LoggerFactory
@@ -13,6 +21,26 @@ abstract class MongoInterface {
     companion object {
         @JvmStatic
         val LOGGER = LoggerFactory.getLogger(MongoInterface::class.java)!!
+        private const val MAX_ATTEMPTS = 3
+    }
+
+    // Only wrap reads or idempotent writes, never append-only inserts or a whole publication.
+    open suspend fun <T> retryMongoOperation(operation: String, block: suspend () -> T): T {
+        var attempt = 1
+        while (true) {
+            currentCoroutineContext().ensureActive()
+            try {
+                return block()
+            } catch (e: MongoException) {
+                val transient = e is MongoSocketException || e is MongoTimeoutException ||
+                    e is MongoNotPrimaryException || e is MongoNodeIsRecoveringException ||
+                    e.hasErrorLabel("RetryableWriteError")
+                if (!transient || attempt == MAX_ATTEMPTS) throw e
+                LOGGER.warn("Transient MongoDB failure during {}; retrying ({}/{})", operation, attempt + 1, MAX_ATTEMPTS, e)
+                delay(100L * attempt)
+                attempt++
+            }
+        }
     }
 
     inline fun <reified T : Any> createCollection(
@@ -26,7 +54,9 @@ abstract class MongoInterface {
         ): MongoCollection<T> {
         return runBlocking<MongoCollection<T>> {
             try {
-                database.createCollection(collectionName)
+                retryMongoOperation("create collection $collectionName") {
+                    database.createCollection(collectionName)
+                }
                 initCollection(database.getCollection(collectionName, T::class.java))
             } catch (e: MongoCommandException) {
                 if (e.errorCode == 48) {

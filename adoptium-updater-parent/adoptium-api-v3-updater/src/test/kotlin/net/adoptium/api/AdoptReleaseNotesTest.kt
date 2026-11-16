@@ -1,8 +1,10 @@
 package net.adoptium.api
 
+import com.mongodb.MongoException
 import io.mockk.mockk
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import kotlinx.coroutines.CancellationException
 import net.adoptium.api.v3.ReleaseIncludeFilter
 import kotlinx.coroutines.runBlocking
@@ -23,6 +25,7 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositor
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.GitHubId
+import net.adoptium.api.v3.dataSources.persitence.ApiPersistence
 import net.adoptium.api.v3.releaseNotes.AdoptReleaseNotes
 import net.adoptium.api.v3.models.DateTime
 import net.adoptium.api.v3.models.GHReleaseMetadata
@@ -41,6 +44,8 @@ import org.apache.http.message.BasicHttpResponse
 import org.jboss.weld.junit5.auto.AddPackages
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 @AddPackages(value = [DefaultUpdaterHtmlClient::class, HttpClientFactory::class])
 class AdoptReleaseNotesTest : BaseTest() {
@@ -78,6 +83,7 @@ class AdoptReleaseNotesTest : BaseTest() {
             val id = GitHubId(release.id)
             val repository: AdoptRepository = mockk()
             val versionSupplier: VersionSupplier = mockk()
+            every { versionSupplier.getAllVersions() } returns arrayOf(17)
             val htmlClient: GitHubHtmlClient = mockk()
             val persistence = InMemoryApiPersistence(repo, mockk())
             val notes = AdoptReleaseNotes(repository, persistence, htmlClient)
@@ -174,6 +180,33 @@ class AdoptReleaseNotesTest : BaseTest() {
             }
             coVerify(exactly = count * 4) { htmlClient.getUrlUpdatedSince("a-download-url", any()) }
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["cache", "persistence"])
+    fun `database failures abort release note refresh instead of continuing`(source: String) = runBlocking {
+        val release = adoptRepos.allReleases.nodeList.first { it.release_type == ReleaseType.ga }
+        val repository = mockk<AdoptRepository>()
+        val persistence = mockk<ApiPersistence>()
+        val html = mockk<GitHubHtmlClient>()
+        val failure = MongoException("Release notes database unavailable")
+        coEvery { repository.getReleaseFilesForId(any()) } returns listOf(
+            GHAsset("release-notes.json", 0, "notes", 0, "")
+        )
+        if (source == "cache") {
+            coEvery { html.getUrlUpdatedSince("notes", any()) } throws failure
+        } else {
+            coEvery { html.getUrlUpdatedSince("notes", any()) } returns "[]"
+            coEvery { persistence.putReleaseNote(any()) } throws failure
+        }
+        val notes = AdoptReleaseNotes(repository, persistence, html)
+
+        val error = runCatching {
+            notes.updateReleaseNotes(AdoptRepos(emptyList()).addAll(listOf(release)))
+        }.exceptionOrNull()
+
+        Assertions.assertSame(failure, error)
+        coVerify(exactly = if (source == "cache") 0 else 1) { persistence.putReleaseNote(any()) }
     }
 
     @Test

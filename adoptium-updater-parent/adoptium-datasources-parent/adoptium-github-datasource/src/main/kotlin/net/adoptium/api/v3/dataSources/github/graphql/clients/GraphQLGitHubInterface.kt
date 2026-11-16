@@ -14,7 +14,6 @@ import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.github.graphql.models.HasRateLimit
 import org.slf4j.LoggerFactory
-import tools.jackson.databind.exc.MismatchedInputException
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
@@ -57,17 +56,20 @@ open class GraphQLGitHubInterface @Inject constructor(
             }
         }
 
-        val result = checkNotNull(queryApi(requestEntityBuilder, cursor)) { "GraphQL page unavailable" }
+        val result = queryApi(requestEntityBuilder, cursor)
+            ?: throw IllegalStateException("No data returned for GraphQL page at cursor $cursor")
 
         if (repoDoesNotExist(result)) {
-            check(response == null && initialCursor == null) { "Repository disappeared during pagination" }
+            check(response == null && initialCursor == null) {
+                "Repository disappeared during GraphQL pagination at cursor $cursor"
+            }
             return emptyList()
         }
         check(result.errors.isNullOrEmpty()) { "Incomplete GraphQL page: ${result.errors}" }
 
         selfRateLimit(result)
 
-        val data = checkNotNull(result.data) { "GraphQL page data unavailable" }
+        val data = checkNotNull(result.data) { "No data returned for GraphQL page at cursor $cursor" }
         val newData = extract(data)
 
         val more = getAll(requestEntityBuilder, extract, hasNext, getCursor, cursor, data)
@@ -190,8 +192,6 @@ open class GraphQLGitHubInterface @Inject constructor(
                     throw Exception("Unexpected return type ${e.response.status}")
                 }
 
-            } catch (e: MismatchedInputException) {
-                throw IllegalStateException("Unable to decode GraphQL page", e)
             } catch (e: Exception) {
                 LOGGER.error("Query failed", e)
                 throw e

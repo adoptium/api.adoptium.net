@@ -88,7 +88,7 @@ open class AdoptRepositoryStub : AdoptRepository {
     override suspend fun getSummary(version: Int): GHRepositorySummary {
         return GHSummaryTestDataGenerator.generateGHRepositorySummary(
             GHSummaryTestDataGenerator.generateGHRepository(
-                AdoptRepos(listOf(updated.getFeatureRelease(version)!!))
+                AdoptRepos(listOf(updated.getFeatureRelease(version) ?: FeatureRelease(version, emptyList())))
             )
         )
     }

@@ -1,5 +1,6 @@
 package net.adoptium.api
 
+import tools.jackson.databind.exc.MismatchedInputException
 import com.expediagroup.graphql.client.types.GraphQLClientRequest
 import com.expediagroup.graphql.client.types.GraphQLClientResponse
 import io.mockk.coEvery
@@ -61,7 +62,7 @@ import tools.jackson.databind.json.JsonMapper
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicBoolean
 
-/** No asset identity, digest cache, retention, or bounded-EA-selection dependencies. */
+/** Snapshot regressions shared with upstream, using the current update policies. */
 class ReleaseSnapshotTest {
     private val timestamp = DateTimeFormatter.ISO_INSTANT.format(TimeSource.now().minusDays(2))
     private val first = "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz"
@@ -82,8 +83,9 @@ class ReleaseSnapshotTest {
          "scmRef":"test","version_data":"jdk8u","sha256":"checksum"}
     """.trimIndent()
 
-    private fun client(): GitHubHtmlClient = mockk<GitHubHtmlClient>().also {
-        coEvery { it.getUrl(any()) } answers { metadata(if (firstArg<String>().contains("-2")) 2 else 1) }
+    private fun client(): GitHubHtmlClient = mockk<GitHubHtmlClient>().also { client ->
+        coEvery { client.getUrl(any()) } answers { metadata(if (firstArg<String>().contains("-2")) 2 else 1) }
+        coEvery { client.getAsset(any()) } coAnswers { client.getUrl(firstArg<GHAsset>().downloadUrl) }
     }
 
     private fun factory(client: GitHubHtmlClient) = AdoptReleaseMapperFactory(AdoptBinaryMapper(client), client)
@@ -159,12 +161,11 @@ class ReleaseSnapshotTest {
         val builder = AdoptReposBuilder(AdoptRepositoryImpl(github, factory), versions)
         assertEquals(nodes(previous), nodes(builder.incrementalUpdate(setOf(complete.name), previous) { null }))
         val error = assertThrows(Exception::class.java) { runBlocking { builder.build(ReleaseIncludeFilter.INCLUDE_ALL) } }
-        assertTrue(error.message!!.contains(when (failure) {
-            "null-response" -> "GraphQL page unavailable"
-            "missing-data" -> "No data returned"
-            "missing-node" -> "Release asset page unavailable"
-            else -> "Unable to decode GraphQL page"
-        }))
+        if (failure == "decode") {
+            assertTrue(generateSequence<Throwable>(error) { it.cause }.any { it is MismatchedInputException })
+        } else {
+            assertTrue(error.message!!.contains(if (failure == "missing-node") "Release asset page unavailable" else "No data returned"))
+        }
         val database = spyk(InMemoryApiPersistence(previous, mockk()))
         assertNull(database.getLatestGithubStatsForFeatureVersion(8))
         updater(builder, database, versions).runUpdate(previous, AtomicBoolean(true), mockk())
@@ -174,7 +175,7 @@ class ReleaseSnapshotTest {
 
     @ParameterizedTest
     @ValueSource(strings = ["metadata", "legacy", "source", "multi"])
-    fun `downloads include excluded assets once without fetching installer metadata`(format: String) = runBlocking {
+    fun `downloads include excluded assets once while using installer metadata`(format: String) = runBlocking {
         val zip = "OpenJDK8U-jdk_x64_windows_hotspot-1.zip"
         val msi = zip.removeSuffix(".zip") + ".msi"
         val source = "OpenJDK8U-sources-1.tar.gz"
@@ -186,7 +187,6 @@ class ReleaseSnapshotTest {
             asset.copy(downloadCount = when (asset.name) { zip -> 10; msi -> 20; source -> 30; second -> 7; else -> 100 })
         })) }
         val client = client()
-        coEvery { client.getUrl("$msi.json") } throws IllegalStateException("Installer metadata must not be fetched")
         val mapper = factory(client).get(Vendor.getDefault())
         val mapped = mapper.toAdoptRelease(release).result!!
         val expected = when (format) { "source" -> 60L; "multi" -> 37L; else -> 30L }
@@ -199,7 +199,7 @@ class ReleaseSnapshotTest {
         }
         assertFalse(mapped.flatMap { it.binaries.toList() }.any { it.`package`.name == msi || it.`package`.name == source })
         if (format == "source") assertEquals(source, mapped.single().source!!.name)
-        coVerify(exactly = 0) { client.getUrl("$msi.json") }
+        coVerify(exactly = if (format == "multi") 2 else 1) { client.getUrl("$msi.json") }
     }
 
     @Test
@@ -272,7 +272,7 @@ class ReleaseSnapshotTest {
         assertTrue(failed.retryable)
         assertNull(failed.result)
         coEvery { repository.getReleaseById(complete.id) } returns failed
-        val builder = AdoptReposBuilder(repository, mockk())
+        val builder = AdoptReposBuilder(repository, versions())
         val notifications = mutableListOf<List<Release>>()
         val after = builder.incrementalUpdate(setOf(complete.name), before, onReleasesUpdated = { notifications.add(it) }) {
             GHReleaseMetadata(999, it)
@@ -293,7 +293,7 @@ class ReleaseSnapshotTest {
 
     @ParameterizedTest
     @ValueSource(strings = ["missing", "invalid", "exception"])
-    fun `excluded sidecars are never fetched and sources are not binaries`(failure: String) = runBlocking {
+    fun `excluded sidecars are never fetched and metadata bearing sources can map`(failure: String) = runBlocking {
         val source = "OpenJDK8U-sources-1.tar.gz"
         val excluded = listOf("corretto-1.tar.gz", "AQAvitTapFiles-1.tar.gz", "archive.tar.xz", "installer.msi")
         val client = client()
@@ -311,7 +311,7 @@ class ReleaseSnapshotTest {
             listOf(first, "$first.json", source, "$source.json") + excluded.flatMap { listOf(it, "$it.json") }
         ))
         assertTrue(result.succeeded())
-        assertEquals(listOf(first), result.result!!.single().binaries.map { it.`package`.name })
+        assertEquals(listOf(first, source), result.result!!.single().binaries.map { it.`package`.name })
         assertEquals(source, result.result!!.single().source!!.link)
         excluded.forEach { name -> coVerify(exactly = 0) { client.getUrl("$name.json") } }
         coVerify(exactly = 1) { client.getUrl("$source.json") }
@@ -341,9 +341,9 @@ class ReleaseSnapshotTest {
         coEvery { repository.getSummary(8) } returns summary
         val refreshed = mapper.toAdoptRelease(upstream(listOf(first, "$first.json"))).result!!
         coEvery { repository.getReleaseById(upstream.id) } returns ReleaseResult(refreshed)
-        coEvery { repository.getReleaseById(GitHubId("upstream-other")) } returns ReleaseResult(error = "Network failure")
+        coEvery { repository.getReleaseById(GitHubId("upstream-other")) } returns ReleaseResult(error = "Network failure", retryable = true)
         val notifications = mutableListOf<List<Release>>()
-        val after = AdoptReposBuilder(repository, mockk()).incrementalUpdate(
+        val after = AdoptReposBuilder(repository, versions()).incrementalUpdate(
             setOf(upstream.name), repos(previous + unrelated), onReleasesUpdated = { notifications.add(it) }
         ) {
             GHReleaseMetadata(999, it)
@@ -367,7 +367,7 @@ class ReleaseSnapshotTest {
         )
         coEvery { repository.getReleaseById(upstream.id) } returns ReleaseResult(refreshed)
         val notifications = mutableListOf<List<Release>>()
-        val after = AdoptReposBuilder(repository, mockk()).incrementalUpdate(
+        val after = AdoptReposBuilder(repository, versions()).incrementalUpdate(
             emptySet(), repos(previous), onReleasesUpdated = { notifications.add(it) }
         ) { null }
         assertEquals((previous + refreshed).associateBy { it.id }, nodes(after))
@@ -378,7 +378,7 @@ class ReleaseSnapshotTest {
 
     @ParameterizedTest
     @ValueSource(strings = ["jdk17u-2022-05-27-19-32-beta", "jdk-11.0.13'+8"])
-    fun `known malformed tags are permanent policy exclusions in both update paths`(name: String) = runBlocking {
+    fun `known malformed tags produce successful empty snapshots in both update paths`(name: String) = runBlocking {
         val github = mockk<GitHubApi>()
         val excluded = upstream().copy(name = name, isPrerelease = true)
         coEvery { github.getReleaseById(excluded.id) } returns excluded
@@ -388,19 +388,20 @@ class ReleaseSnapshotTest {
         val client = client()
         val repository = AdoptRepositoryImpl(github, factory(client))
         val outcome = repository.getReleaseById(excluded.id)!!
-        assertFalse(outcome.succeeded())
+        assertTrue(outcome.succeeded())
+        assertTrue(outcome.result!!.isEmpty())
         assertFalse(outcome.retryable)
         assertTrue(repository.getRelease(8, ReleaseIncludeFilter.INCLUDE_ALL).releases.nodes.isEmpty())
-        coVerify(exactly = 0) { client.getUrl(any()) }
+        coVerify(atLeast = 1) { client.getAsset(any()) }
     }
 
     @Test
-    fun `successful empty and explicit exclusion remove old splits but null and exceptions preserve them`() = runBlocking {
+    fun `successful empty removes old splits but failures and explicit nonretryable results preserve them`() = runBlocking {
         val upstream = upstream()
         val previous = factory(client()).get(Vendor.eclipse).toAdoptRelease(upstream).result!!
         val before = repos(previous)
         val repository = repository(upstream)
-        val builder = AdoptReposBuilder(repository, mockk())
+        val builder = AdoptReposBuilder(repository, versions())
         coEvery { repository.getReleaseById(upstream.id) } returns null
         assertEquals(nodes(before), nodes(builder.incrementalUpdate(emptySet(), before) { null }))
         coEvery { repository.getReleaseById(upstream.id) } throws IllegalStateException("Network failure")
@@ -408,7 +409,10 @@ class ReleaseSnapshotTest {
         coEvery { repository.getReleaseById(upstream.id) } returns ReleaseResult(emptyList())
         assertTrue(nodes(builder.incrementalUpdate(emptySet(), before) { null }).isEmpty())
         coEvery { repository.getReleaseById(upstream.id) } returns ReleaseResult(error = "Explicit exclusion", retryable = false)
-        assertTrue(nodes(builder.incrementalUpdate(emptySet(), before) { null }).isEmpty())
+        assertEquals(nodes(before), nodes(builder.incrementalUpdate(emptySet(), before) { null }))
+        coEvery { repository.getReleaseById(upstream.id) } returns ReleaseResult(emptyList())
+        assertEquals(nodes(before), nodes(builder.incrementalUpdate(emptySet(), before) { null }))
+        coVerify(exactly = 4) { repository.getReleaseById(upstream.id) }
         val excluded = upstream.copy(name = "jdk17u-2022-05-27-19-32-beta", isPrerelease = true)
         assertEquals(emptyList<Release>(), factory(client()).get(Vendor.eclipse).toAdoptRelease(excluded).result)
     }
@@ -457,5 +461,3 @@ class ReleaseSnapshotTest {
         assertEquals(nodes(previous), nodes(builder.build(ReleaseIncludeFilter.INCLUDE_ALL)))
     }
 }
-
-

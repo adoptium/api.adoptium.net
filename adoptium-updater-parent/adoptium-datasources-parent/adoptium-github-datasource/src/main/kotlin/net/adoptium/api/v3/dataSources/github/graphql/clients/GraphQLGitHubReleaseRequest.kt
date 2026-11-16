@@ -71,6 +71,8 @@ open class GraphQLGitHubReleaseRequest @Inject constructor(
                                 ... on Release {
                                     releaseAssets(first:50, after:$cursorPointer) {
                                         nodes {
+                                            id,
+                                            digest,
                                             downloadCount,
                                             updatedAt,
                                             name,

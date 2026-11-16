@@ -1,5 +1,6 @@
 package net.adoptium.api.v3.releaseNotes
 
+import com.mongodb.MongoException
 import jakarta.enterprise.context.ApplicationScoped
 import kotlinx.coroutines.CancellationException
 import net.adoptium.api.v3.AdoptRepository
@@ -63,6 +64,7 @@ open class AdoptReleaseNotes @Inject constructor(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
+                    if (e is MongoException) throw e
                     LOGGER.error("Failed to update release notes for ${it.release_name}", e)
                 }
             }

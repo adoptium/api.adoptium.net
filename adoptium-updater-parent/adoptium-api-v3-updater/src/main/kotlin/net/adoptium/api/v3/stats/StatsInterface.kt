@@ -1,7 +1,9 @@
 package net.adoptium.api.v3.stats
 
+import com.mongodb.MongoException
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import kotlinx.coroutines.CancellationException
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.stats.cloudflare.CloudflareStatsCalculator
 import net.adoptium.api.v3.stats.dockerstats.DockerStatsInterfaceFactory
@@ -29,6 +31,7 @@ open class StatsInterface @Inject constructor(
     private suspend fun handlingUpdateException(source: String, fn: suspend () -> Unit) = try {
         fn()
     } catch (e: Exception) {
+        if (e is MongoException || e is CancellationException) throw e
         LOGGER.error("Failed to update $source, continuing with other sources", e)
     }
 

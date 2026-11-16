@@ -1,38 +1,291 @@
 package net.adoptium.api
 
+import com.mongodb.MongoException
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.confirmVerified
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.yield
 import net.adoptium.api.testDoubles.InMemoryInternalDbStore
 import net.adoptium.api.v3.JsonMapper
 import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.UrlRequest
 import net.adoptium.api.v3.dataSources.github.CachedGitHubHtmlClient
+import net.adoptium.api.v3.dataSources.github.graphql.models.GHAsset
 import net.adoptium.api.v3.dataSources.mongo.CacheDbEntry
 import net.adoptium.api.v3.dataSources.mongo.InternalDbStore
 import org.apache.http.HttpVersion
 import org.apache.http.entity.StringEntity
 import org.apache.http.message.BasicHttpResponse
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.ZonedDateTime
 import java.util.stream.Stream
 
 @ExtendWith(MockKExtension::class)
 class CachedGitHubHtmlClientTest {
+
+    @Test
+    fun `cache read failure inside a fetch bypasses HTTP retries`() = runBlocking {
+        withTimeout(2000) {
+            val failure = MongoException("Cache read failed")
+            val memory = InMemoryInternalDbStore()
+            var reads = 0
+            val store = object : InternalDbStore by memory {
+                override suspend fun getCachedWebpage(url: String): CacheDbEntry? {
+                    if (++reads > 1) throw failure
+                    return null
+                }
+            }
+            val http = mockk<UpdaterHtmlClient>()
+            val asset = GHAsset("metadata.json", 1, "read-failure", 0, "2013-02-27T19:35:32Z", id = "identity")
+            assertSame(failure, runCatching { CachedGitHubHtmlClient(store, http).getAsset(asset) }.exceptionOrNull())
+            assertEquals(2, reads)
+            coVerify(exactly = 0) { http.getFullResponse(any()) }
+        }
+    }
+
+    @Test
+    fun `background database failure leaves the worker available for later requests`() = runBlocking {
+        withTimeout(5000) {
+            val memory = InMemoryInternalDbStore()
+            val now = TimeSource.now()
+            val modified = CachedGitHubHtmlClient.LAST_MODIFIED_PARSER.format(now.minusDays(2))
+            for (url in listOf("failed", "later")) {
+                memory.putCachedWebpage(url, modified, now.minusDays(2), "old").await()
+            }
+            val failed = CompletableDeferred<Unit>()
+            val recovered = CompletableDeferred<Unit>()
+            val store = object : InternalDbStore by memory {
+                override suspend fun updateCheckedTime(url: String, dateTime: ZonedDateTime) {
+                    if (url == "failed") {
+                        failed.complete(Unit)
+                        throw MongoException("Background database failure")
+                    }
+                    memory.updateCheckedTime(url, dateTime)
+                    recovered.complete(Unit)
+                }
+            }
+            val http = mockk<UpdaterHtmlClient>()
+            coEvery { http.getFullResponse(any()) } answers { BasicHttpResponse(HttpVersion.HTTP_1_1, 304, "Not modified") }
+            val client = CachedGitHubHtmlClient(store, http)
+            assertEquals("old", client.getUrl("failed"))
+            failed.await()
+            assertEquals("old", client.getUrl("later"))
+            recovered.await()
+            coVerify(exactly = 2) { http.getFullResponse(any()) }
+        }
+    }
+
+    @Test
+    fun `failed cache writes fail all shared callers without retrying HTTP`() = runBlocking {
+        withTimeout(5000) {
+            val failure = MongoException("Cache write failed")
+            val memory = InMemoryInternalDbStore()
+            var fail = true
+            val store = object : InternalDbStore by memory {
+                override fun putCachedWebpage(url: String, lastModified: String?, date: ZonedDateTime, data: String?, accessedAt: ZonedDateTime?): Deferred<Unit> =
+                    kotlinx.coroutines.GlobalScope.async {
+                        if (fail) throw failure
+                        memory.putCachedWebpage(url, lastModified, date, data, accessedAt).join()
+                    }
+            }
+            val gate = CompletableDeferred<Unit>()
+            val http = mockk<UpdaterHtmlClient>()
+            coEvery { http.getFullResponse(any()) } coAnswers { gate.await(); response("body") }
+            val client = CachedGitHubHtmlClient(store, http)
+            val asset = GHAsset("metadata.json", 1, "failed-write", 0, "2013-02-27T19:35:32Z", id = "identity")
+            val owner = async(start = CoroutineStart.UNDISPATCHED) { runCatching { client.getAsset(asset) } }
+            val waiter = async(start = CoroutineStart.UNDISPATCHED) { runCatching { client.getAsset(asset) } }
+            gate.complete(Unit)
+
+            assertSame(failure, owner.await().exceptionOrNull())
+            assertSame(failure, waiter.await().exceptionOrNull())
+            coVerify(exactly = 1) { http.getFullResponse(any()) }
+            fail = false
+            assertEquals("body", client.getAsset(asset))
+            coVerify(exactly = 2) { http.getFullResponse(any()) }
+        }
+    }
+
+    @Test
+    fun `cancellation during a cache write waits before releasing ordering and sharing state`() = runBlocking {
+        withTimeout(5000) {
+            val memory = InMemoryInternalDbStore()
+            val gate = CompletableDeferred<Unit>()
+            val started = CompletableDeferred<Unit>()
+            val store = object : InternalDbStore by memory {
+                override fun putCachedWebpage(url: String, lastModified: String?, date: ZonedDateTime, data: String?, accessedAt: ZonedDateTime?): Deferred<Unit> =
+                    kotlinx.coroutines.GlobalScope.async {
+                        if (data == "old") {
+                            started.complete(Unit)
+                            gate.await()
+                        }
+                        memory.putCachedWebpage(url, lastModified, date, data, accessedAt).join()
+                    }
+            }
+            val http = mockk<UpdaterHtmlClient>()
+            coEvery { http.getFullResponse(UrlRequest("ordered")) } returnsMany listOf(response("old"), response("new"))
+            val client = CachedGitHubHtmlClient(store, http)
+            val asset = GHAsset("metadata.json", 1, "ordered", 0, "2013-02-27T19:35:32Z")
+            val owner = async(start = CoroutineStart.UNDISPATCHED) { client.getAsset(asset) }
+            try {
+                started.await()
+                owner.cancel()
+                yield()
+                assertTrue(!owner.isCompleted, "Cancellation must not abandon the in-flight write")
+                val waiter = async(start = CoroutineStart.UNDISPATCHED) { client.getAsset(asset) }
+                coVerify(exactly = 1) { http.getFullResponse(any()) }
+                gate.complete(Unit)
+                owner.join()
+                assertTrue(runCatching { waiter.await() }.exceptionOrNull() is CancellationException)
+                assertEquals("new", client.getAsset(asset))
+                assertEquals("new", memory.peekCachedWebpage("ordered")!!.data)
+            } finally {
+                gate.complete(Unit)
+                owner.cancelAndJoin()
+            }
+        }
+    }
+
+    @Test
+    fun `demand reads do not enqueue repeated refreshes while validation is pending`() = runBlocking {
+        withTimeout(5000) {
+            val started = CompletableDeferred<Unit>()
+            val gate = CompletableDeferred<Unit>()
+            val http = mockk<UpdaterHtmlClient>()
+            coEvery { http.getFullResponse(UrlRequest("refresh")) } coAnswers {
+                started.complete(Unit)
+                gate.await()
+                response("fresh")
+            }
+            val store = InMemoryInternalDbStore()
+            store.putCachedWebpage("refresh", null, TimeSource.now().minusDays(2), "old").join()
+            val client = CachedGitHubHtmlClient(store, http)
+            try {
+                assertEquals("old", client.getUrl("refresh"))
+                started.await()
+                repeat(3) { assertEquals("old", client.getUrl("refresh")) }
+                assertEquals(0, client.getQueueLength())
+                coVerify(exactly = 1) { http.getFullResponse(any()) }
+            } finally {
+                gate.complete(Unit)
+            }
+        }
+    }
+
+    @Test
+    fun `cancelling the fetch owner clears pending work for a subsequent request`() = runBlocking {
+        withTimeout(5000) {
+            val http = mockk<UpdaterHtmlClient>()
+            var requests = 0
+            coEvery { http.getFullResponse(UrlRequest("cancelled")) } coAnswers {
+                if (++requests == 1) awaitCancellation()
+                response("recovered")
+            }
+            val client = CachedGitHubHtmlClient(InMemoryInternalDbStore(), http)
+            val owner = async(start = CoroutineStart.UNDISPATCHED) { client.getUrl("cancelled") }
+            val waiter = async(start = CoroutineStart.UNDISPATCHED) { client.getUrl("cancelled") }
+            owner.cancelAndJoin()
+            val failure = runCatching { waiter.await() }.exceptionOrNull()
+            assertTrue(failure is CancellationException)
+            assertEquals("recovered", client.getUrl("cancelled"))
+            coVerify(exactly = 2) { http.getFullResponse(any()) }
+        }
+    }
+
+    @Test
+    fun `unavailable pending response is shared and removed before a later retry`() = runBlocking {
+        withTimeout(5000) {
+            val gate = CompletableDeferred<Unit>()
+            val http = mockk<UpdaterHtmlClient>()
+            var requests = 0
+            coEvery { http.getFullResponse(UrlRequest("unavailable")) } coAnswers {
+                gate.await()
+                if (++requests == 1) null else response("recovered")
+            }
+            val client = CachedGitHubHtmlClient(InMemoryInternalDbStore(), http)
+            val first = async(start = CoroutineStart.UNDISPATCHED) { client.getUrl("unavailable") }
+            val second = async(start = CoroutineStart.UNDISPATCHED) { client.getUrl("unavailable") }
+            gate.complete(Unit)
+            assertNull(first.await())
+            assertNull(second.await())
+            assertEquals("recovered", client.getUrl("unavailable"))
+            coVerify(exactly = 2) { http.getFullResponse(any()) }
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [false, true])
+    fun `overlapping asset fetches share work without caching later unversioned requests`(versioned: Boolean) = runBlocking {
+        withTimeout(5000) {
+            val gate = CompletableDeferred<Unit>()
+            val http = mockk<UpdaterHtmlClient>()
+            coEvery { http.getFullResponse(UrlRequest("shared")) } coAnswers {
+                gate.await()
+                response("body")
+            }
+            val store = InMemoryInternalDbStore()
+            val client = CachedGitHubHtmlClient(store, http)
+            val asset = GHAsset("metadata.json", 1, "shared", 0, "2013-02-27T19:35:32Z",
+                id = if (versioned) "identity" else null)
+            val first = async(start = CoroutineStart.UNDISPATCHED) { client.getAsset(asset) }
+            val second = async(start = CoroutineStart.UNDISPATCHED) { client.getAsset(asset) }
+            val cancelledWaiter = async(start = CoroutineStart.UNDISPATCHED) { client.getAsset(asset) }
+            cancelledWaiter.cancel()
+            coVerify(exactly = 1) { http.getFullResponse(any()) }
+            val releasedAt = TimeSource.now()
+            gate.complete(Unit)
+            assertEquals("body", first.await())
+            assertEquals("body", second.await())
+            val key = if (versioned) "shared#github-asset=identity;digest=" else "shared"
+            assertTrue(!store.peekCachedWebpage(key)!!.lastAccessed!!.isBefore(releasedAt))
+            assertEquals("body", client.getAsset(asset))
+            coVerify(exactly = if (versioned) 1 else 2) { http.getFullResponse(any()) }
+        }
+    }
+
+    @Test
+    fun `different asset identities never share a pending response`() = runBlocking {
+        withTimeout(5000) {
+            val gate = CompletableDeferred<Unit>()
+            val http = mockk<UpdaterHtmlClient>()
+            coEvery { http.getFullResponse(UrlRequest("shared")) } coAnswers {
+                gate.await()
+                response("body")
+            }
+            val client = CachedGitHubHtmlClient(InMemoryInternalDbStore(), http)
+            val asset = GHAsset("metadata.json", 1, "shared", 0, "2013-02-27T19:35:32Z", id = "first")
+            val first = async(start = CoroutineStart.UNDISPATCHED) { client.getAsset(asset) }
+            val second = async(start = CoroutineStart.UNDISPATCHED) { client.getAsset(asset.copy(id = "second")) }
+            coVerify(exactly = 2) { http.getFullResponse(any()) }
+            gate.complete(Unit)
+            assertEquals("body", first.await())
+            assertEquals("body", second.await())
+        }
+    }
 
     private data class TestData(
         val name: String,
@@ -100,19 +353,74 @@ class CachedGitHubHtmlClientTest {
 
         assertEquals("foo", cacheDbEntry.url)
         assertNull(cacheDbEntry.lastChecked)
-        assertNull(cacheDbEntry.lastAccessed)
+    }
+
+    @Test
+    fun `background HTTP 200 updates content without recording demand usage`() = runBlocking {
+        val memory = InMemoryInternalDbStore()
+        val modified = CachedGitHubHtmlClient.LAST_MODIFIED_PARSER.format(TimeSource.now().minusDays(20))
+        memory.putCachedWebpage("background", modified, TimeSource.now().minusDays(2), "old")
+        val written = CompletableDeferred<ZonedDateTime?>()
+        val store = recordingStore(memory, written)
+        val http = mockk<UpdaterHtmlClient>()
+        coEvery { http.getFullResponse(UrlRequest("background", modified)) } returns response("new")
+        val client = CachedGitHubHtmlClient(store, http)
+
+        assertEquals("old", client.getUrl("background"))
+        assertNull(withTimeout(5000) { written.await() })
+        assertEquals("new", memory.getCachedWebpage("background")!!.data)
+    }
+
+    @Test
+    fun `direct unversioned asset fetch records demand usage without a cache read`() = runBlocking {
+        val memory = InMemoryInternalDbStore()
+        val now = TimeSource.now()
+        memory.putCachedWebpage("direct", null, now.minusDays(20), "old")
+        val written = CompletableDeferred<ZonedDateTime?>()
+        val store = recordingStore(memory, written)
+        val http = mockk<UpdaterHtmlClient>()
+        coEvery { http.getFullResponse(UrlRequest("direct")) } returns response("new")
+        val client = CachedGitHubHtmlClient(store, http)
+        val asset = GHAsset("metadata.json", 1, "direct", 0, "2013-02-27T19:35:32Z")
+
+        assertEquals("new", client.getAsset(asset))
+        val accessedAt = withTimeout(5000) { written.await() }
+        assertNotNull(accessedAt)
+        assertTrue(!accessedAt!!.isBefore(now))
+        assertEquals(accessedAt, memory.peekCachedWebpage("direct")!!.lastAccessed)
+    }
+
+    @Test
+    fun `fetch does not return until its cache write completes`() = runBlocking {
+        val memory = InMemoryInternalDbStore()
+        val gate = CompletableDeferred<Unit>()
+        val store = object : InternalDbStore by memory {
+            override fun putCachedWebpage(url: String, lastModified: String?, date: ZonedDateTime, data: String?, accessedAt: ZonedDateTime?): Deferred<Unit> {
+                return kotlinx.coroutines.GlobalScope.async {
+                    gate.await()
+                    memory.putCachedWebpage(url, lastModified, date, data, accessedAt).join()
+                }
+            }
+        }
+        val http = mockk<UpdaterHtmlClient>()
+        coEvery { http.getFullResponse(UrlRequest("ordered")) } returns response("new")
+        val result = this.async { CachedGitHubHtmlClient(store, http).getUrl("ordered") }
+
+        delay(200)
+        assertTrue(!result.isCompleted)
+        gate.complete(Unit)
+        assertEquals("new", withTimeout(5000) { result.await() })
+        assertEquals("new", memory.peekCachedWebpage("ordered")!!.data)
     }
 
     @Test
     fun `uncached demand fetch initializes usage`() = runBlocking {
         val store = InMemoryInternalDbStore()
         val http = mockk<UpdaterHtmlClient>()
-        coEvery { http.getFullResponse(UrlRequest("demand")) } returns
-            BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "OK").apply { entity = StringEntity("body") }
+        coEvery { http.getFullResponse(UrlRequest("demand")) } returns response("body")
         val before = TimeSource.now()
         assertEquals("body", CachedGitHubHtmlClient(store, http).getUrl("demand"))
-        assertEquals(0L, store.evictUnusedCache(before.minusDays(30)))
-        assertTrue(!store.getCachedWebpage("demand")!!.lastAccessed!!.isBefore(before))
+        assertTrue(!store.peekCachedWebpage("demand")!!.lastAccessed!!.isBefore(before))
     }
 
     @TestFactory
@@ -130,7 +438,7 @@ class CachedGitHubHtmlClientTest {
                     override suspend fun getCachedWebpage(url: String): CacheDbEntry? =
                         backing.getCachedWebpage(url)?.also { demandUsage = it.lastAccessed }
 
-                    override fun putCachedWebpage(url: String, lastModified: String?, date: ZonedDateTime, data: String?, accessedAt: ZonedDateTime?): Job {
+                    override fun putCachedWebpage(url: String, lastModified: String?, date: ZonedDateTime, data: String?, accessedAt: ZonedDateTime?): Deferred<Unit> {
                         assertNull(accessedAt, "Background HTTP 200 must not be a demand write")
                         return backing.putCachedWebpage(url, lastModified, date, data, accessedAt)
                             .also { validated.complete(Unit) }
@@ -150,11 +458,24 @@ class CachedGitHubHtmlClientTest {
                 assertTrue(!demandUsage!!.isBefore(now), "Cache hits are demand reads")
                 releaseResponse.complete(Unit)
                 withTimeout(5000) { validated.await() }
-                // The refresh has finished; usage must still be exactly the original demand touch.
-                assertEquals(1L, backing.evictUnusedCache(demandUsage!!))
+                assertEquals(demandUsage, backing.peekCachedWebpage("background")!!.lastAccessed)
             }
         }
     }.stream()
+
+    private fun recordingStore(memory: InternalDbStore, written: CompletableDeferred<ZonedDateTime?>): InternalDbStore {
+        return object : InternalDbStore by memory {
+            override fun putCachedWebpage(url: String, lastModified: String?, date: ZonedDateTime, data: String?, accessedAt: ZonedDateTime?): Deferred<Unit> {
+                return memory.putCachedWebpage(url, lastModified, date, data, accessedAt).also {
+                    it.invokeOnCompletion { written.complete(accessedAt) }
+                }
+            }
+        }
+    }
+
+    private fun response(body: String) = BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "OK").apply {
+        entity = StringEntity(body)
+    }
 
     @Test
     fun `cached failed fetch is retried even when recently checked`() = runBlocking {
