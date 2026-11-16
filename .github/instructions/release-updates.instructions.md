@@ -20,6 +20,8 @@ contracts are repeated here rather than relying on loading the ADR.
   lock held for the whole run, so the baseline cannot change during a build and
   no generation re-check is needed. Scheduled incrementals skip (not queue)
   while a full build runs; startup runs an incremental before the full builds.
+  Each scheduled incremental reloads its unfiltered persisted baseline after
+  acquiring the update lock; it must not reuse a previous cycle's catalogue.
 - I3: The release database must be usable at every point. Upsert releases by id
   before deleting superseded ones; publish the target generation only after all
   release writes succeed. Readers reject changing generations. Failed startup
@@ -33,7 +35,9 @@ contracts are repeated here rather than relying on loading the ADR.
   candidate versions; only absent EAs receive the persisted-download allowance,
   not retained EAs or GAs.
 - I6: Prefer exact sidecars, then unambiguous aliases, independently of asset
-  order. A checksum disagreement excludes only the affected binary or installer;
+  order. Resolve competitors' higher-priority sidecars before deciding whether
+  an alias is shared; an ambiguous higher-priority alias does not free another.
+  A checksum disagreement excludes only the affected binary or installer;
   other required-metadata or binary-mapping failures reject the snapshot.
 - I7: Cache identity includes available asset ID/digest; without either, fetch
   on demand. Share only pending fetches. Keep per-key write ordering through

@@ -2,7 +2,7 @@
 
 Date: 2026-10-22
 
-Last reviewed: 2026-11-11
+Last reviewed: 2026-11-16
 
 ## Status
 
@@ -393,8 +393,13 @@ Readers reject a marker that changes while loading and keep serving their cached
 catalogue. If the updater cannot read its startup baseline, startup aborts before
 scheduling any updates; it never substitutes an empty catalogue for an unreadable
 baseline, and can be retried once the database is readable again.
-Updater startup and incremental checksum reconciliation use the unfiltered
-persisted snapshot. API-only filtering must not feed publication: in particular,
+Updater startup, scheduled incrementals and incremental checksum reconciliation
+use the unfiltered persisted snapshot. Each scheduled incremental loads its
+baseline after acquiring the update lock, rather than retaining the repository
+from the first full-update cycle. Otherwise a later full rebuild can omit a
+failed EA while the scheduled task still retains it: recovery with identical
+content would appear unchanged and never reach publication or checksum repair.
+API-only filtering must not feed publication: in particular,
 internal releases with no binaries retain their download counts even though the
 frontend hides them.
 
@@ -451,7 +456,11 @@ unavailable optional checksum.
 
 A legacy basename sidecar shared by several supported artifacts (for example `foo.sha256.txt`
 for both `foo.zip` and `foo.msi`) is ambiguous, so it is treated as unavailable for each
-of them unless the others have their own exact sidecar. The same applies to `.json` metadata.
+of them unless the others resolve their own higher-priority sidecar, either an
+exact match or a more-specific unambiguous alias. A higher-priority alias that is
+itself ambiguous does not remove an artifact from competition. For example,
+`jdk.2.sha256.txt` serves `jdk.2.tar.gz`, leaving `jdk.sha256.txt` available to
+`jdk.1.tar.gz`. The same applies to `.json` metadata.
 Cache writes are ordered per cache key, GitHub download totals are summed as `Long`,
 and append-only GitHub statistics saves are not replayed after a database error.
 The full-update guard uses the persisted release snapshot, not saved statistics.

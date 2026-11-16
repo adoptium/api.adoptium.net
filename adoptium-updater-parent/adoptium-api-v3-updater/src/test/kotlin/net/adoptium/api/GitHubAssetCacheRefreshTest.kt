@@ -434,6 +434,65 @@ class GitHubAssetCacheRefreshTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = ["checksum", "metadata"])
+    fun `another archive's more specific alias leaves the shared sidecar available`(kind: String) = runBlocking {
+        val now = TimeSource.now()
+        val stem = "OpenJDK8U-jdk_x64_windows_hotspot"
+        val firstHash = "a".repeat(64)
+        val secondHash = "b".repeat(64)
+        val first = asset("$stem.1.zip", now, "first", "sha256:$firstHash")
+        val second = asset("$stem.2.zip", now, "second", "sha256:$secondHash")
+        val suffix = if (kind == "checksum") ".sha256.txt" else ".json"
+        val shared = asset("$stem$suffix", now)
+        val specific = asset("$stem.2$suffix", now)
+        val client = mockk<GitHubHtmlClient>()
+        coEvery { client.getAsset(specific) } returns secondHash
+        val mapper = AdoptBinaryMapper(client)
+        val assets = listOf(first, second, shared, specific)
+
+        for (ordered in listOf(assets, assets.reversed())) {
+            coEvery { client.getAsset(shared) } returns firstHash
+            val binaries = mapper.toBinaryList(listOf(first, second), ordered, emptyMap())
+                .associateBy { it.`package`.name }
+
+            assertEquals(setOf(first.name, second.name), binaries.keys)
+            if (kind == "checksum") {
+                assertEquals(shared.downloadUrl, binaries.getValue(first.name).`package`.checksum_link)
+                assertEquals(specific.downloadUrl, binaries.getValue(second.name).`package`.checksum_link)
+                coEvery { client.getAsset(shared) } returns "c".repeat(64)
+                val checked = mapper.toBinaryList(listOf(first, second), ordered, emptyMap())
+                assertEquals(listOf(second.name), checked.map { it.`package`.name })
+            } else {
+                assertEquals(shared.downloadUrl, binaries.getValue(first.name).`package`.metadata_link)
+                assertEquals(specific.downloadUrl, binaries.getValue(second.name).`package`.metadata_link)
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["checksum", "metadata"])
+    fun `an ambiguous more specific alias does not free the shared sidecar`(kind: String) = runBlocking {
+        val now = TimeSource.now()
+        val stem = "OpenJDK8U-jdk_x64_linux_hotspot"
+        val first = asset("$stem.1.zip", now)
+        val second = asset("$stem.2.zip", now)
+        val third = asset("$stem.2.tar.gz", now)
+        val suffix = if (kind == "checksum") ".sha256.txt" else ".json"
+        val shared = asset("$stem$suffix", now)
+        val specific = asset("$stem.2$suffix", now)
+        val client = mockk<GitHubHtmlClient>()
+        val mapper = AdoptBinaryMapper(client)
+        val assets = listOf(first, second, third, shared, specific)
+
+        for (ordered in listOf(assets, assets.reversed())) {
+            val binary = mapper.toBinaryList(listOf(first), ordered, emptyMap()).single()
+            if (kind == "checksum") assertNull(binary.`package`.checksum_link)
+            else assertNull(binary.`package`.metadata_link)
+        }
+        coVerify(exactly = 0) { client.getAsset(any()) }
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = ["stem", "first-dot"])
     fun `legacy checksum aliases remain supported without an exact sidecar`(format: String) = runBlocking {
         val now = TimeSource.now()

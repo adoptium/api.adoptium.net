@@ -7,6 +7,7 @@ import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.v3.AdoptReposBuilder
+import net.adoptium.api.v3.TimeSource
 import net.adoptium.api.v3.V3Updater
 import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.APIDataStoreImpl
@@ -15,6 +16,7 @@ import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
 import net.adoptium.api.v3.dataSources.models.FeatureRelease
 import net.adoptium.api.v3.dataSources.models.Releases
+import net.adoptium.api.v3.models.DateTime
 import net.adoptium.api.v3.models.Release
 import net.adoptium.api.v3.models.ReleaseType
 import net.adoptium.api.v3.models.Vendor
@@ -99,7 +101,7 @@ class PublicationInvariantTest {
     @Test
     fun `startup runs an incremental first and scheduled incrementals skip while a full build runs`() = runBlocking {
         val before = repos(release("baseline", ReleaseType.ga))
-        val database = InMemoryApiPersistence(before, AdoptCdxaRepos(emptyList()))
+        val database = spyk(InMemoryApiPersistence(before, AdoptCdxaRepos(emptyList())))
         val builder = mockk<AdoptReposBuilder>()
         val order = java.util.Collections.synchronizedList(mutableListOf<String>())
         val incrementals = AtomicInteger()
@@ -129,11 +131,45 @@ class PublicationInvariantTest {
         val incrementalsBefore = incrementals.get()
         scheduled.captured.run()
         assertEquals(incrementalsBefore, incrementals.get())
+        coVerify(exactly = 1) { database.readAllReleaseData() }
 
         releaseBuild.countDown()
         runner.join(30_000)
         scheduled.captured.run()
         assertEquals(incrementalsBefore + 2, incrementals.get())
+    }
+
+    @Test
+    fun `scheduled incremental republishes an unchanged EA omitted by a later full cycle`() = runBlocking {
+        val ga = release("ga", ReleaseType.ga, vendor = Vendor.eclipse)
+        val recent = DateTime(TimeSource.now().minusDays(1))
+        val ea = Release("rolling", ReleaseType.ea, ga.release_link, "rolling", recent, recent,
+            emptyArray(), 50, Vendor.eclipse, ga.version_data)
+        val complete = repos(ga, ea)
+        val withoutEa = repos(ga)
+        val database = InMemoryApiPersistence(complete, AdoptCdxaRepos(emptyList()))
+        database.updateAllRepos(complete, V3Updater.calculateChecksum(complete))
+        val builder = mockk<AdoptReposBuilder>()
+        val updater = updater(builder, database)
+        coEvery { builder.build(any()) } returns complete
+        val scheduled = slot<Runnable>()
+        val executor = mockk<ScheduledExecutorService>()
+        every { executor.scheduleWithFixedDelay(capture(scheduled), any(), any(), any()) } returns mockk(relaxed = true)
+        val incrementalScheduled = AtomicBoolean(false)
+
+        val firstCycle = updater.runUpdate(complete, incrementalScheduled, executor)
+        coEvery { builder.build(any()) } returns withoutEa
+        updater.runUpdate(firstCycle, incrementalScheduled, executor)
+        assertEquals(withoutEa, database.repos)
+
+        coEvery { builder.incrementalUpdate(any(), any(), any(), any()) } answers {
+            secondArg<AdoptRepos>().addAll(listOf(ea))
+        }
+        scheduled.captured.run()
+
+        assertEquals(complete, database.repos)
+        coVerify(exactly = 1) { builder.incrementalUpdate(any(), withoutEa, any(), any()) }
+        verify(exactly = 1) { executor.scheduleWithFixedDelay(any(), any(), any(), any()) }
     }
 
     @Test

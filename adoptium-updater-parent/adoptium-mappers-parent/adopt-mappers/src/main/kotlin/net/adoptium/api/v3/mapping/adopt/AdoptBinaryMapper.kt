@@ -212,16 +212,17 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         setOf(removeExtensionFromName(name) + suffix, name.substringBefore(".") + suffix)
 
     // A sidecar named only by the shared stem (foo.sha256.txt for foo.zip and foo.msi) cannot be
-    // attributed to one artifact, so it is unavailable to each unless the others have their own exact sidecar.
-    private fun getSidecarAsset(fullAssetList: List<GHAsset>, binary_name: String, suffix: String): GHAsset? {
+    // attributed to one artifact unless the others resolve a higher-priority sidecar.
+    private fun getSidecarAsset(fullAssetList: List<GHAsset>, binary_name: String, suffix: String, beforeAlias: String? = null): GHAsset? {
+        if (beforeAlias == "$binary_name$suffix") return null
         fullAssetList.firstOrNull { it.name == "$binary_name$suffix" }?.let { return it }
-        for (name in sidecarAliases(binary_name, suffix)) {
+        for (name in sidecarAliases(binary_name, suffix).takeWhile { it != beforeAlias }) {
             val alias = fullAssetList.firstOrNull { it.name == name } ?: continue
             val competes = fullAssetList.any { other ->
                 other.name != binary_name &&
                     (BINARY_ASSET_WHITELIST.any { other.name.endsWith(it) } || isSupportedSbom(other)) &&
                     alias.name in sidecarAliases(other.name, suffix) &&
-                    fullAssetList.none { it.name == "${other.name}$suffix" }
+                    getSidecarAsset(fullAssetList, other.name, suffix, beforeAlias = alias.name) == null
             }
             if (!competes) return alias
         }

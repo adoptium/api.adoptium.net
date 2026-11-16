@@ -8,6 +8,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.spyk
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import net.adoptium.api.testDoubles.InMemoryApiPersistence
 import net.adoptium.api.v3.AdoptCdxaReposBuilder
@@ -45,7 +46,9 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 class DatabaseFailurePolicyTest {
@@ -151,6 +154,45 @@ class DatabaseFailurePolicyTest {
         scheduled.captured.run()
 
         coVerify(exactly = 4) { builder.incrementalUpdate(any(), any(), any(), any()) }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [false, true])
+    fun `scheduled baseline read failure does not use stale data or cancel later attempts`(mongo: Boolean) {
+        val database = spyk(InMemoryApiPersistence(before, AdoptCdxaRepos(emptyList())))
+        val updater = updater(database)
+        val executor = mockk<ScheduledExecutorService>()
+        val scheduled = slot<Runnable>()
+        every { executor.scheduleWithFixedDelay(capture(scheduled), any(), any(), any()) } returns mockk()
+        updater.runUpdate(before, AtomicBoolean(false), executor)
+        val failure = if (mongo) MongoException("Snapshot unavailable") else IllegalStateException("Invalid snapshot")
+        coEvery { database.readAllReleaseData() } throws failure
+
+        scheduled.captured.run()
+        coVerify(exactly = 2) { builder.incrementalUpdate(any(), any(), any(), any()) }
+
+        coEvery { database.readAllReleaseData() } returns before
+        scheduled.captured.run()
+        coVerify(exactly = 3) { builder.incrementalUpdate(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `scheduled baseline cancellation propagates and releases the update lock`() {
+        val database = spyk(InMemoryApiPersistence(before, AdoptCdxaRepos(emptyList())))
+        val updater = updater(database)
+        val executor = mockk<ScheduledExecutorService>()
+        val scheduled = slot<Runnable>()
+        every { executor.scheduleWithFixedDelay(capture(scheduled), any(), any(), any()) } returns mockk()
+        updater.runUpdate(before, AtomicBoolean(false), executor)
+        val cancelled = CancellationException("Snapshot cancelled")
+        coEvery { database.readAllReleaseData() } throws cancelled
+
+        assertSame(cancelled, assertThrows(CancellationException::class.java) { scheduled.captured.run() })
+        coVerify(exactly = 2) { builder.incrementalUpdate(any(), any(), any(), any()) }
+
+        coEvery { database.readAllReleaseData() } returns before
+        CompletableFuture.runAsync { scheduled.captured.run() }.get(30, TimeUnit.SECONDS)
+        coVerify(exactly = 3) { builder.incrementalUpdate(any(), any(), any(), any()) }
     }
 
     @Test

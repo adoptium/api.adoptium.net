@@ -8,6 +8,7 @@ import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.ApplicationPath
 import jakarta.ws.rs.core.Application
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -132,13 +133,17 @@ class V3Updater @Inject constructor(
         updateLock.withLock { incrementalUpdateLocked(oldRepo) }
 
     // Scheduled incrementals skip rather than queue behind a running full build
-    private fun incrementalUpdateIfIdle(oldRepo: AdoptRepos): AdoptRepos? {
+    private fun incrementalUpdateIfIdle(): AdoptRepos? {
         if (!updateLock.tryLock()) {
             LOGGER.info("Skipping scheduled incremental update, another release update is in progress")
             return null
         }
         try {
-            return incrementalUpdateLocked(oldRepo)
+            return incrementalUpdateLocked(APIDataStoreImpl.loadUpdaterSnapshot(database))
+        } catch (e: Exception) {
+            if (e is MongoException || e is CancellationException) throw e
+            LOGGER.error("Failed to load scheduled incremental baseline", e)
+            return null
         } finally {
             updateLock.unlock()
         }
@@ -439,7 +444,7 @@ class V3Updater @Inject constructor(
             if (!incrementalUpdateScheduled.getAndSet(true)) {
                 executor.scheduleWithFixedDelay(
                     updateTask {
-                        repo1 = incrementalUpdateIfIdle(repo1) ?: repo1
+                        incrementalUpdateIfIdle()
                     },
                     1, 6, TimeUnit.MINUTES
                 )
