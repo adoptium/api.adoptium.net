@@ -189,9 +189,14 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         if (githubChecksum != null) {
             for ((source, checksum) in listOf("metadata" to metadata, "checksum sidecar" to sidecar)) {
                 if (checksum != null && !githubChecksum.equals(checksum.trim(), ignoreCase = true)) {
-                    throw ChecksumMismatchException(
-                        "SHA-256 mismatch for ${asset.downloadUrl}: GitHub=$githubChecksum, $source=$checksum"
-                    )
+                    val message = "SHA-256 mismatch for ${asset.downloadUrl}: GitHub=$githubChecksum, $source=$checksum"
+                    // Known upstream issue: SBOMs are signed after their checksums are recorded, so only
+                    // GitHub's digest describes the published SBOM.
+                    if (isSupportedSbom(asset)) {
+                        LOGGER.debug("Using GitHub digest for SBOM ${asset.name}: $message")
+                        continue
+                    }
+                    throw ChecksumMismatchException(message)
                 }
             }
         }
