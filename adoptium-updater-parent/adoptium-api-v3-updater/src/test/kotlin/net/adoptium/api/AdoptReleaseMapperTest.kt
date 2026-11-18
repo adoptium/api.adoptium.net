@@ -178,6 +178,35 @@ class AdoptReleaseMapperTest : BaseTest() {
     }
 
     @Test
+    fun `sbom metadata without sha256 uses the GitHub digest`() = runBlocking {
+        val sbom = "OpenJDK8U-sbom_aarch64_alpine-linux_hotspot_2022-06-17-23-30.json"
+        val digest = "a".repeat(64)
+        val source = buildGhAssets(
+            listOf(
+                Pair("OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz", ""),
+                Pair("OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz.json", "1"),
+                Pair(sbom, ""),
+                Pair(sbom.removeSuffix(".json") + "-metadata.json", "2"),
+            )
+        )
+        val assets = GHAssets(source.assets.map { if (it.name == sbom) it.copy(digest = "sha256:$digest") else it }, source.pageInfo, source.totalCount)
+        val cached = CachedGitHubHtmlClient(InMemoryInternalDbStore(), mockClient())
+        val client = object : GitHubHtmlClient {
+            override suspend fun getUrl(url: String): String? = cached.getUrl(url)
+            override suspend fun getAsset(asset: GHAsset): String? {
+                val body = cached.getAsset(asset)
+                return if (asset.downloadUrl == "2") body!!.replace(Regex("\"sha256\": *\"[0-9a-f]+\""), "\"sha256\": null") else body
+            }
+        }
+
+        val release = AdoptReleaseMapperFactory(AdoptBinaryMapper(client), client).get(Vendor.eclipse).toAdoptRelease(formGhRelease(assets))
+
+        assertTrue(release.succeeded())
+        val binary = release.result!!.flatMap { it.binaries.toList() }.single { it.`package`.name == sbom }
+        assertEquals(digest, binary.`package`.checksum)
+    }
+
+    @Test
     fun copesWithSbom() {
         runBlocking {
             val source = buildGhAssets(
