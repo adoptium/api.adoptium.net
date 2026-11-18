@@ -19,6 +19,7 @@ interface ApiPersistence {
     suspend fun updateAllRepos(repos: AdoptRepos, checksum: String)
     suspend fun updateCdxaRepos(repos: AdoptCdxaRepos, checksum: String)
     suspend fun readReleaseData(featureVersion: Int): FeatureRelease
+    suspend fun readAllReleaseData(): AdoptRepos
     suspend fun readCdxaData(): List<Cdxa>
 
     suspend fun addGithubDownloadStatsEntries(stats: List<GitHubDownloadStatsDbEntry>)

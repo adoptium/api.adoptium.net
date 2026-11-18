@@ -2,7 +2,6 @@ package net.adoptium.api.v3.dataSources.github.graphql.clients
 
 import com.expediagroup.graphql.client.types.GraphQLClientRequest
 import com.expediagroup.graphql.client.types.GraphQLClientResponse
-import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import io.ktor.client.plugins.*
 import io.ktor.http.*
 import jakarta.enterprise.context.ApplicationScoped
@@ -10,6 +9,7 @@ import jakarta.inject.Inject
 import jakarta.json.JsonObject
 import kotlinx.coroutines.delay
 import net.adoptium.api.v3.TimeSource
+import net.adoptium.api.v3.config.APIConfig
 import net.adoptium.api.v3.dataSources.UpdaterHtmlClient
 import net.adoptium.api.v3.dataSources.UpdaterJsonMapper
 import net.adoptium.api.v3.dataSources.github.graphql.models.HasRateLimit
@@ -20,7 +20,7 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 import kotlin.random.Random
-import net.adoptium.api.v3.config.APIConfig
+import kotlin.time.Duration.Companion.milliseconds
 
 @ApplicationScoped
 open class GraphQLGitHubInterface @Inject constructor(
@@ -51,29 +51,28 @@ open class GraphQLGitHubInterface @Inject constructor(
             if (!hasNext(response)) {
                 return listOf()
             } else {
-                cursor = getCursor(response)
+                cursor = checkNotNull(getCursor(response)) { "Missing GraphQL continuation cursor" }
+                check(cursor.isNotBlank() && cursor != initialCursor) { "GraphQL continuation did not advance" }
             }
         }
 
         val result = queryApi(requestEntityBuilder, cursor)
+            ?: throw IllegalStateException("No data returned for GraphQL page at cursor $cursor")
 
-        if (result == null) {
-            LOGGER.warn("No data returned")
+        if (repoDoesNotExist(result)) {
+            check(response == null && initialCursor == null) {
+                "Repository disappeared during GraphQL pagination at cursor $cursor"
+            }
             return emptyList()
         }
-
-        if (repoDoesNotExist(result)) return listOf()
+        check(result.errors.isNullOrEmpty()) { "Incomplete GraphQL page: ${result.errors}" }
 
         selfRateLimit(result)
 
-        if (result.data == null) {
-            LOGGER.warn("No data returned")
-            return emptyList()
-        }
+        val data = checkNotNull(result.data) { "No data returned for GraphQL page at cursor $cursor" }
+        val newData = extract(data)
 
-        val newData = extract(result.data!!)
-
-        val more = getAll(requestEntityBuilder, extract, hasNext, getCursor, initialCursor, result.data)
+        val more = getAll(requestEntityBuilder, extract, hasNext, getCursor, cursor, data)
 
         return newData.plus(more)
     }
@@ -101,8 +100,8 @@ open class GraphQLGitHubInterface @Inject constructor(
             var quota = getRemainingQuota()
             do {
                 val delayTime = max(10, quota.second)
-                LOGGER.debug("Remaining data getting low $quota ${rateLimitData.cost} $delayTime")
-                delay(1000 * delayTime)
+                LOGGER.debug("Remaining data getting low {} {} {}", quota, rateLimitData.cost, delayTime)
+                delay((1000 * delayTime).milliseconds)
 
                 quota = getRemainingQuota()
             } while (quota.first < THRESHOLD_START)
@@ -110,7 +109,7 @@ open class GraphQLGitHubInterface @Inject constructor(
 
         // Reduce log rate
         if ((Random.nextInt() % 10) == 0) {
-            LOGGER.debug("RateLimit ${rateLimitData.remaining} ${rateLimitData.cost}")
+            LOGGER.debug("RateLimit {} {}", rateLimitData.remaining, rateLimitData.cost)
         }
     }
 
@@ -160,7 +159,7 @@ open class GraphQLGitHubInterface @Inject constructor(
         val query = requestEntityBuilder.invoke(cursor)
 
         if (APIConfig.DEBUG) {
-            LOGGER.debug("GraphQL query: "+query.query)
+            LOGGER.debug("GraphQL query: " + query.query)
         }
 
         var retryCount = 0
@@ -177,9 +176,9 @@ open class GraphQLGitHubInterface @Inject constructor(
 
                 if (repoDoesNotExist(response)) return response
 
-                LOGGER.info("Failed query: "+query.query)
+                LOGGER.info("Failed query: " + query.query)
                 LOGGER.info("Retrying ${retryCount++}")
-                delay((TimeUnit.SECONDS.toMillis(5) * retryCount))
+                delay((TimeUnit.SECONDS.toMillis(5) * retryCount).milliseconds)
             } catch (e: ResponseException) {
                 if (e.response.status == HttpStatusCode.Forbidden ||
                     e.response.status == HttpStatusCode.BadGateway ||
@@ -187,15 +186,12 @@ open class GraphQLGitHubInterface @Inject constructor(
                     e.response.status == HttpStatusCode.GatewayTimeout) {
                     // Normally get these due to tmp ban due to rate limiting
                     LOGGER.info("Retrying ${e.response.status} ${retryCount++}")
-                    delay((TimeUnit.SECONDS.toMillis(5) * retryCount))
+                    delay((TimeUnit.SECONDS.toMillis(5) * retryCount).milliseconds)
                 } else {
                     printError(query, cursor)
                     throw Exception("Unexpected return type ${e.response.status}")
                 }
 
-            } catch (e: MismatchedInputException) {
-                LOGGER.info("MismatchedInputException: "+e)
-                return null
             } catch (e: Exception) {
                 LOGGER.error("Query failed", e)
                 throw e

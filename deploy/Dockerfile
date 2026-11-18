@@ -22,7 +22,7 @@ WORKDIR /tmp/build
 
 COPY . /tmp/build
 
-RUN     ./mvnw clean install $MAVEN_FLAGS && \
+RUN     ./mvnw -Daether.transport.http.retryHandler.count=5 clean install $MAVEN_FLAGS && \
         mkdir -p /api/deployment && \
         cp adoptium-updater-parent/adoptium-api-v3-updater/target/adoptium-api-v3-updater-*-jar-with-dependencies.jar /api/deployment/updater.jar && \
         cp -r adoptium-frontend-parent/adoptium-api-v3-frontend/target/quarkus-app/* /api/deployment/ && \

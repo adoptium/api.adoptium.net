@@ -31,6 +31,32 @@ class StatEntry(
 @ApplicationScoped
 class DownloadStatsInterface {
 
+    companion object {
+        // Placeholder for the cumulative package download baseline that existed prior to
+        // daily tracking of Cloudflare package downloads. The Cloudflare API only exposes
+        // downloads for the last 24h, so this baseline (manually entered into the data
+        // store / configured here) is added to the running total of daily snapshots to
+        // produce a cumulative package download count over time. The variable is dated
+        // with the day the baseline was captured; create a new dated baseline when the
+        // baseline is next refreshed.
+        // Map: feature_version -> baseline downloads at the date encoded in the name.
+        val PACKAGE_DOWNLOAD_BASELINE_2026_05_28: Map<Int, Long> = mapOf(
+            8 to 635751L,
+            11 to 8029903L,
+            16 to 20L,
+            17 to 531547L,
+            18 to 3851L,
+            19 to 9614L,
+            20 to 5285L,
+            21 to 666282L,
+            22 to 10417L,
+            23 to 16341L,
+            24 to 21104L,
+            25 to 287069L,
+            26 to 18710L
+        )
+    }
+
     @Schema(hidden = true)
     private var versionSupplier: VersionSupplier
 
@@ -267,13 +293,23 @@ class DownloadStatsInterface {
 
         val githubDownloads = githubStats.sumOf { it.downloads }
 
-        val packageDownloads = packageStats.sumOf { it.downloads }
+        val trackedPackageDownloadsByVersion: Map<Int, Long> =
+            packageStats.associate { it.feature_version to it.downloads }
+
+        // Cumulative package downloads = manually-captured baseline + running total of
+        // daily Cloudflare snapshots stored since baseline date.
+        val packageBreakdown: Map<Int, Long> =
+            (PACKAGE_DOWNLOAD_BASELINE_2026_05_28.keys + trackedPackageDownloadsByVersion.keys)
+                .associateWith { featureVersion ->
+                    (PACKAGE_DOWNLOAD_BASELINE_2026_05_28[featureVersion] ?: 0L) +
+                        (trackedPackageDownloadsByVersion[featureVersion] ?: 0L)
+                }
+
+        val packageDownloads = packageBreakdown.values.sum()
 
         val dockerBreakdown = dockerStats.associate { Pair(it.repo, it.pulls) }
 
         val githubBreakdown = githubStats.associate { Pair(it.feature_version, it.downloads) }
-
-        val packageBreakdown = packageStats.associate { Pair(it.feature_version, it.downloads) }
 
         val totalStats = TotalStats(dockerPulls, githubDownloads, packageDownloads, dockerPulls + githubDownloads + packageDownloads)
         return DownloadStats(TimeSource.now(), totalStats, githubBreakdown, dockerBreakdown, packageBreakdown)
