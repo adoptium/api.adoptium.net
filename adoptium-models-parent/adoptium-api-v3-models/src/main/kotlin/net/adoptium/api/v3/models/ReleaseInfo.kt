@@ -10,6 +10,9 @@ class ReleaseInfo {
     @Schema(example = "[8,11]", description = "The LTS versions for which adopt have produced a ga release")
     val available_lts_releases: Array<Int>
 
+    @Schema(example = "[20,21]", description = "The versions for which adopt have produced an ea release")
+    val available_ea_releases: Array<Int>
+
     @Schema(example = "11", description = "The highest LTS version for which adopt have produced a ga release")
     val most_recent_lts: Int
 
@@ -28,7 +31,8 @@ class ReleaseInfo {
         most_recent_lts: Int,
         most_recent_feature_release: Int,
         most_recent_feature_version: Int,
-        tip_version: Int
+        tip_version: Int,
+        available_ea_releases: Array<Int> = emptyArray()
     ) {
         this.available_releases = available_releases
         this.available_lts_releases = available_lts_releases
@@ -36,5 +40,6 @@ class ReleaseInfo {
         this.most_recent_feature_release = most_recent_feature_release
         this.most_recent_feature_version = most_recent_feature_version
         this.tip_version = tip_version
+        this.available_ea_releases = available_ea_releases
     }
 }
