@@ -206,15 +206,25 @@ class AdoptReleaseMapperTest : BaseTest() {
         assertEquals(digest, binary.`package`.checksum)
     }
 
-    @Test
-    fun `explicitly excluded sbom with malformed metadata is not fetched`() = runBlocking {
-        val sbom = "OpenJDK8U-sbom_x64_solaris_hotspot_8u462b08.json"
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "OpenJDK8U-sbom_x64_solaris_hotspot_8u462b08.json",
+            // Assets on the GA jdk8u452-b09 release; its x64 Solaris assets carry an -ea suffix upstream
+            "OpenJDK8U-jdk_sparcv9_solaris_hotspot_8u452b09.tar.gz",
+            "OpenJDK8U-sbom_sparcv9_solaris_hotspot_8u452b09.json",
+            "OpenJDK8U-jdk_x64_solaris_hotspot_8u452b09-ea.tar.gz",
+            "OpenJDK8U-sbom_x64_solaris_hotspot_8u452b09-ea.json",
+        ]
+    )
+    fun `explicitly excluded asset with malformed metadata is not fetched`(excluded: String) = runBlocking {
+        val sidecar = if (excluded.contains("-sbom_")) excluded.removeSuffix(".json") + "-metadata.json" else "$excluded.json"
         val assets = buildGhAssets(
             listOf(
                 Pair("OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz", ""),
                 Pair("OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz.json", "1"),
-                Pair(sbom, ""),
-                Pair(sbom.removeSuffix(".json") + "-metadata.json", "2"),
+                Pair(excluded, ""),
+                Pair(sidecar, "2"),
             )
         )
         val cached = CachedGitHubHtmlClient(InMemoryInternalDbStore(), mockClient())
@@ -230,8 +240,8 @@ class AdoptReleaseMapperTest : BaseTest() {
         val release = AdoptReleaseMapperFactory(AdoptBinaryMapper(client), client).get(Vendor.eclipse).toAdoptRelease(formGhRelease(assets))
 
         assertTrue(release.succeeded())
-        assertTrue(fetched.none { it.contains("sbom") })
-        assertTrue(release.result!!.flatMap { it.binaries.toList() }.none { it.`package`.name == sbom })
+        assertTrue(fetched.none { it.contains("solaris") })
+        assertTrue(release.result!!.flatMap { it.binaries.toList() }.none { it.`package`.name == excluded })
     }
 
     @Test
