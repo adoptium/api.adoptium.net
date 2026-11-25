@@ -77,7 +77,9 @@ private class AdoptReleaseMapper(
             LOGGER.error("Failed to retrieve metadata for $releaseName", e)
             return ReleaseResult(error = "Failed to retrieve metadata for $releaseName", retryable = true)
         }
-        val selectedAssets = supportedAssets.filter { !it.name.contains("-sources") || it in ghAssetsWithMetadata }
+        val selectedAssets = supportedAssets.filter {
+            it in ghAssetsWithMetadata || (!it.name.contains("-sources") && (ghAssetsWithMetadata.isEmpty() || !isSbom(it)))
+        }
         val ungroupedDownloads = downloadCount(ghRelease.releaseAssets.assets.filterNot { it in selectedAssets })
         val sourcePackage = getSourcePackage(ghRelease, ghAssetsWithMetadata)
         val releaseNotes = getReleaseNotesPackage(ghRelease.releaseAssets.assets)
@@ -253,10 +255,14 @@ private class AdoptReleaseMapper(
         // Legacy releases (including Semeru) may have no metadata at all. Once
         // metadata is used for grouping, every supported release asset must be accounted
         // for, even when its sidecar node is temporarily absent from GitHub.
+        // SBOM metadata is non-critical: an SBOM without usable metadata is omitted.
         if (assetsWithMetadata.isNotEmpty()) {
             val missingMetadata = supportedAssets.filter { asset ->
-                !asset.name.contains("-sources") && asset !in assetsWithMetadata
+                !asset.name.contains("-sources") && !isSbom(asset) && asset !in assetsWithMetadata
             }
+            supportedAssets
+                .filter { isSbom(it) && it !in assetsWithMetadata }
+                .forEach { LOGGER.warn("Omitting SBOM ${it.name}: metadata missing or unusable") }
             check(missingMetadata.isEmpty()) {
                 "Required metadata missing for: ${missingMetadata.joinToString { it.name }}"
             }
@@ -277,13 +283,23 @@ private class AdoptReleaseMapper(
             return null
         }
 
-        val metadataString = htmlClient.getAsset(metadataAsset)
-            ?: throw IllegalStateException("Required metadata unavailable: ${metadataAsset.downloadUrl}")
-        return withContext(Dispatchers.IO) {
-            val metadata = UpdaterJsonMapper.mapper.readValue(metadataString, GHMetaData::class.java)
-            Pair(binaryAsset, metadata)
+        return try {
+            val metadataString = htmlClient.getAsset(metadataAsset)
+                ?: throw IllegalStateException("Required metadata unavailable: ${metadataAsset.downloadUrl}")
+            withContext(Dispatchers.IO) {
+                val metadata = UpdaterJsonMapper.mapper.readValue(metadataString, GHMetaData::class.java)
+                Pair(binaryAsset, metadata)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            if (e is MongoException || !isSbom(binaryAsset)) throw e
+            LOGGER.warn("Ignoring unusable SBOM metadata ${metadataAsset.name}", e)
+            null
         }
     }
+
+    private fun isSbom(asset: GHAsset) = asset.name.endsWith(".json") && asset.name.contains("-sbom_")
 
     private fun metadataNameFor(binary: GHAsset) = if (binary.name.endsWith(".json")) {
         // SBOMs replace their .json extension: sbom.json with sbom-metadata.json

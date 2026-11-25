@@ -244,6 +244,27 @@ class AdoptReleaseMapperTest : BaseTest() {
         assertTrue(release.result!!.flatMap { it.binaries.toList() }.none { it.`package`.name == excluded })
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = ["missing-sbom-node", "invalid-sbom-metadata"])
+    fun `sbom without usable metadata is omitted and the release maps`(failure: String) = runBlocking {
+        val jre = "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz"
+        val sbom = "OpenJDK8U-sbom_x64_windows_hotspot_8u442b06.json"
+        val sidecar = if (failure == "missing-sbom-node") emptyList() else listOf(Pair(sbom.removeSuffix(".json") + "-metadata.json", "2"))
+        val assets = buildGhAssets(listOf(Pair(jre, ""), Pair("$jre.json", "1"), Pair(sbom, "")) + sidecar)
+        val cached = CachedGitHubHtmlClient(InMemoryInternalDbStore(), mockClient())
+        val client = object : GitHubHtmlClient {
+            override suspend fun getUrl(url: String): String? = cached.getUrl(url)
+            override suspend fun getAsset(asset: GHAsset): String? =
+                if (asset.downloadUrl == "2") "{\"sha256\": \"jre,\n}" else cached.getAsset(asset)
+        }
+
+        val release = AdoptReleaseMapperFactory(AdoptBinaryMapper(client), client).get(Vendor.eclipse).toAdoptRelease(formGhRelease(assets))
+
+        assertTrue(release.succeeded())
+        assertFalse(release.retryable)
+        assertEquals(setOf(jre), release.result!!.flatMap { it.binaries.toList() }.map { it.`package`.name }.toSet())
+    }
+
     @Test
     fun copesWithSbom() {
         runBlocking {
@@ -320,14 +341,10 @@ class AdoptReleaseMapperTest : BaseTest() {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["missing", "invalid", "exception", "missing-node", "missing-sbom-node", "invalid-variant"])
+    @ValueSource(strings = ["missing", "invalid", "exception", "missing-node", "invalid-variant"])
     fun `incomplete metadata refresh preserves both stored split groups`(failure: String) = runBlocking {
-        val secondAsset = if (failure == "missing-sbom-node") {
-            "OpenJDK8U-sbom_aarch64_alpine-linux_hotspot_2022-06-17-23-30.json"
-        } else "OpenJDK8U-jre_x64_linux_hotspot-2.tar.gz"
-        val secondMetadata = if (failure == "missing-sbom-node") {
-            secondAsset.removeSuffix(".json") + "-metadata.json"
-        } else "$secondAsset.json"
+        val secondAsset = "OpenJDK8U-jre_x64_linux_hotspot-2.tar.gz"
+        val secondMetadata = "$secondAsset.json"
         val assetNames = listOf(
             "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz" to "",
             "OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz.json" to "1",
@@ -362,7 +379,7 @@ class AdoptReleaseMapperTest : BaseTest() {
         coEvery { repository.getSummary(8) } returns GHSummaryTestDataGenerator.generateGHRepositorySummary(
             GHSummaryTestDataGenerator.generateGHRepository(before))
         fail = true
-        val incomplete = if (failure == "missing-node" || failure == "missing-sbom-node") {
+        val incomplete = if (failure == "missing-node") {
             formGhRelease(buildGhAssets(assetNames.dropLast(1)))
         } else upstream
         val failed = mapper.toAdoptRelease(incomplete)

@@ -244,8 +244,12 @@ the snapshot to succeed. Other mapping failures still reject the snapshot.
 Supported assets include archives and SBOMs, subject to the mapper's existing
 exclusions.
 
-Once metadata is used, every supported non-source release asset must have its
-required metadata, including SBOM metadata. Metadata sidecars themselves are not
+Once metadata is used, every supported non-source, non-SBOM release asset must
+have its required metadata. SBOM metadata is non-critical: an SBOM whose sidecar
+is absent, unfetchable or malformed is logged and omitted, and the rest of the
+release still publishes. SBOM downloads are not counted, so omission does not
+change download statistics. Database failures while reading SBOM metadata still
+propagate. Metadata sidecars themselves are not
 binaries. Installer, unsupported-asset and excluded-asset metadata is not required
 for binary grouping.
 
