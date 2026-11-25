@@ -207,6 +207,34 @@ class AdoptReleaseMapperTest : BaseTest() {
     }
 
     @Test
+    fun `explicitly excluded sbom with malformed metadata is not fetched`() = runBlocking {
+        val sbom = "OpenJDK8U-sbom_x64_solaris_hotspot_8u462b08.json"
+        val assets = buildGhAssets(
+            listOf(
+                Pair("OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz", ""),
+                Pair("OpenJDK8U-jre_x64_linux_hotspot-1.tar.gz.json", "1"),
+                Pair(sbom, ""),
+                Pair(sbom.removeSuffix(".json") + "-metadata.json", "2"),
+            )
+        )
+        val cached = CachedGitHubHtmlClient(InMemoryInternalDbStore(), mockClient())
+        val fetched = mutableListOf<String>()
+        val client = object : GitHubHtmlClient {
+            override suspend fun getUrl(url: String): String? = cached.getUrl(url)
+            override suspend fun getAsset(asset: GHAsset): String? {
+                fetched.add(asset.name)
+                return if (asset.downloadUrl == "2") "{\"sha256\": \"jre,\n}" else cached.getAsset(asset)
+            }
+        }
+
+        val release = AdoptReleaseMapperFactory(AdoptBinaryMapper(client), client).get(Vendor.eclipse).toAdoptRelease(formGhRelease(assets))
+
+        assertTrue(release.succeeded())
+        assertTrue(fetched.none { it.contains("sbom") })
+        assertTrue(release.result!!.flatMap { it.binaries.toList() }.none { it.`package`.name == sbom })
+    }
+
+    @Test
     fun copesWithSbom() {
         runBlocking {
             val source = buildGhAssets(

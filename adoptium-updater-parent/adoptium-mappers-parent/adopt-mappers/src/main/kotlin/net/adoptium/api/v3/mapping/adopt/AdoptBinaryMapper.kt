@@ -35,7 +35,12 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         private const val HOTSPOT_JFR = "hotspot-jfr"
         private const val TEMURIN = "temurin"
 
-        private val EXCLUDED = listOf("corretto", "AQAvitTapFiles")
+        private val EXCLUDED = listOf(
+            "corretto",
+            "AQAvitTapFiles",
+            // Upstream sidecar contains malformed JSON (unterminated sha256 value)
+            "OpenJDK8U-sbom_x64_solaris_hotspot_8u462b08",
+        )
         private val SHA256_DIGEST = Regex("sha256:([0-9a-f]{64})", RegexOption.IGNORE_CASE)
     }
 
