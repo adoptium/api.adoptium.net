@@ -37,8 +37,13 @@ contracts are repeated here rather than relying on loading the ADR.
 - I6: Prefer exact sidecars, then unambiguous aliases, independently of asset
   order. Resolve competitors' higher-priority sidecars before deciding whether
   an alias is shared; an ambiguous higher-priority alias does not free another.
-  A checksum disagreement excludes only the affected binary or installer;
-  other required-metadata or binary-mapping failures reject the snapshot.
+  A checksum disagreement excludes only the affected binary or installer
+  (SBOMs ignore disagreements and use GitHub's digest).
+  Absent metadata checksums use GitHub/sidecar fallback for every artifact.
+  SBOM metadata is non-critical: an SBOM whose sidecar is absent, unfetchable
+  or malformed is omitted and the rest of the release publishes (Mongo failures
+  still propagate). Other required-metadata or binary-mapping failures reject
+  the snapshot.
 - I7: Cache identity includes available asset ID/digest; without either, fetch
   on demand. Share only pending fetches. Keep per-key write ordering through
   cancellation and await write failures; cache persistence is not best-effort.

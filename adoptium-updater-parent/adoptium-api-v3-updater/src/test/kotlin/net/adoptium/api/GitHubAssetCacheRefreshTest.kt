@@ -38,7 +38,9 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
+import tools.jackson.databind.node.ObjectNode
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.time.ZonedDateTime
@@ -203,6 +205,57 @@ class GitHubAssetCacheRefreshTest {
     }
 
     @ParameterizedTest
+    @CsvSource(
+        "msi, null, github", "msi, missing, github",
+        "msi, null, sidecar", "msi, missing, sidecar",
+        "msi, null, none", "msi, missing, none",
+        "pkg, null, github", "pkg, missing, github",
+        "pkg, null, sidecar", "pkg, missing, sidecar",
+        "pkg, null, none", "pkg, missing, none"
+    )
+    fun `missing metadata checksums fall back for archives and installers`(extension: String, checksumField: String, checksumSource: String) = runBlocking {
+        val now = TimeSource.now()
+        val archiveHash = "a".repeat(64)
+        val installerHash = "b".repeat(64)
+        val archiveName = if (extension == "msi") {
+            "OpenJDK8U-jdk_x64_windows_hotspot_8u512b05-ea.zip"
+        } else {
+            "OpenJDK8U-jdk_x64_mac_hotspot_8u512b05-ea.tar.gz"
+        }
+        val archive = asset(archiveName, now, "archive", if (checksumSource == "github") "sha256:$archiveHash" else null)
+        val installer = asset(archiveName.substringBefore(".") + ".$extension", now, "installer",
+            if (checksumSource == "github") "sha256:$installerHash" else null)
+        val archiveMetadata = asset("${archive.name}.json", now)
+        val installerMetadata = asset("${installer.name}.json", now)
+        val archiveChecksum = asset("${archive.name}.sha256.txt", now)
+        val installerChecksum = asset("${installer.name}.sha256.txt", now)
+        val metadataBody = UpdaterJsonMapper.mapper.readValue(metadata(archiveHash), ObjectNode::class.java).apply {
+            if (checksumField == "missing") remove("sha256") else putNull("sha256")
+        }.toString()
+        val client = mockk<GitHubHtmlClient>()
+        coEvery { client.getAsset(archiveMetadata) } returns metadataBody
+        coEvery { client.getAsset(installerMetadata) } returns metadataBody
+        coEvery { client.getAsset(archiveChecksum) } returns "$archiveHash ${archive.name}"
+        coEvery { client.getAsset(installerChecksum) } returns "$installerHash ${installer.name}"
+        val sidecars = if (checksumSource == "sidecar") listOf(archiveChecksum, installerChecksum) else emptyList()
+        val time = DateTimeFormatter.ISO_INSTANT.format(now)
+        val upstream = GHRelease(
+            GitHubId("missing-checksums"), "jdk8u512-b05-ea-beta", true, time, time,
+            GHAssets(listOf(archive, installer, archiveMetadata, installerMetadata) + sidecars, PageInfo(false, null), 0),
+            "", "https://github.com/adoptium/temurin8-binaries/releases/tag/jdk8u512-b05-ea-beta"
+        )
+
+        val release = AdoptReleaseMapperFactory(AdoptBinaryMapper(client), client).get(Vendor.eclipse).toAdoptRelease(upstream)
+
+        assertTrue(release.succeeded())
+        assertFalse(release.retryable)
+        val binary = release.result!!.single().binaries.single()
+        assertEquals(if (checksumSource == "none") null else archiveHash, binary.`package`.checksum)
+        assertEquals(if (checksumSource == "none") null else installerHash, binary.installer!!.checksum)
+        coVerify(exactly = 1) { client.getAsset(installerMetadata) }
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = ["metadata", "sidecar", "legacy", "split", "all", "mixed-failure"])
     fun `checksum disagreements exclude only affected binaries and can recover`(scenario: String) = runBlocking {
         val now = TimeSource.now().minusDays(1)
@@ -282,6 +335,26 @@ class GitHubAssetCacheRefreshTest {
 
         assertEquals(hash, binary.`package`.checksum)
         assertNull(binary.installer)
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["metadata", "sidecar", "both"])
+    fun `sbom checksum disagreements use the GitHub digest`(source: String) = runBlocking {
+        val now = TimeSource.now()
+        val hash = "a".repeat(64)
+        val sbom = asset("OpenJDK8U-sbom_x64_linux_hotspot_8u512b05-ea.json", now, "sbom", "sha256:$hash")
+        val checksum = asset("${sbom.name}.sha256.txt", now)
+        val client = mockk<GitHubHtmlClient>()
+        val sidecarHash = if (source == "metadata") hash else "c".repeat(64)
+        val metadataHash = if (source == "sidecar") hash else "b".repeat(64)
+        coEvery { client.getAsset(checksum) } returns "$sidecarHash ${sbom.name}"
+        val metadata = UpdaterJsonMapper.mapper.readValue(metadata(metadataHash), GHMetaData::class.java)
+
+        val binary = AdoptBinaryMapper(client).toBinaryList(
+            listOf(sbom), listOf(sbom, checksum), mapOf(sbom to metadata)
+        ).single()
+
+        assertEquals(hash, binary.`package`.checksum)
     }
 
     @ParameterizedTest

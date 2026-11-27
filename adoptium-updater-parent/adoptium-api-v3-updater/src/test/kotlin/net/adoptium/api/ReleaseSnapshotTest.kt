@@ -246,10 +246,10 @@ class ReleaseSnapshotTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["missing", "invalid", "exception", "missing-node", "missing-sbom-node"])
+    @ValueSource(strings = ["missing", "invalid", "exception", "missing-node"])
     fun `incomplete snapshot preserves all splits and recovers on the same builder`(failure: String) = runBlocking {
-        val secondAsset = if (failure == "missing-sbom-node") sbom else second
-        val sidecar = if (secondAsset == sbom) sbom.removeSuffix(".json") + "-metadata.json" else "$second.json"
+        val secondAsset = second
+        val sidecar = "$second.json"
         val complete = upstream(listOf(first, "$first.json", secondAsset, sidecar))
         val client = client()
         val mapper = factory(client).get(Vendor.eclipse)
@@ -418,12 +418,40 @@ class ReleaseSnapshotTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["missing", "invalid", "exception", "missing-node", "missing-sbom-node"])
+    @ValueSource(strings = ["missing", "invalid", "exception", "missing-node"])
+    fun `sbom metadata failures omit only the sbom`(failure: String) = runBlocking {
+        val sidecar = sbom.removeSuffix(".json") + "-metadata.json"
+        val names = listOf(first, "$first.json", second, "$second.json", sbom) + if (failure == "missing-node") emptyList() else listOf(sidecar)
+        val release = upstream(names)
+        val complete = factory(client()).get(Vendor.eclipse).toAdoptRelease(upstream(listOf(first, "$first.json", second, "$second.json", sbom, sidecar))).result!!
+        assertTrue(complete.flatMap { it.binaries.toList() }.any { it.`package`.name == sbom })
+        val client = client()
+        coEvery { client.getUrl(sidecar) } answers {
+            when (failure) {
+                "missing" -> null
+                "invalid" -> "{\"sha256\": \"jre,\n}"
+                else -> error("Temporary network failure")
+            }
+        }
+
+        val mapped = factory(client).get(Vendor.eclipse).toAdoptRelease(release)
+
+        assertTrue(mapped.succeeded())
+        assertEquals(setOf(first, second), mapped.result!!.flatMap { it.binaries.toList() }.map { it.`package`.name }.toSet())
+        assertEquals(complete.sumOf { it.download_count }, mapped.result!!.sumOf { it.download_count })
+        assertEquals(
+            GitHubDownloadStatsCalculator.getStats(repos(complete)).single().downloads,
+            GitHubDownloadStatsCalculator.getStats(repos(mapped.result!!)).single().downloads
+        )
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["missing", "invalid", "exception", "missing-node"])
     fun `full builds abort incomplete snapshots and recover`(failure: String) = runBlocking {
         val client = client()
         val factory = factory(client)
-        val secondAsset = if (failure == "missing-sbom-node") sbom else second
-        val sidecar = if (secondAsset == sbom) sbom.removeSuffix(".json") + "-metadata.json" else "$second.json"
+        val secondAsset = second
+        val sidecar = "$second.json"
         val complete = upstream(listOf(first, "$first.json", secondAsset, sidecar))
         var current = complete
         val github = mockk<GitHubApi>()

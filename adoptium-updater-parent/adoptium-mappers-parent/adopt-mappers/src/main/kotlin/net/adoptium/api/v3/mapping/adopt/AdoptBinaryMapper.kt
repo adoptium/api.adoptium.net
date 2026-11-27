@@ -35,7 +35,13 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         private const val HOTSPOT_JFR = "hotspot-jfr"
         private const val TEMURIN = "temurin"
 
-        private val EXCLUDED = listOf("corretto", "AQAvitTapFiles")
+        private val EXCLUDED = listOf(
+            "corretto",
+            "AQAvitTapFiles",
+            // Upstream sidecars contain malformed JSON (unterminated sha256 value)
+            "OpenJDK8U-sbom_x64_solaris_hotspot_8u462b08",
+            "_solaris_hotspot_8u452b09",
+        )
         private val SHA256_DIGEST = Regex("sha256:([0-9a-f]{64})", RegexOption.IGNORE_CASE)
     }
 
@@ -189,9 +195,14 @@ class AdoptBinaryMapper @Inject constructor(private val gitHubHtmlClient: GitHub
         if (githubChecksum != null) {
             for ((source, checksum) in listOf("metadata" to metadata, "checksum sidecar" to sidecar)) {
                 if (checksum != null && !githubChecksum.equals(checksum.trim(), ignoreCase = true)) {
-                    throw ChecksumMismatchException(
-                        "SHA-256 mismatch for ${asset.downloadUrl}: GitHub=$githubChecksum, $source=$checksum"
-                    )
+                    val message = "SHA-256 mismatch for ${asset.downloadUrl}: GitHub=$githubChecksum, $source=$checksum"
+                    // Known upstream issue: SBOMs are signed after their checksums are recorded, so only
+                    // GitHub's digest describes the published SBOM.
+                    if (isSupportedSbom(asset)) {
+                        LOGGER.debug("Using GitHub digest for SBOM ${asset.name}: $message")
+                        continue
+                    }
+                    throw ChecksumMismatchException(message)
                 }
             }
         }

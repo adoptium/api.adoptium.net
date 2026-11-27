@@ -223,7 +223,7 @@ retried every cycle. The latest EA normally remains eligible for the next cycle.
 | MongoDB read or write fails, including a metadata-cache operation | Apply bounded transient retries only to the individual read or repeat-safe write. On a permanent failure or exhausted budget, abandon the entire update attempt without continuing to other releases or retrying at a higher layer. Try again on the next scheduled cycle. |
 | Required metadata is missing, unreadable, invalid, or fails retrieval | Reject that upstream snapshot as retryable; retain all its previous splits. |
 | A selected supported binary fails mapping, other than an explicit checksum disagreement | Reject that upstream snapshot as retryable; do not publish the remaining binaries. |
-| GitHub's binary SHA-256 disagrees with metadata or a checksum sidecar | Log an error and omit only that binary; publish the other successfully mapped binaries. |
+| GitHub's binary SHA-256 disagrees with metadata or a checksum sidecar | Log an error and omit only that binary; publish the other successfully mapped binaries. SBOMs instead use GitHub's digest (known upstream signing-order issue). |
 | Explicit non-retryable mapping result | Retain existing splits and suppress further incremental attempts through the builder's exclusion set. |
 | Repository-summary retrieval or pagination fails | Abandon the incremental calculation without publishing it; do not prune from an incomplete summary. |
 | Coroutine cancellation at the per-release boundary | Propagate cancellation rather than continuing as if it were an ordinary EA failure. |
@@ -244,8 +244,12 @@ the snapshot to succeed. Other mapping failures still reject the snapshot.
 Supported assets include archives and SBOMs, subject to the mapper's existing
 exclusions.
 
-Once metadata is used, every supported non-source release asset must have its
-required metadata, including SBOM metadata. Metadata sidecars themselves are not
+Once metadata is used, every supported non-source, non-SBOM release asset must
+have its required metadata. SBOM metadata is non-critical: an SBOM whose sidecar
+is absent, unfetchable or malformed is logged and omitted, and the rest of the
+release still publishes. SBOM downloads are not counted, so omission does not
+change download statistics. Database failures while reading SBOM metadata still
+propagate. Metadata sidecars themselves are not
 binaries. Installer, unsupported-asset and excluded-asset metadata is not required
 for binary grouping.
 
@@ -446,6 +450,12 @@ nonempty metadata SHA-256 and any retrieved checksum-sidecar value. Fetch an
 available checksum sidecar for this comparison even when GitHub or metadata
 already provides a checksum. Compare hexadecimal values case-insensitively;
 checksum sidecars may contain a bare hash or a hash followed by a filename.
+SBOMs are the only exception: upstream signs them after recording their
+checksums, so an SBOM disagreement is ignored and GitHub's digest is used.
+Metadata for any artifact may omit `sha256` or set it to null. Use GitHub's
+digest when available, otherwise fall back to a checksum sidecar. Missing
+metadata checksums are not disagreements and do not by themselves exclude an
+artifact or reject the release snapshot.
 Prefer the exact `<asset-name>.sha256.txt` sidecar before legacy basename
 aliases, independently of asset order. Among aliases, prefer the full basename
 with known extensions removed before the shorter first-dot basename. Skip each
