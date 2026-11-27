@@ -8,7 +8,9 @@ data class GHAsset @JsonCreator constructor(
     @JsonProperty("size") val size: Long,
     @JsonProperty("downloadUrl") val downloadUrl: String,
     @JsonProperty("downloadCount") val downloadCount: Long,
-    @JsonProperty("updatedAt") val updatedAt: String
+    @JsonProperty("updatedAt") val updatedAt: String,
+    @JsonProperty("id") val id: String? = null,
+    @JsonProperty("digest") val digest: String? = null
 )
 
 data class GHAssetNode @JsonCreator constructor(@JsonProperty("releaseAssets") val releaseAssets: GHAssets)

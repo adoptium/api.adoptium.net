@@ -14,7 +14,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 import java.time.Instant
-import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 class CloudflareStatsCalculatorTest {
@@ -64,25 +63,22 @@ class CloudflareStatsCalculatorTest {
     }
 
     @Test
-    fun `updateDb should aggregate downloads by date and version`() = runBlocking {
+    fun `updateDb should aggregate downloads by version`() = runBlocking {
         
         val mockClient = mockk<CloudflareClient>()
         val database = InMemoryApiPersistence(AdoptRepos(emptyList()), AdoptCdxaRepos(emptyList()))
         val calculator = CloudflareStatsCalculator(database, mockClient)
 
-        val testDateTime = Instant.parse("2024-01-15T00:00:00Z")
         val response = CloudflareResponse(
             data = setOf(
                 // Version 17 entries - should aggregate to 150
-                CloudflarePackageStats(testDateTime, 100, "/artifactory/deb/pool/main/t/temurin-17/temurin-17-jdk_17.0.10_amd64.deb"),
-                CloudflarePackageStats(testDateTime, 50, "/artifactory/rpm/centos/7/x86_64/Packages/temurin-17-jdk-17.0.10.x86_64.rpm"),
+                CloudflarePackageStats(100, "/artifactory/deb/pool/main/t/temurin-17/temurin-17-jdk_17.0.10_amd64.deb"),
+                CloudflarePackageStats(50, "/artifactory/rpm/centos/7/x86_64/Packages/temurin-17-jdk-17.0.10.x86_64.rpm"),
                 // Version 21 entries - should aggregate to 300
-                CloudflarePackageStats(testDateTime, 200, "/artifactory/deb/pool/main/t/temurin-21/temurin-21-jdk_21.0.2_amd64.deb"),
-                CloudflarePackageStats(testDateTime, 100, "/artifactory/apk/alpine/main/x86_64/temurin-21-jdk-21.0.2.apk"),
+                CloudflarePackageStats(200, "/artifactory/deb/pool/main/t/temurin-21/temurin-21-jdk_21.0.2_amd64.deb"),
+                CloudflarePackageStats(100, "/artifactory/apk/alpine/main/x86_64/temurin-21-jdk-21.0.2.apk"),
                 // Invalid entry - should be skipped
-                CloudflarePackageStats(testDateTime, 999, "/invalid/path"),
-                // Different date - should be separate entry
-                CloudflarePackageStats(testDateTime.plus(1, ChronoUnit.DAYS), 75, "/artifactory/deb/pool/main/t/temurin-17/temurin-17-jdk_17.0.10_amd64.deb")
+                CloudflarePackageStats(999, "/invalid/path")
             )
         )
 
@@ -90,26 +86,21 @@ class CloudflareStatsCalculatorTest {
 
         calculator.updateDb()
 
-        val startTime = testDateTime.minus(1, ChronoUnit.DAYS).atZone(TimeSource.ZONE)
-        val endTime = testDateTime.plus(2, ChronoUnit.DAYS).atZone(TimeSource.ZONE)
+        val startTime = Instant.EPOCH.atZone(TimeSource.ZONE)
+        val endTime = Instant.now().plus(2, ChronoUnit.DAYS).atZone(TimeSource.ZONE)
         val savedStats = database.getPackageStats(startTime, endTime)
 
-        assertEquals(3, savedStats.size)
+        assertEquals(2, savedStats.size)
 
-        // Find stats for version 17 on first datetime
-        val version17Stats = savedStats.find { it.feature_version == 17 && it.date.toInstant() == testDateTime }
+        // Find stats for version 17
+        val version17Stats = savedStats.find { it.feature_version == 17 }
         assertNotNull(version17Stats)
         assertEquals(150, version17Stats!!.downloads)
 
-        // Find stats for version 21 on first datetime
-        val version21Stats = savedStats.find { it.feature_version == 21 && it.date.toInstant() == testDateTime }
+        // Find stats for version 21
+        val version21Stats = savedStats.find { it.feature_version == 21 }
         assertNotNull(version21Stats)
         assertEquals(300, version21Stats!!.downloads)
-
-        // Find stats for version 17 on second datetime
-        val version17NextDayStats = savedStats.find { it.feature_version == 17 && it.date.toInstant() == testDateTime.plus(1, ChronoUnit.DAYS) }
-        assertNotNull(version17NextDayStats)
-        assertEquals(75, version17NextDayStats!!.downloads)
 
         coVerify(exactly = 1) { mockClient.fetchDownloadStats(any(), any()) }
     }
@@ -128,7 +119,7 @@ class CloudflareStatsCalculatorTest {
 
         
         val savedStats = database.getPackageStats(
-            Instant.now().minus(7, ChronoUnit.DAYS).atZone(TimeSource.ZONE),
+            Instant.EPOCH.atZone(TimeSource.ZONE),
             Instant.now().plus(1, ChronoUnit.DAYS).atZone(TimeSource.ZONE)
         )
         assertTrue(savedStats.isEmpty())
@@ -141,14 +132,13 @@ class CloudflareStatsCalculatorTest {
         val database = InMemoryApiPersistence(AdoptRepos(emptyList()), AdoptCdxaRepos(emptyList()))
         val calculator = CloudflareStatsCalculator(database, mockClient)
 
-        val testDateTime = Instant.parse("2024-01-15T00:00:00Z")
         val response = CloudflareResponse(
             data = setOf(
-                CloudflarePackageStats(testDateTime, 100, "/artifactory/rpm/centos/7/x86_64/Packages/temurin-17-jdk-17.0.18.0.0.8-1.x86_64.rpm"),
-                CloudflarePackageStats(testDateTime, 50, "/invalid/path1"),
-                CloudflarePackageStats(testDateTime, 200, "/artifactory/deb/pool/main/t/temurin-11/temurin-11-jdk_11.0.30.0.0%2b7-0_amd64.deb"),
-                CloudflarePackageStats(testDateTime, 75, "/another/invalid"),
-                CloudflarePackageStats(testDateTime, 150, "/artifactory/apk/alpine/main/x86_64/temurin-8-jdk-8.482.08-r0.apk")
+                CloudflarePackageStats(100, "/artifactory/rpm/centos/7/x86_64/Packages/temurin-17-jdk-17.0.18.0.0.8-1.x86_64.rpm"),
+                CloudflarePackageStats(50, "/invalid/path1"),
+                CloudflarePackageStats(200, "/artifactory/deb/pool/main/t/temurin-11/temurin-11-jdk_11.0.30.0.0%2b7-0_amd64.deb"),
+                CloudflarePackageStats(75, "/another/invalid"),
+                CloudflarePackageStats(150, "/artifactory/apk/alpine/main/x86_64/temurin-8-jdk-8.482.08-r0.apk")
             )
         )
 
@@ -159,8 +149,8 @@ class CloudflareStatsCalculatorTest {
 
         
         val savedStats = database.getPackageStats(
-            testDateTime.minus(1, ChronoUnit.DAYS).atZone(TimeSource.ZONE),
-            testDateTime.plus(1, ChronoUnit.DAYS).atZone(TimeSource.ZONE)
+            Instant.EPOCH.atZone(TimeSource.ZONE),
+            Instant.now().plus(1, ChronoUnit.DAYS).atZone(TimeSource.ZONE)
         )
 
         assertEquals(3, savedStats.size)

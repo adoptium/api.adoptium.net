@@ -42,5 +42,5 @@ data class GHMetaData @JsonCreator constructor(
     @JsonProperty("scmRef") val scmRef: String,
     @JsonProperty("version_data") val version_data: String,
     @JsonProperty("binary_type") val binary_type: ImageType,
-    @JsonProperty("sha256") val sha256: String
+    @JsonProperty("sha256") val sha256: String?
 )

@@ -51,6 +51,8 @@ import net.adoptium.api.v3.dataSources.github.graphql.models.Evidences
 import net.adoptium.api.v3.dataSources.github.graphql.models.PageInfo
 import net.adoptium.api.v3.dataSources.github.graphql.models.summary.GHRepositorySummary
 import net.adoptium.api.v3.dataSources.models.AdoptRepos
+import net.adoptium.api.v3.dataSources.models.FeatureRelease
+import net.adoptium.api.v3.dataSources.models.Releases
 import net.adoptium.api.v3.dataSources.models.AdoptCdxaRepos
 import net.adoptium.api.v3.dataSources.models.GitHubId
 import net.adoptium.api.v3.mapping.adopt.AdoptBinaryMapper
@@ -465,6 +467,29 @@ class V3UpdaterEndToEndTest {
     }
 
     @Test
+    fun `cdxa summary query failure does not delete CDXAs`() {
+        runBlocking {
+            val cdxaRepo = AdoptCdxaReposTestDataGenerator.generate()
+
+            // Simulate a failure in getCdxaSummary (e.g., spurious HTTP 401)
+            val getCdxaSummary: ((String, String, String) -> GHCdxaRepoSummaryData?) = { org, repo, directory ->
+                LOGGER.info("getCdxaSummary: simulating failure for $org/$repo/$directory")
+                throw Exception("Simulated HTTP 401 Unauthorized error for $org/$repo/$directory")
+            }
+
+            val getCdxaByName: ((String, String, String) -> GHCdxa?) = { _, _, _ ->
+                null
+            }
+
+            val updatedRepo = runCdxaUpdateTest(cdxaRepo, getCdxaSummary, getCdxaByName)
+
+            // CDXAs must NOT be deleted when the summary query fails
+            assertTrue(updatedRepo.repos.size == cdxaRepo.repos.size)
+            assertTrue(updatedRepo == cdxaRepo)
+        }
+    }
+
+    @Test
     fun `removed release disappears`() {
         runBlocking {
             val repo = AdoptReposTestDataGenerator.generate()
@@ -497,8 +522,24 @@ class V3UpdaterEndToEndTest {
         }
     }
 
+    // The GitHub fixtures only carry binary asset counts, so a rebuild cannot reproduce the
+    // release-level download counts of the generated snapshot the stats guard reads from the db.
+    private fun withoutReleaseDownloads(repo: AdoptRepos) = AdoptRepos(
+        repo.repos.values.map { featureRelease ->
+            FeatureRelease(
+                featureRelease.featureVersion,
+                Releases(featureRelease.releases.getReleases().map {
+                    Release(
+                        it.id, it.release_type, it.release_link, it.release_name, it.timestamp, it.updated_at,
+                        it.binaries, 0, it.vendor, it.version_data, it.source, it.release_notes, it.aqavit_results_link
+                    )
+                }.toList())
+            )
+        }
+    )
+
     private fun runUpdateTest(repo: AdoptRepos, getRepository: (String, String, (updatedAt: String, isPrerelease: Boolean) -> Boolean) -> GHRepository, getById: (GitHubId) -> GHRelease?): AdoptRepos {
-        val memoryDb = InMemoryApiPersistence(repo, mockk())
+        val memoryDb = InMemoryApiPersistence(withoutReleaseDownloads(repo), mockk())
 
         val apiDataStore: APIDataStore = APIDataStoreImpl(memoryDb)
 

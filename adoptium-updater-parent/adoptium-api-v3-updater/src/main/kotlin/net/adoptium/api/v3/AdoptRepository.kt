@@ -1,7 +1,9 @@
 package net.adoptium.api.v3
 
+import com.mongodb.MongoException
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -77,8 +79,13 @@ open class AdoptRepositoryImpl @Inject constructor(
 
         if (release == null) return null
 
-        return getMapperForRepo(release.url)
+        val result = getMapperForRepo(release.url)
             .toAdoptRelease(release)
+        return if (result.succeeded()) {
+            ReleaseResult(result = result.result!!.filter(::excludeReleases))
+        } else {
+            result
+        }
     }
 
     override suspend fun getReleaseFilesForId(gitHubId: GitHubId): List<GHAsset>? {
@@ -93,7 +100,7 @@ open class AdoptRepositoryImpl @Inject constructor(
         val repo = getDataForEachRepo(
             version,
             filter,
-            getRepository(filter)
+            { vendor, owner, repoName -> getRepository(filter, vendor, owner, repoName) }
         )
             .await()
             .filterNotNull()
@@ -114,24 +121,28 @@ open class AdoptRepositoryImpl @Inject constructor(
         return GHRepositorySummary(GHReleasesSummary(releaseSummaries, PageInfo(false, "")))
     }
 
-    private fun getRepository(filter: ReleaseIncludeFilter): suspend (Vendor, String, String) -> List<Release> {
-        return { vendor: Vendor, owner: String, repoName: String -> getRepository(filter, vendor, owner, repoName) }
-    }
-
-    private suspend fun getRepository(filter: ReleaseIncludeFilter, vendor: Vendor, owner: String, repoName: String): List<Release> {
+    private suspend fun getRepository(
+        filter: ReleaseIncludeFilter,
+        vendor: Vendor,
+        owner: String,
+        repoName: String
+    ): List<Release> {
         return client
             .getRepository(owner, repoName) { updatedAt, isPrerelease -> filter.filter(vendor, updatedAt, isPrerelease) }
             .getReleases()
-            .flatMap {
+            .flatMap { release ->
                 try {
-                    val result = getMapperForRepo(it.url).toAdoptRelease(it)
-                    if (result.succeeded()) {
-                        result.result!!
-                    } else {
-                        return@flatMap emptyList<Release>()
-                    }
+                    check(!release.releaseAssets.pageInfo.hasNextPage) { "Incomplete assets for ${release.id.id}" }
+                    val result = getMapperForRepo(release.url).toAdoptRelease(release)
+                    check(!result.retryable) { "Retryable mapping failure for ${release.id.id}: ${result.error}" }
+                    if (result.succeeded()) result.result!! else emptyList()
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
-                    return@flatMap emptyList<Release>()
+                    if (e is MongoException) throw e
+                    if (!release.isPrerelease) throw e
+                    LOGGER.warn("Omitting EA ${release.id.id} from full update after failure", e)
+                    emptyList()
                 }
             }
             .filter { excludeReleases(it) }

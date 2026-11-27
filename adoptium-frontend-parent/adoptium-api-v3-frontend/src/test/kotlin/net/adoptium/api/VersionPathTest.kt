@@ -1,6 +1,5 @@
 package net.adoptium.api
 
-import com.fasterxml.jackson.databind.node.ObjectNode
 import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured
 import net.adoptium.api.v3.JsonMapper
@@ -14,6 +13,7 @@ import org.hamcrest.TypeSafeMatcher
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.skyscreamer.jsonassert.JSONAssert
+import tools.jackson.databind.node.ObjectNode
 
 @QuarkusTest
 class VersionPathTest {
